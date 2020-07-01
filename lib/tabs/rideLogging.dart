@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 
 import 'package:freesk8_mobile/databaseAssistant.dart';
+import 'package:freesk8_mobile/fileSyncViewer.dart';
 import 'package:freesk8_mobile/file_manager.dart';
 import 'package:freesk8_mobile/rideLogViewer.dart';
 import 'package:freesk8_mobile/userSettings.dart';
@@ -38,11 +39,12 @@ class Dialogs {
 }
 
 class RideLogging extends StatefulWidget {
-  RideLogging({this.myUserSettings, this.theTXLoggerCharacteristic, this.syncInProgress, this.onSyncPress});
+  RideLogging({this.myUserSettings, this.theTXLoggerCharacteristic, this.syncInProgress, this.onSyncPress, this.syncStatus});
   final UserSettings myUserSettings;
   final BluetoothCharacteristic theTXLoggerCharacteristic;
   final bool syncInProgress;
   final ValueChanged<bool> onSyncPress;
+  final FileSyncViewerArguments syncStatus;
 
   void _handleSyncPress() {
     onSyncPress(!syncInProgress);
@@ -432,188 +434,51 @@ class RideLoggingState extends State<RideLogging> {
                     }),
               ),
                */
-            Row(
+            widget.syncStatus.syncInProgress?Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-/*
-                RaisedButton(
-                    child: Text("Start Ride"),
-                    onPressed: () async {
-                      await FileManager.clearLogFile().whenComplete(() {
-                        Scaffold
-                            .of(context)
-                            .showSnackBar(SnackBar(content: Text('Recording new ride')));
-                        setState(() {
-                          temporaryLog = "";
-                        });
-                      });
-                    }),
-
-                SizedBox(width: 5,),
-
-
-
-                  RaisedButton(
-                      child: Text("Debug Data"),
-                      onPressed: () async {
-                        FileManager.readLogFile().then((value){
-                          setState(() {
-                            temporaryLog = value;
-                          });
-                        });
-                      }),
-                  SizedBox(width: 5,),
-                   */
-
-                /*
-                  RaisedButton(
-                      child: Text("Save Ride"),
-                      onPressed: () async {
-
-                        ///Save temporary data to user documents, later iterate documents and show list of logs to load
-                        await FileManager.saveLogToDocuments().then((savedFilePath) async {
-
-                        /// Analyze log to generate database statistics
-                        double maxCurrentBattery = 0.0;
-                        double maxCurrentMotor = 0.0;
-                        int faultCodeCount = 0;
-                        double minElevation;
-                        double maxElevation;
-                        await FileManager.openLogFile(savedFilePath).then((value){
-                          List<String> thisRideLogEntries = value.split("\n");
-                          for(int i=0; i<thisRideLogEntries.length; ++i) {
-                            final entry = thisRideLogEntries[i].split(",");
-
-                            if(entry.length > 1){ // entry[0] = Time, entry[1] = Data type
-                              ///GPS position entry
-                              if(entry[1] == "position") {
-                                //DateTime, 'position', lat, lon, accuracy, altitude, speed, speedAccuracy
-                                // Track elevation change
-                                double elevation = double.parse(entry[5]);
-                                minElevation ??= elevation; //Set if null
-                                maxElevation ??= elevation; //Set if null
-                                if (elevation < minElevation) minElevation = elevation;
-                                if (elevation > maxElevation) maxElevation = elevation;
-                              }
-                              ///ESC Values
-                              else if (entry[1] == "values" && entry.length > 9) {
-                                //[2020-05-19T13:46:28.8, values, 12.9, -99.9, 29.0, 0.0, 0.0, 0.0, 0.0, 11884, 102]
-                                double motorCurrent = double.parse(entry[6]); //Motor Current
-                                double batteryCurrent = double.parse(entry[7]); //Input Current
-                                if (batteryCurrent>maxCurrentBattery) maxCurrentBattery = batteryCurrent;
-                                if (motorCurrent>maxCurrentMotor) maxCurrentMotor = motorCurrent;
-                                //TODO: max speed
-                                //TODO: average speed
-                                //TODO: Distance
-                              }
-                              ///Fault codes
-                              else if (entry[1] == "fault") {
-                                ++faultCodeCount;
-                              }
-                            }
-                          }
-                        });
-
-                        /// Insert record into database
-                        DatabaseAssistant.dbInsertLog(LogInfoItem(
-                            boardID: widget.myUserSettings.currentDeviceID,
-                            boardAlias: widget.myUserSettings.settings.boardAlias,
-                            logFilePath: savedFilePath,
-                            avgSpeed: -1.0,
-                            maxSpeed: -1.0,
-                            elevationChange: maxElevation != null ? maxElevation - minElevation : -1.0,
-                            maxAmpsBattery: maxCurrentBattery,
-                            maxAmpsMotors: maxCurrentMotor,
-                            distance: -1.0,
-                            durationSeconds: DateTime.now().difference(FileManager.logFileStartTime).inSeconds,
-                            faultCount: faultCodeCount,
-                            rideName: "",
-                            notes: ""
-                        ));
-
-                        /// Finish up //TODO: _listFiles() and below call setState(): Optimize please
-                        _listFiles();
-                        Scaffold
-                            .of(context)
-                            .showSnackBar(SnackBar(content: Text('Ride Log Saved')));
-                        await FileManager.clearLogFile();
-                        setState(() {
-                          temporaryLog = "";
-                        });
-                      });
-                    }),
-
-                   */
-
-
-                SizedBox(width: 5,),
-                RaisedButton(
-                    child: Text("ls"),
-                    onPressed: () async {
-                      //TODO: Request files from receiver
-                      widget.theTXLoggerCharacteristic.write(utf8.encode("ls~"));
-                    }),
-
-                SizedBox(width: 5,),
-                RaisedButton(
-                    child: Text("cat"),
-                    onPressed: () async {
-                      //TODO: too much to list
-                      widget.theTXLoggerCharacteristic.write(utf8.encode("cat 2020-06-20T20:26:40~"));
-                    }),
-
-                SizedBox(width: 5,),
-                RaisedButton(
-                    child: Text("rm"),
-                    onPressed: () async {
-                      //TODO: too much to list
-                      widget.theTXLoggerCharacteristic.write(utf8.encode("rm 1970-01-01T00:00:06~"));
-                    }),
-
-                SizedBox(width: 5,),
-                RaisedButton(
-                    child: Text("sync"),
-                    onPressed: () async {
-                      //TODO: too much to list
-                      widget._handleSyncPress();
-                    }),
+                FileSyncViewer(syncStatus: widget.syncStatus,),
               ],
-            ),
+            ):Container(),
+
+
 
 
             Row( mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
               SizedBox(width: 5,),
               RaisedButton(
-                  child: Text("start"),
+                  child: Text("start log"),
                   onPressed: () async {
                     widget.theTXLoggerCharacteristic.write(utf8.encode("logstart~"));
                   }),
 
               SizedBox(width: 5,),
               RaisedButton(
-                  child: Text("stop"),
+                  child: Text("stop log"),
                   onPressed: () async {
                     widget.theTXLoggerCharacteristic.write(utf8.encode("logstop~"));
                   }),
 
               SizedBox(width: 5,),
               RaisedButton(
+                  child: Text("sync all"),
+                  onPressed: () async {
+                    //TODO: too much to list
+                    widget._handleSyncPress(); //Start or stop Sync
+                  }),
+
+              /*
+              SizedBox(width: 5,),
+              RaisedButton(
                   child: Text("set time"),
                   onPressed: () async {
                     widget.theTXLoggerCharacteristic.write(utf8.encode("settime ${DateTime.now().toIso8601String().substring(0,21).replaceAll("-", ":")}~"));
                   }),
+               */
 
             ],),
 
             SizedBox(height: 5,)
-            /*
-              Expanded(child:
-                SingleChildScrollView(
-                  child: Text(temporaryLog, style: TextStyle(fontSize: 8),),
-                )
-              ),
-               */
-
 
           ],
         ),

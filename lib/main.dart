@@ -16,6 +16,7 @@ import 'package:freesk8_mobile/tabs/esk8Configuration.dart';
 import 'package:freesk8_mobile/tabs/test.dart';
 import 'package:freesk8_mobile/tabs/rideLogging.dart';
 import 'package:freesk8_mobile/rideLogViewer.dart';
+import 'package:freesk8_mobile/fileSyncViewer.dart';
 import 'package:freesk8_mobile/focWizard.dart';
 
 // Supporting packages
@@ -608,11 +609,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
   //TODO: some logger vars that need to be in their own class
   static String loggerTestBuffer = "";
-  static String loggerCurrentFilename = "";
+  static String catCurrentFilename = "";
   static bool syncInProgress = false;
+  static bool syncAdvanceProgress = false;
   static bool lsInProgress = false;
   static bool catInProgress = false;
   static int catBytesReceived = 0;
+  static int catBytesTotal = 0;
   static List<FileToSync> fileList = new List<FileToSync>();
   static List<String> fileListToDelete = new List();
   void _handleBLESyncState(bool startSync) {
@@ -730,7 +733,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
           if(syncInProgress){
             //TODO: start by cat'ing the first file
-            //When cat is complete we will setState and can request the next file
+            //When cat is complete we will call setState and will request the next file
+            catCurrentFilename = fileList.first.fileName;
+            catBytesTotal = fileList.first.fileSize;
             theTXLoggerCharacteristic.write(utf8.encode("cat ${fileList.first.fileName}~"));
           }else _alertLoggerTest();
           return;
@@ -741,29 +746,32 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         List<String> values = receiveStr.split(",");
         if (values[1] == "FILE"){
           fileList.add(new FileToSync(fileName: values[2], fileSize: int.parse(values[3])));
-          //TODO: building list to delete when cat is successful//RREMOVE: fileListToDelete.add(values[2]);
+          //TODO: building list to delete when cat is successful//REMOVE: fileListToDelete.add(values[2]);
         }
+        await theTXLoggerCharacteristic.write(utf8.encode("ls,${fileList.length},ack~"));
       }
       else if(receiveStr.startsWith("ls,/FreeSK8Logs")){
         fileList.clear();
         fileListToDelete.clear();
         lsInProgress = true;
+        catInProgress = false;
+        await theTXLoggerCharacteristic.write(utf8.encode("ls,${fileList.length},ack~"));
       }
 
       ///CAT Command
       else if (catInProgress) {
         if (receiveStr == "cat,complete") {
-          print("Concatenate file operation complete on $loggerCurrentFilename with $catBytesReceived bytes");
+          print("Concatenate file operation complete on $catCurrentFilename with $catBytesReceived bytes");
 
           //TODO: validate file transmission. We need a proper packet definition and CRC
           // Add successful transfer to list of files to delete during sync operation
-          fileListToDelete.add(loggerCurrentFilename);
+          fileListToDelete.add(catCurrentFilename);
 
           // Save temporary log data to final filename
           // Then generate database statistics
           // Then create database entry
           // Then rebuild state and continue sync process
-          FileManager.saveLogToDocuments(filename: loggerCurrentFilename).then((savedFilePath)
+          FileManager.saveLogToDocuments(filename: catCurrentFilename).then((savedFilePath)
           {
             /// Analyze log to generate database statistics
             double maxCurrentBattery = 0.0;
@@ -835,6 +843,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 loggerTestBuffer = receiveStr;
                 if(!syncInProgress) _alertLoggerTest();
                 setState(() {
+                  syncAdvanceProgress = true;
+                  //Cat completed
                   //Setting state so this widget rebuilds. On build it will
                   //check if syncInProgress and start the next file
                 });
@@ -850,15 +860,20 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 //print("logdata Received $receiveStr");
 
         print("cat received ${receiveStr.length} bytes");
-        catBytesReceived += receiveStr.length;
+        setState(() {
+          catBytesReceived += receiveStr.length;
+        });
+        await theTXLoggerCharacteristic.write(utf8.encode("cat,$catBytesReceived,ack~"));
       }
       else if(receiveStr.startsWith("cat,/FreeSK8Logs")){
         print("Starting cat Command: $receiveStr");
         loggerTestBuffer = "";
         catInProgress = true;
+        lsInProgress = false;
         catBytesReceived = 0;
-        loggerCurrentFilename = receiveStr.split(",")[1].split("/").last;
+        //TODO: removed this bc it's set during the sync operation (ls command)//catCurrentFilename = receiveStr.split(",")[1].split("/").last;
         FileManager.clearLogFile();
+        await theTXLoggerCharacteristic.write(utf8.encode("cat,0,ack~"));
       }
 
       else if(receiveStr.startsWith("rm,")){
@@ -1380,26 +1395,30 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    if(syncInProgress){
+    if(syncInProgress && syncAdvanceProgress){
       print("Building main.dart while syncInProgress");
+      syncAdvanceProgress = false;
 
       if(fileList.length>0) //TODO: logically I didn't think this needed to be conditional but helps during debugging
         fileList.removeAt(0); //Remove the first file in the list (we just finished receiving this file)
 
       if(fileList.length>0){
+        catCurrentFilename = fileList.first.fileName;
+        catBytesTotal = fileList.first.fileSize; //Set the total expected bytes for the current file
         theTXLoggerCharacteristic.write(utf8.encode("cat ${fileList.first.fileName}~")); //Request next file
       }
       else if(fileListToDelete.length>0){
-        //print("stopping sync without remove");
-        //syncInProgress = false;
+        print("stopping sync without remove");
+        syncInProgress = false;
         //TODO: give user option to remove files on sync
-        theTXLoggerCharacteristic.write(utf8.encode("rm ${fileListToDelete.first}~"));
+        //theTXLoggerCharacteristic.write(utf8.encode("rm ${fileListToDelete.first}~"));
       }
       else {
         syncInProgress = false;
       }
-
     }
+
+    FileSyncViewerArguments syncStatus = FileSyncViewerArguments(syncInProgress: syncInProgress, fileName: catCurrentFilename, fileBytesReceived: catBytesReceived, fileBytesTotal: catBytesTotal);
     return Scaffold(
         // Appbar
         appBar: AppBar(
@@ -1414,7 +1433,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           ConnectionStatus(active:_scanActive, bleDevicesGrid: _buildGridViewOfDevices(), currentDevice: _connectedDevice, currentFirmware: firmwarePacket, userSettings: widget.myUserSettings, onChanged: _handleBLEScanState),
           RealTimeData(routeTakenLocations: routeTakenLocations, telemetryPacket: telemetryPacket, currentSettings: widget.myUserSettings, startStopTelemetryFunc: startStopTelemetryTimer,),
           ESK8Configuration(myUserSettings: widget.myUserSettings, currentDevice: _connectedDevice),
-          RideLogging(myUserSettings: widget.myUserSettings, theTXLoggerCharacteristic: theTXLoggerCharacteristic, syncInProgress: syncInProgress, onSyncPress: _handleBLESyncState,)]),
+          RideLogging(myUserSettings: widget.myUserSettings, theTXLoggerCharacteristic: theTXLoggerCharacteristic, syncInProgress: syncInProgress, onSyncPress: _handleBLESyncState, syncStatus: syncStatus,)]),
       bottomNavigationBar: Material(
         color: Theme.of(context).primaryColor,
         child: getTabBar(),
