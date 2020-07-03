@@ -40,11 +40,6 @@ import 'package:wakelock/wakelock.dart';
 
 import 'databaseAssistant.dart';
 
-class FileToSync{
-  FileToSync({this.fileName, this.fileSize});
-  String fileName;
-  int fileSize;
-}
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -618,13 +613,32 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static int catBytesTotal = 0;
   static List<FileToSync> fileList = new List<FileToSync>();
   static List<String> fileListToDelete = new List();
+  static bool syncEraseOnComplete = false;
+  static bool isLoggerLogging = false;
+  // Handler for RideLogging's sync button
   void _handleBLESyncState(bool startSync) {
     print("_handleBLESyncState: startSync: $startSync");
     if (startSync) {
-      //TODO: start syncing all files
+      // Start syncing all files by setting syncInProgress to true and request
+      // the file list from the receiver
       syncInProgress = true;
       theTXLoggerCharacteristic.write(utf8.encode("ls~"));
+    } else {
+      print("Stopping Sync Process");
+      setState(() {
+        syncInProgress = false;
+        syncAdvanceProgress = false;
+        lsInProgress = false;
+        catInProgress = false;
+        catCurrentFilename = "";
+      });
     }
+  }
+  void _handleEraseOnSyncButton(bool eraseOnSync) {
+    print("_handleEraseOnSyncButton: eraseOnSync: $eraseOnSync");
+    setState(() {
+      syncEraseOnComplete = eraseOnSync;
+    });
   }
   //TODO: ^^ move this stuff when you feel like it ^^
 
@@ -731,6 +745,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             loggerTestBuffer += "File: ${element.fileName} is ${element.fileSize} bytes\n";
           });
 
+          if(fileList.length == 0) {
+            //Nothing to sync
+            syncInProgress = false;
+            loggerTestBuffer = "No logs are saved on the receiver";
+          }
+
           if(syncInProgress){
             //TODO: start by cat'ing the first file
             //When cat is complete we will call setState and will request the next file
@@ -745,8 +765,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         // build list of files on device
         List<String> values = receiveStr.split(",");
         if (values[1] == "FILE"){
-          fileList.add(new FileToSync(fileName: values[2], fileSize: int.parse(values[3])));
-          //TODO: building list to delete when cat is successful//REMOVE: fileListToDelete.add(values[2]);
+          int fileSize = int.parse(values[3]);
+          fileList.add(new FileToSync(fileName: values[2], fileSize: fileSize));
         }
         await theTXLoggerCharacteristic.write(utf8.encode("ls,${fileList.length},ack~"));
       }
@@ -882,13 +902,22 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         loggerTestBuffer = receiveStr;
         if(!syncInProgress) _alertLoggerTest();
         else {
-          _alertLoggerTest();
-          fileListToDelete.removeAt(0);
+          //_alertLoggerTest();
+          if (fileListToDelete.length > 0) fileListToDelete.removeAt(0);
           setState(() {
             //Calling setState to remove the next file while sync is in progress
+            syncAdvanceProgress = true;
           });
         }
-      } else {
+      }
+      else if(receiveStr.startsWith("status,")) {
+        print("Status packet received: $receiveStr");
+        List<String> values = receiveStr.split(",");
+        setState(() {
+          isLoggerLogging = values[2] == "1";
+        });
+      }
+      else {
         ///Unexpected response
         print("loggerReceived and unexpected response: ${new String.fromCharCodes(value)}");
       }
@@ -1396,7 +1425,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     if(syncInProgress && syncAdvanceProgress){
-      print("Building main.dart while syncInProgress");
+      print("Building main.dart while syncInProgress and sync wants to advance a step");
       syncAdvanceProgress = false;
 
       if(fileList.length>0) //TODO: logically I didn't think this needed to be conditional but helps during debugging
@@ -1408,17 +1437,27 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         theTXLoggerCharacteristic.write(utf8.encode("cat ${fileList.first.fileName}~")); //Request next file
       }
       else if(fileListToDelete.length>0){
-        print("stopping sync without remove");
-        syncInProgress = false;
-        //TODO: give user option to remove files on sync
-        //theTXLoggerCharacteristic.write(utf8.encode("rm ${fileListToDelete.first}~"));
+        // We have sync'd all the files and we have files to erase
+        // Evaluate user's option to remove files on sync
+        if (syncEraseOnComplete) {
+          // Remove the first file in the list of files to delete
+          theTXLoggerCharacteristic.write(utf8.encode("rm ${fileListToDelete.first}~"));
+        } else {
+          // We are finished with the sync process because the user does not
+          // want to erase files on the receiver
+          print("stopping sync without remove");
+          syncInProgress = false;
+        }
       }
       else {
         syncInProgress = false;
       }
     }
+    else {
+      print("Building main.dart");
+    }
 
-    FileSyncViewerArguments syncStatus = FileSyncViewerArguments(syncInProgress: syncInProgress, fileName: catCurrentFilename, fileBytesReceived: catBytesReceived, fileBytesTotal: catBytesTotal);
+    FileSyncViewerArguments syncStatus = FileSyncViewerArguments(syncInProgress: syncInProgress, fileName: catCurrentFilename, fileBytesReceived: catBytesReceived, fileBytesTotal: catBytesTotal, fileList: fileList);
     return Scaffold(
         // Appbar
         appBar: AppBar(
@@ -1433,7 +1472,17 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           ConnectionStatus(active:_scanActive, bleDevicesGrid: _buildGridViewOfDevices(), currentDevice: _connectedDevice, currentFirmware: firmwarePacket, userSettings: widget.myUserSettings, onChanged: _handleBLEScanState),
           RealTimeData(routeTakenLocations: routeTakenLocations, telemetryPacket: telemetryPacket, currentSettings: widget.myUserSettings, startStopTelemetryFunc: startStopTelemetryTimer,),
           ESK8Configuration(myUserSettings: widget.myUserSettings, currentDevice: _connectedDevice),
-          RideLogging(myUserSettings: widget.myUserSettings, theTXLoggerCharacteristic: theTXLoggerCharacteristic, syncInProgress: syncInProgress, onSyncPress: _handleBLESyncState, syncStatus: syncStatus,)]),
+          RideLogging(
+            myUserSettings: widget.myUserSettings,
+            theTXLoggerCharacteristic: theTXLoggerCharacteristic,
+            syncInProgress: syncInProgress, //TODO: RideLogging receives syncInProgress in syncStatus object
+            onSyncPress: _handleBLESyncState,
+            syncStatus: syncStatus,
+            eraseOnSync: syncEraseOnComplete,
+            onSyncEraseSwitch: _handleEraseOnSyncButton,
+            isLoggerLogging: isLoggerLogging
+          )
+        ]),
       bottomNavigationBar: Material(
         color: Theme.of(context).primaryColor,
         child: getTabBar(),

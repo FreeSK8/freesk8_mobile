@@ -39,12 +39,24 @@ class Dialogs {
 }
 
 class RideLogging extends StatefulWidget {
-  RideLogging({this.myUserSettings, this.theTXLoggerCharacteristic, this.syncInProgress, this.onSyncPress, this.syncStatus});
+  RideLogging({
+    this.myUserSettings,
+    this.theTXLoggerCharacteristic,
+    this.syncInProgress,
+    this.onSyncPress,
+    this.syncStatus,
+    this.eraseOnSync,
+    this.onSyncEraseSwitch,
+    this.isLoggerLogging
+  });
   final UserSettings myUserSettings;
   final BluetoothCharacteristic theTXLoggerCharacteristic;
   final bool syncInProgress;
   final ValueChanged<bool> onSyncPress;
   final FileSyncViewerArguments syncStatus;
+  final bool eraseOnSync;
+  final ValueChanged<bool> onSyncEraseSwitch;
+  final bool isLoggerLogging;
 
   void _handleSyncPress() {
     onSyncPress(!syncInProgress);
@@ -69,6 +81,9 @@ class RideLoggingState extends State<RideLogging> {
   @override
   void initState() {
     super.initState();
+    widget.theTXLoggerCharacteristic.write(utf8.encode("status~")).catchError((error){
+      print("Status request failed. Are we connected?");
+    });
     _listFiles(true);
   }
 
@@ -447,25 +462,42 @@ class RideLoggingState extends State<RideLogging> {
             Row( mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
               SizedBox(width: 5,),
               RaisedButton(
-                  child: Text("start log"),
+                  child: Text(widget.isLoggerLogging? "Stop Log" : "Start Log"),
                   onPressed: () async {
-                    widget.theTXLoggerCharacteristic.write(utf8.encode("logstart~"));
+                    if (widget.isLoggerLogging) {
+                      widget.theTXLoggerCharacteristic.write(utf8.encode("logstop~"));
+                    } else {
+                      widget.theTXLoggerCharacteristic.write(utf8.encode("logstart~"));
+                    }
                   }),
 
               SizedBox(width: 5,),
               RaisedButton(
-                  child: Text("stop log"),
-                  onPressed: () async {
-                    widget.theTXLoggerCharacteristic.write(utf8.encode("logstop~"));
-                  }),
-
-              SizedBox(width: 5,),
-              RaisedButton(
-                  child: Text("sync all"),
+                  child: Text(widget.syncInProgress?"Stop Sync":"Sync All"),
                   onPressed: () async {
                     //TODO: too much to list
                     widget._handleSyncPress(); //Start or stop Sync
                   }),
+
+
+
+              SizedBox(width: 5,),
+              Column(children: <Widget>[
+
+                Icon(widget.eraseOnSync?Icons.delete_forever:Icons.save,
+                    color: widget.eraseOnSync?Colors.orange:Colors.green
+                ),
+                Text(widget.eraseOnSync?"Clear":"Keep"),
+              ],),
+
+              Switch(
+                value: widget.eraseOnSync,
+                onChanged: (bool newValue){
+                  print("erase on sync $newValue");
+                  widget.onSyncEraseSwitch(newValue);
+                },
+              )
+
 
               /*
               SizedBox(width: 5,),

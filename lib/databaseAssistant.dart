@@ -58,7 +58,7 @@ class LogInfoItem {
 class DatabaseAssistant {
 
   static Future<Database> getDatabase() async {
-    print("DatabaseAssistant: getDatabase: called");
+    //print("DatabaseAssistant: getDatabase: called");
     return openDatabase(
       join(await getDatabasesPath(), 'logDatabase.db'), // Set the path to the database.
       onCreate: (db, version) async {

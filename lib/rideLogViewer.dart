@@ -476,17 +476,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                         ],
                       ),
                     ) :
-                  SizedBox(height: 175, child:
-                    Column(
-                      children: <Widget>[
-                        Icon(Icons.warning, size: 80,),
-                        Text("No map points recorded O_o"),
-                        Text("How embarrassing, this was not supposed to happen."),
-                        Text("ESC data will be shown below if available:")
-                      ],
-                    ),
-                  ),
-
+                  SizedBox(height: 25, child: Text("GPS Data Not Recorded")),
 
                   Expanded( child:
                     Stack( children: <Widget>[
