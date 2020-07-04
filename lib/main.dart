@@ -1359,25 +1359,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         },
       ),
 
-      ListTile(
-        leading: Transform.rotate(
-            angle: 180 * 3.1415 / 180,
-            child:Icon(Icons.exit_to_app)),
-        title: Text("Exit Application"),
-        onTap: () async {
-          print("Exiting application via Exit button");
-
-          BackgroundLocator.unRegisterLocationUpdate();
-          IsolateNameServer.removePortNameMapping(_isolateName);
-
-          locatorReceivePort?.close();
-
-          _bleDisconnect();
-
-          SystemChannels.platform.invokeMethod('SystemNavigator.pop');
-        },
-      ),
-
     ];
 
     return Drawer(

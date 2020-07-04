@@ -40,8 +40,7 @@ class FileSyncViewerState extends State<FileSyncViewer> {
   Widget build(BuildContext context) {
     print("Build: fileSyncViewer");
 
-    syncIconAngle += 5.0;
-    if (syncIconAngle > 360.0) syncIconAngle = 5.0;
+    syncIconAngle -= 0.1;
 
     return Container(
       child: Center(
