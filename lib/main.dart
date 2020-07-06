@@ -766,7 +766,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         List<String> values = receiveStr.split(",");
         if (values[1] == "FILE"){
           int fileSize = int.parse(values[3]);
-          fileList.add(new FileToSync(fileName: values[2], fileSize: fileSize));
+          // Add file to list if it's greater than 0 bytes. (0 byte file usually means it's the active log)
+          if (fileSize > 0) fileList.add(new FileToSync(fileName: values[2], fileSize: fileSize));
         }
         await theTXLoggerCharacteristic.write(utf8.encode("ls,${fileList.length},ack~"));
       }

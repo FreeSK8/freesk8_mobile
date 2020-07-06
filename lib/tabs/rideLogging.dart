@@ -81,9 +81,12 @@ class RideLoggingState extends State<RideLogging> {
   @override
   void initState() {
     super.initState();
-    widget.theTXLoggerCharacteristic.write(utf8.encode("status~")).catchError((error){
-      print("Status request failed. Are we connected?");
-    });
+    if (widget.theTXLoggerCharacteristic != null) {
+      widget.theTXLoggerCharacteristic.write(utf8.encode("status~")).catchError((error){
+        print("Status request failed. Are we connected?");
+      });
+    }
+
     _listFiles(true);
   }
 
@@ -487,7 +490,7 @@ class RideLoggingState extends State<RideLogging> {
                 Icon(widget.eraseOnSync?Icons.delete_forever:Icons.save,
                     color: widget.eraseOnSync?Colors.orange:Colors.green
                 ),
-                Text(widget.eraseOnSync?"Clear":"Keep"),
+                Text(widget.eraseOnSync?"Erase":"Keep"),
               ],),
 
               Switch(
