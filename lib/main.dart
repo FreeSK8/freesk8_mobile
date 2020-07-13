@@ -403,6 +403,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       // Reset the TX characteristic
       the_tx_characteristic = null;
+      theTXLoggerCharacteristic = null;
 
       // Reset firmware packet
       firmwarePacket = new ESCFirmware();
@@ -697,15 +698,15 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             the_tx_characteristic = characteristic;
             foundTX = true;
           }
-          else if ( characteristic.uuid == rxCharacteristicUUID){
+          else if (characteristic.uuid == rxCharacteristicUUID){
             the_rx_characteristic = characteristic;
             foundRX = true;
           }
-          else if ( characteristic.uuid == txLoggerCharacteristicUUID){
+          else if (characteristic.uuid == txLoggerCharacteristicUUID){
             theTXLoggerCharacteristic = characteristic;
             foundTXLogger = true;
           }
-          else if ( characteristic.uuid == rxLoggerCharacteristicUUID){
+          else if (characteristic.uuid == rxLoggerCharacteristicUUID){
             theRXLoggerCharacteristic = characteristic;
             foundRXLogger = true;
           }
@@ -713,22 +714,22 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       }
     } //--finding required service and characteristics
 
-    if ( !foundService || !foundTX || !foundRX || !foundTXLogger || !foundRXLogger ) {
+    if ( !foundService || !foundTX || !foundRX ) {
       print("ERROR: Required service and characteristics not found on this device");
 
       _alertInvalidDevice();
       _bleDisconnect();
 
       return;
-    } else {
-      print("The required service and characteristics were found on this device. Good news.");
+    } else if ( !foundTXLogger || !foundRXLogger ) {
+      _alertLimitedFunctionality();
+    }
+    else {
+      print("All required service and characteristics were found on this device. Good news.");
     }
 
     await theRXLoggerCharacteristic.setNotifyValue(true);
     loggerRXDataSubscription = theRXLoggerCharacteristic.value.listen((value) async {
-      //TODO: more with logger RX data
-      //TODO: create class to process the received data and
-      //TODO: handle the creation of files during the sync
       //TODO: process
       String receiveStr = new String.fromCharCodes(value);
       ///LS Command
@@ -752,8 +753,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           }
 
           if(syncInProgress){
-            //TODO: start by cat'ing the first file
-            //When cat is complete we will call setState and will request the next file
+            //NOTE: start by cat'ing the first file
+            //When cat is complete we will call setState which will request the next file
             catCurrentFilename = fileList.first.fileName;
             catBytesTotal = fileList.first.fileSize;
             theTXLoggerCharacteristic.write(utf8.encode("cat ${fileList.first.fileName}~"));
@@ -860,7 +861,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   rideName: "",
                   notes: ""
               )).then((value){
-                //TODO: get rideLogging widget to reList the files
+                //TODO: get rideLogging widget to reList the last file after sync without erase
                 loggerTestBuffer = receiveStr;
                 if(!syncInProgress) _alertLoggerTest();
                 setState(() {
@@ -1190,6 +1191,34 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     }
   }
 
+  Future<void> _alertLimitedFunctionality() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Not a Robogotchi'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text('The connected device does not have all the cool features of the FreeSK8 Robogotchi =(\n\n'),
+                Text('This app will be limited in functionality.'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: Text('I understand'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _alertInvalidDevice() async {
     return showDialog<void>(
       context: context,
@@ -1353,6 +1382,41 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 return AlertDialog(
                   title: Text("nRF Quick Pair"),
                   content: Text("Oops. Try connecting to your board first."),
+                );
+              },
+            );
+          }
+        },
+      ),
+
+      ListTile(
+        leading: Icon(Icons.system_update),
+        title: Text("Firmware Update"),
+        onTap: () {
+          // Don't write if not connected
+          if (theTXLoggerCharacteristic != null) {
+            theTXLoggerCharacteristic.write(utf8.encode("dfumode~")).whenComplete((){
+              print('Your robogotchi is ready to receive firmware!\nUse the nRF Toolbox application to upload new firmware.\nPower cycle board to cancel update.');
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text("Firmware Update Ready"),
+                    content: Text('Use the nRF Toolbox application to upload new firmware.\nWait 2 minutes or power cycle board to cancel update.'),
+                  );
+                },
+              );
+              _bleDisconnect();
+            }).catchError((e){
+              print("Firmware Update: Exception: $e");
+            });
+          } else {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text("Firmware Update"),
+                  content: Text("Oops. Try connecting to your robogotchi first."),
                 );
               },
             );
