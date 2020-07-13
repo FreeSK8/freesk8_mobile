@@ -728,8 +728,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       print("All required service and characteristics were found on this device. Good news.");
     }
 
-    await theRXLoggerCharacteristic.setNotifyValue(true);
-    loggerRXDataSubscription = theRXLoggerCharacteristic.value.listen((value) async {
+    if(foundRXLogger){
+      await theRXLoggerCharacteristic.setNotifyValue(true);
+    }
+
+    if(foundRXLogger) loggerRXDataSubscription = theRXLoggerCharacteristic.value.listen((value) async {
       //TODO: process
       String receiveStr = new String.fromCharCodes(value);
       ///LS Command
@@ -1140,13 +1143,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       }
     });
 
-    //TODO: testing loggerTX
-    //await theTXLoggerCharacteristic.write(utf8.encode("ls~"));
-    //await theTXLoggerCharacteristic.write(utf8.encode("cat 2020-06-20T20_26_42_00~"));
-//    setState(() {
-//    });
-//return;
-    await theTXLoggerCharacteristic.write(utf8.encode("settime ${DateTime.now().toIso8601String().substring(0,21).replaceAll("-", ":")}~"));
+    if (foundTXLogger) {
+      await theTXLoggerCharacteristic.write(utf8.encode("settime ${DateTime.now().toIso8601String().substring(0,21).replaceAll("-", ":")}~"));
+    }
 
     //Request firmware packet once connected
     await the_tx_characteristic.write([0x02, 0x01, 0x00, 0x00, 0x00, 0x03]);
