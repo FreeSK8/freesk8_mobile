@@ -45,7 +45,6 @@ class FileManager {
     return newPath;
   }
 
-  //TODO: add create documents log folder method
   static Future<void> createLogDirectory() async {
     final documentsDirectory = await getApplicationDocumentsDirectory();
     final directoryPath = "${documentsDirectory.path}/logs/";

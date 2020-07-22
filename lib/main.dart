@@ -49,8 +49,6 @@ void main() {
       // Home
       home: MyHome(),
       routes: <String, WidgetBuilder>{
-        //TODO: work on routes at some point
-        Test.routeName: (BuildContext context) => Test(),
         RideLogViewer.routeName: (BuildContext context) => RideLogViewer(),
         ConfigureESC.routeName: (BuildContext context) => ConfigureESC(),
       },
@@ -176,7 +174,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     locatorReceivePort.listen(
           (dynamic data) async {
             await updateLocationForRoute(data);
-            //TODO: remove this when you feel comfortable... not used cause receiver: await setLog(data);
       },
     );
 
@@ -246,10 +243,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   }
   static String formatLogPositionEntry(LocationDto locationDto) { //lat, lon, accuracy, altitude, speed, speedAccuracy
     return "position,${dp(locationDto.latitude, 5)},${dp(locationDto.longitude, 5)},${locationDto.accuracy.toInt()},${dp(locationDto.altitude,1)},${dp(locationDto.speed,1)},${locationDto.speedAccuracy.toInt()},";
-  }
-  static Future<void> setLog(LocationDto data) async {
-    final gpsTime = DateTime.fromMillisecondsSinceEpoch(data.time.toInt());
-    await FileManager.writeToLogFile("${gpsTime.toIso8601String().substring(0,21)},${formatLogPositionEntry(data)},\r\n");
   }
   static void notificationCallback() {
     print('notificationCallback: Someone clicked on the notification');
@@ -733,7 +726,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     }
 
     if(foundRXLogger) loggerRXDataSubscription = theRXLoggerCharacteristic.value.listen((value) async {
-      //TODO: process
+      /// Process data received from FreeSK8 logger characteristic
       String receiveStr = new String.fromCharCodes(value);
       ///LS Command
       if (lsInProgress) {
@@ -864,7 +857,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   rideName: "",
                   notes: ""
               )).then((value){
-                //TODO: get rideLogging widget to reList the last file after sync without erase
+                //TODO: BUG: get rideLogging widget to reList the last file after sync without erase
                 loggerTestBuffer = receiveStr;
                 if(!syncInProgress) _alertLoggerTest();
                 setState(() {
@@ -881,8 +874,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         }
 
         // store chunk of log data
-        await FileManager.writeToLogFile(receiveStr); //TODO: testing await here to make sure the contents are written or else shit gets out of order
-//print("logdata Received $receiveStr");
+        await FileManager.writeToLogFile(receiveStr);
 
         print("cat received ${receiveStr.length} bytes");
         setState(() {
@@ -896,7 +888,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         catInProgress = true;
         lsInProgress = false;
         catBytesReceived = 0;
-        //TODO: removed this bc it's set during the sync operation (ls command)//catCurrentFilename = receiveStr.split(",")[1].split("/").last;
         FileManager.clearLogFile();
         await theTXLoggerCharacteristic.write(utf8.encode("cat,0,ack~"));
       }
@@ -1164,9 +1155,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     //print("TEST packetScanCAN $packetScanCAN");
     await the_tx_characteristic.write(packetScanCAN);
 
-    // Start the telemetry timer so we are logging data
-    //TODO: remove this. startStopTelemetryTimer(false);
-
     // Keep the device on while connected
     Wakelock.enable();
 
@@ -1367,9 +1355,17 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         onTap: () {
           // Don't write if not connected
           if (the_tx_characteristic != null) {
-            //TODO: put quick pair packet together properly
+            var byteData = new ByteData(10); //<start><payloadLen><packetID><int32_milliseconds><crc1><crc2><end>
+            byteData.setUint8(0, 0x02);
+            byteData.setUint8(1, 0x05);
+            byteData.setUint8(2, COMM_PACKET_ID.COMM_NRF_START_PAIRING.index);
+            byteData.setUint32(3, 10000); //milliseconds
+            int checksum = bleHelper.crc16(byteData.buffer.asUint8List(), 2, 5);
+            byteData.setUint16(7, checksum);
+            byteData.setUint8(9, 0x03); //End of packet
+
             //<start><payloadLen><packetID><int32_milliseconds><crc1><crc2><end>
-            the_tx_characteristic.write([0x02, 0x05, COMM_PACKET_ID.COMM_NRF_START_PAIRING.index, 0x00, 0x00, 0x27, 0x10, 0xa6, 0xa3, 0x03]).then((value){
+            the_tx_characteristic.write(byteData.buffer.asUint8List()).then((value){
               print('You have 10 seconds to power remote!');
             }).catchError((e){
               print("nRF Quick Pair: Exception: $e");
@@ -1492,6 +1488,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           // want to erase files on the receiver
           print("stopping sync without remove");
           syncInProgress = false;
+          //TODO: Testing setState here to reload file list after sync is finished
+          setState(() {
+            //TESTING
+          });
         }
       }
       else {

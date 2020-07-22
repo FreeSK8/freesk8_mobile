@@ -401,7 +401,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                     RaisedButton(
                         child: Text("Delete log"),
                         onPressed: () async {
-                          //TODO: confirm with user
+                          //confirm with user
                           showConfirmationDialog(context);
                         }),
 

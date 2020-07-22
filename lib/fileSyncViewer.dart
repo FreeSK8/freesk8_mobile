@@ -7,7 +7,6 @@ class FileToSync{
 }
 
 class FileSyncViewerArguments {
-  //TODO: add file sync status variable
   final bool syncInProgress;
   final String fileName;
   final int fileBytesTotal;

@@ -478,8 +478,7 @@ class RideLoggingState extends State<RideLogging> {
               RaisedButton(
                   child: Text(widget.syncInProgress?"Stop Sync":"Sync All"),
                   onPressed: () async {
-                    //TODO: too much to list
-                    widget._handleSyncPress(); //Start or stop Sync
+                    widget._handleSyncPress(); //Start or stop file sync routine
                   }),
 
 

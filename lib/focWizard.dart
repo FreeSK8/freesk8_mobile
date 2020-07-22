@@ -7,8 +7,6 @@ import 'package:flutter_blue/flutter_blue.dart';
 import 'package:freesk8_mobile/bleHelper.dart';
 import 'package:freesk8_mobile/escHelper.dart';
 
-import 'main.dart' as main; //TODO: doing this to restart the telemetry timer
-
 class FOCWizardArguments {
   final BluetoothCharacteristic txCharacteristic;
   final BLEHelper bleHelper;
@@ -185,7 +183,6 @@ class ConfigureESCState extends State<ConfigureESC> {
         onStepCancel: () {
           // On hitting cancel button, change the state
           if( currentStepIndex == 0 ) {
-            main.MyHomeState().startStopTelemetryTimer(false); //TODO: idk if this is good idea but it does work
             Navigator.of(context).pop();
           } else {
             setState(() {
