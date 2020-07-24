@@ -40,6 +40,16 @@ import 'package:wakelock/wakelock.dart';
 
 import 'databaseAssistant.dart';
 
+///
+/// FreeSK8 Mobile Known issues
+/// * Sync without Erase will not show last file until you switch back to logging tab
+/// * Sync with Erase while Logging is active will not erase files (could be robogotchi fw, see renee)
+/// * Duty Cycle gauge on Real Time tab may flicker the red highlight on and off
+/// * Editing board settings may put the input cursor at the start of the entry
+///
+/// Robogotchi Known issues
+/// * None, it's perfect
+///
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -548,8 +558,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                     //});
                     widget.myUserSettings.loadSettings(device.id.toString()).then((thisDeviceIsKnown){
                       print("_buildGridViewOfDevices():widget.myUserSettings.loadSettings() returned $thisDeviceIsKnown");
-                      
-
+                      isConnectedDeviceKnown = thisDeviceIsKnown;
                     });
                     await setupConnectedDeviceStreamListener();
                   } catch (e) {
@@ -1303,7 +1312,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     var aboutChild = AboutListTile(
       child: Text("About"),
       applicationName: "FreeSK8 Mobile",
-      applicationVersion: "v0.2.0",
+      applicationVersion: "v0.1.0",
       applicationIcon: Icon(Icons.info, size: 40,),
       icon: Icon(Icons.info),
       aboutBoxChildren: <Widget>[
