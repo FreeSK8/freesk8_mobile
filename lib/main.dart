@@ -44,11 +44,14 @@ import 'databaseAssistant.dart';
 /// FreeSK8 Mobile Known issues
 /// * Sync without Erase will not show last file until you switch back to logging tab
 /// * Sync with Erase while Logging is active will not erase files (could be robogotchi fw, see renee)
+/// * Share button is limited to text data. If log is too big share will not function.
+/// * Chart in ride log viewer not optimized for large number of points. Try mp_charts
 /// * Duty Cycle gauge on Real Time tab may flicker the red highlight on and off
 /// * Editing board settings may put the input cursor at the start of the entry
 ///
 /// Robogotchi Known issues
-/// * None, it's perfect
+/// * Open Connection; A pairing mechanism should be implemented
+/// * Logging auto-stop voltage, auto-stop timeout and board in motion thresholds not configurable
 ///
 
 void main() {
