@@ -5,7 +5,6 @@ import 'package:flutter_blue/flutter_blue.dart';
 
 import 'package:freesk8_mobile/databaseAssistant.dart';
 import 'package:freesk8_mobile/fileSyncViewer.dart';
-import 'package:freesk8_mobile/file_manager.dart';
 import 'package:freesk8_mobile/rideLogViewer.dart';
 import 'package:freesk8_mobile/userSettings.dart';
 
@@ -251,10 +250,16 @@ class RideLoggingState extends State<RideLogging> {
                         // Show indication of loading
                         await Dialogs.showLoadingDialog(context, _keyLoader).timeout(Duration(milliseconds: 500)).catchError((error){});
 
+                        // Fetch user settings for selected board, fallback to current settings if not found
+                        UserSettings selectedBoardSettings = new UserSettings();
+                        if (await selectedBoardSettings.loadSettings(rideLogsFromDatabase[index].boardID) == false) {
+                          print("WARNING: Board ID ${rideLogsFromDatabase[index].boardID} has no settings on this device!");
+                          selectedBoardSettings = widget.myUserSettings;
+                        }
+
                         // navigate to the route by replacing the loading dialog
                         Navigator.of(context).pushReplacementNamed(RideLogViewer.routeName,
-                          //TODO: I'm passing current user settings and not those of the board selected -- Only using imperial global preferences anyway
-                          arguments: RideLogViewerArguments(rideLogsFromDatabase[index].logFilePath, widget.myUserSettings),
+                          arguments: RideLogViewerArguments(rideLogsFromDatabase[index].logFilePath, selectedBoardSettings),
                         ).then((value){
                           // Once finished re-list files and remove a potential snackBar item before re-draw of setState
                           _listFiles(true);

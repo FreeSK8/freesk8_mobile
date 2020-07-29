@@ -52,6 +52,7 @@ import 'databaseAssistant.dart';
 /// Robogotchi Known issues
 /// * Open Connection; A pairing mechanism should be implemented
 /// * Logging auto-stop voltage, auto-stop timeout and board in motion thresholds not configurable
+/// * Logging while viewing Real Time data results in large files
 ///
 
 void main() {
@@ -925,6 +926,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           isLoggerLogging = values[2] == "1";
         });
       }
+      else if(receiveStr.startsWith("version,")) {
+        print("Version packet received: $receiveStr");
+        //TODO: Display/store version
+      }
       else {
         ///Unexpected response
         print("loggerReceived and unexpected response: ${new String.fromCharCodes(value)}");
@@ -1402,6 +1407,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         onTap: () {
           // Don't write if not connected
           if (theTXLoggerCharacteristic != null) {
+            //TODO: confirmation dialog cause robogotchi will stop operating
             theTXLoggerCharacteristic.write(utf8.encode("dfumode~")).whenComplete((){
               print('Your robogotchi is ready to receive firmware!\nUse the nRF Toolbox application to upload new firmware.\nPower cycle board to cancel update.');
               showDialog(
