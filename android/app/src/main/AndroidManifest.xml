@@ -14,6 +14,9 @@
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!--READ and WRITE for esys_flutter_share-->
+    <uses-permission android:name="android.permission.READ_CONTENT" />
+    <uses-permission android:name="android.permission.WRITE_CONTENT" />
 
     <!-- io.flutter.app.FlutterApplication is an android.app.Application that
          calls FlutterMain.startInitialization(this); in its onCreate method.

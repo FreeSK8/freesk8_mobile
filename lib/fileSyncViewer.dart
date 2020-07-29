@@ -57,7 +57,7 @@ class FileSyncViewerState extends State<FileSyncViewer> {
             ),
             Text("Files remaining: ${widget.syncStatus.fileList.length}"),
             Text("Current file: ${widget.syncStatus.fileName}"),
-            Text("Progress: ${widget.syncStatus.fileBytesReceived}/${widget.syncStatus.fileBytesTotal} bytes"), //TODO: dont' divide by 0
+            Text("Progress: ${widget.syncStatus.fileBytesReceived}/${widget.syncStatus.fileBytesTotal} bytes"),
             SizedBox(width: 200, height: 20, child:
               LinearProgressIndicator( value: widget.syncStatus.fileBytesReceived / widget.syncStatus.fileBytesTotal)),
 
