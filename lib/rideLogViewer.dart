@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -14,7 +15,7 @@ import 'package:freesk8_mobile/userSettings.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 
-import 'package:share/share.dart';
+import 'package:esys_flutter_share/esys_flutter_share.dart';
 
 import 'dart:math' show cos, sqrt, asin;
 
@@ -410,7 +411,15 @@ class RideLogViewerState extends State<RideLogViewer> {
                     RaisedButton(
                         child: Text("Share Log"),
                         onPressed: () async {
-                          Share.share(thisRideLog, subject: 'FreeSK8 Ride Log $pageTitle');
+                          String fileSummary = 'Robogotchi gotchi!';
+                          fileSummary += "\nTop Speed: $maxSpeed";
+                          fileSummary += "\nAvg Speed: $avgSpeed";
+                          fileSummary += "\nDistance: $distance";
+                          fileSummary += "\nBattery Amps: $_maxAmpsBattery";
+                          fileSummary += "\nMotor Amps: $_maxAmpsMotor";
+                          fileSummary += "\nDuration: ${duration.toString().substring(0,duration.toString().lastIndexOf("."))}";
+                          fileSummary += "\nFormat: DateTime, Voltage, Motor Temp, Mosfet Temp, DutyCycle, Motor Current, Battery Current, eRPM, eDistance, ESC ID";
+                          await Share.file('FreeSK8Log', filename, utf8.encode(thisRideLog), 'text/csv', text: fileSummary);
                         }),
                   ],),
 
