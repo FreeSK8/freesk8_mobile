@@ -1,4 +1,4 @@
-package com.example.freesk8_mobile
+package com.derelictrobot.freesk8_mobile
 
 import androidx.annotation.NonNull;
 import io.flutter.embedding.android.FlutterActivity
