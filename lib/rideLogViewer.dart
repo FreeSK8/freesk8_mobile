@@ -351,7 +351,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                 ],
               ),
 
-              SizedBox(height: 20,),
+              SizedBox(height: 12,),
               Row(mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   Column(children: <Widget>[
@@ -379,7 +379,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                 ],
               ),
 
-              SizedBox(height: 15,),
+              SizedBox(height: 12,),
               Row(mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   faultCodeCount > 0 ?

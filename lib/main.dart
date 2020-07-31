@@ -30,11 +30,9 @@ import 'package:flutter_blue/flutter_blue.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:background_locator/background_locator.dart';
-import 'package:background_locator/location_dto.dart';
-import 'package:background_locator/location_settings.dart';
+import 'package:latlong/latlong.dart';
 
-import 'package:location_permissions/location_permissions.dart';
+import 'package:geolocator/geolocator.dart';
 
 import 'package:wakelock/wakelock.dart';
 
@@ -92,13 +90,14 @@ class MyHome extends StatefulWidget {
 
 // SingleTickerProviderStateMixin is used for animation
 class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
-  /* Get location for the user at all times */
-  static const String _isolateName = "LocatorIsolate";
-  ReceivePort locatorReceivePort = ReceivePort();
-  //Ok it works!
-  LocationDto lastLocation;
+
+  /* User's current location for map */
+  var geolocator = Geolocator();
+  var locationOptions = LocationOptions(accuracy: LocationAccuracy.high, distanceFilter: 0);
+
+  LatLng lastLocation;
   DateTime lastTimeLocation;
-  List<LocationDto> routeTakenLocations = new List<LocationDto>();
+  List<LatLng> routeTakenLocations = new List<LatLng>();
   
   /* Testing preferences, for fun, keep a counter of how many times the app was opened */
   int counter = -1;
@@ -133,6 +132,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static bool isConnectedDeviceKnown = false;
   static List<BluetoothService> _services;
   static StreamSubscription<BluetoothDeviceState> _connectedDeviceStreamSubscription;
+  StreamSubscription<Position> positionStream;
 
   @override
   void initState() {
@@ -178,28 +178,25 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     });
     widget.flutterBlue.setLogLevel(LogLevel.warning);
 
-    // Setup Location listener
-    if (IsolateNameServer.lookupPortByName(_isolateName) != null) {
-      IsolateNameServer.removePortNameMapping(_isolateName);
-    }
-    IsolateNameServer.registerPortWithName(locatorReceivePort.sendPort, _isolateName);
-    // Handler for when location data is received from callback
-    locatorReceivePort.listen(
-          (dynamic data) async {
-            await updateLocationForRoute(data);
-      },
-    );
-
-    // Spin up the background location service
-    initBackgroundLocator();
-
     FileManager.clearLogFile();
+
+    checkLocationPermission();
+    positionStream = geolocator.getPositionStream(locationOptions).listen(
+            (Position position) {
+          if(position != null) {
+            updateLocationForRoute(new LatLng(position.latitude, position.longitude));
+          }
+        });
 
     //TODO: watching AppLifecycleState but not doing anything
     WidgetsBinding.instance.addObserver(AutoStopHandler());
   }
 
-  Future<void> updateLocationForRoute(LocationDto data) async {
+  Future<void> checkLocationPermission() async {
+    GeolocationStatus geolocationStatus  = await Geolocator().checkGeolocationPermissionStatus();
+  }
+
+  Future<void> updateLocationForRoute(LatLng data) async {
 
     lastLocation = data;
     lastTimeLocation = DateTime.now();
@@ -230,70 +227,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     }
   }
 
-  Future<void> initBackgroundLocator() async {
-    await BackgroundLocator.initialize();
-    print("background locator initialized");
-
-    await _checkLocationPermission();
-    print("background locator registered for location updates");
-
-    // Check if background locator is started / actually started?
-    bool _isRunning = await BackgroundLocator.isRegisterLocationUpdate();
-    while(_isRunning == false)
-    {
-      await _checkLocationPermission();
-      _isRunning = await BackgroundLocator.isRegisterLocationUpdate();
-      print('BackgroundLocator is Registered for Location Updates? ${_isRunning.toString()}');
-    }
-  }
-  static void locationDataCallback(LocationDto locationDto) async {
-    final SendPort send = IsolateNameServer.lookupPortByName(_isolateName);
-    send?.send(locationDto);
-  }
   static double dp(double val, int places) {
     double mod = pow(10.0, places);
     return ((val * mod).round().toDouble() / mod);
-  }
-  static String formatLogPositionEntry(LocationDto locationDto) { //lat, lon, accuracy, altitude, speed, speedAccuracy
-    return "position,${dp(locationDto.latitude, 5)},${dp(locationDto.longitude, 5)},${locationDto.accuracy.toInt()},${dp(locationDto.altitude,1)},${dp(locationDto.speed,1)},${locationDto.speedAccuracy.toInt()},";
-  }
-  static void notificationCallback() {
-    print('notificationCallback: Someone clicked on the notification');
-  }
-  void startLocationService(){
-    print("starting location service");
-    BackgroundLocator.registerLocationUpdate(
-      locationDataCallback,
-      //optional
-      androidNotificationCallback: notificationCallback,
-      settings: LocationSettings(
-          distanceFilter: 0,
-          wakeLockTime: 1,
-          interval: 1,
-          notificationTitle: "FreeSK8 Location Tracking",
-      ),
-    ); //This does not return
-  }
-  Future<void> _checkLocationPermission() async {
-    final PermissionStatus access = await LocationPermissions().checkPermissionStatus();
-    print("checking location permission status: received: $access");
-    switch (access) {
-      case PermissionStatus.unknown:
-      case PermissionStatus.denied:
-      case PermissionStatus.restricted:
-        final permission = await LocationPermissions().requestPermissions(
-          permissionLevel: LocationPermissionLevel.locationAlways,
-        );
-        if (permission == PermissionStatus.granted) {
-          startLocationService();
-        } else {
-          // show error
-        }
-        break;
-      case PermissionStatus.granted:
-        startLocationService();
-        break;
-    }
   }
 
 
@@ -308,10 +244,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     // Dispose of the Tab Controller
     controller.dispose();
 
-    BackgroundLocator.unRegisterLocationUpdate();
-    IsolateNameServer.removePortNameMapping(_isolateName);
-
-    locatorReceivePort?.close();
+    positionStream?.cancel();
 
     super.dispose();
   }

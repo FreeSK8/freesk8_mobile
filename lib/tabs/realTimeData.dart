@@ -7,7 +7,7 @@ import 'package:freesk8_mobile/userSettings.dart';
 import 'package:flutter_thermometer/label.dart';
 import 'package:flutter_thermometer/scale.dart';
 
-import 'flutterMap.dart'; import 'package:background_locator/location_dto.dart';
+import 'flutterMap.dart'; import 'package:latlong/latlong.dart';
 
 import 'package:flutter_gauge/flutter_gauge.dart';
 import 'package:flutter_thermometer/thermometer_widget.dart';
@@ -18,7 +18,7 @@ class RealTimeData extends StatefulWidget {
 
   RealTimeData({this.routeTakenLocations, this.telemetryPacket, @required this.currentSettings, this.startStopTelemetryFunc});
 
-  final List<LocationDto> routeTakenLocations;
+  final List<LatLng> routeTakenLocations;
   final UserSettings currentSettings;
   final ESCTelemetry telemetryPacket;
   final ValueChanged<bool> startStopTelemetryFunc;

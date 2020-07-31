@@ -2,14 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong/latlong.dart';
 
-import 'package:background_locator/location_dto.dart';
-
-
 import 'package:rxdart/rxdart.dart';
 
 class FlutterMapWidget extends StatefulWidget {
   FlutterMapWidget({this.routeTakenLocations});
-  final List<LocationDto> routeTakenLocations;
+  final List<LatLng> routeTakenLocations;
   FlutterMapWidgetState createState() => new FlutterMapWidgetState();
 
   static const String routeName = "/fluttermap";
@@ -44,16 +41,16 @@ class FlutterMapWidgetState extends State<FlutterMapWidget> {
 
     //Create polyline
 
-    List<LatLng> routePoints = new List<LatLng>();
-    for (int i=0; i<widget.routeTakenLocations.length; ++i) {
-      routePoints.add(new LatLng(widget.routeTakenLocations[i].latitude, widget.routeTakenLocations[i].longitude));
-    }
-    Polyline routePolyLine = new Polyline(points: routePoints, strokeWidth: 3, color: Colors.red);
+    //List<LatLng> routePoints = new List<LatLng>();
+    //TODO: for (int i=0; i<widget.routeTakenLocations.length; ++i) {
+    //TODO:   routePoints.add(new LatLng(widget.routeTakenLocations[i].latitude, widget.routeTakenLocations[i].longitude));
+    //TODO: }
+    Polyline routePolyLine = new Polyline(points: widget.routeTakenLocations, strokeWidth: 3, color: Colors.red);
 
     Marker startPosition = Marker(
       width: 160.0,
       height: 160.0,
-      point: new LatLng(widget.routeTakenLocations.first.latitude, widget.routeTakenLocations.first.longitude),
+      point: widget.routeTakenLocations.first,
       builder: (ctx) =>
       new Container(
         margin: EdgeInsets.fromLTRB(0, 0, 0, 80),
@@ -63,7 +60,7 @@ class FlutterMapWidgetState extends State<FlutterMapWidget> {
 
     return FlutterMap(
       options: new MapOptions(
-        center: new LatLng(widget.routeTakenLocations.last.latitude, widget.routeTakenLocations.last.longitude),
+        center: widget.routeTakenLocations.last,
         zoom: 13.0,
       ),
       layers: [
@@ -77,7 +74,7 @@ class FlutterMapWidgetState extends State<FlutterMapWidget> {
             new Marker(
               width: 160.0,
               height: 160.0,
-              point: new LatLng(widget.routeTakenLocations.last.latitude, widget.routeTakenLocations.last.longitude),
+              point: widget.routeTakenLocations.last,
               builder: (ctx) =>
               new Container(
                 margin: EdgeInsets.fromLTRB(0, 0, 0, 80),
