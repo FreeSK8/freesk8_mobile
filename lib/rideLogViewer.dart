@@ -288,7 +288,7 @@ class RideLogViewerState extends State<RideLogViewer> {
     String distance = "N/A";
     Duration duration = Duration(seconds:0);
     if(escTimeSeriesData.length > 0) {
-      distance = myArguments.userSettings.settings.useImperial ? "${_kmToMile(escTimeSeriesData.last.distance)} miles" : "${escTimeSeriesData.last.distance} km";
+      distance = myArguments.userSettings.settings.useImperial ? "${escTimeSeriesData.last.distance} miles" : "${escTimeSeriesData.last.distance} km";
       duration = escTimeSeriesData.last.time.difference(escTimeSeriesData.first.time);
 
       _avgSpeed /= escTimeSeriesData.length;
