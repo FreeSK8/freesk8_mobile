@@ -72,28 +72,35 @@ class DieBieMSHelper {
   
   DieBieMSTelemetry processTelemetry(Uint8List payload) {
     int index = 1;
+    DieBieMSTelemetry parsedTelemetry = new DieBieMSTelemetry();
+    parsedTelemetry.packVoltage = buffer_get_float32(payload, index, 1e3); index += 4;
+    parsedTelemetry.packCurrent = buffer_get_float32(payload, index, 1e3); index += 4;
+    parsedTelemetry.soc = payload[index++];
+    parsedTelemetry.cellVoltageHigh = buffer_get_float32(payload, index, 1e3); index += 4;
+    parsedTelemetry.cellVoltageAverage = buffer_get_float32(payload, index, 1e3); index += 4;
+    parsedTelemetry.cellVoltageLow = buffer_get_float32(payload, index, 1e3); index += 4;
+    parsedTelemetry.cellVoltageMismatch = buffer_get_float32(payload, index, 1e3); index += 4;
+    parsedTelemetry.loCurrentLoadVoltage = buffer_get_float16(payload, index, 1e2); index += 2;
+    parsedTelemetry.loCurrentLoadCurrent = buffer_get_float16(payload, index, 1e2); index += 2;
+    parsedTelemetry.hiCurrentLoadVoltage = buffer_get_float16(payload, index, 1e2); index += 2;
+    parsedTelemetry.hiCurrentLoadCurrent = buffer_get_float16(payload, index, 1e2); index += 2;
+    parsedTelemetry.auxVoltage = buffer_get_float16(payload, index, 1e2); index += 2;
+    parsedTelemetry.auxCurrent = buffer_get_float16(payload, index, 1e2); index += 2;
+    parsedTelemetry.tempBatteryHigh = buffer_get_float16(payload, index, 1e2); index += 2;
+    parsedTelemetry.tempBatteryAverage = buffer_get_float16(payload, index, 1e2); index += 2;
+    parsedTelemetry.tempBMSHigh = buffer_get_float16(payload, index, 1e1); index += 2;
+    parsedTelemetry.tempBMSAverage = buffer_get_float16(payload, index, 1e1); index += 2;
+    parsedTelemetry.operationalState = payload[index++];
+    parsedTelemetry.chargeBalanceActive = payload[index++];
+    parsedTelemetry.faultState = payload[index++];
+    parsedTelemetry.canID = payload[index];
 
-    latestTelemetry.packVoltage = buffer_get_float32(payload, index, 1e3); index += 4;
-    latestTelemetry.packCurrent = buffer_get_float32(payload, index, 1e3); index += 4;
-    latestTelemetry.soc = payload[index++];
-    latestTelemetry.cellVoltageHigh = buffer_get_float32(payload, index, 1e3); index += 4;
-    latestTelemetry.cellVoltageAverage = buffer_get_float32(payload, index, 1e3); index += 4;
-    latestTelemetry.cellVoltageLow = buffer_get_float32(payload, index, 1e3); index += 4;
-    latestTelemetry.cellVoltageMismatch = buffer_get_float32(payload, index, 1e3); index += 4;
-    latestTelemetry.loCurrentLoadVoltage = buffer_get_float16(payload, index, 1e2); index += 2;
-    latestTelemetry.loCurrentLoadCurrent = buffer_get_float16(payload, index, 1e2); index += 2;
-    latestTelemetry.hiCurrentLoadVoltage = buffer_get_float16(payload, index, 1e2); index += 2;
-    latestTelemetry.hiCurrentLoadCurrent = buffer_get_float16(payload, index, 1e2); index += 2;
-    latestTelemetry.auxVoltage = buffer_get_float16(payload, index, 1e2); index += 2;
-    latestTelemetry.auxCurrent = buffer_get_float16(payload, index, 1e2); index += 2;
-    latestTelemetry.tempBatteryHigh = buffer_get_float16(payload, index, 1e2); index += 2;
-    latestTelemetry.tempBatteryAverage = buffer_get_float16(payload, index, 1e2); index += 2;
-    latestTelemetry.tempBMSHigh = buffer_get_float16(payload, index, 1e2); index += 2;
-    latestTelemetry.tempBMSAverage = buffer_get_float16(payload, index, 1e2); index += 2;
-    latestTelemetry.operationalState = payload[index++];
-    latestTelemetry.chargeBalanceActive = payload[index++];
-    latestTelemetry.faultState = payload[index++];
-    latestTelemetry.canID = payload[index];
+    //TODO: ask user for canID of DieBieMS
+    if( parsedTelemetry.canID == 10 ) {
+      latestTelemetry = parsedTelemetry;
+    } else {
+      print("TODO: this is an ESC packet");
+    }
 
     return latestTelemetry;
   }
