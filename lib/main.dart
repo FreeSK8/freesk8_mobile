@@ -8,6 +8,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:freesk8_mobile/dieBieMSHelper.dart';
 
 // UI Pages
 import 'package:freesk8_mobile/tabs/connectionStatus.dart';
@@ -37,6 +38,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:wakelock/wakelock.dart';
 
 import 'databaseAssistant.dart';
+import 'dieBieMSViewer.dart';
 
 ///
 /// FreeSK8 Mobile Known issues
@@ -62,6 +64,7 @@ void main() {
       routes: <String, WidgetBuilder>{
         RideLogViewer.routeName: (BuildContext context) => RideLogViewer(),
         ConfigureESC.routeName: (BuildContext context) => ConfigureESC(),
+        DieBieMSViewer.routeName: (BuildContext context) => DieBieMSViewer()
       },
       theme: ThemeData(
         brightness: Brightness.light,
@@ -121,6 +124,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
   BLEHelper bleHelper = new BLEHelper();
   ESCHelper escHelper = new ESCHelper();
+  DieBieMSHelper dieBieMSHelper = new DieBieMSHelper();
 
   static Uint8List escMotorConfiguration;
   static Uint8List escMotorConfigurationDefaults;
@@ -534,10 +538,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static BluetoothCharacteristic theTXLoggerCharacteristic;
   static BluetoothCharacteristic theRXLoggerCharacteristic;
   static StreamSubscription<List<int>> escRXDataSubscription;
+  static StreamSubscription<List<int>> dieBieMSRXDataSubscription;
   static StreamSubscription<List<int>> loggerRXDataSubscription;
 
   static ESCFirmware firmwarePacket = new ESCFirmware();
   static ESCTelemetry telemetryPacket = new ESCTelemetry();
+  static DieBieMSTelemetry dieBieMSTelemetry = new DieBieMSTelemetry();
+  static bool _helloDieBieMS = false;
   static Timer telemetryTimer;
   static int bleTXErrorCount = 0;
 
@@ -899,7 +906,20 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           }
 
         }
+        else if ( packetID == DieBieMSHelper.COMM_GET_BMS_CELLS ) {
+          dieBieMSTelemetry = dieBieMSHelper.processCells(bleHelper.payload);
+          //TODO: DieBieMSViewer as route does not rebuild with setState()
+          bleHelper.resetPacket(); //Prepare for next packet
+        }
         else if ( packetID == COMM_PACKET_ID.COMM_GET_VALUES.index ) {
+          if(_helloDieBieMS) {
+            //Parse DieBieMS GET_VALUES packet - A shame they share the same ID as ESC values
+            dieBieMSTelemetry = dieBieMSHelper.processTelemetry(bleHelper.payload);
+            bleHelper.resetPacket(); //Prepare for next packet
+            return;
+          }
+
+
           ///Telemetry packet
           final dtNow = DateTime.now();
           telemetryPacket = escHelper.processTelemetry(bleHelper.payload);
@@ -1098,7 +1118,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     //3,4 are CRC computed below
     packetScanCAN[5] = 0x03; //End packet
     int checksum = bleHelper.crc16(packetScanCAN, 2, 1);
-    //print("TEST Checksum ${checksum.toRadixString(16)}");
     packetScanCAN[3] = (checksum >> 8) & 0xff;
     packetScanCAN[4] = checksum & 0xff;
     //print("TEST packetScanCAN $packetScanCAN");
@@ -1252,7 +1271,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     var aboutChild = AboutListTile(
       child: Text("About"),
       applicationName: "FreeSK8 Mobile",
-      applicationVersion: "v0.1.1",
+      applicationVersion: "v0.1.2",
       applicationIcon: Icon(Icons.info, size: 40,),
       icon: Icon(Icons.info),
       aboutBoxChildren: <Widget>[
@@ -1369,6 +1388,20 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         },
       ),
 
+      ListTile(
+        leading: Icon(Icons.battery_unknown),
+        title: Text("DieBieMS Status"),
+        onTap: () async {
+          _helloDieBieMS = true;
+          startStopTelemetryTimer(false);
+          await Navigator.of(context).pushNamed(DieBieMSViewer.routeName,
+            arguments: DieBieMSViewerArguments(the_tx_characteristic, dieBieMSTelemetry),
+          );
+          if (controller.index != 1) startStopTelemetryTimer(true); //Stop the telemetry timer
+          _helloDieBieMS = false;
+          print("Finished with DieBieMS");
+        },
+      )
     ];
 
     return Drawer(
@@ -1381,13 +1414,46 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     if ( _connectedDevice != null || !this.mounted){
 
       //Request telemetry packet; On error increase error counter
-      await the_tx_characteristic.write(
-          [0x02, 0x01, 0x04, 0x40, 0x84, 0x03], withoutResponse: true).then((value) {
-      }).
-      catchError((e) {
-        ++bleTXErrorCount;
-        print("Second::_requestTelemetry() failed ($bleTXErrorCount) times. Exception: $e");
-      });
+      if(_helloDieBieMS) {
+        /// Request DieBieMS Telemetry
+        var byteData = new ByteData(10);
+        const int packetLength = 3;
+        byteData.setUint8(0, 0x02); //Start of packet
+        byteData.setUint8(1, packetLength);
+        byteData.setUint8(2, COMM_PACKET_ID.COMM_FORWARD_CAN.index);
+        byteData.setUint8(3, 10); //CAN ID
+        byteData.setUint8(4, COMM_PACKET_ID.COMM_GET_VALUES.index);
+        int checksum = bleHelper.crc16(byteData.buffer.asUint8List(), 2, packetLength);
+        byteData.setUint16(5, checksum);
+        byteData.setUint8(7, 0x03); //End of packet
+        await the_tx_characteristic.write(byteData.buffer.asUint8List(), withoutResponse: true).then((value) {
+        }).
+        catchError((e) {
+          ++bleTXErrorCount;
+          print("_requestTelemetry() failed ($bleTXErrorCount) times. Exception: $e");
+        });
+
+        /// Request cell data from DieBieMS
+        byteData.setUint8(0, 0x02); //Start of packet
+        byteData.setUint8(1, packetLength);
+        byteData.setUint8(2, COMM_PACKET_ID.COMM_FORWARD_CAN.index);
+        byteData.setUint8(3, 10); //CAN ID
+        byteData.setUint8(4, DieBieMSHelper.COMM_GET_BMS_CELLS);
+        checksum = bleHelper.crc16(byteData.buffer.asUint8List(), 2, packetLength);
+        byteData.setUint16(5, checksum);
+        byteData.setUint8(7, 0x03); //End of packet
+
+        await the_tx_characteristic.write(byteData.buffer.asUint8List(), withoutResponse: true);
+      } else {
+        /// Request ESC Telemetry
+        await the_tx_characteristic.write(
+            [0x02, 0x01, 0x04, 0x40, 0x84, 0x03], withoutResponse: true).then((value) {
+        }).
+        catchError((e) {
+          ++bleTXErrorCount;
+          print("_requestTelemetry() failed ($bleTXErrorCount) times. Exception: $e");
+        });
+      }
     } else {
       // We are requesting telemetry but are not connected =/
       print("Request telemetry canceled because we are not connected");
@@ -1438,10 +1504,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           // want to erase files on the receiver
           print("stopping sync without remove");
           syncInProgress = false;
-          //TODO: Testing setState here to reload file list after sync is finished
-          setState(() {
-            //TESTING
-          });
+          //TODO: NOTE: setState here does not reload file list after sync is finished
         }
       }
       else {
