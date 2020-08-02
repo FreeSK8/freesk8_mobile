@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_blue/flutter_blue.dart';
@@ -21,21 +23,39 @@ class DieBieMSViewer extends StatefulWidget {
 }
 
 class DieBieMSViewerState extends State<DieBieMSViewer> {
-  DieBieMSViewerArguments myArguments;
+  static DieBieMSViewerArguments myArguments;
+  static DieBieMSTelemetry testTelemetry;
+  static Timer refreshTimer;
 
   @override
   void initState() {
+    testTelemetry = new DieBieMSTelemetry();
     super.initState();
   }
 
   @override
   void dispose() {
+    refreshTimer?.cancel();
     super.dispose();
   }
 
+  void _refreshTimer() {
+    if(this.mounted) {
+      setState(() {
+
+      });
+    } else {
+      refreshTimer?.cancel();
+      refreshTimer = null;
+    }
+  }
   @override
   Widget build(BuildContext context) {
     print("Build: dieBieMSViewer");
+
+    const duration = const Duration(milliseconds:100);
+    refreshTimer = new Timer.periodic(duration, (Timer t) => _refreshTimer());
+
     //Receive arguments building this widget
     myArguments = ModalRoute.of(context).settings.arguments;
     if(myArguments == null){
@@ -50,31 +70,36 @@ class DieBieMSViewerState extends State<DieBieMSViewer> {
               size: 35.0,
               color: Colors.blue,
             ),
-            Text("DieBieMS..fancy"),
+            Text("DieBieMS Status"),
           ],),
         ),
         body:
         Center(child:
           Column(children: <Widget>[
-            Text("Pack Voltage: ${myArguments.telemetry.packVoltage}"),
-            Text("Pack Current: ${myArguments.telemetry.packCurrent}"),
-            Text("Cell Voltage High: ${myArguments.telemetry.cellVoltageHigh}"),
-            Text("Cell Voltage Average: ${myArguments.telemetry.cellVoltageAverage}"),
-            Text("Cell Voltage Low: ${myArguments.telemetry.cellVoltageLow}"),
-            Text("Cell Voltage Mismatch: ${myArguments.telemetry.cellVoltageMismatch}"),
-            Text("Battery Temp High: ${myArguments.telemetry.tempBatteryHigh}"),
-            Text("Battery Temp Average: ${myArguments.telemetry.tempBatteryAverage}"),
-            Text("BMS Temp High: ${myArguments.telemetry.tempBMSHigh}"),
-            Text("BMS Temp Average: ${myArguments.telemetry.tempBMSAverage}"),
+            Text("Pack Voltage: ${testTelemetry.packVoltage}"),
+            Text("Pack Current: ${testTelemetry.packCurrent}"),
+            Text("Cell Voltage High: ${testTelemetry.cellVoltageHigh}"),
+            Text("Cell Voltage Average: ${testTelemetry.cellVoltageAverage}"),
+            Text("Cell Voltage Low: ${testTelemetry.cellVoltageLow}"),
+            Text("Cell Voltage Mismatch: ${testTelemetry.cellVoltageMismatch}"),
+            Text("Battery Temp High: ${testTelemetry.tempBatteryHigh}"),
+            Text("Battery Temp Average: ${testTelemetry.tempBatteryAverage}"),
+            Text("BMS Temp High: ${testTelemetry.tempBMSHigh}"),
+            Text("BMS Temp Average: ${testTelemetry.tempBMSAverage}"),
 
             Expanded(child: GridView.builder(
-              itemCount: myArguments.telemetry.noOfCells,
+              itemCount: testTelemetry.noOfCells,
               gridDelegate: new SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, childAspectRatio: 3),
               itemBuilder: (BuildContext context, int index) {
                 return new Card(
                   child: new GridTile(
                     footer: new Text("Cell $index"),
-                    child: new Text(myArguments.telemetry.cellVoltage[index].toString()),
+                    child: new Stack(children: <Widget>[
+
+                      new SizedBox(height: 42,child: new LinearProgressIndicator( value: testTelemetry.cellVoltage[index] / 4.2),),
+                      new Text(testTelemetry.cellVoltage[index].toString(), style: TextStyle(color: Colors.black)),
+                    ],)
+
                   ),
                 );
               },

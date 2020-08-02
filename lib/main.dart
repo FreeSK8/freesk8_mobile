@@ -908,12 +908,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         }
         else if ( packetID == DieBieMSHelper.COMM_GET_BMS_CELLS ) {
           dieBieMSTelemetry = dieBieMSHelper.processCells(bleHelper.payload);
-          //TODO: DieBieMSViewer as route does not rebuild with setState()
+          DieBieMSViewerState.testTelemetry = dieBieMSTelemetry;
           bleHelper.resetPacket(); //Prepare for next packet
         }
         else if ( packetID == COMM_PACKET_ID.COMM_GET_VALUES.index ) {
           if(_helloDieBieMS) {
-            //Parse DieBieMS GET_VALUES packet - A shame they share the same ID as ESC values
+            //TODO: Parse DieBieMS GET_VALUES packet - A shame they share the same ID as ESC values
             dieBieMSTelemetry = dieBieMSHelper.processTelemetry(bleHelper.payload);
             bleHelper.resetPacket(); //Prepare for next packet
             return;
@@ -1433,6 +1433,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           print("_requestTelemetry() failed ($bleTXErrorCount) times. Exception: $e");
         });
 
+        //TODO: This should be delayed because the characteristic might not be ready to write...
         /// Request cell data from DieBieMS
         byteData.setUint8(0, 0x02); //Start of packet
         byteData.setUint8(1, packetLength);
