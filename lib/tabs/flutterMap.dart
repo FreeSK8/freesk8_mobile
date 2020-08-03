@@ -40,11 +40,6 @@ class FlutterMapWidgetState extends State<FlutterMapWidget> {
     eventObservable.add(widget.routeTakenLocations);
 
     //Create polyline
-
-    //List<LatLng> routePoints = new List<LatLng>();
-    //TODO: for (int i=0; i<widget.routeTakenLocations.length; ++i) {
-    //TODO:   routePoints.add(new LatLng(widget.routeTakenLocations[i].latitude, widget.routeTakenLocations[i].longitude));
-    //TODO: }
     Polyline routePolyLine = new Polyline(points: widget.routeTakenLocations, strokeWidth: 3, color: Colors.red);
 
     Marker startPosition = Marker(

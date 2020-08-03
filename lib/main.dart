@@ -38,7 +38,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:wakelock/wakelock.dart';
 
 import 'databaseAssistant.dart';
-import 'dieBieMSViewer.dart';
 
 ///
 /// FreeSK8 Mobile Known issues
@@ -64,7 +63,6 @@ void main() {
       routes: <String, WidgetBuilder>{
         RideLogViewer.routeName: (BuildContext context) => RideLogViewer(),
         ConfigureESC.routeName: (BuildContext context) => ConfigureESC(),
-        DieBieMSViewer.routeName: (BuildContext context) => DieBieMSViewer()
       },
       theme: ThemeData(
         brightness: Brightness.light,
@@ -907,8 +905,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
         }
         else if ( packetID == DieBieMSHelper.COMM_GET_BMS_CELLS ) {
-          dieBieMSTelemetry = dieBieMSHelper.processCells(bleHelper.payload);
-          DieBieMSViewerState.testTelemetry = dieBieMSTelemetry;
+          setState(() {
+            dieBieMSTelemetry = dieBieMSHelper.processCells(bleHelper.payload);
+          });
           bleHelper.resetPacket(); //Prepare for next packet
         }
         else if ( packetID == COMM_PACKET_ID.COMM_GET_VALUES.index ) {
@@ -1390,16 +1389,20 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       ListTile(
         leading: Icon(Icons.battery_unknown),
-        title: Text("DieBieMS Status"),
+        title: Text(_helloDieBieMS ? "Hide DieBieMS" : "Show DieBieMS"),
         onTap: () async {
-          _helloDieBieMS = true;
-          startStopTelemetryTimer(false);
-          await Navigator.of(context).pushNamed(DieBieMSViewer.routeName,
-            arguments: DieBieMSViewerArguments(the_tx_characteristic, dieBieMSTelemetry),
-          );
-          if (controller.index != 1) startStopTelemetryTimer(true); //Stop the telemetry timer
-          _helloDieBieMS = false;
-          print("Finished with DieBieMS");
+          if(_helloDieBieMS) {
+            setState(() {
+              _helloDieBieMS = false;
+            });
+            print("DieBieMS RealTime Disabled");
+          } else {
+            setState(() {
+              _helloDieBieMS = true;
+              controller.index = 1;
+            });
+            print("DieBieMS RealTime Enabled");
+          }
         },
       )
     ];
@@ -1459,7 +1462,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       // We are requesting telemetry but are not connected =/
       print("Request telemetry canceled because we are not connected");
       setState(() {
-        telemetryTimer.cancel();
+        telemetryTimer?.cancel();
         telemetryTimer = null;
       });
     }
@@ -1474,7 +1477,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     } else {
       print("Cancel timer");
       if (telemetryTimer != null) {
-        telemetryTimer.cancel();
+        telemetryTimer?.cancel();
         telemetryTimer = null;
       }
     }
@@ -1529,7 +1532,14 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         // Set the TabBar view as the body of the Scaffold
         body: getTabBarView( <Widget>[
           ConnectionStatus(active:_scanActive, bleDevicesGrid: _buildGridViewOfDevices(), currentDevice: _connectedDevice, currentFirmware: firmwarePacket, userSettings: widget.myUserSettings, onChanged: _handleBLEScanState),
-          RealTimeData(routeTakenLocations: routeTakenLocations, telemetryPacket: telemetryPacket, currentSettings: widget.myUserSettings, startStopTelemetryFunc: startStopTelemetryTimer,),
+          RealTimeData(
+            routeTakenLocations: routeTakenLocations,
+            telemetryPacket: telemetryPacket,
+            currentSettings: widget.myUserSettings,
+            startStopTelemetryFunc: startStopTelemetryTimer,
+            showDieBieMS: _helloDieBieMS,
+            dieBieMSTelemetry: dieBieMSTelemetry,
+          ),
           ESK8Configuration(myUserSettings: widget.myUserSettings, currentDevice: _connectedDevice),
           RideLogging(
             myUserSettings: widget.myUserSettings,

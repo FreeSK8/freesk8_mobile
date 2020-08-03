@@ -1,11 +1,13 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 
+import 'package:freesk8_mobile/dieBieMSHelper.dart';
 import 'package:freesk8_mobile/escHelper.dart';
 import 'package:freesk8_mobile/userSettings.dart';
 
 import 'package:flutter_thermometer/label.dart';
 import 'package:flutter_thermometer/scale.dart';
+
 
 import 'flutterMap.dart'; import 'package:latlong/latlong.dart';
 
@@ -14,14 +16,41 @@ import 'package:flutter_thermometer/thermometer_widget.dart';
 
 import 'package:oscilloscope/oscilloscope.dart';
 
+/**
+ * Symmetric sigmoidal approximation
+ * https://www.desmos.com/calculator/7m9lu26vpy
+ *
+ * c - c / (1 + k*x/v)^3
+ */
+double sigmoidal(double voltage, double minVoltage, double maxVoltage) {
+  // slow
+  // int result = 110 - (110 / (1 + pow(1.468 * (voltage - minVoltage)/(maxVoltage - minVoltage), 6)));
+
+  // steep
+  // int result = 102 - (102 / (1 + pow(1.621 * (voltage - minVoltage)/(maxVoltage - minVoltage), 8.1)));
+
+  // normal
+  double result = 105 - (105 / (1 + pow(1.724 * (voltage - minVoltage)/(maxVoltage - minVoltage), 5.5)));
+  return result >= 100 ? 1.0 : result / 100;
+}
+
 class RealTimeData extends StatefulWidget {
 
-  RealTimeData({this.routeTakenLocations, this.telemetryPacket, @required this.currentSettings, this.startStopTelemetryFunc});
+  RealTimeData(
+      { this.routeTakenLocations,
+        this.telemetryPacket,
+        @required this.currentSettings,
+        this.startStopTelemetryFunc,
+        this.showDieBieMS,
+        this.dieBieMSTelemetry
+      });
 
   final List<LatLng> routeTakenLocations;
   final UserSettings currentSettings;
   final ESCTelemetry telemetryPacket;
   final ValueChanged<bool> startStopTelemetryFunc;
+  final bool showDieBieMS;
+  final DieBieMSTelemetry dieBieMSTelemetry;
 
   RealTimeDataState createState() => new RealTimeDataState();
 
@@ -103,6 +132,40 @@ class RealTimeDataState extends State<RealTimeData> {
   @override
   Widget build(BuildContext context) {
     print("Build: RealTimeData");
+    if(widget.showDieBieMS) {
+      return Center(child:
+        Column(children: <Widget>[
+          Text("Pack Voltage: ${widget.dieBieMSTelemetry.packVoltage}"),
+          Text("Pack Current: ${widget.dieBieMSTelemetry.packCurrent}"),
+          Text("Cell Voltage High: ${widget.dieBieMSTelemetry.cellVoltageHigh}"),
+          Text("Cell Voltage Average: ${widget.dieBieMSTelemetry.cellVoltageAverage}"),
+          Text("Cell Voltage Low: ${widget.dieBieMSTelemetry.cellVoltageLow}"),
+          Text("Cell Voltage Mismatch: ${widget.dieBieMSTelemetry.cellVoltageMismatch}"),
+          Text("Battery Temp High: ${widget.dieBieMSTelemetry.tempBatteryHigh}"),
+          Text("Battery Temp Average: ${widget.dieBieMSTelemetry.tempBatteryAverage}"),
+          Text("BMS Temp High: ${widget.dieBieMSTelemetry.tempBMSHigh}"),
+          Text("BMS Temp Average: ${widget.dieBieMSTelemetry.tempBMSAverage}"),
+
+          Expanded(child: GridView.builder(
+            itemCount: widget.dieBieMSTelemetry.noOfCells,
+            gridDelegate: new SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, childAspectRatio: 3),
+            itemBuilder: (BuildContext context, int index) {
+              return new Card(
+                child: new GridTile(
+                    footer: new Text("Cell $index"),
+                    child: new Stack(children: <Widget>[
+                      //TODO: Scale percent remaining by configured min/max voltage and fit to battery curve
+                      new SizedBox(height: 42,child: new LinearProgressIndicator( value: sigmoidal(widget.dieBieMSTelemetry.cellVoltage[index],3.2,4.2) )),
+                      new Text(widget.dieBieMSTelemetry.cellVoltage[index].toString(), style: TextStyle(color: Colors.black)),
+                    ],)
+
+                ),
+              );
+            },
+          ))
+        ])
+      );
+    }
     doubleItemWidth = MediaQuery.of(context).size.width /2 - 10;
 
     //TODO: testing oscope package
@@ -137,7 +200,8 @@ class RealTimeDataState extends State<RealTimeData> {
     double powerMax = widget.currentSettings.settings.batterySeriesCount * widget.currentSettings.settings.batteryCellMaxVoltage;
     double powerMinimum = widget.currentSettings.settings.batterySeriesCount * widget.currentSettings.settings.batteryCellMinVoltage;
     double powerRemaining = widget.telemetryPacket.v_in - powerMinimum;
-    double percentRemaining = (powerRemaining / (powerMax - powerMinimum)) * 100;
+    double percentRemaining = sigmoidal(widget.telemetryPacket.v_in,powerMinimum,powerMax) * 100;
+    if(percentRemaining.isNaN) percentRemaining = 0;
     //print("POWER min $powerMinimum current ${widget.telemetryPacket.v_in} remaining $powerRemaining percentage $percentRemaining");
     if(percentRemaining<0.0) {percentRemaining = 0.0;}
 
@@ -321,37 +385,6 @@ class RealTimeDataState extends State<RealTimeData> {
                 Text(" ${widget.telemetryPacket.fault_code.index}")
               ]),
             ],),
-
-
-            //Row(children: <Widget>[SizedBox(height: 100, width: 100, child:scopeOne,)]),
-            //Center(child:LinearProgressIndicator(value:widget.telemetryPacket.duty_now)),
-            ////Center(child:Text("temp_mos $temperatureMosfet")),
-            ////Center(child:Text("temp_motor $temperatureMotor")),
-            //Center(child:Text("current_motor ${widget.telemetryPacket.current_motor}")),
-            //////Center(child:Text("current_in ${widget.telemetryPacket.current_in}")),
-            //Center(child:Text("foc_id ${widget.telemetryPacket.foc_id}")),
-            //Center(child:Text("foc_iq ${widget.telemetryPacket.foc_iq}")),
-            ////Center(child:Text("duty_now ${widget.telemetryPacket.duty_now}")),
-            //Center(child:Text("erpm ${widget.telemetryPacket.rpm}")),
-            ////Center(child:Text("speed $speed")),
-            ////Center(child:Text("v_in ${widget.telemetryPacket.v_in}")),
-            //////Center(child:Text("amp_hours ${widget.telemetryPacket.amp_hours}")),
-            //////Center(child:Text("amp_hours_charged ${widget.telemetryPacket.amp_hours_charged}")),
-            //////Center(child:Text("watt_hours ${widget.telemetryPacket.watt_hours}")),
-            //////Center(child:Text("watt_hours_charged ${widget.telemetryPacket.watt_hours_charged}")),
-            //Center(child:Text("tachometer ${widget.telemetryPacket.tachometer}")),
-            //Center(child:Text("tachometer_abs ${widget.telemetryPacket.tachometer_abs}")),
-            /////Center(child:Text("distance $distance")),
-            //Center(child:Text("efficiency $efficiency")),
-            //////Center(child:Text("fault_code ${widget.telemetryPacket.fault_code}")),
-            //Center(child:Text("position ${widget.telemetryPacket.position}")),
-            //////Center(child:Text("vesc_id ${widget.telemetryPacket.vesc_id}")),
-            //////Center(child:Text("temp_mos_1 $temperatureMosfet1")),
-            //////Center(child:Text("temp_mos_2 $temperatureMosfet2")),
-            //////Center(child:Text("temp_mos_3 $temperatureMosfet3")),
-            //Center(child:Text("vd ${widget.telemetryPacket.vd}")),
-            //Center(child:Text("vq ${widget.telemetryPacket.vq}")),
-
 
             ///FlutterMapWidget
             Container(
