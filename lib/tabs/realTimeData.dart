@@ -31,7 +31,13 @@ double sigmoidal(double voltage, double minVoltage, double maxVoltage) {
 
   // normal
   double result = 105 - (105 / (1 + pow(1.724 * (voltage - minVoltage)/(maxVoltage - minVoltage), 5.5)));
-  return result >= 100 ? 1.0 : result / 100;
+
+  double normalized = result >= 100 ? 1.0 : result / 100;
+  if (normalized.isNaN) {
+    print("realTimeData::sigmoidalWhat the hey? $voltage, $minVoltage, $maxVoltage");
+    normalized = 0;
+  }
+  return normalized;
 }
 
 class RealTimeData extends StatefulWidget {

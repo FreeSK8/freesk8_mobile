@@ -1231,6 +1231,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     );
   }
 
+  static int seriousBusinessCounter = 0;
   Future<void> _alertLoggerTest() async {
     return showDialog<void>(
       context: context,
@@ -1264,13 +1265,23 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   /// Hamburger Menu... mmmm hamburgers
   Drawer getNavDrawer(BuildContext context) {
     var headerChild = DrawerHeader(
-        child: Image(image: AssetImage('assets/FreeSK8_MobileLogo.png')),
+        child: GestureDetector(
+            onTap: ()
+            {
+              setState(() {
+                ++seriousBusinessCounter;
+                print("Things are getting serious $seriousBusinessCounter");
+              });
+            },
+            child: seriousBusinessCounter > 10 ? Image(image: AssetImage('assets/dri_about_serious.gif')) :
+            Image(image: AssetImage('assets/FreeSK8_MobileLogo.png'))
+        ),
     );
 
     var aboutChild = AboutListTile(
       child: Text("About"),
       applicationName: "FreeSK8 Mobile",
-      applicationVersion: "v0.1.2",
+      applicationVersion: "v0.2.0",
       applicationIcon: Icon(Icons.info, size: 40,),
       icon: Icon(Icons.info),
       aboutBoxChildren: <Widget>[
@@ -1413,11 +1424,17 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   }
 
   // Called by timer on interval to request telemetry packet
+  static int telemetryRateLimiter = 0;
   void _requestTelemetry() async {
     if ( _connectedDevice != null || !this.mounted){
 
       //Request telemetry packet; On error increase error counter
       if(_helloDieBieMS) {
+        if(++telemetryRateLimiter > 4) {
+          telemetryRateLimiter = 0;
+        } else {
+          return;
+        }
         /// Request DieBieMS Telemetry
         var byteData = new ByteData(10);
         const int packetLength = 3;
@@ -1447,7 +1464,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         byteData.setUint16(5, checksum);
         byteData.setUint8(7, 0x03); //End of packet
 
-        await the_tx_characteristic.write(byteData.buffer.asUint8List(), withoutResponse: true);
+        await the_tx_characteristic.write(byteData.buffer.asUint8List(), withoutResponse: true).
+        catchError((e) {
+          print("TODO: You should request the next packet type upon reception of the prior");
+        });
       } else {
         /// Request ESC Telemetry
         await the_tx_characteristic.write(
