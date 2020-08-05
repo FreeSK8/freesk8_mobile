@@ -292,7 +292,7 @@ class RealTimeDataState extends State<RealTimeData> {
     if(percentRemaining<0.0) {percentRemaining = 0.0;}
 
 
-    FlutterGauge _gaugeDutyCycle = FlutterGauge(handSize: 30,index: widget.telemetryPacket.duty_now * 100,fontFamily: "Courier", start:-100, end: 100,number: Number.endAndCenterAndStart,secondsMarker: SecondsMarker.secondsAndMinute,counterStyle: TextStyle(color: Theme.of(context).textTheme.bodyText1.color,fontSize: 25,));
+    FlutterGauge _gaugeDutyCycle = FlutterGauge(activeColor: Colors.black, handSize: 30,index: widget.telemetryPacket.duty_now * 100,fontFamily: "Courier", start:-100, end: 100,number: Number.endAndCenterAndStart,secondsMarker: SecondsMarker.secondsAndMinute,counterStyle: TextStyle(color: Theme.of(context).textTheme.bodyText1.color,fontSize: 25,));
     //TODO: if speed is less than start value of gauge this will error
     FlutterGauge _gaugeSpeed = FlutterGauge(numberInAndOut: NumberInAndOut.inside, index: speedNow, start: -5, end: speedMax.ceil().toInt(),counterStyle: TextStyle(color: Theme.of(context).textTheme.bodyText1.color,fontSize: 25,),widthCircle: 10,secondsMarker: SecondsMarker.none,number: Number.all);
 
