@@ -82,16 +82,26 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     print("Build: ESK8Configuration");
 
     tecBoardAlias.text = widget.myUserSettings.settings.boardAlias;
+    tecBoardAlias.selection = TextSelection.fromPosition(TextPosition(offset: tecBoardAlias.text.length));
     if (widget.myUserSettings.settings.boardAvatarPath != null) _imageBoardAvatar = File(widget.myUserSettings.settings.boardAvatarPath);
     tecBatterySeriesCount.text = widget.myUserSettings.settings.batterySeriesCount.toString();
+    tecBatterySeriesCount.selection = TextSelection.fromPosition(TextPosition(offset: tecBatterySeriesCount.text.length));
     tecBatteryCellmAH.text = widget.myUserSettings.settings.batteryCellmAH.toString();
+    tecBatteryCellmAH.selection = TextSelection.fromPosition(TextPosition(offset: tecBatteryCellmAH.text.length));
     tecBatteryCellMinVoltage.text = widget.myUserSettings.settings.batteryCellMinVoltage.toString();
+    tecBatteryCellMinVoltage.selection = TextSelection.fromPosition(TextPosition(offset: tecBatteryCellMinVoltage.text.length));
     tecBatteryCellMaxVoltage.text = widget.myUserSettings.settings.batteryCellMaxVoltage.toString();
+    tecBatteryCellMaxVoltage.selection = TextSelection.fromPosition(TextPosition(offset: tecBatteryCellMaxVoltage.text.length));
     tecWheelDiameterMillimeters.text = widget.myUserSettings.settings.wheelDiameterMillimeters.toString();
+    tecWheelDiameterMillimeters.selection = TextSelection.fromPosition(TextPosition(offset: tecWheelDiameterMillimeters.text.length));
     tecPulleyMotorToothCount.text = widget.myUserSettings.settings.pulleyMotorToothCount.toString();
+    tecPulleyMotorToothCount.selection = TextSelection.fromPosition(TextPosition(offset: tecPulleyMotorToothCount.text.length));
     tecPulleyWheelToothCount.text = widget.myUserSettings.settings.pulleyWheelToothCount.toString();
+    tecPulleyWheelToothCount.selection = TextSelection.fromPosition(TextPosition(offset: tecPulleyWheelToothCount.text.length));
     tecMotorKV.text = widget.myUserSettings.settings.motorKV.toString();
+    tecMotorKV.selection = TextSelection.fromPosition(TextPosition(offset: tecMotorKV.text.length));
     tecMotorPoles.text = widget.myUserSettings.settings.motorPoles.toString();
+    tecMotorPoles.selection = TextSelection.fromPosition(TextPosition(offset: tecMotorPoles.text.length));
 
     return Container(
       //padding: EdgeInsets.all(5),
