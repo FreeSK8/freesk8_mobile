@@ -19,24 +19,18 @@ import 'package:flutter_thermometer/thermometer_widget.dart';
 import 'package:oscilloscope/oscilloscope.dart';
 
 /**
- * Symmetric sigmoidal approximation
- * https://www.desmos.com/calculator/7m9lu26vpy
+ * Asymmetric sigmoidal approximation
+ * https://www.desmos.com/calculator/oyhpsu8jnw
  *
- * c - c / (1 + k*x/v)^3
+ * c - c / [1 + (k*x/v)^4.5]^3
  */
 double sigmoidal(double voltage, double minVoltage, double maxVoltage) {
-  // slow
-  // int result = 110 - (110 / (1 + pow(1.468 * (voltage - minVoltage)/(maxVoltage - minVoltage), 6)));
 
-  // steep
-  // int result = 102 - (102 / (1 + pow(1.621 * (voltage - minVoltage)/(maxVoltage - minVoltage), 8.1)));
-
-  // normal
-  double result = 105 - (105 / (1 + pow(1.724 * (voltage - minVoltage)/(maxVoltage - minVoltage), 5.5)));
+  double result = 101 - (101 / pow(1 + pow(1.33 * (voltage - minVoltage)/(maxVoltage - minVoltage) ,4.5), 3));
 
   double normalized = result >= 100 ? 1.0 : result / 100;
   if (normalized.isNaN) {
-    print("realTimeData::sigmoidal: What the hey? $voltage, $minVoltage, $maxVoltage");
+    print("realTimeData::sigmoidal: Returning Zero: $voltage V, $minVoltage min, $maxVoltage max");
     normalized = 0;
   }
   return normalized;
