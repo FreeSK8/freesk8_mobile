@@ -257,7 +257,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           icon: Icon(_connectedDevice != null ? Icons.bluetooth_connected : Icons.bluetooth),
         ),
         Tab(
-          icon: Icon(Icons.timeline),
+          icon: Icon(Icons.multiline_chart),
         ),
         Tab(
           icon: Icon(Icons.settings),
@@ -1279,7 +1279,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     var aboutChild = AboutListTile(
       child: Text("About"),
       applicationName: "FreeSK8 Mobile",
-      applicationVersion: "v0.2.1",
+      applicationVersion: "v0.2.2",
       applicationIcon: Icon(Icons.info, size: 40,),
       icon: Icon(Icons.info),
       aboutBoxChildren: <Widget>[

@@ -9,6 +9,7 @@ import 'package:freesk8_mobile/userSettings.dart';
 import 'package:flutter_thermometer/label.dart';
 import 'package:flutter_thermometer/scale.dart';
 import 'package:intl/intl.dart';
+import 'package:sliding_up_panel/sliding_up_panel.dart';
 
 
 import 'flutterMap.dart'; import 'package:latlong/latlong.dart';
@@ -136,114 +137,172 @@ class RealTimeDataState extends State<RealTimeData> {
     print("Build: RealTimeData");
     if(widget.showDieBieMS) {
       var formatTriple = new NumberFormat("##0.000", "en_US");
-      return Center(child:
-        Column(children: <Widget>[
-          Table(children: [
-            TableRow(children: [
-              Text("Pack Voltage: ", textAlign: TextAlign.right,textScaleFactor: 1.25,),
-              Text(" ${widget.dieBieMSTelemetry.packVoltage}", textScaleFactor: 1.25,)
-            ]),
-            TableRow(children: [
-              Text("Pack Current: ", textAlign: TextAlign.right,),
-              Text(" ${widget.dieBieMSTelemetry.packCurrent}")
-            ]),
-            TableRow(children: [
-              Text("Cell Voltage High: ", textAlign: TextAlign.right,),
-              Text(" ${formatTriple.format(widget.dieBieMSTelemetry.cellVoltageHigh)} V")
-            ]),
-            TableRow(children: [
-              Text("Cell Voltage Average: ", textAlign: TextAlign.right,),
-              Text(" ${formatTriple.format(widget.dieBieMSTelemetry.cellVoltageAverage)} V")
-            ]),
-            TableRow(children: [
-              Text("Cell Voltage Low: ", textAlign: TextAlign.right,),
-              Text(" ${formatTriple.format(widget.dieBieMSTelemetry.cellVoltageLow)} V")
-            ]),
-            TableRow(children: [
-              Text("Cell Voltage Mismatch: ", textAlign: TextAlign.right,),
-              Text(" ${formatTriple.format(widget.dieBieMSTelemetry.cellVoltageMismatch)} V")
-            ]),
-            TableRow(children: [
-              Text("Battery Temp High: ", textAlign: TextAlign.right,),
-              Text(" ${widget.dieBieMSTelemetry.tempBatteryHigh} C")
-            ]),
-            TableRow(children: [
-              Text("Battery Temp Average: ", textAlign: TextAlign.right,),
-              Text(" ${widget.dieBieMSTelemetry.tempBatteryAverage} C")
-            ]),
-            TableRow(children: [
-              Text("BMS Temp High: ", textAlign: TextAlign.right,),
-              Text(" ${widget.dieBieMSTelemetry.tempBMSHigh} C")
-            ]),
-            TableRow(children: [
-              Text("BMS Temp Average: ", textAlign: TextAlign.right,),
-              Text(" ${widget.dieBieMSTelemetry.tempBMSAverage} C")
-            ]),
-          ],),
+      return SlidingUpPanel(
+        color: Theme.of(context).primaryColor,
+        minHeight: 42,
+        maxHeight: MediaQuery.of(context).size.height - 150,
+        panel: Column(
+          children: <Widget>[
+            Row(mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Icon(Icons.arrow_drop_up),
+                Icon(Icons.arrow_drop_down),
+              ],),
+            Expanded(
+                child: ListView.builder(
+                  primary: false,
+                  padding: EdgeInsets.all(5),
+                  itemCount: widget.dieBieMSTelemetry.noOfCells,
+                  itemBuilder: (context, i) {
+                    Widget rowIcon;
+                    if (widget.dieBieMSTelemetry.cellVoltage[i] == widget.dieBieMSTelemetry.cellVoltageAverage){
+                      rowIcon = Transform.rotate(
+                        angle: 1.5707,
+                        child: Icon(Icons.pause_circle_outline),
+                      );
+                    } else if (widget.dieBieMSTelemetry.cellVoltage[i] < widget.dieBieMSTelemetry.cellVoltageAverage){
+                      rowIcon = Icon(Icons.remove_circle_outline);
+                    } else {
+                      rowIcon = Icon(Icons.add_circle_outline);
+                    }
 
-          Expanded(child: GridView.builder(
-            primary: false,
-            itemCount: widget.dieBieMSTelemetry.noOfCells,
-            gridDelegate: new SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, childAspectRatio: 3, crossAxisSpacing: 1, mainAxisSpacing: 1),
-            itemBuilder: (BuildContext context, int index) {
-              return new Card(
-                shadowColor: Colors.transparent,
-                child: new GridTile(
-                    child: new Stack(children: <Widget>[
-                      new SizedBox(height: 42,
+                    //Sometimes we get a bad parse or bad data from DieBieMS and slider value will not be in min/max range
+                    double voltage = widget.dieBieMSTelemetry.cellVoltage[i] - widget.dieBieMSTelemetry.cellVoltageAverage;
+                    if (voltage < -widget.dieBieMSTelemetry.cellVoltageMismatch || voltage > widget.dieBieMSTelemetry.cellVoltageMismatch) {
+                      return Container();
+                    }
+                    else return Row(
 
-                          child: new ClipRRect(
-                            borderRadius: new BorderRadius.only(topLeft: new Radius.circular(10), topRight: new Radius.circular(10)),
-                            child: new LinearProgressIndicator(
-                              backgroundColor: Colors.grey,
-                              valueColor: new AlwaysStoppedAnimation<Color>(Colors.lightGreen),
-                                value: sigmoidal(
-                                    widget.dieBieMSTelemetry.cellVoltage[index],
-                                    widget.currentSettings.settings.batteryCellMinVoltage,
-                                    widget.currentSettings.settings.batteryCellMaxVoltage)
-                            ),
-                          )
-                      ),
-                      new Positioned(
-                        top: 5, child: new Text(
+                      children: <Widget>[
+                        rowIcon,
+                        Text(" Cell $i"),
+
+                        Expanded(child: Slider(
+                          inactiveColor: Colors.red,
+                          value: widget.dieBieMSTelemetry.cellVoltage[i] - widget.dieBieMSTelemetry.cellVoltageAverage,
+                          min: -widget.dieBieMSTelemetry.cellVoltageMismatch,
+                          max: widget.dieBieMSTelemetry.cellVoltageMismatch,
+                        ),),
+                        Text("${formatTriple.format(widget.dieBieMSTelemetry.cellVoltage[i])}"),
+                      ],
+
+
+                    );
+                  },
+                )
+            ),
+          ],
+        ),
+        body: Center(child:
+          Column(children: <Widget>[
+            Table(children: [
+              TableRow(children: [
+                Text("Pack Voltage: ", textAlign: TextAlign.right,textScaleFactor: 1.25,),
+                Text(" ${widget.dieBieMSTelemetry.packVoltage}", textScaleFactor: 1.25,)
+              ]),
+              TableRow(children: [
+                Text("Pack Current: ", textAlign: TextAlign.right,),
+                Text(" ${widget.dieBieMSTelemetry.packCurrent}")
+              ]),
+              TableRow(children: [
+                Text("Cell Voltage Average: ", textAlign: TextAlign.right,),
+                Text(" ${formatTriple.format(widget.dieBieMSTelemetry.cellVoltageAverage)} V")
+              ]),
+              TableRow(children: [
+                Text("Cell Voltage High: ", textAlign: TextAlign.right,),
+                Text(" ${formatTriple.format(widget.dieBieMSTelemetry.cellVoltageHigh)} V")
+              ]),
+
+              TableRow(children: [
+                Text("Cell Voltage Low: ", textAlign: TextAlign.right,),
+                Text(" ${formatTriple.format(widget.dieBieMSTelemetry.cellVoltageLow)} V")
+              ]),
+              TableRow(children: [
+                Text("Cell Voltage Mismatch: ", textAlign: TextAlign.right,),
+                Text(" ${formatTriple.format(widget.dieBieMSTelemetry.cellVoltageMismatch)} V")
+              ]),
+              TableRow(children: [
+                Text("Battery Temp High: ", textAlign: TextAlign.right,),
+                Text(" ${widget.dieBieMSTelemetry.tempBatteryHigh} C")
+              ]),
+              TableRow(children: [
+                Text("Battery Temp Average: ", textAlign: TextAlign.right,),
+                Text(" ${widget.dieBieMSTelemetry.tempBatteryAverage} C")
+              ]),
+              TableRow(children: [
+                Text("BMS Temp High: ", textAlign: TextAlign.right,),
+                Text(" ${widget.dieBieMSTelemetry.tempBMSHigh} C")
+              ]),
+              TableRow(children: [
+                Text("BMS Temp Average: ", textAlign: TextAlign.right,),
+                Text(" ${widget.dieBieMSTelemetry.tempBMSAverage} C")
+              ]),
+            ],),
+
+            Expanded(child: GridView.builder(
+              primary: false,
+              itemCount: widget.dieBieMSTelemetry.noOfCells,
+              gridDelegate: new SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, childAspectRatio: 3, crossAxisSpacing: 1, mainAxisSpacing: 1),
+              itemBuilder: (BuildContext context, int index) {
+                return new Card(
+                  shadowColor: Colors.transparent,
+                  child: new GridTile(
+                      child: new Stack(children: <Widget>[
+                        new SizedBox(height: 42,
+
+                            child: new ClipRRect(
+                              borderRadius: new BorderRadius.only(topLeft: new Radius.circular(10), topRight: new Radius.circular(10)),
+                              child: new LinearProgressIndicator(
+                                  backgroundColor: Colors.grey,
+                                  valueColor: new AlwaysStoppedAnimation<Color>(Colors.lightGreen),
+                                  value: sigmoidal(
+                                      widget.dieBieMSTelemetry.cellVoltage[index],
+                                      widget.currentSettings.settings.batteryCellMinVoltage,
+                                      widget.currentSettings.settings.batteryCellMaxVoltage)
+                              ),
+                            )
+                        ),
+                        new Positioned(
+                            top: 5, child: new Text(
                           "  ${formatTriple.format(widget.dieBieMSTelemetry.cellVoltage[index])} V",
                           style: TextStyle(color: Colors.black),
                           textScaleFactor: 1.25,)),
-                      new Positioned(bottom: 2, child: new Text("  Cell $index")),
-                      new ClipRRect(
-                        borderRadius: new BorderRadius.circular(10),
-                        child: new Container(
-                          decoration: new BoxDecoration(
-                            color: Colors.transparent,
-                            border: new Border.all(color: Theme.of(context).accentColor, width: 3.0),
-                            borderRadius: new BorderRadius.circular(10.0),
+                        new Positioned(bottom: 2, child: new Text("  Cell $index")),
+                        new ClipRRect(
+                            borderRadius: new BorderRadius.circular(10),
+                            child: new Container(
+                              decoration: new BoxDecoration(
+                                color: Colors.transparent,
+                                border: new Border.all(color: Theme.of(context).accentColor, width: 3.0),
+                                borderRadius: new BorderRadius.circular(10.0),
+                              ),
+                            )
+                        ),
+                        /*
+                        new Positioned(
+                          right: -5,
+                          top: 15,
+                          child: new SizedBox(
+                            height: 30,
+                            width: 10,
+                            child: new Container(
+                              decoration: new BoxDecoration(
+                                color: Colors.red,
+                                border: new Border.all(color: Colors.red, width: 3.0),
+                                borderRadius: new BorderRadius.circular(10.0),
+                              ),
+                            )
                           ),
                         )
-                      ),
-                      /*
-                      new Positioned(
-                        right: -5,
-                        top: 15,
-                        child: new SizedBox(
-                          height: 30,
-                          width: 10,
-                          child: new Container(
-                            decoration: new BoxDecoration(
-                              color: Colors.red,
-                              border: new Border.all(color: Colors.red, width: 3.0),
-                              borderRadius: new BorderRadius.circular(10.0),
-                            ),
-                          )
-                        ),
-                      )
-                      */
-                    ],)
+                        */
+                      ],)
 
-                ),
-              );
-            },
-          ))
-        ])
+                  ),
+                );
+              },
+            ))
+          ])
+        ),
       );
     }
     doubleItemWidth = MediaQuery.of(context).size.width /2 - 10;
