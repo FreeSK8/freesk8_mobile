@@ -139,15 +139,19 @@ class RealTimeDataState extends State<RealTimeData> {
       var formatTriple = new NumberFormat("##0.000", "en_US");
       return SlidingUpPanel(
         color: Theme.of(context).primaryColor,
-        minHeight: 42,
+        minHeight: 40,
         maxHeight: MediaQuery.of(context).size.height - 150,
         panel: Column(
           children: <Widget>[
-            Row(mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Icon(Icons.arrow_drop_up),
-                Icon(Icons.arrow_drop_down),
-              ],),
+            Container(
+              height: 25,
+              color: Theme.of(context).highlightColor,
+              child: Row(mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Icon(Icons.arrow_drop_up),
+                  Icon(Icons.arrow_drop_down),
+                ]),
+            ),
             Expanded(
                 child: ListView.builder(
                   primary: false,
