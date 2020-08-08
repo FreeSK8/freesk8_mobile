@@ -1361,8 +1361,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       ),
 
       ListTile(
-        leading: Icon(Icons.system_update),
-        title: Text("Firmware Update"),
+        leading: Icon(Icons.devices),
+        title: Text("Robogotchi FW Update"),
         onTap: () {
           // Don't write if not connected
           if (theTXLoggerCharacteristic != null) {
