@@ -533,7 +533,7 @@ class RideLogViewerState extends State<RideLogViewer> {
 
                       //TODO: would be cool to position this near the user input
                       Positioned(
-                        bottom: 15,
+                        bottom: 21,
                         right: 5,
                         child: RideLogViewChartOverlay(eventObservable: eventObservable,),
                       ),

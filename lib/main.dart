@@ -864,6 +864,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       else if(receiveStr.startsWith("version,")) {
         print("Version packet received: $receiveStr");
         //TODO: Display/store version
+        List<String> values = receiveStr.split(",");
+
       }
       else {
         ///Unexpected response
@@ -1367,6 +1369,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           // Don't write if not connected
           if (theTXLoggerCharacteristic != null) {
             //TODO: confirmation dialog cause robogotchi will stop operating
+            //TODO: this is becoming increasingly important. plllllzzzzzzzzzzz
+            //TODO: fix this please
+            //TODO: it's not even hard to do
             theTXLoggerCharacteristic.write(utf8.encode("dfumode~")).whenComplete((){
               print('Your robogotchi is ready to receive firmware!\nUse the nRF Toolbox application to upload new firmware.\nPower cycle board to cancel update.');
               showDialog(
