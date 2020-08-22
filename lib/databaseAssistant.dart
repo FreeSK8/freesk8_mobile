@@ -96,7 +96,7 @@ class DatabaseAssistant {
   static Future<int> dbInsertLog(LogInfoItem logItem) async {
     final Database db = await getDatabase();
 
-    return db.insert('logs', logItem.toMap(), conflictAlgorithm: ConflictAlgorithm.ignore);
+    return db.insert('logs', logItem.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
     //TODO: consider closing database// .then((value){db.close();return value;});
   }
 
