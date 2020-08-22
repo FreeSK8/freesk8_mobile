@@ -86,8 +86,8 @@ class DieBieMSHelper {
     parsedTelemetry.hiCurrentLoadCurrent = buffer_get_float16(payload, index, 1e2); index += 2;
     parsedTelemetry.auxVoltage = buffer_get_float16(payload, index, 1e2); index += 2;
     parsedTelemetry.auxCurrent = buffer_get_float16(payload, index, 1e2); index += 2;
-    parsedTelemetry.tempBatteryHigh = buffer_get_float16(payload, index, 1e2); index += 2;
-    parsedTelemetry.tempBatteryAverage = buffer_get_float16(payload, index, 1e2); index += 2;
+    parsedTelemetry.tempBatteryHigh = buffer_get_float16(payload, index, 1e1); index += 2;
+    parsedTelemetry.tempBatteryAverage = buffer_get_float16(payload, index, 1e1); index += 2;
     parsedTelemetry.tempBMSHigh = buffer_get_float16(payload, index, 1e1); index += 2;
     parsedTelemetry.tempBMSAverage = buffer_get_float16(payload, index, 1e1); index += 2;
     parsedTelemetry.operationalState = payload[index++];
