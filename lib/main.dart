@@ -122,7 +122,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   ESCHelper escHelper = new ESCHelper();
   DieBieMSHelper dieBieMSHelper = new DieBieMSHelper();
 
-  static Uint8List escMotorConfiguration;
+  static MCCONF escMotorConfiguration;
   static Uint8List escMotorConfigurationDefaults;
   static List<int> _validCANBusDeviceIDs = new List();
 
@@ -1014,7 +1014,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_GET_MCCONF.index) {
           ///ESC Motor Configuration
-          escMotorConfiguration = bleHelper.payload.sublist(0,bleHelper.lenPayload);
+          escMotorConfiguration = escHelper.processMCCONF(bleHelper.payload); //bleHelper.payload.sublist(0,bleHelper.lenPayload);
 
           //TODO: handle MCCONF data
           print("Oof.. MCCONF: $escMotorConfiguration");
@@ -1418,7 +1418,40 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             print("DieBieMS RealTime Enabled");
           }
         },
-      )
+      ),
+
+      ListTile(
+        leading: Icon(Icons.bug_report),
+        title: Text("Debug"),
+        onTap: () {
+          // Don't write if not connected
+          if (the_tx_characteristic != null) {
+            var byteData = new ByteData(6); //<start><payloadLen><packetID><crc1><crc2><end>
+            byteData.setUint8(0, 0x02);
+            byteData.setUint8(1, 0x01);
+            byteData.setUint8(2, COMM_PACKET_ID.COMM_GET_MCCONF.index);
+            int checksum = bleHelper.crc16(byteData.buffer.asUint8List(), 2, 1);
+            byteData.setUint16(3, checksum);
+            byteData.setUint8(5, 0x03); //End of packet
+
+            the_tx_characteristic.write(byteData.buffer.asUint8List()).then((value){
+              print('COMM_GET_MCCONF requested');
+            }).catchError((e){
+              print("COMM_GET_MCCONF: Exception: $e");
+            });
+          } else {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text("Debug"),
+                  content: Text("Oops. Try connecting to your board first."),
+                );
+              },
+            );
+          }
+        },
+      ),
     ];
 
     return Drawer(
