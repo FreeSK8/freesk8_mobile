@@ -457,6 +457,10 @@ class ESCFirmware {
   String hardware_name;
 }
 
+class FrexpResult {
+  double result;
+  int exponent;
+}
 class ESCHelper {
   static const int MCCONF_SIGNATURE = 3698540221;
   static const int APPCONF_SIGNATURE = 2460147246;
@@ -659,6 +663,155 @@ class ESCHelper {
     mcconfData.si_battery_ah = buffer_get_float32_auto(buffer, index); index += 4;
 
     return mcconfData;
+  }
+
+  ByteData serializeMCCONF(MCCONF conf) {
+    int index = 0;
+    var response = new ByteData(512);
+    response.setUint8(index++, COMM_PACKET_ID.COMM_GET_MCCONF.index); //TODO: this is here for the processMCCONF method
+    response.setUint32(index, MCCONF_SIGNATURE); index += 4;
+
+    response.setUint8(index++, conf.pwm_mode.index);
+    response.setUint8(index++, conf.comm_mode.index);
+    response.setUint8(index++, conf.motor_type.index);
+    response.setUint8(index++, conf.sensor_mode.index);
+    response.setFloat32(index, conf.l_current_max); index += 4;
+    response.setFloat32(index, conf.l_current_min); index += 4;
+    response.setFloat32(index, conf.l_in_current_max); index += 4;
+    response.setFloat32(index, conf.l_in_current_min); index += 4;
+    response.setFloat32(index, conf.l_abs_current_max); index += 4;
+    response.setFloat32(index, conf.l_min_erpm); index += 4;
+    response.setFloat32(index, conf.l_max_erpm); index += 4;
+    response.setFloat32(index, conf.l_erpm_start); index += 4;
+    response.setFloat32(index, conf.l_max_erpm_fbrake); index += 4;
+    response.setFloat32(index, conf.l_max_erpm_fbrake_cc); index += 4;
+    response.setFloat32(index, conf.l_min_vin); index += 4;
+    response.setFloat32(index, conf.l_max_vin); index += 4;
+    response.setFloat32(index, conf.l_battery_cut_start); index += 4;
+    response.setFloat32(index, conf.l_battery_cut_end); index += 4;
+    response.setUint8(index++, conf.l_slow_abs_current ? 1 : 0);
+    response.setFloat32(index, conf.l_temp_fet_start); index += 4;
+    response.setFloat32(index, conf.l_temp_fet_end); index += 4;
+    response.setFloat32(index, conf.l_temp_motor_start); index += 4;
+    response.setFloat32(index, conf.l_temp_motor_end); index += 4;
+    response.setFloat32(index, conf.l_temp_accel_dec); index += 4;
+    response.setFloat32(index, conf.l_min_duty); index += 4;
+    response.setFloat32(index, conf.l_max_duty); index += 4;
+    response.setFloat32(index, conf.l_watt_max); index += 4;
+    response.setFloat32(index, conf.l_watt_min); index += 4;
+    response.setFloat32(index, conf.l_current_max_scale); index += 4;
+    response.setFloat32(index, conf.l_current_min_scale); index += 4;
+    response.setFloat32(index, conf.l_duty_start); index += 4;
+    response.setFloat32(index, conf.sl_min_erpm); index += 4;
+    response.setFloat32(index, conf.sl_min_erpm_cycle_int_limit); index += 4;
+    response.setFloat32(index, conf.sl_max_fullbreak_current_dir_change); index += 4;
+    response.setFloat32(index, conf.sl_cycle_int_limit); index += 4;
+    response.setFloat32(index, conf.sl_phase_advance_at_br); index += 4;
+    response.setFloat32(index, conf.sl_cycle_int_rpm_br); index += 4;
+    response.setFloat32(index, conf.sl_bemf_coupling_k); index += 4;
+    response.setUint8(index++, conf.hall_table[0]);
+    response.setUint8(index++, conf.hall_table[1]);
+    response.setUint8(index++, conf.hall_table[2]);
+    response.setUint8(index++, conf.hall_table[3]);
+    response.setUint8(index++, conf.hall_table[4]);
+    response.setUint8(index++, conf.hall_table[5]);
+    response.setUint8(index++, conf.hall_table[6]);
+    response.setUint8(index++, conf.hall_table[7]);
+    response.setFloat32(index, conf.hall_sl_erpm); index += 4;
+    response.setFloat32(index, conf.foc_current_kp); index += 4;
+    response.setFloat32(index, conf.foc_current_ki); index += 4;
+    response.setFloat32(index, conf.foc_f_sw); index += 4;
+    response.setFloat32(index, conf.foc_dt_us); index += 4;
+    response.setUint8(index++, conf.foc_encoder_inverted ? 1 : 0);
+    response.setFloat32(index, conf.foc_encoder_offset); index += 4;
+    response.setFloat32(index, conf.foc_encoder_ratio); index += 4;
+    response.setFloat32(index, conf.foc_encoder_sin_gain); index += 4;
+    response.setFloat32(index, conf.foc_encoder_cos_gain); index += 4;
+    response.setFloat32(index, conf.foc_encoder_sin_offset); index += 4;
+    response.setFloat32(index, conf.foc_encoder_cos_offset); index += 4;
+    response.setFloat32(index, conf.foc_encoder_sincos_filter_constant); index += 4;
+    response.setUint8(index++, conf.foc_sensor_mode.index);
+    response.setFloat32(index, conf.foc_pll_kp); index += 4;
+    response.setFloat32(index, conf.foc_pll_ki); index += 4;
+    response.setFloat32(index, conf.foc_motor_l); index += 4;
+    response.setFloat32(index, conf.foc_motor_r); index += 4;
+    response.setFloat32(index, conf.foc_motor_flux_linkage); index += 4;
+    response.setFloat32(index, conf.foc_observer_gain); index += 4;
+    response.setFloat32(index, conf.foc_observer_gain_slow); index += 4;
+    response.setFloat32(index, conf.foc_duty_dowmramp_kp); index += 4;
+    response.setFloat32(index, conf.foc_duty_dowmramp_ki); index += 4;
+    response.setFloat32(index, conf.foc_openloop_rpm); index += 4;
+    response.setFloat32(index, conf.foc_sl_openloop_hyst); index += 4;
+    response.setFloat32(index, conf.foc_sl_openloop_time); index += 4;
+    response.setFloat32(index, conf.foc_sl_d_current_duty); index += 4;
+    response.setFloat32(index, conf.foc_sl_d_current_factor); index += 4;
+    response.setUint8(index++, conf.foc_hall_table[0]);
+    response.setUint8(index++, conf.foc_hall_table[1]);
+    response.setUint8(index++, conf.foc_hall_table[2]);
+    response.setUint8(index++, conf.foc_hall_table[3]);
+    response.setUint8(index++, conf.foc_hall_table[4]);
+    response.setUint8(index++, conf.foc_hall_table[5]);
+    response.setUint8(index++, conf.foc_hall_table[6]);
+    response.setUint8(index++, conf.foc_hall_table[7]);
+    response.setFloat32(index, conf.foc_sl_erpm); index += 4;
+    response.setUint8(index++, conf.foc_sample_v0_v7 ? 1 : 0);
+    response.setUint8(index++, conf.foc_sample_high_current ? 1 : 0);
+    response.setFloat32(index, conf.foc_sat_comp); index += 4;
+    response.setUint8(index++, conf.foc_temp_comp ? 1 : 0);
+    response.setFloat32(index, conf.foc_temp_comp_base_temp); index += 4;
+    response.setFloat32(index, conf.foc_current_filter_const); index += 4;
+    response.setUint8(index++, conf.foc_cc_decoupling.index);
+    response.setUint8(index++, conf.foc_observer_type.index);
+    response.setFloat32(index, conf.foc_hfi_voltage_start); index += 4;
+    response.setFloat32(index, conf.foc_hfi_voltage_run); index += 4;
+    response.setFloat32(index, conf.foc_hfi_voltage_max); index += 4;
+    response.setFloat32(index, conf.foc_sl_erpm_hfi); index += 4;
+    response.setUint16(index, conf.foc_hfi_start_samples); index += 2;
+    response.setFloat32(index, conf.foc_hfi_obs_ovr_sec); index += 4;
+    response.setUint8(index++, conf.foc_hfi_samples.index);
+    response.setInt16(index, conf.gpd_buffer_notify_left); index += 2;
+    response.setInt16(index, conf.gpd_buffer_interpol); index += 2;
+    response.setFloat32(index, conf.gpd_current_filter_const); index += 4;
+    response.setFloat32(index, conf.gpd_current_kp); index += 4;
+    response.setFloat32(index, conf.gpd_current_ki); index += 4;
+    response.setFloat32(index, conf.s_pid_kp); index += 4;
+    response.setFloat32(index, conf.s_pid_ki); index += 4;
+    response.setFloat32(index, conf.s_pid_kd); index += 4;
+    response.setFloat32(index, conf.s_pid_kd_filter); index += 4;
+    response.setFloat32(index, conf.s_pid_min_erpm); index += 4;
+    response.setUint8(index++, conf.s_pid_allow_braking ? 1 : 0);
+    response.setFloat32(index, conf.p_pid_kp); index += 4;
+    response.setFloat32(index, conf.p_pid_ki); index += 4;
+    response.setFloat32(index, conf.p_pid_kd); index += 4;
+    response.setFloat32(index, conf.p_pid_kd_filter); index += 4;
+    response.setFloat32(index, conf.p_pid_ang_div); index += 4;
+    response.setFloat32(index, conf.cc_startup_boost_duty); index += 4;
+    response.setFloat32(index, conf.cc_min_current); index += 4;
+    response.setFloat32(index, conf.cc_gain); index += 4;
+    response.setFloat32(index, conf.cc_ramp_step_max); index += 4;
+    response.setInt32(index, conf.m_fault_stop_time_ms); index += 4;
+    response.setFloat32(index, conf.m_duty_ramp_step); index += 4;
+    response.setFloat32(index, conf.m_current_backoff_gain); index += 4;
+    response.setUint32(index, conf.m_encoder_counts); index += 4;
+    response.setUint8(index++, conf.m_sensor_port_mode.index);
+    response.setUint8(index++, conf.m_invert_direction ? 1 : 0);
+    response.setUint8(index++, conf.m_drv8301_oc_mode.index);
+    response.setUint8(index++, conf.m_drv8301_oc_adj);
+    response.setFloat32(index, conf.m_bldc_f_sw_min); index += 4;
+    response.setFloat32(index, conf.m_bldc_f_sw_max); index += 4;
+    response.setFloat32(index, conf.m_dc_f_sw); index += 4;
+    response.setFloat32(index, conf.m_ntc_motor_beta); index += 4;
+    response.setUint8(index++, conf.m_out_aux_mode.index);
+    response.setUint8(index++, conf.m_motor_temp_sens_type.index);
+    response.setFloat32(index, conf.m_ptc_motor_coeff); index += 4;
+    response.setUint8(index++, conf.si_motor_poles);
+    response.setFloat32(index, conf.si_gear_ratio); index += 4;
+    response.setFloat32(index, conf.si_wheel_diameter); index += 4;
+    response.setUint8(index++, conf.si_battery_type.index);
+    response.setUint8(index++, conf.si_battery_cells);
+    response.setFloat32(index, conf.si_battery_ah); index += 4;
+
+    return response;
   }
 
   int buffer_get_int16(Uint8List buffer, int index) {

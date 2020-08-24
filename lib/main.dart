@@ -1016,6 +1016,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           ///ESC Motor Configuration
           escMotorConfiguration = escHelper.processMCCONF(bleHelper.payload); //bleHelper.payload.sublist(0,bleHelper.lenPayload);
 
+          ByteData serializedMcconf = escHelper.serializeMCCONF(escMotorConfiguration);
+
+          MCCONF refriedMcconf = escHelper.processMCCONF(serializedMcconf.buffer.asUint8List());
+
           //TODO: handle MCCONF data
           print("Oof.. MCCONF: $escMotorConfiguration");
 
