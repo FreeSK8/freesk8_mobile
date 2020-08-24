@@ -457,10 +457,6 @@ class ESCFirmware {
   String hardware_name;
 }
 
-class FrexpResult {
-  double result;
-  int exponent;
-}
 class ESCHelper {
   static const int MCCONF_SIGNATURE = 3698540221;
   static const int APPCONF_SIGNATURE = 2460147246;
