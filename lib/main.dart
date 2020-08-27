@@ -347,7 +347,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       // Reset firmware packet
       firmwarePacket = new ESCFirmware();
 
-      //Reset telemetry packet
+      // Reset telemetry packet
       telemetryPacket = new ESCTelemetry();
 
       // Reset deviceHasDisconnected flag
@@ -355,6 +355,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       // Reset syncInProgress flag
       syncInProgress = false;
+
+      // Reset current ESC motor configuration
+      escMotorConfiguration = new MCCONF();
     }
   }
 
@@ -540,7 +543,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static ESCFirmware firmwarePacket = new ESCFirmware();
   static ESCTelemetry telemetryPacket = new ESCTelemetry();
   static DieBieMSTelemetry dieBieMSTelemetry = new DieBieMSTelemetry();
-  static bool _helloDieBieMS = false;
+  static bool _showDieBieMS = false;
   static Timer telemetryTimer;
   static int bleTXErrorCount = 0;
 
@@ -911,7 +914,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           bleHelper.resetPacket(); //Prepare for next packet
         }
         else if ( packetID == COMM_PACKET_ID.COMM_GET_VALUES.index ) {
-          if(_helloDieBieMS) {
+          if(_showDieBieMS) {
             //TODO: Parse DieBieMS GET_VALUES packet - A shame they share the same ID as ESC values
             dieBieMSTelemetry = dieBieMSHelper.processTelemetry(bleHelper.payload);
             bleHelper.resetPacket(); //Prepare for next packet
@@ -1407,16 +1410,16 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       ListTile(
         leading: Icon(Icons.battery_unknown),
-        title: Text(_helloDieBieMS ? "Hide DieBieMS" : "Show DieBieMS"),
+        title: Text(_showDieBieMS ? "Hide DieBieMS" : "Show DieBieMS"),
         onTap: () async {
-          if(_helloDieBieMS) {
+          if(_showDieBieMS) {
             setState(() {
-              _helloDieBieMS = false;
+              _showDieBieMS = false;
             });
             print("DieBieMS RealTime Disabled");
           } else {
             setState(() {
-              _helloDieBieMS = true;
+              _showDieBieMS = true;
               controller.index = 1;
             });
             print("DieBieMS RealTime Enabled");
@@ -1469,7 +1472,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     if ( _connectedDevice != null || !this.mounted){
 
       //Request telemetry packet; On error increase error counter
-      if(_helloDieBieMS) {
+      if(_showDieBieMS) {
         if(++telemetryRateLimiter > 4) {
           telemetryRateLimiter = 0;
         } else {
@@ -1597,7 +1600,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             telemetryPacket: telemetryPacket,
             currentSettings: widget.myUserSettings,
             startStopTelemetryFunc: startStopTelemetryTimer,
-            showDieBieMS: _helloDieBieMS,
+            showDieBieMS: _showDieBieMS,
             dieBieMSTelemetry: dieBieMSTelemetry,
           ),
           ESK8Configuration(myUserSettings: widget.myUserSettings, currentDevice: _connectedDevice),
