@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'dart:typed_data';
 
-// VESC defines
+// VESC based ESC defines
 // From datatypes.h
 enum BATTERY_TYPE {
   BATTERY_TYPE_LIION_3_0__4_2,
@@ -216,7 +216,7 @@ enum CAN_PACKET_ID {
   CAN_PACKET_SHUTDOWN
 }
 
-// VESC faults
+// VESC based ESC faults
 // From datatypes.h
 enum mc_fault_code {
   FAULT_CODE_NONE,
@@ -294,6 +294,23 @@ class ESCTelemetry {
   int vesc_id;
   double vd;
   double vq;
+}
+
+class ESCProfile {
+  ESCProfile({this.profileName});
+  // For user interaction
+  String profileName;
+  double speedKmh;
+  double speedKmhRev;
+  // VESC based ESC variables :smirk:
+  double l_current_min_scale;
+  double l_current_max_scale;
+  double l_watt_min;
+  double l_watt_max;
+  double l_min_erpm;
+  double l_max_erpm;
+  double l_min_duty;
+  double l_max_duty;
 }
 
 class MCCONF {

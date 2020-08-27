@@ -1,17 +1,29 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 
 import 'package:freesk8_mobile/userSettings.dart';
+import 'package:freesk8_mobile/escHelper.dart';
 
 import 'package:image_picker/image_picker.dart';
 
 import 'dart:io';
 
 class ESK8Configuration extends StatefulWidget {
-  ESK8Configuration({@required this.myUserSettings, this.currentDevice});
+  ESK8Configuration({
+    @required this.myUserSettings,
+    this.currentDevice,
+    this.showESCProfiles,
+    this.theTXCharacteristic,
+    this.escMotorConfiguration
+  });
   final UserSettings myUserSettings;
   final BluetoothDevice currentDevice;
+  final bool showESCProfiles;
+  final BluetoothCharacteristic theTXCharacteristic;
+  final MCCONF escMotorConfiguration;
   ESK8ConfigurationState createState() => new ESK8ConfigurationState();
 
   static const String routeName = "/settings";
@@ -20,6 +32,7 @@ class ESK8Configuration extends StatefulWidget {
 class ESK8ConfigurationState extends State<ESK8Configuration> {
 
   File _imageBoardAvatar;
+  bool _applyESCProfilePermanently;
 
   Future getImage() async {
     var image = await ImagePicker.pickImage(source: ImageSource.camera, maxWidth: 640, maxHeight: 640);
@@ -43,9 +56,16 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
   final tecMotorKV = TextEditingController();
   final tecMotorPoles = TextEditingController();
 
+  static double dp(double val, int places) {
+    double mod = pow(10.0, places);
+    return ((val * mod).round().toDouble() / mod);
+  }
+
   @override
   void initState() {
     super.initState();
+
+    _applyESCProfilePermanently = false;
 
     //TODO: these try parse can return null.. then the device will remove null because it's not a number
     tecBoardAlias.addListener(() { widget.myUserSettings.settings.boardAlias = tecBoardAlias.text; });
@@ -80,6 +100,199 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
   @override
   Widget build(BuildContext context) {
     print("Build: ESK8Configuration");
+    if (widget.showESCProfiles) {
+      //TODO: do stuff
+      double imperialFactor = widget.myUserSettings.settings.useImperial ? 0.621371192 : 1.0;
+      String speedUnit = widget.myUserSettings.settings.useImperial ? "mph" : "km/h";
+      double speedFactor = ((widget.escMotorConfiguration.si_motor_poles / 2.0) * 60.0 *
+          widget.escMotorConfiguration.si_gear_ratio) /
+          (widget.escMotorConfiguration.si_wheel_diameter * pi);
+
+      //TODO: load profiles from SharedPreferences
+      List<ESCProfile> escProfiles = new List<ESCProfile>();
+      escProfiles.add(new ESCProfile(profileName: "Sean Mode"));
+      escProfiles[0].l_current_min_scale = widget.escMotorConfiguration.l_current_min_scale / 2;
+      escProfiles[0].l_current_max_scale = widget.escMotorConfiguration.l_current_max_scale / 2;
+      //escProfiles[0].l_watt_min = widget.escMotorConfiguration.l_watt_min;
+      //escProfiles[0].l_watt_max = widget.escMotorConfiguration.l_watt_max;
+      escProfiles[0].l_min_erpm = widget.escMotorConfiguration.l_min_erpm / 4;
+      escProfiles[0].l_max_erpm = widget.escMotorConfiguration.l_max_erpm / 4;
+      escProfiles[0].l_min_duty = widget.escMotorConfiguration.l_min_duty;
+      escProfiles[0].l_max_duty = widget.escMotorConfiguration.l_max_duty;
+      escProfiles.add(new ESCProfile(profileName: "Renee Mode"));
+      escProfiles[1].l_current_min_scale = widget.escMotorConfiguration.l_current_min_scale * .8;
+      escProfiles[1].l_current_max_scale = widget.escMotorConfiguration.l_current_max_scale * .8;
+      escProfiles[1].l_watt_min = -5000;
+      escProfiles[1].l_watt_max = 5000;
+      escProfiles[1].l_min_erpm = widget.escMotorConfiguration.l_min_erpm / 2;
+      escProfiles[1].l_max_erpm = widget.escMotorConfiguration.l_max_erpm / 2;
+      escProfiles[1].l_min_duty = widget.escMotorConfiguration.l_min_duty;
+      escProfiles[1].l_max_duty = widget.escMotorConfiguration.l_max_duty;
+      escProfiles.add(new ESCProfile(profileName: "Andrew Mode"));
+      escProfiles[2].l_current_min_scale = widget.escMotorConfiguration.l_current_min_scale;
+      escProfiles[2].l_current_max_scale = widget.escMotorConfiguration.l_current_max_scale;
+      //escProfiles[2].l_watt_min = widget.escMotorConfiguration.l_watt_min;
+      //escProfiles[2].l_watt_max = widget.escMotorConfiguration.l_watt_max;
+      escProfiles[2].l_min_erpm = widget.escMotorConfiguration.l_min_erpm;
+      escProfiles[2].l_max_erpm = widget.escMotorConfiguration.l_max_erpm;
+      escProfiles[2].l_min_duty = widget.escMotorConfiguration.l_min_duty;
+      escProfiles[2].l_max_duty = widget.escMotorConfiguration.l_max_duty;
+      // User data
+      escProfiles[0].speedKmh = dp(3.6 * escProfiles[0].l_max_erpm / speedFactor, 1);
+      escProfiles[0].speedKmhRev = dp(3.6 * -escProfiles[0].l_max_erpm / speedFactor, 1);
+      escProfiles[1].speedKmh = dp(3.6 * escProfiles[1].l_max_erpm / speedFactor, 1);
+      escProfiles[1].speedKmhRev = dp(3.6 * -escProfiles[1].l_max_erpm / speedFactor, 1);
+      escProfiles[2].speedKmh = dp(3.6 * escProfiles[2].l_max_erpm / speedFactor, 1);
+      escProfiles[2].speedKmhRev = dp(3.6 * -escProfiles[2].l_max_erpm / speedFactor, 1);
+
+      return Center(
+        child: Column(
+          children: <Widget>[
+            Icon(
+              Icons.timer,
+              size: 60.0,
+              color: Colors.blue,
+            ),
+            Center(child:Text("ESC Profiles")),
+
+            Expanded(
+              child: ListView.builder(
+                primary: false,
+                padding: EdgeInsets.all(5),
+                itemCount: escProfiles.length,
+                itemBuilder: (context, i) {
+
+                  Table thisTableData = new Table(
+                    children: [
+                      TableRow(children: [
+                        Text("Speed Forward", textAlign: TextAlign.right),
+                        Text(":"),
+                        Text("${escProfiles[i].speedKmh} km/h")
+                      ]),
+                      TableRow(children: [
+                        Text("Speed Reverse", textAlign: TextAlign.right),
+                        Text(":"),
+                        Text("${escProfiles[i].speedKmhRev} km/h")
+                      ]),
+                      TableRow(children: [
+                        Text("Current Accel", textAlign: TextAlign.right),
+                        Text(":"),
+                        Text("${escProfiles[i].l_current_max_scale * 100} %")
+                      ]),
+                      TableRow(children: [
+                        Text("Current Brake", textAlign: TextAlign.right),
+                        Text(":"),
+                        Text("${escProfiles[i].l_current_min_scale * 100} %")
+                      ]),
+
+                    ],
+                  );
+
+                  if (escProfiles[i].l_watt_max != null) {
+                    thisTableData.children.add(new TableRow(children: [
+                      Text("Max Power Out", textAlign: TextAlign.right),
+                      Text(":"),
+                      Text("${escProfiles[i].l_watt_max} W")
+                    ]));
+                  }
+
+                  if (escProfiles[i].l_watt_min != null) {
+                    thisTableData.children.add(new TableRow(children: [
+                      Text("Max Power Regen", textAlign: TextAlign.right),
+                      Text(":"),
+                      Text("${escProfiles[i].l_watt_min} W")
+                    ]));
+                  }
+
+                  Icon rowIcon;
+                  switch (i) {
+                    case 0:
+                      rowIcon = Icon(Icons.filter_1);
+                      break;
+                    case 1:
+                      rowIcon = Icon(Icons.filter_2);
+                      break;
+                    case 2:
+                      rowIcon = Icon(Icons.filter_3);
+                      break;
+                    case 3:
+                      rowIcon = Icon(Icons.filter_4);
+                      break;
+                    default:
+                      rowIcon = Icon(Icons.filter_none);
+                      break;
+                  }
+                  return Column(
+                    children: <Widget>[
+
+                      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: <Widget>[
+                          rowIcon,
+                          Text(escProfiles[i].profileName),
+                          SizedBox(width: 75,),
+                          RaisedButton(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                Text("Edit "),
+                                Icon(Icons.edit),
+                              ],),
+                            onPressed: () {
+                              //TODO: edit
+                            },
+                            color: Colors.transparent,
+                          ),
+                          RaisedButton(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                Text("Apply "),
+                                Icon(Icons.exit_to_app),
+                              ],),
+                            onPressed: () {
+                              //TODO: edit
+                            },
+                            color: Colors.transparent,
+                          )
+                        ]
+                      ),
+
+                      thisTableData,
+                      SizedBox(height: 20,)
+                    ],
+                  );
+                },
+              ),
+            ),
+            SizedBox(
+              height: 115,
+              child: ListView(
+                padding: EdgeInsets.all(5),
+                primary: false,
+                children: <Widget>[
+                  SwitchListTile(
+                    title: Text("Retain profile after ESC is reset?"),
+                    value: _applyESCProfilePermanently,
+                    onChanged: (bool newValue) { setState((){_applyESCProfilePermanently = newValue;}); },
+                    secondary: const Icon(Icons.memory),
+                  ),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                    RaisedButton(child:
+                      Row(mainAxisAlignment: MainAxisAlignment.center , children: <Widget>[Text("Finished"),Icon(Icons.check),],),
+                        onPressed: () {
+                          //TODO: callback to clear showESCProfiles
+                        })
+                  ],)
+                ],
+              ),
+            )
+          ],
+        ),
+      );
+    }
 
     tecBoardAlias.text = widget.myUserSettings.settings.boardAlias;
     tecBoardAlias.selection = TextSelection.fromPosition(TextPosition(offset: tecBoardAlias.text.length));

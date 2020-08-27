@@ -358,6 +358,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       // Reset current ESC motor configuration
       escMotorConfiguration = new MCCONF();
+      _showESCProfiles = false;
     }
   }
 
@@ -544,6 +545,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static ESCTelemetry telemetryPacket = new ESCTelemetry();
   static DieBieMSTelemetry dieBieMSTelemetry = new DieBieMSTelemetry();
   static bool _showDieBieMS = false;
+  static bool _showESCProfiles = false;
   static Timer telemetryTimer;
   static int bleTXErrorCount = 0;
 
@@ -1019,17 +1021,23 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           ///ESC Motor Configuration
           escMotorConfiguration = escHelper.processMCCONF(bleHelper.payload); //bleHelper.payload.sublist(0,bleHelper.lenPayload);
 
+          //TODO: remove debug testing
           ByteData serializedMcconf = escHelper.serializeMCCONF(escMotorConfiguration);
-
           MCCONF refriedMcconf = escHelper.processMCCONF(serializedMcconf.buffer.asUint8List());
+          print("Oof.. MCCONF: $escMotorConfiguration");
 
           //TODO: handle MCCONF data
-          print("Oof.. MCCONF: $escMotorConfiguration");
+          if (_showESCProfiles) {
+            setState(() {
+              controller.index = 2; // Navigate user to Configuration tab
+            });
+          }
 
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_GET_MCCONF_DEFAULT.index) {
 
           setState(() { // setState so focWizard receives updated MCCONF Defaults
+            //TODO: focWizard never uses escMotorConfigurationDefaults
             escMotorConfigurationDefaults = bleHelper.payload.sublist(0,bleHelper.lenPayload);
           });
           print("Oof.. MCCONF_DEFAULT: $escMotorConfigurationDefaults");
@@ -1433,6 +1441,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         onTap: () {
           // Don't write if not connected
           if (the_tx_characteristic != null) {
+            // Set the flag to show ESC profiles. Display when MCCONF is returned
+            _showESCProfiles = true;
+
             var byteData = new ByteData(6); //<start><payloadLen><packetID><crc1><crc2><end>
             byteData.setUint8(0, 0x02);
             byteData.setUint8(1, 0x01);
@@ -1603,7 +1614,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             showDieBieMS: _showDieBieMS,
             dieBieMSTelemetry: dieBieMSTelemetry,
           ),
-          ESK8Configuration(myUserSettings: widget.myUserSettings, currentDevice: _connectedDevice),
+          ESK8Configuration(
+            myUserSettings: widget.myUserSettings,
+            currentDevice: _connectedDevice,
+            showESCProfiles: _showESCProfiles,
+            theTXCharacteristic: the_tx_characteristic,
+            escMotorConfiguration: escMotorConfiguration,
+          ),
           RideLogging(
             myUserSettings: widget.myUserSettings,
             theTXLoggerCharacteristic: theTXLoggerCharacteristic,
