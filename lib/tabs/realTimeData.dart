@@ -202,11 +202,11 @@ class RealTimeDataState extends State<RealTimeData> {
             Table(children: [
               TableRow(children: [
                 Text("Pack Voltage: ", textAlign: TextAlign.right,textScaleFactor: 1.25,),
-                Text(" ${widget.dieBieMSTelemetry.packVoltage}", textScaleFactor: 1.25,)
+                Text(" ${widget.dieBieMSTelemetry.packVoltage} (${widget.dieBieMSTelemetry.soc}%)", textScaleFactor: 1.25,)
               ]),
               TableRow(children: [
                 Text("Pack Current: ", textAlign: TextAlign.right,),
-                Text(" ${widget.dieBieMSTelemetry.packCurrent}")
+                Text(" ${widget.dieBieMSTelemetry.packCurrent} A")
               ]),
               TableRow(children: [
                 Text("Cell Voltage Average: ", textAlign: TextAlign.right,),
