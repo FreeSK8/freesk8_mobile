@@ -258,9 +258,11 @@ class RealTimeDataState extends State<RealTimeData> {
                               borderRadius: new BorderRadius.only(topLeft: new Radius.circular(10), topRight: new Radius.circular(10)),
                               child: new LinearProgressIndicator(
                                   backgroundColor: Colors.grey,
-                                  valueColor: new AlwaysStoppedAnimation<Color>(Colors.lightGreen),
+                                  valueColor: widget.dieBieMSTelemetry.cellVoltage[index] < 0 ?
+                                  new AlwaysStoppedAnimation<Color>(Colors.redAccent) :
+                                  new AlwaysStoppedAnimation<Color>(Colors.lightGreen),
                                   value: sigmoidal(
-                                      widget.dieBieMSTelemetry.cellVoltage[index],
+                                      widget.dieBieMSTelemetry.cellVoltage[index].abs(),
                                       widget.currentSettings.settings.batteryCellMinVoltage,
                                       widget.currentSettings.settings.batteryCellMaxVoltage)
                               ),
