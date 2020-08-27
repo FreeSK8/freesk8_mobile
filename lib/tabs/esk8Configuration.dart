@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_blue/flutter_blue.dart';
+import 'package:freesk8_mobile/escProfileEditor.dart';
 
 import 'package:freesk8_mobile/userSettings.dart';
 import 'package:freesk8_mobile/escHelper.dart';
@@ -17,13 +18,15 @@ class ESK8Configuration extends StatefulWidget {
     this.currentDevice,
     this.showESCProfiles,
     this.theTXCharacteristic,
-    this.escMotorConfiguration
+    this.escMotorConfiguration,
+    this.onFinished
   });
   final UserSettings myUserSettings;
   final BluetoothDevice currentDevice;
   final bool showESCProfiles;
   final BluetoothCharacteristic theTXCharacteristic;
   final MCCONF escMotorConfiguration;
+  final ValueChanged<bool> onFinished;
   ESK8ConfigurationState createState() => new ESK8ConfigurationState();
 
   static const String routeName = "/settings";
@@ -239,6 +242,8 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               ],),
                             onPressed: () {
                               //TODO: edit
+                              // navigate to the editor
+                              Navigator.of(context).pushNamed(ESCProfileEditor.routeName, arguments: ESCProfileEditorArguments(widget.theTXCharacteristic, escProfiles[i]));
                             },
                             color: Colors.transparent,
                           ),
@@ -250,7 +255,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                 Icon(Icons.exit_to_app),
                               ],),
                             onPressed: () {
-                              //TODO: edit
+                              //TODO: set MCCONF
                             },
                             color: Colors.transparent,
                           )
@@ -283,7 +288,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                     RaisedButton(child:
                       Row(mainAxisAlignment: MainAxisAlignment.center , children: <Widget>[Text("Finished"),Icon(Icons.check),],),
                         onPressed: () {
-                          //TODO: callback to clear showESCProfiles
+                          widget.onFinished(false);
                         })
                   ],)
                 ],

@@ -9,6 +9,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:freesk8_mobile/dieBieMSHelper.dart';
+import 'package:freesk8_mobile/escProfileEditor.dart';
 
 // UI Pages
 import 'package:freesk8_mobile/tabs/connectionStatus.dart';
@@ -61,6 +62,7 @@ void main() {
       routes: <String, WidgetBuilder>{
         RideLogViewer.routeName: (BuildContext context) => RideLogViewer(),
         ConfigureESC.routeName: (BuildContext context) => ConfigureESC(),
+        ESCProfileEditor.routeName: (BuildContext context) => ESCProfileEditor()
       },
       theme: ThemeData(
         brightness: Brightness.light,
@@ -282,6 +284,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     );
   }
 
+  void _handleESCProfileFinished(bool newValue) {
+    setState(() {
+      _showESCProfiles = newValue;
+    });
+  }
   _addDeviceToList(final BluetoothDevice device) {
     if (!widget.devicesList.contains(device)) {
       setState(() {
@@ -1620,6 +1627,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             showESCProfiles: _showESCProfiles,
             theTXCharacteristic: the_tx_characteristic,
             escMotorConfiguration: escMotorConfiguration,
+            onFinished: _handleESCProfileFinished,
           ),
           RideLogging(
             myUserSettings: widget.myUserSettings,
