@@ -62,12 +62,20 @@ class ESCProfileEditorState extends State<ESCProfileEditor> {
     }
 
     // Add listeners to text editing controllers
-    tecProfileName.addListener(() { myArguments.profile.profileName = tecProfileName.text; });
+    tecProfileName.addListener(() {
+      myArguments.profile.profileName = tecProfileName.text;
+      if (tecProfileName.text.length > 12) {
+        setState(() {
+          myArguments.profile.profileName = tecProfileName.text.substring(0,12);
+          tecProfileName.selection = TextSelection.fromPosition(TextPosition(offset: myArguments.profile.profileName.length));
+        });
+      }
+    });
     tecSpeedLimitFwd.addListener(() {
       myArguments.profile.speedKmh = double.tryParse(tecSpeedLimitFwd.text);
-      if (myArguments.profile.speedKmh > 32) {
+      if (myArguments.profile.speedKmh > 128) {
         setState(() {
-          myArguments.profile.speedKmh = 32;
+          myArguments.profile.speedKmh = 128;
         });
       }
     });
@@ -180,7 +188,7 @@ class ESCProfileEditorState extends State<ESCProfileEditor> {
 
               TextField(
                   controller: tecWattsMax,
-                  decoration: new InputDecoration(labelText: "Power Limit Maximum"),
+                  decoration: new InputDecoration(labelText: "Power Limit Maximum (0.0 = No Change)"),
                   keyboardType: TextInputType.numberWithOptions(decimal: true),
                   inputFormatters: <TextInputFormatter>[
                     NumberTextInputFormatter() //This allows for negative doubles
@@ -188,7 +196,7 @@ class ESCProfileEditorState extends State<ESCProfileEditor> {
               ),
               TextField(
                   controller: tecWattsMin,
-                  decoration: new InputDecoration(labelText: "Power Limit Regen"),
+                  decoration: new InputDecoration(labelText: "Power Limit Regen (0.0 = No Change)"),
                   keyboardType: TextInputType.numberWithOptions(decimal: true),
                   inputFormatters: <TextInputFormatter>[
                     NumberTextInputFormatter() //This allows for negative doubles
