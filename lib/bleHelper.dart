@@ -42,7 +42,7 @@ class BLEHelper {
 
   static final Uint16List crc16Table = new Uint16List.fromList(dartCRCList);
 
-  int crc16(Uint8List buffer, int index, int length) {
+  static int crc16(Uint8List buffer, int index, int length) {
     Uint16List checksum = new Uint16List(1);
     //int checksum = 0;
     for (int i=0; i<length; ++i) {
