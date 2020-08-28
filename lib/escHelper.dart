@@ -308,8 +308,6 @@ class ESCProfile {
   double l_current_max_scale;
   double l_watt_min;
   double l_watt_max;
-  double l_min_erpm;
-  double l_max_erpm;
 }
 
 class MCCONF {
@@ -895,8 +893,6 @@ class ESCHelper {
     response.l_current_max_scale = prefs.getDouble('profile$profileIndex l_current_max_scale') ?? 1.0;
     response.l_watt_min = prefs.getDouble('profile$profileIndex l_watt_min') ?? 0.0;
     response.l_watt_max = prefs.getDouble('profile$profileIndex l_watt_max') ?? 0.0;
-    response.l_min_erpm = prefs.getDouble('profile$profileIndex l_min_erpm') ?? 32525.0;
-    response.l_max_erpm = prefs.getDouble('profile$profileIndex l_max_erpm') ?? 32525.0;
 
     return response;
   }
@@ -914,8 +910,6 @@ class ESCHelper {
     await prefs.setDouble('profile$profileIndex l_current_max_scale', profile.l_current_max_scale);
     await prefs.setDouble('profile$profileIndex l_watt_min', profile.l_watt_min);
     await prefs.setDouble('profile$profileIndex l_watt_max', profile.l_watt_max);
-    await prefs.setDouble('profile$profileIndex l_min_erpm', profile.l_min_erpm);
-    await prefs.setDouble('profile$profileIndex l_max_erpm', profile.l_max_erpm);
   }
 
 }
