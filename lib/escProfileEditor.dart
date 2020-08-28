@@ -73,9 +73,9 @@ class ESCProfileEditorState extends State<ESCProfileEditor> {
     });
     tecSpeedLimitFwd.addListener(() {
       myArguments.profile.speedKmh = double.tryParse(tecSpeedLimitFwd.text);
-      if (myArguments.profile.speedKmh > 128) {
+      if (myArguments.profile.speedKmh > 256) {
         setState(() {
-          myArguments.profile.speedKmh = 128;
+          myArguments.profile.speedKmh = 256;
         });
       }
     });
@@ -188,7 +188,7 @@ class ESCProfileEditorState extends State<ESCProfileEditor> {
 
               TextField(
                   controller: tecWattsMax,
-                  decoration: new InputDecoration(labelText: "Power Limit Maximum (0.0 = No Change)"),
+                  decoration: new InputDecoration(labelText: "Power Limit Maximum Watts (0.0 = No Change)"),
                   keyboardType: TextInputType.numberWithOptions(decimal: true),
                   inputFormatters: <TextInputFormatter>[
                     NumberTextInputFormatter() //This allows for negative doubles
@@ -196,7 +196,7 @@ class ESCProfileEditorState extends State<ESCProfileEditor> {
               ),
               TextField(
                   controller: tecWattsMin,
-                  decoration: new InputDecoration(labelText: "Power Limit Regen (0.0 = No Change)"),
+                  decoration: new InputDecoration(labelText: "Power Limit Regen Watts (0.0 = No Change)"),
                   keyboardType: TextInputType.numberWithOptions(decimal: true),
                   inputFormatters: <TextInputFormatter>[
                     NumberTextInputFormatter() //This allows for negative doubles
@@ -208,7 +208,7 @@ class ESCProfileEditorState extends State<ESCProfileEditor> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   RaisedButton(child:
-                  Row(mainAxisAlignment: MainAxisAlignment.center , children: <Widget>[Text("Cancel"),Icon(Icons.cancel),],),
+                  Row(mainAxisAlignment: MainAxisAlignment.center , children: <Widget>[Icon(Icons.cancel),Text("Cancel"),],),
                       onPressed: () {
                         Navigator.of(context).pop();
                       }),

@@ -46,7 +46,8 @@ class RideLogging extends StatefulWidget {
     this.syncStatus,
     this.eraseOnSync,
     this.onSyncEraseSwitch,
-    this.isLoggerLogging
+    this.isLoggerLogging,
+    this.isRobogotchi
   });
   final UserSettings myUserSettings;
   final BluetoothCharacteristic theTXLoggerCharacteristic;
@@ -56,6 +57,7 @@ class RideLogging extends StatefulWidget {
   final bool eraseOnSync;
   final ValueChanged<bool> onSyncEraseSwitch;
   final bool isLoggerLogging;
+  final bool isRobogotchi;
 
   void _handleSyncPress() {
     onSyncPress(!syncInProgress);
@@ -472,6 +474,9 @@ class RideLoggingState extends State<RideLogging> {
               RaisedButton(
                   child: Text(widget.isLoggerLogging? "Stop Log" : "Start Log"),
                   onPressed: () async {
+                    if (!widget.isRobogotchi) {
+                      return _alertLimitedFunctionality();
+                    }
                     if (widget.isLoggerLogging) {
                       widget.theTXLoggerCharacteristic.write(utf8.encode("logstop~"));
                     } else {
@@ -483,6 +488,9 @@ class RideLoggingState extends State<RideLogging> {
               RaisedButton(
                   child: Text(widget.syncInProgress?"Stop Sync":"Sync All"),
                   onPressed: () async {
+                    if (!widget.isRobogotchi) {
+                      return _alertLimitedFunctionality();
+                    }
                     widget._handleSyncPress(); //Start or stop file sync routine
                   }),
 
@@ -522,6 +530,34 @@ class RideLoggingState extends State<RideLogging> {
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _alertLimitedFunctionality() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Not a Robogotchi'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text('This feature cool abilities of the FreeSK8 Robogotchi =(\n\n'),
+                Text('Please connect to a Robogotchi device.'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: Text('Shucks'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }

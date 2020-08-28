@@ -898,7 +898,7 @@ class ESCHelper {
   }
   static Future<String> getESCProfileName(int profileIndex) async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('profile$profileIndex name') ?? "";
+    return prefs.getString('profile$profileIndex name') ?? "Unnamed";
   }
   static Future<void> setESCProfile(int profileIndex, ESCProfile profile) async {
     print("setESCProfile is saving index $profileIndex");

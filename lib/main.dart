@@ -558,6 +558,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static bool _showESCProfiles = false;
   static Timer telemetryTimer;
   static int bleTXErrorCount = 0;
+  static bool _deviceIsRobogotchi = false;
 
   //TODO: some logger vars that need to be in their own class
   static String loggerTestBuffer = "";
@@ -679,9 +680,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       return;
     } else if ( !foundTXLogger || !foundRXLogger ) {
-      _alertLimitedFunctionality();
+      _deviceIsRobogotchi = false;
+      print("Not a Robogotchi..");
     }
     else {
+      _deviceIsRobogotchi = true;
       print("All required service and characteristics were found on this device. Good news.");
     }
 
@@ -1211,34 +1214,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     );
   }
 
-  Future<void> _alertLimitedFunctionality() async {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false, // user must tap button!
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Not a Robogotchi'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                Text('The connected device does not have all the cool features of the FreeSK8 Robogotchi =(\n\n'),
-                Text('This app will be limited in functionality.'),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            FlatButton(
-              child: Text('I understand'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   Future<void> _alertInvalidDevice() async {
     return showDialog<void>(
       context: context,
@@ -1647,6 +1622,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     }
 
     FileSyncViewerArguments syncStatus = FileSyncViewerArguments(syncInProgress: syncInProgress, fileName: catCurrentFilename, fileBytesReceived: catBytesReceived, fileBytesTotal: catBytesTotal, fileList: fileList);
+
     return Scaffold(
         // Appbar
         appBar: AppBar(
@@ -1683,7 +1659,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             syncStatus: syncStatus,
             eraseOnSync: syncEraseOnComplete,
             onSyncEraseSwitch: _handleEraseOnSyncButton,
-            isLoggerLogging: isLoggerLogging
+            isLoggerLogging: isLoggerLogging,
+            isRobogotchi : _deviceIsRobogotchi
           )
         ]),
       bottomNavigationBar: Material(
