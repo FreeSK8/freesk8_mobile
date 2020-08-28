@@ -243,7 +243,7 @@ class ConfigureESCState extends State<ConfigureESC> {
               byteData.setInt32(12, (focDetectMaxBatteryAmps * 1000).round());
               byteData.setInt32(16, focDetectOpenloopErpm * 1000);
               byteData.setInt32(20, focDetectSensorlessErpm * 1000);
-              int checksum = myArguments.bleHelper.crc16(byteData.buffer.asUint8List(), 2, focDetectPacketPayloadLength);
+              int checksum = BLEHelper.crc16(byteData.buffer.asUint8List(), 2, focDetectPacketPayloadLength);
               byteData.setUint16(24, checksum);
               byteData.setUint8(26, 0x03); //End of packet
 
