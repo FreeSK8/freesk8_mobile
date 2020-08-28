@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'package:freesk8_mobile/escProfileEditor.dart';
-import 'package:freesk8_mobile/main.dart';
 
 import 'package:freesk8_mobile/userSettings.dart';
 import 'package:freesk8_mobile/escHelper.dart';
+import 'package:freesk8_mobile/bleHelper.dart';
 
 import 'package:image_picker/image_picker.dart';
 
@@ -35,7 +35,6 @@ class ESK8Configuration extends StatefulWidget {
 
 class ESK8ConfigurationState extends State<ESK8Configuration> {
 
-  List<ESCProfile> escProfiles = new List<ESCProfile>();
   File _imageBoardAvatar;
   bool _applyESCProfilePermanently;
 
@@ -102,12 +101,48 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     tecMotorPoles.dispose();
   }
 
-  void _loadProfiles() async {
-    escProfiles.clear();
-    escProfiles.add(await ESCHelper.getESCProfile(0));
-    escProfiles.add(await ESCHelper.getESCProfile(1));
-    escProfiles.add(await ESCHelper.getESCProfile(2));
+  void setMCCONFTemp(bool persistentChange, ESCProfile escProfile) {
+    double speedFactor = ((widget.escMotorConfiguration.si_motor_poles / 2.0) * 60.0 *
+        widget.escMotorConfiguration.si_gear_ratio) /
+        (widget.escMotorConfiguration.si_wheel_diameter * pi);
+
+    var byteData = new ByteData(42); //<start><payloadLen><payload><crc1><crc2><end>
+    byteData.setUint8(0, 0x02); //Start of packet <255 in length
+    byteData.setUint8(1, 37); //Payload length
+    byteData.setUint8(2, COMM_PACKET_ID.COMM_SET_MCCONF_TEMP_SETUP.index);
+    byteData.setUint8(3, persistentChange ? 1 : 0);
+    byteData.setUint8(4, 0x01); //Forward to CAN devices =D Hooray
+    byteData.setUint8(5, 0x01); //ACK = true
+    byteData.setUint8(6, 0x00); //Divide By Controllers = false
+    byteData.setFloat32(7, escProfile.l_current_min_scale);
+    byteData.setFloat32(11, escProfile.l_current_max_scale);
+    byteData.setFloat32(15, escProfile.speedKmhRev / 3.6); //TODO: why does Vedder divide by 3.6?
+    byteData.setFloat32(19, escProfile.speedKmh / 3.6); //TODO: why does Vedder divide by 3.6?
+    byteData.setFloat32(23, widget.escMotorConfiguration.l_min_duty);
+    byteData.setFloat32(27, widget.escMotorConfiguration.l_max_duty);
+    if (escProfile.l_watt_min != 0.0){
+      byteData.setFloat32(31, escProfile.l_watt_min);
+    } else {
+      byteData.setFloat32(31, widget.escMotorConfiguration.l_watt_max);
+    }
+    if (escProfile.l_watt_min != 0.0){
+      byteData.setFloat32(35, escProfile.l_watt_min);
+    } else {
+      byteData.setFloat32(35, widget.escMotorConfiguration.l_watt_max);
+    }
+
+    int checksum = BLEHelper.crc16(byteData.buffer.asUint8List(), 2, 37);
+    byteData.setUint16(39, checksum);
+    byteData.setUint8(41, 0x03); //End of packet
+
+    widget.theTXCharacteristic.write(byteData.buffer.asUint8List()).then((value){
+      print('COMM_SET_MCCONF_TEMP_SETUP published');
+    }).catchError((e){
+      print("COMM_SET_MCCONF_TEMP_SETUP: Exception: $e");
+    });
+
   }
+
   @override
   Widget build(BuildContext context) {
     print("Build: ESK8Configuration");
@@ -115,49 +150,6 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       //TODO: do stuff
       double imperialFactor = widget.myUserSettings.settings.useImperial ? 0.621371192 : 1.0;
       String speedUnit = widget.myUserSettings.settings.useImperial ? "mph" : "km/h";
-      double speedFactor = ((widget.escMotorConfiguration.si_motor_poles / 2.0) * 60.0 *
-          widget.escMotorConfiguration.si_gear_ratio) /
-          (widget.escMotorConfiguration.si_wheel_diameter * pi);
-
-      //TODO: load profiles from SharedPreferences
-      //_loadProfiles();
-      /*
-      List<ESCProfile> escProfiles = new List<ESCProfile>();
-      escProfiles.add(new ESCProfile(profileName: "Sean Mode"));
-      escProfiles[0].l_current_min_scale = widget.escMotorConfiguration.l_current_min_scale / 2;
-      escProfiles[0].l_current_max_scale = widget.escMotorConfiguration.l_current_max_scale / 2;
-      //escProfiles[0].l_watt_min = widget.escMotorConfiguration.l_watt_min;
-      //escProfiles[0].l_watt_max = widget.escMotorConfiguration.l_watt_max;
-      escProfiles[0].l_min_erpm = widget.escMotorConfiguration.l_min_erpm / 4;
-      escProfiles[0].l_max_erpm = widget.escMotorConfiguration.l_max_erpm / 4;
-      escProfiles[0].l_min_duty = widget.escMotorConfiguration.l_min_duty;
-      escProfiles[0].l_max_duty = widget.escMotorConfiguration.l_max_duty;
-      escProfiles.add(new ESCProfile(profileName: "Renee Mode"));
-      escProfiles[1].l_current_min_scale = widget.escMotorConfiguration.l_current_min_scale * .8;
-      escProfiles[1].l_current_max_scale = widget.escMotorConfiguration.l_current_max_scale * .8;
-      escProfiles[1].l_watt_min = -5000;
-      escProfiles[1].l_watt_max = 5000;
-      escProfiles[1].l_min_erpm = widget.escMotorConfiguration.l_min_erpm / 2;
-      escProfiles[1].l_max_erpm = widget.escMotorConfiguration.l_max_erpm / 2;
-      escProfiles[1].l_min_duty = widget.escMotorConfiguration.l_min_duty;
-      escProfiles[1].l_max_duty = widget.escMotorConfiguration.l_max_duty;
-      escProfiles.add(new ESCProfile(profileName: "Andrew Mode"));
-      escProfiles[2].l_current_min_scale = widget.escMotorConfiguration.l_current_min_scale;
-      escProfiles[2].l_current_max_scale = widget.escMotorConfiguration.l_current_max_scale;
-      //escProfiles[2].l_watt_min = widget.escMotorConfiguration.l_watt_min;
-      //escProfiles[2].l_watt_max = widget.escMotorConfiguration.l_watt_max;
-      escProfiles[2].l_min_erpm = widget.escMotorConfiguration.l_min_erpm;
-      escProfiles[2].l_max_erpm = widget.escMotorConfiguration.l_max_erpm;
-      escProfiles[2].l_min_duty = widget.escMotorConfiguration.l_min_duty;
-      escProfiles[2].l_max_duty = widget.escMotorConfiguration.l_max_duty;
-      // User data
-      escProfiles[0].speedKmh = dp(3.6 * escProfiles[0].l_max_erpm / speedFactor, 1);
-      escProfiles[0].speedKmhRev = dp(3.6 * -escProfiles[0].l_max_erpm / speedFactor, 1);
-      escProfiles[1].speedKmh = dp(3.6 * escProfiles[1].l_max_erpm / speedFactor, 1);
-      escProfiles[1].speedKmhRev = dp(3.6 * -escProfiles[1].l_max_erpm / speedFactor, 1);
-      escProfiles[2].speedKmh = dp(3.6 * escProfiles[2].l_max_erpm / speedFactor, 1);
-      escProfiles[2].speedKmhRev = dp(3.6 * -escProfiles[2].l_max_erpm / speedFactor, 1);
-       */
 
       return Center(
         child: Column(
@@ -220,7 +212,6 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                 Icon(Icons.edit),
                               ],),
                             onPressed: () async {
-                              //TODO: edit
                               // navigate to the editor
                               Navigator.of(context).pushNamed(ESCProfileEditor.routeName, arguments: ESCProfileEditorArguments(widget.theTXCharacteristic, await ESCHelper.getESCProfile(i), i));
                             },
@@ -233,8 +224,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                 Text("Apply "),
                                 Icon(Icons.exit_to_app),
                               ],),
-                            onPressed: () {
+                            onPressed: () async {
+                              //TODO: compute erpm based on current mcconf
                               //TODO: set MCCONF
+                              setMCCONFTemp(_applyESCProfilePermanently, await ESCHelper.getESCProfile(i));
                             },
                             color: Colors.transparent,
                           )

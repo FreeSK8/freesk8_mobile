@@ -982,10 +982,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 builder: (BuildContext context) {
                   return AlertDialog(
                     title: Text("nRF Quick Pair"),
-                    content: SizedBox(height: 100, child: Column(children: <Widget>[
+                    content: SizedBox(
+                      height: 100, child: Column(children: <Widget>[
                       CircularProgressIndicator(),
                       SizedBox(height: 10,),
-                      Text("Think fast! You have 10 seconds to turn on your remote.")
+                      Text(
+                          "Think fast! You have 10 seconds to turn on your remote.")
                     ],),
                     ),
                   );
@@ -995,14 +997,16 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             case 1:
               print("Pairing Successful");
               Navigator.of(context).pop(); //Pop Quick Pair initial dialog
-              if (controller.index == 1) startStopTelemetryTimer(false); //Resume the telemetry timer
+              if (controller.index == 1) startStopTelemetryTimer(
+                  false); //Resume the telemetry timer
 
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
                   return AlertDialog(
                     title: Text("nRF Quick Pair"),
-                    content: Text("Pairing Successful! Your remote is now live. Congratulations =)"),
+                    content: Text(
+                        "Pairing Successful! Your remote is now live. Congratulations =)"),
                   );
                 },
               );
@@ -1010,14 +1014,16 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             case 2:
               print("Pairing timeout");
               Navigator.of(context).pop(); //Pop Quick Pair initial dialog
-              if (controller.index == 1) startStopTelemetryTimer(false); //Resume the telemetry timer
+              if (controller.index == 1) startStopTelemetryTimer(
+                  false); //Resume the telemetry timer
 
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
                   return AlertDialog(
                     title: Text("nRF Quick Pair"),
-                    content: Text("Oh bummer, a timeout. We didn't find a remote this time but you are welcome to try again."),
+                    content: Text(
+                        "Oh bummer, a timeout. We didn't find a remote this time but you are welcome to try again."),
                   );
                 },
               );
@@ -1025,8 +1031,14 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             default:
               print("ERROR: Pairing unknown payload");
               Navigator.of(context).pop(); //Pop Quick Pair initial dialog
-              if (controller.index == 1) startStopTelemetryTimer(false); //Resume the telemetry timer
+              if (controller.index == 1) startStopTelemetryTimer(
+                  false); //Resume the telemetry timer
           }
+          bleHelper.resetPacket();
+        } else if (packetID == COMM_PACKET_ID.COMM_SET_MCCONF_TEMP_SETUP.index ) {
+          print("COMM_SET_MCCONF_TEMP_SETUP received! This is a good sign.. packetID(${COMM_PACKET_ID.COMM_SET_MCCONF_TEMP_SETUP.index})");
+          //TODO: analyze packet before assuming success..
+          _alertProfileSet();
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_GET_MCCONF.index) {
           ///ESC Motor Configuration
@@ -1142,7 +1154,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     packetScanCAN[2] = COMM_PACKET_ID.COMM_PING_CAN.index; //Payload data
     //3,4 are CRC computed below
     packetScanCAN[5] = 0x03; //End packet
-    int checksum = bleHelper.crc16(packetScanCAN, 2, 1);
+    int checksum = BLEHelper.crc16(packetScanCAN, 2, 1);
     packetScanCAN[3] = (checksum >> 8) & 0xff;
     packetScanCAN[4] = checksum & 0xff;
     //print("TEST packetScanCAN $packetScanCAN");
@@ -1169,6 +1181,34 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       );
       controller.index = 2; // switch to configuration tab for now
     }
+  }
+
+  Future<void> _alertProfileSet() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Good news everyone'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text('Profile set successfully.'),
+                Text('Give it a test before your session!')
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: Text('Noice'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _alertLimitedFunctionality() async {
@@ -1307,7 +1347,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     var aboutChild = AboutListTile(
       child: Text("About"),
       applicationName: "FreeSK8 Mobile",
-      applicationVersion: "v0.2.2",
+      applicationVersion: "v0.3.0",
       applicationIcon: Icon(Icons.info, size: 40,),
       icon: Icon(Icons.info),
       aboutBoxChildren: <Widget>[
@@ -1364,7 +1404,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             byteData.setUint8(1, 0x05);
             byteData.setUint8(2, COMM_PACKET_ID.COMM_NRF_START_PAIRING.index);
             byteData.setUint32(3, 10000); //milliseconds
-            int checksum = bleHelper.crc16(byteData.buffer.asUint8List(), 2, 5);
+            int checksum = BLEHelper.crc16(byteData.buffer.asUint8List(), 2, 5);
             byteData.setUint16(7, checksum);
             byteData.setUint8(9, 0x03); //End of packet
 
@@ -1442,6 +1482,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               controller.index = 1;
             });
             print("DieBieMS RealTime Enabled");
+            Navigator.pop(context); // Close drawer
           }
         },
       ),
@@ -1459,12 +1500,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             byteData.setUint8(0, 0x02);
             byteData.setUint8(1, 0x01);
             byteData.setUint8(2, COMM_PACKET_ID.COMM_GET_MCCONF.index);
-            int checksum = bleHelper.crc16(byteData.buffer.asUint8List(), 2, 1);
+            int checksum = BLEHelper.crc16(byteData.buffer.asUint8List(), 2, 1);
             byteData.setUint16(3, checksum);
             byteData.setUint8(5, 0x03); //End of packet
 
             the_tx_characteristic.write(byteData.buffer.asUint8List()).then((value){
               print('COMM_GET_MCCONF requested');
+              Navigator.pop(context); // Close the drawer
             }).catchError((e){
               print("COMM_GET_MCCONF: Exception: $e");
             });
@@ -1508,7 +1550,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         byteData.setUint8(2, COMM_PACKET_ID.COMM_FORWARD_CAN.index);
         byteData.setUint8(3, 10); //CAN ID
         byteData.setUint8(4, COMM_PACKET_ID.COMM_GET_VALUES.index);
-        int checksum = bleHelper.crc16(byteData.buffer.asUint8List(), 2, packetLength);
+        int checksum = BLEHelper.crc16(byteData.buffer.asUint8List(), 2, packetLength);
         byteData.setUint16(5, checksum);
         byteData.setUint8(7, 0x03); //End of packet
         await the_tx_characteristic.write(byteData.buffer.asUint8List(), withoutResponse: true).then((value) {
@@ -1525,7 +1567,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         byteData.setUint8(2, COMM_PACKET_ID.COMM_FORWARD_CAN.index);
         byteData.setUint8(3, 10); //CAN ID
         byteData.setUint8(4, DieBieMSHelper.COMM_GET_BMS_CELLS);
-        checksum = bleHelper.crc16(byteData.buffer.asUint8List(), 2, packetLength);
+        checksum = BLEHelper.crc16(byteData.buffer.asUint8List(), 2, packetLength);
         byteData.setUint16(5, checksum);
         byteData.setUint8(7, 0x03); //End of packet
 
