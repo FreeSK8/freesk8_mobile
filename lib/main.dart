@@ -339,6 +339,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       loggerRXDataSubscription?.cancel();
       loggerRXDataSubscription = null;
 
+      dieBieMSRXDataSubscription?.cancel();
+      dieBieMSRXDataSubscription = null;
+
       // Stop listening to the connected device events
       _connectedDeviceStreamSubscription?.cancel();
       _connectedDeviceStreamSubscription = null;
@@ -606,6 +609,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             setState(() {
               escRXDataSubscription?.cancel();
               loggerRXDataSubscription?.cancel();
+              dieBieMSRXDataSubscription?.cancel();
               prepareConnectedDevice();
             });
           } else {
@@ -1443,8 +1447,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       ),
 
       ListTile(
-        leading: Icon(Icons.bug_report),
-        title: Text("Debug"),
+        leading: Icon(Icons.timer),
+        title: Text("Show Profiles"),
         onTap: () {
           // Don't write if not connected
           if (the_tx_characteristic != null) {

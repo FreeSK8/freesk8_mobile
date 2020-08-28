@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // VESC based ESC defines
 // From datatypes.h
@@ -309,8 +310,6 @@ class ESCProfile {
   double l_watt_max;
   double l_min_erpm;
   double l_max_erpm;
-  double l_min_duty;
-  double l_max_duty;
 }
 
 class MCCONF {
@@ -883,5 +882,41 @@ class ESCHelper {
     double result = arg * pow(2, exp);
     return result;
   }
+
+  ///ESC Profiles
+  static Future<ESCProfile> getESCProfile(int profileIndex) async {
+    print("getESCProfile is loading index $profileIndex");
+    final prefs = await SharedPreferences.getInstance();
+    ESCProfile response = new ESCProfile();
+    response.profileName = prefs.getString('profile$profileIndex name') ?? "Unnamed";
+    response.speedKmh = prefs.getDouble('profile$profileIndex speedKmh') ?? 32.0;
+    response.speedKmhRev = prefs.getDouble('profile$profileIndex speedKmhRev') ?? -32.0;
+    response.l_current_min_scale = prefs.getDouble('profile$profileIndex l_current_min_scale') ?? 1.0;
+    response.l_current_max_scale = prefs.getDouble('profile$profileIndex l_current_max_scale') ?? 1.0;
+    response.l_watt_min = prefs.getDouble('profile$profileIndex l_watt_min') ?? 0.0;
+    response.l_watt_max = prefs.getDouble('profile$profileIndex l_watt_max') ?? 0.0;
+    response.l_min_erpm = prefs.getDouble('profile$profileIndex l_min_erpm') ?? 32525.0;
+    response.l_max_erpm = prefs.getDouble('profile$profileIndex l_max_erpm') ?? 32525.0;
+
+    return response;
+  }
+  static Future<String> getESCProfileName(int profileIndex) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('profile$profileIndex name') ?? "";
+  }
+  static Future<void> setESCProfile(int profileIndex, ESCProfile profile) async {
+    print("setESCProfile is saving index $profileIndex");
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('profile$profileIndex name', profile.profileName);
+    await prefs.setDouble('profile$profileIndex speedKmh', profile.speedKmh);
+    await prefs.setDouble('profile$profileIndex speedKmhRev', profile.speedKmhRev);
+    await prefs.setDouble('profile$profileIndex l_current_min_scale', profile.l_current_min_scale);
+    await prefs.setDouble('profile$profileIndex l_current_max_scale', profile.l_current_max_scale);
+    await prefs.setDouble('profile$profileIndex l_watt_min', profile.l_watt_min);
+    await prefs.setDouble('profile$profileIndex l_watt_max', profile.l_watt_max);
+    await prefs.setDouble('profile$profileIndex l_min_erpm', profile.l_min_erpm);
+    await prefs.setDouble('profile$profileIndex l_max_erpm', profile.l_max_erpm);
+  }
+
 }
 

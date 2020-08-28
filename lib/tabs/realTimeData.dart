@@ -19,12 +19,12 @@ import 'package:flutter_thermometer/thermometer_widget.dart';
 
 import 'package:oscilloscope/oscilloscope.dart';
 
-/**
- * Asymmetric sigmoidal approximation
- * https://www.desmos.com/calculator/oyhpsu8jnw
- *
- * c - c / [1 + (k*x/v)^4.5]^3
- */
+///
+/// Asymmetric sigmoidal approximation
+/// https://www.desmos.com/calculator/oyhpsu8jnw
+///
+/// c - c / [1 + (k*x/v)^4.5]^3
+///
 double sigmoidal(double voltage, double minVoltage, double maxVoltage) {
 
   double result = 101 - (101 / pow(1 + pow(1.33 * (voltage - minVoltage)/(maxVoltage - minVoltage) ,4.5), 3));
@@ -182,6 +182,7 @@ class RealTimeDataState extends State<RealTimeData> {
                         Text(" Cell $i"),
 
                         Expanded(child: Slider(
+                          onChanged: (newValue){},
                           inactiveColor: Colors.red,
                           value: widget.dieBieMSTelemetry.cellVoltage[i] - widget.dieBieMSTelemetry.cellVoltageAverage,
                           min: -widget.dieBieMSTelemetry.cellVoltageMismatch,

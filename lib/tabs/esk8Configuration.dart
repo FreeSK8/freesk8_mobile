@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'package:freesk8_mobile/escProfileEditor.dart';
+import 'package:freesk8_mobile/main.dart';
 
 import 'package:freesk8_mobile/userSettings.dart';
 import 'package:freesk8_mobile/escHelper.dart';
@@ -34,6 +35,7 @@ class ESK8Configuration extends StatefulWidget {
 
 class ESK8ConfigurationState extends State<ESK8Configuration> {
 
+  List<ESCProfile> escProfiles = new List<ESCProfile>();
   File _imageBoardAvatar;
   bool _applyESCProfilePermanently;
 
@@ -100,6 +102,12 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     tecMotorPoles.dispose();
   }
 
+  void _loadProfiles() async {
+    escProfiles.clear();
+    escProfiles.add(await ESCHelper.getESCProfile(0));
+    escProfiles.add(await ESCHelper.getESCProfile(1));
+    escProfiles.add(await ESCHelper.getESCProfile(2));
+  }
   @override
   Widget build(BuildContext context) {
     print("Build: ESK8Configuration");
@@ -112,6 +120,8 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
           (widget.escMotorConfiguration.si_wheel_diameter * pi);
 
       //TODO: load profiles from SharedPreferences
+      //_loadProfiles();
+      /*
       List<ESCProfile> escProfiles = new List<ESCProfile>();
       escProfiles.add(new ESCProfile(profileName: "Sean Mode"));
       escProfiles[0].l_current_min_scale = widget.escMotorConfiguration.l_current_min_scale / 2;
@@ -147,6 +157,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       escProfiles[1].speedKmhRev = dp(3.6 * -escProfiles[1].l_max_erpm / speedFactor, 1);
       escProfiles[2].speedKmh = dp(3.6 * escProfiles[2].l_max_erpm / speedFactor, 1);
       escProfiles[2].speedKmhRev = dp(3.6 * -escProfiles[2].l_max_erpm / speedFactor, 1);
+       */
 
       return Center(
         child: Column(
@@ -162,51 +173,9 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
               child: ListView.builder(
                 primary: false,
                 padding: EdgeInsets.all(5),
-                itemCount: escProfiles.length,
+                itemCount: 3,
                 itemBuilder: (context, i) {
-
-                  Table thisTableData = new Table(
-                    children: [
-                      TableRow(children: [
-                        Text("Speed Forward", textAlign: TextAlign.right),
-                        Text(":"),
-                        Text("${escProfiles[i].speedKmh} km/h")
-                      ]),
-                      TableRow(children: [
-                        Text("Speed Reverse", textAlign: TextAlign.right),
-                        Text(":"),
-                        Text("${escProfiles[i].speedKmhRev} km/h")
-                      ]),
-                      TableRow(children: [
-                        Text("Current Accel", textAlign: TextAlign.right),
-                        Text(":"),
-                        Text("${escProfiles[i].l_current_max_scale * 100} %")
-                      ]),
-                      TableRow(children: [
-                        Text("Current Brake", textAlign: TextAlign.right),
-                        Text(":"),
-                        Text("${escProfiles[i].l_current_min_scale * 100} %")
-                      ]),
-
-                    ],
-                  );
-
-                  if (escProfiles[i].l_watt_max != null) {
-                    thisTableData.children.add(new TableRow(children: [
-                      Text("Max Power Out", textAlign: TextAlign.right),
-                      Text(":"),
-                      Text("${escProfiles[i].l_watt_max} W")
-                    ]));
-                  }
-
-                  if (escProfiles[i].l_watt_min != null) {
-                    thisTableData.children.add(new TableRow(children: [
-                      Text("Max Power Regen", textAlign: TextAlign.right),
-                      Text(":"),
-                      Text("${escProfiles[i].l_watt_min} W")
-                    ]));
-                  }
-
+                  //TODO: Custom icons!?!
                   Icon rowIcon;
                   switch (i) {
                     case 0:
@@ -231,7 +200,17 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: <Widget>[
                           rowIcon,
-                          Text(escProfiles[i].profileName),
+
+                          FutureBuilder<String>(
+                              future: ESCHelper.getESCProfileName(i),
+                              builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+                                if(snapshot.connectionState == ConnectionState.waiting){
+                                  return Center(
+                                      child:Text("Loading...")
+                                  );
+                                }
+                                return Text("${snapshot.data}");
+                              }),
                           SizedBox(width: 75,),
                           RaisedButton(
                             child: Row(
@@ -240,10 +219,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                 Text("Edit "),
                                 Icon(Icons.edit),
                               ],),
-                            onPressed: () {
+                            onPressed: () async {
                               //TODO: edit
                               // navigate to the editor
-                              Navigator.of(context).pushNamed(ESCProfileEditor.routeName, arguments: ESCProfileEditorArguments(widget.theTXCharacteristic, escProfiles[i]));
+                              Navigator.of(context).pushNamed(ESCProfileEditor.routeName, arguments: ESCProfileEditorArguments(widget.theTXCharacteristic, await ESCHelper.getESCProfile(i), i));
                             },
                             color: Colors.transparent,
                           ),
@@ -262,7 +241,57 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                         ]
                       ),
 
-                      thisTableData,
+                      FutureBuilder<ESCProfile>(
+                          future: ESCHelper.getESCProfile(i),
+                          builder: (BuildContext context, AsyncSnapshot<ESCProfile> snapshot) {
+                            if(snapshot.connectionState == ConnectionState.waiting){
+                              return Center(
+                                  child:Text("Loading...")
+                              );
+                            }
+                            Table thisTableData = new Table(
+                              children: [
+                                TableRow(children: [
+                                  Text("Speed Forward", textAlign: TextAlign.right),
+                                  Text(":"),
+                                  Text("${snapshot.data.speedKmh} km/h")
+                                ]),
+                                TableRow(children: [
+                                  Text("Speed Reverse", textAlign: TextAlign.right),
+                                  Text(":"),
+                                  Text("${snapshot.data.speedKmhRev} km/h")
+                                ]),
+                                TableRow(children: [
+                                  Text("Current Accel", textAlign: TextAlign.right),
+                                  Text(":"),
+                                  Text("${snapshot.data.l_current_max_scale * 100} %")
+                                ]),
+                                TableRow(children: [
+                                  Text("Current Brake", textAlign: TextAlign.right),
+                                  Text(":"),
+                                  Text("${snapshot.data.l_current_min_scale * 100} %")
+                                ]),
+
+                              ],
+                            );
+
+                            if (snapshot.data.l_watt_max != 0.0) {
+                              thisTableData.children.add(new TableRow(children: [
+                                Text("Max Power Out", textAlign: TextAlign.right),
+                                Text(":"),
+                                Text("${snapshot.data.l_watt_max} W")
+                              ]));
+                            }
+
+                            if (snapshot.data.l_watt_min != 0.0) {
+                              thisTableData.children.add(new TableRow(children: [
+                                Text("Max Power Regen", textAlign: TextAlign.right),
+                                Text(":"),
+                                Text("${snapshot.data.l_watt_min} W")
+                              ]));
+                            }
+                            return thisTableData;
+                          }),
                       SizedBox(height: 20,)
                     ],
                   );
