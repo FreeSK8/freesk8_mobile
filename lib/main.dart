@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:freesk8_mobile/dieBieMSHelper.dart';
 import 'package:freesk8_mobile/escProfileEditor.dart';
+import 'package:freesk8_mobile/robogotchiCfgEditor.dart';
 
 // UI Pages
 import 'package:freesk8_mobile/tabs/connectionStatus.dart';
@@ -62,7 +63,8 @@ void main() {
       routes: <String, WidgetBuilder>{
         RideLogViewer.routeName: (BuildContext context) => RideLogViewer(),
         ConfigureESC.routeName: (BuildContext context) => ConfigureESC(),
-        ESCProfileEditor.routeName: (BuildContext context) => ESCProfileEditor()
+        ESCProfileEditor.routeName: (BuildContext context) => ESCProfileEditor(),
+        RobogotchiCfgEditor.routeName: (BuildContext context) => RobogotchiCfgEditor()
       },
       theme: ThemeData(
         brightness: Brightness.light,
@@ -127,6 +129,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static MCCONF escMotorConfiguration;
   static Uint8List escMotorConfigurationDefaults;
   static List<int> _validCANBusDeviceIDs = new List();
+  static String robogotchiVersion;
 
   static bool deviceIsConnected = false;
   static bool deviceHasDisconnected = false;
@@ -134,7 +137,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static bool isConnectedDeviceKnown = false;
   static List<BluetoothService> _services;
   static StreamSubscription<BluetoothDeviceState> _connectedDeviceStreamSubscription;
-  StreamSubscription<Position> positionStream;
+  static StreamSubscription<Position> positionStream;
 
   @override
   void initState() {
@@ -228,12 +231,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       ///print("Latitude too close to add point (${(lastLocation.latitude - routeTakenLocations.last.latitude).abs()})");
     }
   }
-
-  static double dp(double val, int places) {
-    double mod = pow(10.0, places);
-    return ((val * mod).round().toDouble() / mod);
-  }
-
 
   @override
   void dispose() {
@@ -369,6 +366,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       // Reset current ESC motor configuration
       escMotorConfiguration = new MCCONF();
       _showESCProfiles = false;
+
+      //Reset Robogotchi version
+      robogotchiVersion = null;
     }
   }
 
@@ -882,9 +882,37 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       }
       else if(receiveStr.startsWith("version,")) {
         print("Version packet received: $receiveStr");
-        //TODO: Display/store version
         List<String> values = receiveStr.split(",");
+        setState(() {
+          robogotchiVersion = values[1];
+        });
+      }
+      else if(receiveStr.startsWith("getcfg,")) {
+        print("Robogotchi User Configuration received: $receiveStr");
+        // Parse the configuration
+        List<String> values = receiveStr.split(",");
+        RobogotchiConfiguration gotchConfig = new RobogotchiConfiguration(
+            logAutoStopIdleTime: int.parse(values[1]),
+            logAutoStopLowVoltage: double.parse(values[2]),
+            logAutoStartDutyCycle: double.parse(values[3]),
+            logIntervalHz: int.parse(values[4]),
+            multiESCMode: int.parse(values[5]),
+            multiESCIDs: new List.from({int.parse(values[6]), int.parse(values[7]), int.parse(values[8]), int.parse(values[9])}),
+            gpsBaudRate: int.parse(values[10]),
+            cfgVersion: int.parse(values[11])
+        );
 
+        //TODO: validate we received the expected cfgVersion from the module or else there could be trouble
+
+        // Load the user configuration window
+        Navigator.of(context).pushNamed(
+            RobogotchiCfgEditor.routeName,
+            arguments: RobogotchiCfgEditorArguments(
+                txLoggerCharacteristic: theTXLoggerCharacteristic,
+                currentConfiguration: gotchConfig,
+                discoveredCANDevices: _validCANBusDeviceIDs
+            )
+        );
       }
       else {
         ///Unexpected response
@@ -1034,8 +1062,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             default:
               print("ERROR: Pairing unknown payload");
               Navigator.of(context).pop(); //Pop Quick Pair initial dialog
-              if (controller.index == 1) startStopTelemetryTimer(
-                  false); //Resume the telemetry timer
+              if (controller.index == 1) {
+                //Resume the telemetry timer
+                startStopTelemetryTimer(false);
+              }
           }
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_SET_MCCONF_TEMP_SETUP.index ) {
@@ -1149,6 +1179,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
     //Request firmware packet once connected
     await the_tx_characteristic.write([0x02, 0x01, 0x00, 0x00, 0x00, 0x03]);
+
+    // Request the Robogotchi firmware version once connected
+    if (foundTXLogger) {
+      await theTXLoggerCharacteristic.write(utf8.encode("version~"));
+    }
 
     // Scan for CAN devices
     Uint8List packetScanCAN = new Uint8List(6);
@@ -1443,6 +1478,29 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       ),
 
       ListTile(
+        leading: Icon(Icons.settings),
+        title: Text("Robogotchi Config"),
+        onTap: () {
+          // Don't write if not connected
+          if (theTXLoggerCharacteristic != null) {
+            theTXLoggerCharacteristic.write(utf8.encode("getcfg~"))..catchError((e){
+              print("Gotchi User Config Request: Exception: $e");
+            });
+          } else {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text("Robogotchi Config"),
+                  content: Text("Oops. Try connecting to your robogotchi first."),
+                );
+              },
+            );
+          }
+        },
+      ),
+
+      ListTile(
         leading: Icon(Icons.battery_unknown),
         title: Text(_showDieBieMS ? "Hide DieBieMS" : "Show DieBieMS"),
         onTap: () async {
@@ -1464,7 +1522,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       ListTile(
         leading: Icon(Icons.timer),
-        title: Text("Show Profiles"),
+        title: Text("Speed Profiles"),
         onTap: () {
           // Don't write if not connected
           if (the_tx_characteristic != null) {
@@ -1634,7 +1692,15 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         ),
         // Set the TabBar view as the body of the Scaffold
         body: getTabBarView( <Widget>[
-          ConnectionStatus(active:_scanActive, bleDevicesGrid: _buildGridViewOfDevices(), currentDevice: _connectedDevice, currentFirmware: firmwarePacket, userSettings: widget.myUserSettings, onChanged: _handleBLEScanState),
+          ConnectionStatus(
+              active:_scanActive,
+              bleDevicesGrid: _buildGridViewOfDevices(),
+              currentDevice: _connectedDevice,
+              currentFirmware: firmwarePacket,
+              userSettings: widget.myUserSettings,
+              onChanged: _handleBLEScanState,
+              robogotchiVersion: robogotchiVersion
+          ),
           RealTimeData(
             routeTakenLocations: routeTakenLocations,
             telemetryPacket: telemetryPacket,

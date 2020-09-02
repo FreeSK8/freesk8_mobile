@@ -543,7 +543,7 @@ class RideLoggingState extends State<RideLogging> {
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
-                Text('This feature requires the cool abilities of the FreeSK8 Robogotchi =(\n\n'),
+                Text('This feature only works with the FreeSK8 Robogotchi\n\n'),
                 Text('Please connect to a Robogotchi device.'),
               ],
             ),

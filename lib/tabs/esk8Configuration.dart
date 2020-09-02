@@ -60,11 +60,6 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
   final tecMotorKV = TextEditingController();
   final tecMotorPoles = TextEditingController();
 
-  static double dp(double val, int places) {
-    double mod = pow(10.0, places);
-    return ((val * mod).round().toDouble() / mod);
-  }
-
   @override
   void initState() {
     super.initState();

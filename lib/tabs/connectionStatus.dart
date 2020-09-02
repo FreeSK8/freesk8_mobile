@@ -9,7 +9,7 @@ import 'dart:io';
 
 class ConnectionStatus extends StatelessWidget {
 
-  ConnectionStatus({Key key, this.active: false, this.bleDevicesGrid, this.currentDevice, this.currentFirmware, @required this.userSettings, @required this.onChanged})
+  ConnectionStatus({Key key, this.active: false, this.bleDevicesGrid, this.currentDevice, this.currentFirmware, @required this.userSettings, @required this.onChanged, this.robogotchiVersion})
       : super(key: key);
 
   final ESCFirmware currentFirmware;
@@ -18,6 +18,7 @@ class ConnectionStatus extends StatelessWidget {
   final GridView bleDevicesGrid;
   final bool active;
   final ValueChanged<bool> onChanged;
+  final String robogotchiVersion;
 
   void _handleTap() {
     onChanged(!active);
@@ -49,11 +50,13 @@ class ConnectionStatus extends StatelessWidget {
               ),
 
               Text(currentDevice.name == '' ? '(unknown device)' : currentDevice.name),
-              Text(currentDevice.id.toString()),
 
+              //Text(currentDevice.id.toString()),
+              robogotchiVersion != null ? Text("Robogotchi Firmware: $robogotchiVersion") : Container(),
 
-              Text("Hardware: ${currentFirmware.hardware_name}"),
-              Text("Firmware: ${currentFirmware.fw_version_major}.${currentFirmware.fw_version_minor}"),
+              Text("ESC Hardware: ${currentFirmware.hardware_name}"),
+              Text("ESC Firmware: ${currentFirmware.fw_version_major}.${currentFirmware.fw_version_minor}"),
+
 
               RaisedButton(
                   child: Text("Disconnect"),
