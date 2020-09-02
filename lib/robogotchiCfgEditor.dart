@@ -324,7 +324,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                               ",${myArguments.currentConfiguration.logAutoStartDutyCycle}"
                               ",${myArguments.currentConfiguration.logIntervalHz}"
                               ",$multiESCMode"
-                              ",${_escCANIDsSelected != null && _escCANIDsSelected[0] != null ? _escCANIDsSelected[0] : 0}"
+                              ",${_escCANIDsSelected != null && _escCANIDsSelected.length > 0 ? _escCANIDsSelected[0] : 0}"
                               ",${_escCANIDsSelected != null && _escCANIDsSelected.length > 1 ? _escCANIDsSelected[1] : 0}"
                               ",${_escCANIDsSelected != null && _escCANIDsSelected.length > 2 ? _escCANIDsSelected[2] : 0}"
                               ",0"
