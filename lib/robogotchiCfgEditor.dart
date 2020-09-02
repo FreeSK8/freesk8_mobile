@@ -115,7 +115,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
     }
     if (_multiESCMode == null) {
       // Assign value received from gotchi
-      _multiESCMode = myArguments.currentConfiguration.multiESCMode == 2 && myArguments.currentConfiguration.multiESCMode == 4 ? true : false;
+      _multiESCMode = myArguments.currentConfiguration.multiESCMode == 2 || myArguments.currentConfiguration.multiESCMode == 4 ? true : false;
     }
     if (_multiESCModeQuad == null) {
       _multiESCModeQuad = myArguments.currentConfiguration.multiESCMode == 4;
@@ -129,6 +129,18 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
         });
       }
     }
+    //TODO: Select currently configured ESC CAN IDs; causes MultiSelect to break
+    //TODO: Replace MultiSelect with a better solution
+    if (_escCANIDsSelected == null) {
+      //_escCANIDsSelected = new List();
+      myArguments.currentConfiguration.multiESCIDs.forEach((element) {
+        if (element != 0) {
+          //print("Adding user selected CAN ID: $element");
+          //_escCANIDsSelected.add(element);
+        }
+      });
+    }
+    // Select GPS Baud
     if (_selectedItem == null) {
       _dropdownItems.forEach((item) {
         if (item.value == myArguments.currentConfiguration.gpsBaudRate) {
