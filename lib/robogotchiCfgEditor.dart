@@ -260,7 +260,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
 
                 _multiESCMode ? MultiSelectFormField(
                   autovalidate: false,
-                  titleText: _multiESCModeQuad ? "CAN IDs" : "CAN ID",
+                  titleText: _multiESCModeQuad ? "Select CAN IDs" : "Select CAN ID",
                   validator: (value) {
                     if (value == null || value.length != (_multiESCModeQuad ? 3 : 1)) {
                       if(_multiESCModeQuad) {
@@ -303,11 +303,13 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                     Row(mainAxisAlignment: MainAxisAlignment.center , children: <Widget>[Text("Save"),Icon(Icons.save),],),
                         onPressed: () async {
                           // Validate user input
-                          if (_multiESCMode && _multiESCModeQuad && _escCANIDsSelected.length != 3) {
-                            //TODO: alert user 3 CAN IDs are required
+                          if (_multiESCMode && _multiESCModeQuad && _escCANIDsSelected?.length != 3) {
+                            genericAlert(context, "CAN IDs required", Text("Please select 3 CAN IDs before saving"), "OK");
+                            return;
                           }
-                          if (_multiESCMode && !_multiESCModeQuad && _escCANIDsSelected.length != 1) {
-                            //TODO: alert user 1 CAN ID is required
+                          if (_multiESCMode && !_multiESCModeQuad && _escCANIDsSelected?.length != 1) {
+                            genericAlert(context, "CAN ID required", Text("Please select 1 CAN ID before saving"), "OK");
+                            return;
                           }
 
                           // Convert settings to robogotchi command
@@ -329,11 +331,11 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                               ",${myArguments.currentConfiguration.gpsBaudRate}"
                               ",${myArguments.currentConfiguration.cfgVersion}~";
 
-                          //TODO: save
-                          print(newConfigCMD);
+                          // Save
+                          print("Sending $newConfigCMD");
                           await myArguments.txLoggerCharacteristic.write(utf8.encode(newConfigCMD)).whenComplete((){
                             // Pop away the config page
-                            //Navigator.of(context).pop();
+                            Navigator.of(context).pop();
                           });
                         })
                   ],)

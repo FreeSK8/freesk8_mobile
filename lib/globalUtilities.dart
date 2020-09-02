@@ -1,6 +1,30 @@
 import 'dart:math';
 
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+Future<void> genericAlert(BuildContext context, String alertTitle, Widget alertBody, String alertButtonLabel) async {
+  return showDialog<void>(
+    context: context,
+    barrierDismissible: false, // user must tap button!
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text(alertTitle),
+        content: SingleChildScrollView(
+          child: alertBody
+        ),
+        actions: <Widget>[
+          FlatButton(
+            child: Text(alertButtonLabel),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      );
+    },
+  );
+}
 
 double doublePrecision(double val, int places) {
   double mod = pow(10.0, places);
