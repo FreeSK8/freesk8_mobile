@@ -217,7 +217,8 @@ class RideLogViewerState extends State<RideLogViewer> {
     String gpsDistanceStr = "N/A";
 
     //Charting and data
-    List<TimeSeriesESC> escTimeSeriesData = new List<TimeSeriesESC>();
+    List<TimeSeriesESC> escTimeSeriesList = new List<TimeSeriesESC>();
+    Map<DateTime, TimeSeriesESC> escTimeSeriesMap = new Map();
     List<charts.Series> seriesList;
     int faultCodeCount = 0;
 
@@ -275,56 +276,51 @@ class RideLogViewerState extends State<RideLogViewer> {
             escIDsInLog.add(thisESCID);
           }
 
-          bool foundEntry = false;
-          escTimeSeriesData.forEach((element) {
-            if (element.time == thisDt) {
-              foundEntry = true;
-              switch(escIDsInLog.indexOf(thisESCID)) {
-                case 0:
-                // Primary ESC
-                //TODO: consider what to do. nothing. update. or start dealing with milliseconds
-                  break;
-                case 1:
-                // Second ESC in multiESC configuration
-                  element.tempMotor2 = double.tryParse(entry[3]);
-                  element.tempMosfet2 = double.tryParse(entry[4]);
-                  element.currentMotor2 = double.tryParse(entry[6]);
-                  element.currentInput2 = double.tryParse(entry[7]);
-                  break;
-                case 2:
-                // Third ESC in multiESC configuration
-                  element.tempMotor3 = double.tryParse(entry[3]);
-                  element.tempMosfet3 = double.tryParse(entry[4]);
-                  element.currentMotor3 = double.tryParse(entry[6]);
-                  element.currentInput3 = double.tryParse(entry[7]);
-                  break;
-                case 3:
-                // Fourth ESC in multiESC configuration
-                  element.tempMotor4 = double.tryParse(entry[3]);
-                  element.tempMosfet4 = double.tryParse(entry[4]);
-                  element.currentMotor4 = double.tryParse(entry[6]);
-                  element.currentInput4 = double.tryParse(entry[7]);
-                  break;
-                default:
-                // Shit this was not supposed to happen
-                  print("Shit this was not supposed to happen. There appears to be a 5th ESC ID in the log file: $escIDsInLog");
-                  break;
-              }
-            }
-          });
-
-          if (!foundEntry && thisESCID == escIDsInLog[0]) {
-            escTimeSeriesData.add(new TimeSeriesESC( time: thisDt, //Date Time
-              voltage: double.tryParse(entry[2]), //Voltage
-              tempMotor: double.tryParse(entry[3]), //Motor Temp
-              tempMosfet: double.tryParse(entry[4]), //Mosfet Temp
-              dutyCycle: double.tryParse(entry[5]), //Duty Cycle
-              currentMotor: double.tryParse(entry[6]), //Motor Current
-              currentInput: double.tryParse(entry[7]), //Input Current
-              speed: myArguments.userSettings.settings.useImperial ? _kphToMph(_calculateSpeedKph(double.tryParse(entry[8]))) : _calculateSpeedKph(double.tryParse(entry[8])), //Speed
-              distance: myArguments.userSettings.settings.useImperial ? _kmToMile(_calculateDistanceKm(double.tryParse(entry[9]))) : _calculateDistanceKm(double.tryParse(entry[9])), //Distance
-            ));
+          // Create TimeSeriesESC object if needed
+          if (escTimeSeriesMap[thisDt] == null){
+            escTimeSeriesMap[thisDt] = TimeSeriesESC(time: thisDt, dutyCycle: 0);
           }
+
+          // Populate TimeSeriesESC
+          switch(escIDsInLog.indexOf(thisESCID)) {
+            case 0:
+            // Primary ESC
+              escTimeSeriesMap[thisDt].voltage = double.tryParse(entry[2]);
+              escTimeSeriesMap[thisDt].tempMotor = double.tryParse(entry[3]);
+              escTimeSeriesMap[thisDt].tempMosfet = double.tryParse(entry[4]);
+              escTimeSeriesMap[thisDt].dutyCycle = double.tryParse(entry[5]);
+              escTimeSeriesMap[thisDt].currentMotor = double.tryParse(entry[6]);
+              escTimeSeriesMap[thisDt].currentInput = double.tryParse(entry[7]);
+              escTimeSeriesMap[thisDt].speed = myArguments.userSettings.settings.useImperial ? _kphToMph(_calculateSpeedKph(double.tryParse(entry[8]))) : _calculateSpeedKph(double.tryParse(entry[8]));
+              escTimeSeriesMap[thisDt].distance = myArguments.userSettings.settings.useImperial ? _kmToMile(_calculateDistanceKm(double.tryParse(entry[9]))) : _calculateDistanceKm(double.tryParse(entry[9]));
+              break;
+            case 1:
+            // Second ESC in multiESC configuration
+              escTimeSeriesMap[thisDt].tempMotor2 = double.tryParse(entry[3]);
+              escTimeSeriesMap[thisDt].tempMosfet2 = double.tryParse(entry[4]);
+              escTimeSeriesMap[thisDt].currentMotor2 = double.tryParse(entry[6]);
+              escTimeSeriesMap[thisDt].currentInput2 = double.tryParse(entry[7]);
+              break;
+            case 2:
+            // Third ESC in multiESC configuration
+              escTimeSeriesMap[thisDt].tempMotor3 = double.tryParse(entry[3]);
+              escTimeSeriesMap[thisDt].tempMosfet3 = double.tryParse(entry[4]);
+              escTimeSeriesMap[thisDt].currentMotor3 = double.tryParse(entry[6]);
+              escTimeSeriesMap[thisDt].currentInput3 = double.tryParse(entry[7]);
+              break;
+            case 3:
+            // Fourth ESC in multiESC configuration
+              escTimeSeriesMap[thisDt].tempMotor4 = double.tryParse(entry[3]);
+              escTimeSeriesMap[thisDt].tempMosfet4 = double.tryParse(entry[4]);
+              escTimeSeriesMap[thisDt].currentMotor4 = double.tryParse(entry[6]);
+              escTimeSeriesMap[thisDt].currentInput4 = double.tryParse(entry[7]);
+              break;
+            default:
+            // Shit this was not supposed to happen
+              print("Shit this was not supposed to happen. There appears to be a 5th ESC ID in the log file: $escIDsInLog");
+              break;
+          }
+
         }
         ///Fault codes
         else if (entry[1] == "fault") {
@@ -334,6 +330,9 @@ class RideLogViewerState extends State<RideLogViewer> {
       }
     }
     print("rideLogViewer rideLogEntry iteration complete");
+    escTimeSeriesMap.forEach((key, value) {
+      escTimeSeriesList.add(value);
+    });
 
     if(_positionEntries.length > 1) {
       // Calculate GPS statistics
@@ -346,7 +345,7 @@ class RideLogViewerState extends State<RideLogViewer> {
 
     print("rideLogViewer creating chart data");
     // Create charting data from ESC time series data
-    seriesList = _createChartingData(escTimeSeriesData, escIDsInLog);
+    seriesList = _createChartingData(escTimeSeriesList, escIDsInLog);
     print("rideLogViewer creating map polyline");
     // Create polyline to display GPS route on map
     Polyline routePolyLine = new Polyline(points: _positionEntries, strokeWidth: 3, color: Colors.red);
@@ -360,25 +359,28 @@ class RideLogViewerState extends State<RideLogViewer> {
     double _avgSpeed = 0.0;
     double _maxAmpsBattery = 0.0;
     double _maxAmpsMotor = 0.0;
-    for(int i=0; i<escTimeSeriesData.length;++i) {
-      if(escTimeSeriesData[i].speed > _maxSpeed){
-        _maxSpeed = escTimeSeriesData[i].speed;
+    for(int i=0; i<escTimeSeriesList.length;++i) {
+      if(escTimeSeriesList[i].speed != null && escTimeSeriesList[i].speed > _maxSpeed){
+        _maxSpeed = escTimeSeriesList[i].speed;
       }
-      _avgSpeed += escTimeSeriesData[i].speed;
-      if(escTimeSeriesData[i].currentInput > _maxAmpsBattery){
-        _maxAmpsBattery = escTimeSeriesData[i].currentInput;
+      if (escTimeSeriesList[i].speed != null) {
+        _avgSpeed += escTimeSeriesList[i].speed;
       }
-      if(escTimeSeriesData[i].currentMotor > _maxAmpsMotor){
-        _maxAmpsMotor = escTimeSeriesData[i].currentMotor;
+
+      if(escTimeSeriesList[i].currentInput != null && escTimeSeriesList[i].currentInput > _maxAmpsBattery){
+        _maxAmpsBattery = escTimeSeriesList[i].currentInput;
+      }
+      if(escTimeSeriesList[i].currentMotor != null && escTimeSeriesList[i].currentMotor > _maxAmpsMotor){
+        _maxAmpsMotor = escTimeSeriesList[i].currentMotor;
       }
     }
     String distance = "N/A";
     Duration duration = Duration(seconds:0);
-    if(escTimeSeriesData.length > 0) {
-      distance = myArguments.userSettings.settings.useImperial ? "${escTimeSeriesData.last.distance} miles" : "${escTimeSeriesData.last.distance} km";
-      duration = escTimeSeriesData.last.time.difference(escTimeSeriesData.first.time);
+    if(escTimeSeriesList.length > 0) {
+      distance = myArguments.userSettings.settings.useImperial ? "${escTimeSeriesList.last.distance} miles" : "${escTimeSeriesList.last.distance} km";
+      duration = escTimeSeriesList.last.time.difference(escTimeSeriesList.first.time);
 
-      _avgSpeed /= escTimeSeriesData.length;
+      _avgSpeed /= escTimeSeriesList.length;
       _avgSpeed = roundDouble(_avgSpeed, 2);
     }
     String maxSpeed = myArguments.userSettings.settings.useImperial ? "$_maxSpeed mph" : "$_maxSpeed kph";
@@ -419,19 +421,19 @@ class RideLogViewerState extends State<RideLogViewer> {
                   Column(children: <Widget>[
                     Text("Top Speed"),
                     Icon(Icons.arrow_upward),
-                    escTimeSeriesData.length > 0 ? Text(maxSpeed) : Text(gpsMaxSpeed.toString())
+                    escTimeSeriesList.length > 0 ? Text(maxSpeed) : Text(gpsMaxSpeed.toString())
                   ],),
                   SizedBox(width: 10,),
                   Column(children: <Widget>[
                     Text("Average Speed"),
                     Icon(Icons.trending_up),
-                    escTimeSeriesData.length > 0 ? Text(avgSpeed) : Text(gpsAverageSpeed.toString())
+                    escTimeSeriesList.length > 0 ? Text(avgSpeed) : Text(gpsAverageSpeed.toString())
                   ],),
                   SizedBox(width: 10,),
                   Column(children: <Widget>[
                     Text("Distance Traveled"),
                     Icon(Icons.place),
-                    escTimeSeriesData.length > 0 ? Text(distance) : Text(gpsDistanceStr)
+                    escTimeSeriesList.length > 0 ? Text(distance) : Text(gpsDistanceStr)
                   ],),
 
 
@@ -456,7 +458,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                   Column(children: <Widget>[
                     Text("Duration"),
                     Icon(Icons.watch_later),
-                    escTimeSeriesData.length > 0 ?
+                    escTimeSeriesList.length > 0 ?
                       Text(duration.toString().substring(0,duration.toString().lastIndexOf(".")))
                         :
                     Text(gpsDuration.toString().substring(0,gpsDuration.toString().lastIndexOf(".")))
@@ -665,26 +667,26 @@ class RideLogViewerState extends State<RideLogViewer> {
 /// Simple time series data type.
 class TimeSeriesESC {
   final DateTime time;
-  final double voltage;
-  final double tempMotor;
+  double voltage;
+  double tempMotor;
   double tempMotor2;
   double tempMotor3;
   double tempMotor4;
-  final double tempMosfet;
+  double tempMosfet;
   double tempMosfet2;
   double tempMosfet3;
   double tempMosfet4;
-  final double dutyCycle;
-  final double currentMotor;
+  double dutyCycle;
+  double currentMotor;
   double currentMotor2;
   double currentMotor3;
   double currentMotor4;
-  final double currentInput;
+  double currentInput;
   double currentInput2;
   double currentInput3;
   double currentInput4;
-  final double speed;
-  final double distance;
+  double speed;
+  double distance;
 
   TimeSeriesESC({
       this.time,
