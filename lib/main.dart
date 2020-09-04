@@ -1444,25 +1444,51 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         onTap: () {
           // Don't write if not connected
           if (theTXLoggerCharacteristic != null) {
-            //TODO: confirmation dialog cause robogotchi will stop operating
-            //TODO: this is becoming increasingly important. plllllzzzzzzzzzzz
-            //TODO: fix this please
-            //TODO: it's not even hard to do
-            theTXLoggerCharacteristic.write(utf8.encode("dfumode~")).whenComplete((){
-              print('Your robogotchi is ready to receive firmware!\nUse the nRF Toolbox application to upload new firmware.\nPower cycle board to cancel update.');
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: Text("Firmware Update Ready"),
-                    content: Text('Use the nRF Toolbox application to upload new firmware.\nWait 2 minutes or power cycle board to cancel update.'),
-                  );
-                },
-              );
-              _bleDisconnect();
-            }).catchError((e){
-              print("Firmware Update: Exception: $e");
-            });
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text('Robogotchi FW Update'),
+                  content: SingleChildScrollView(
+                    child: ListBody(
+                      children: <Widget>[
+                        Text('Caution!'),
+                        Text('Do you want to perform a firmware update?'),
+                      ],
+                    ),
+                  ),
+                  actions: <Widget>[
+                    FlatButton(
+                      child: Text('No thank you.'),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                    FlatButton(
+                      child: Text('Yep!'),
+                      onPressed: () {
+                        theTXLoggerCharacteristic.write(utf8.encode("dfumode~")).whenComplete((){
+                          print('Your robogotchi is ready to receive firmware!\nUse the nRF Toolbox application to upload new firmware.\nPower cycle board to cancel update.');
+                          Navigator.of(context).pop();
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: Text("Firmware Update Ready"),
+                                content: Text('Use the nRF Toolbox application to upload new firmware.\nWait 2 minutes or power cycle board to cancel update.'),
+                              );
+                            },
+                          );
+                          _bleDisconnect();
+                        }).catchError((e){
+                          print("Firmware Update: Exception: $e");
+                        });
+                      },
+                    ),
+                  ],
+                );
+              },
+            );
           } else {
             showDialog(
               context: context,
