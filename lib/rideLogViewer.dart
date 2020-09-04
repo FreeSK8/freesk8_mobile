@@ -125,6 +125,22 @@ class RideLogViewerState extends State<RideLogViewer> {
           data: values,
         ));
       }
+      if (escIDsInLog.length > 3) {
+        chartData.add(charts.Series<TimeSeriesESC, DateTime>(
+          id: 'Motor3 Temp',
+          colorFn: (_, __) => charts.MaterialPalette.red.shadeDefault,
+          domainFn: (TimeSeriesESC escData, _) => escData.time,
+          measureFn: (TimeSeriesESC escData, _) => escData.tempMotor3,
+          data: values,
+        ));
+        chartData.add(charts.Series<TimeSeriesESC, DateTime>(
+          id: 'Motor4 Temp',
+          colorFn: (_, __) => charts.MaterialPalette.gray.shadeDefault,
+          domainFn: (TimeSeriesESC escData, _) => escData.time,
+          measureFn: (TimeSeriesESC escData, _) => escData.tempMotor4,
+          data: values,
+        ));
+      }
       chartData.add(charts.Series<TimeSeriesESC, DateTime>(
         id: 'Mosfet Temp',
         colorFn: (_, __) => charts.MaterialPalette.deepOrange.shadeDefault,
@@ -138,6 +154,22 @@ class RideLogViewerState extends State<RideLogViewer> {
           colorFn: (_, __) => charts.MaterialPalette.yellow.shadeDefault,
           domainFn: (TimeSeriesESC escData, _) => escData.time,
           measureFn: (TimeSeriesESC escData, _) => escData.tempMosfet2,
+          data: values,
+        ));
+      }
+      if (escIDsInLog.length > 3) {
+        chartData.add(charts.Series<TimeSeriesESC, DateTime>(
+          id: 'Mosfet3 Temp',
+          colorFn: (_, __) => charts.MaterialPalette.deepOrange.shadeDefault,
+          domainFn: (TimeSeriesESC escData, _) => escData.time,
+          measureFn: (TimeSeriesESC escData, _) => escData.tempMosfet3,
+          data: values,
+        ));
+        chartData.add(charts.Series<TimeSeriesESC, DateTime>(
+          id: 'Mosfet4 Temp',
+          colorFn: (_, __) => charts.MaterialPalette.yellow.shadeDefault,
+          domainFn: (TimeSeriesESC escData, _) => escData.time,
+          measureFn: (TimeSeriesESC escData, _) => escData.tempMosfet4,
           data: values,
         ));
       }
@@ -164,6 +196,22 @@ class RideLogViewerState extends State<RideLogViewer> {
           data: values,
         ));
       }
+      if (escIDsInLog.length > 3) {
+        chartData.add(charts.Series<TimeSeriesESC, DateTime>(
+          id: 'Motor3 Current',
+          colorFn: (_, __) => charts.MaterialPalette.purple.shadeDefault,
+          domainFn: (TimeSeriesESC escData, _) => escData.time,
+          measureFn: (TimeSeriesESC escData, _) => escData.currentMotor3,
+          data: values,
+        ));
+        chartData.add(charts.Series<TimeSeriesESC, DateTime>(
+          id: 'Motor4 Current',
+          colorFn: (_, __) => charts.MaterialPalette.teal.shadeDefault,
+          domainFn: (TimeSeriesESC escData, _) => escData.time,
+          measureFn: (TimeSeriesESC escData, _) => escData.currentMotor4,
+          data: values,
+        ));
+      }
       chartData.add(charts.Series<TimeSeriesESC, DateTime>(
         id: 'Input Current',
         colorFn: (_, __) => charts.MaterialPalette.pink.shadeDefault,
@@ -177,6 +225,22 @@ class RideLogViewerState extends State<RideLogViewer> {
           colorFn: (_, __) => charts.MaterialPalette.cyan.shadeDefault,
           domainFn: (TimeSeriesESC escData, _) => escData.time,
           measureFn: (TimeSeriesESC escData, _) => escData.currentInput2,
+          data: values,
+        ));
+      }
+      if (escIDsInLog.length > 3) {
+        chartData.add(charts.Series<TimeSeriesESC, DateTime>(
+          id: 'Input3 Current',
+          colorFn: (_, __) => charts.MaterialPalette.pink.shadeDefault,
+          domainFn: (TimeSeriesESC escData, _) => escData.time,
+          measureFn: (TimeSeriesESC escData, _) => escData.currentInput3,
+          data: values,
+        ));
+        chartData.add(charts.Series<TimeSeriesESC, DateTime>(
+          id: 'Input4 Current',
+          colorFn: (_, __) => charts.MaterialPalette.cyan.shadeDefault,
+          domainFn: (TimeSeriesESC escData, _) => escData.time,
+          measureFn: (TimeSeriesESC escData, _) => escData.currentInput4,
           data: values,
         ));
       }
