@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:freesk8_mobile/globalUtilities.dart';
 import 'package:freesk8_mobile/rideLogViewChartOverlay.dart';
 import 'package:latlong/latlong.dart';
 import 'package:freesk8_mobile/databaseAssistant.dart';
@@ -221,6 +222,8 @@ class RideLogViewerState extends State<RideLogViewer> {
     Map<DateTime, TimeSeriesESC> escTimeSeriesMap = new Map();
     List<charts.Series> seriesList;
     int faultCodeCount = 0;
+    double distanceStartPrimary = null;
+    double distanceEndPrimary;
 
     //Mapping
     thisRideLogEntries = new List<String>();
@@ -293,6 +296,11 @@ class RideLogViewerState extends State<RideLogViewer> {
               escTimeSeriesMap[thisDt].currentInput = double.tryParse(entry[7]);
               escTimeSeriesMap[thisDt].speed = myArguments.userSettings.settings.useImperial ? _kphToMph(_calculateSpeedKph(double.tryParse(entry[8]))) : _calculateSpeedKph(double.tryParse(entry[8]));
               escTimeSeriesMap[thisDt].distance = myArguments.userSettings.settings.useImperial ? _kmToMile(_calculateDistanceKm(double.tryParse(entry[9]))) : _calculateDistanceKm(double.tryParse(entry[9]));
+              if (distanceStartPrimary == null) {
+                distanceStartPrimary = escTimeSeriesMap[thisDt].distance;
+              } else {
+                distanceEndPrimary = escTimeSeriesMap[thisDt].distance;
+              }
               break;
             case 1:
             // Second ESC in multiESC configuration
@@ -377,7 +385,8 @@ class RideLogViewerState extends State<RideLogViewer> {
     String distance = "N/A";
     Duration duration = Duration(seconds:0);
     if(escTimeSeriesList.length > 0) {
-      distance = myArguments.userSettings.settings.useImperial ? "${escTimeSeriesList.last.distance} miles" : "${escTimeSeriesList.last.distance} km";
+      double totalDistance = doublePrecision(distanceEndPrimary - distanceStartPrimary, 2);
+      distance = myArguments.userSettings.settings.useImperial ? "$totalDistance miles" : "$totalDistance km";
       duration = escTimeSeriesList.last.time.difference(escTimeSeriesList.first.time);
 
       _avgSpeed /= escTimeSeriesList.length;
