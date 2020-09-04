@@ -54,9 +54,27 @@ class RideLogViewChartOverlayState extends State<RideLogViewChartOverlay> {
     if (selectedDateTime == null) {
       return Container();
     }
+
+    String tempMotor = "${selectedESCData.tempMotor}";
+    if (selectedESCData.tempMotor2 != null) {
+      tempMotor += ", ${selectedESCData.tempMotor2}";
+    }
+    String tempMosfet = "${selectedESCData.tempMosfet}";
+    if (selectedESCData.tempMosfet2 != null) {
+      tempMosfet += ", ${selectedESCData.tempMosfet2}";
+    }
+    String currentMotor = "${selectedESCData.currentMotor} A";
+    if (selectedESCData.currentMotor2 != null) {
+      currentMotor += ", ${selectedESCData.currentMotor2} A";
+    }
+    String currentInput = "${selectedESCData.currentInput} A";
+    if (selectedESCData.currentInput2 != null) {
+      currentInput += ", ${selectedESCData.currentInput2} A";
+    }
+
     return Container(
       height: 130,
-      width: 155,
+      width: 182,
 
       color: Colors.black.withOpacity(0.85),
       child: GestureDetector(onTap: (){
@@ -77,11 +95,11 @@ class RideLogViewChartOverlayState extends State<RideLogViewChartOverlay> {
                   ]),
                   TableRow( children: [
                     Text("MotorTemp"),
-                    Text("${selectedESCData.tempMotor}", textAlign: TextAlign.center),
+                    Text(tempMotor, textAlign: TextAlign.center),
                   ]),
                   TableRow( children: [
                     Text("ESCTemp"),
-                    Text("${selectedESCData.tempMosfet}", textAlign: TextAlign.center),
+                    Text(tempMosfet, textAlign: TextAlign.center),
                   ]),
                   TableRow( children: [
                     Text("Duty"),
@@ -89,11 +107,11 @@ class RideLogViewChartOverlayState extends State<RideLogViewChartOverlay> {
                   ]),
                   TableRow( children: [
                     Text("Motor"),
-                    Text("${selectedESCData.currentMotor} A", textAlign: TextAlign.center),
+                    Text(currentMotor, textAlign: TextAlign.center),
                   ]),
                   TableRow( children: [
-                    Text("Battery"),
-                    Text("${selectedESCData.currentInput} A", textAlign: TextAlign.center),
+                    Text("Input"),
+                    Text(currentInput, textAlign: TextAlign.center),
                   ]),
                   TableRow( children: [
                     Text("Speed"),

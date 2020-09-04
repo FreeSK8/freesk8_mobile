@@ -97,59 +97,98 @@ class RideLogViewerState extends State<RideLogViewer> {
   }
 
   /// Create time series data for chart using ESC values
-  static List<charts.Series<TimeSeriesESC, DateTime>> _createChartingData( List<TimeSeriesESC> values ) {
-    return [
-      new charts.Series<TimeSeriesESC, DateTime>(
+  static List<charts.Series<TimeSeriesESC, DateTime>> _createChartingData( List<TimeSeriesESC> values, List<int> escIDsInLog ) {
+      List<charts.Series<TimeSeriesESC, DateTime>> chartData = new List();
+
+      chartData.add(charts.Series<TimeSeriesESC, DateTime>(
         id: 'VIN',
         colorFn: (_, __) => charts.MaterialPalette.blue.shadeDefault,
-        domainFn: (TimeSeriesESC sales, _) => sales.time,
-        measureFn: (TimeSeriesESC sales, _) => sales.voltage,
+        domainFn: (TimeSeriesESC escData, _) => escData.time,
+        measureFn: (TimeSeriesESC escData, _) => escData.voltage,
         data: values,
-      ),
-      new charts.Series<TimeSeriesESC, DateTime>(
+      ));
+      chartData.add(charts.Series<TimeSeriesESC, DateTime>(
         id: 'Motor Temp',
         colorFn: (_, __) => charts.MaterialPalette.red.shadeDefault,
-        domainFn: (TimeSeriesESC sales, _) => sales.time,
-        measureFn: (TimeSeriesESC sales, _) => sales.tempMotor,
+        domainFn: (TimeSeriesESC escData, _) => escData.time,
+        measureFn: (TimeSeriesESC escData, _) => escData.tempMotor,
         data: values,
-      ),
-      new charts.Series<TimeSeriesESC, DateTime>(
+      ));
+
+      if (escIDsInLog.length > 1) {
+        chartData.add(charts.Series<TimeSeriesESC, DateTime>(
+          id: 'Motor2 Temp',
+          colorFn: (_, __) => charts.MaterialPalette.gray.shadeDefault,
+          domainFn: (TimeSeriesESC escData, _) => escData.time,
+          measureFn: (TimeSeriesESC escData, _) => escData.tempMotor2,
+          data: values,
+        ));
+      }
+      chartData.add(charts.Series<TimeSeriesESC, DateTime>(
         id: 'Mosfet Temp',
         colorFn: (_, __) => charts.MaterialPalette.deepOrange.shadeDefault,
-        domainFn: (TimeSeriesESC sales, _) => sales.time,
-        measureFn: (TimeSeriesESC sales, _) => sales.tempMosfet,
+        domainFn: (TimeSeriesESC escData, _) => escData.time,
+        measureFn: (TimeSeriesESC escData, _) => escData.tempMosfet,
         data: values,
-      ),
-      new charts.Series<TimeSeriesESC, DateTime>(
+      ));
+      if (escIDsInLog.length > 1) {
+        chartData.add(charts.Series<TimeSeriesESC, DateTime>(
+          id: 'Mosfet2 Temp',
+          colorFn: (_, __) => charts.MaterialPalette.yellow.shadeDefault,
+          domainFn: (TimeSeriesESC escData, _) => escData.time,
+          measureFn: (TimeSeriesESC escData, _) => escData.tempMosfet2,
+          data: values,
+        ));
+      }
+      chartData.add(charts.Series<TimeSeriesESC, DateTime>(
         id: 'Duty',
         colorFn: (_, __) => charts.MaterialPalette.green.shadeDefault,
-        domainFn: (TimeSeriesESC sales, _) => sales.time,
-        measureFn: (TimeSeriesESC sales, _) => sales.dutyCycle * 100,
+        domainFn: (TimeSeriesESC escData, _) => escData.time,
+        measureFn: (TimeSeriesESC escData, _) => escData.dutyCycle * 100,
         data: values,
-      ),
-      new charts.Series<TimeSeriesESC, DateTime>(
+      ));
+      chartData.add(charts.Series<TimeSeriesESC, DateTime>(
         id: 'Motor Current',
         colorFn: (_, __) => charts.MaterialPalette.purple.shadeDefault,
-        domainFn: (TimeSeriesESC sales, _) => sales.time,
-        measureFn: (TimeSeriesESC sales, _) => sales.currentMotor,
+        domainFn: (TimeSeriesESC escData, _) => escData.time,
+        measureFn: (TimeSeriesESC escData, _) => escData.currentMotor,
         data: values,
-      ),
-      new charts.Series<TimeSeriesESC, DateTime>(
-        id: 'Battery Current',
+      ));
+      if (escIDsInLog.length > 1) {
+        chartData.add(charts.Series<TimeSeriesESC, DateTime>(
+          id: 'Motor2 Current',
+          colorFn: (_, __) => charts.MaterialPalette.teal.shadeDefault,
+          domainFn: (TimeSeriesESC escData, _) => escData.time,
+          measureFn: (TimeSeriesESC escData, _) => escData.currentMotor2,
+          data: values,
+        ));
+      }
+      chartData.add(charts.Series<TimeSeriesESC, DateTime>(
+        id: 'Input Current',
         colorFn: (_, __) => charts.MaterialPalette.pink.shadeDefault,
-        domainFn: (TimeSeriesESC sales, _) => sales.time,
-        measureFn: (TimeSeriesESC sales, _) => sales.currentInput,
+        domainFn: (TimeSeriesESC escData, _) => escData.time,
+        measureFn: (TimeSeriesESC escData, _) => escData.currentInput,
         data: values,
-      ),
-      new charts.Series<TimeSeriesESC, DateTime>(
+      ));
+      if (escIDsInLog.length > 1) {
+        chartData.add(charts.Series<TimeSeriesESC, DateTime>(
+          id: 'Input2 Current',
+          colorFn: (_, __) => charts.MaterialPalette.cyan.shadeDefault,
+          domainFn: (TimeSeriesESC escData, _) => escData.time,
+          measureFn: (TimeSeriesESC escData, _) => escData.currentInput2,
+          data: values,
+        ));
+      }
+      chartData.add(charts.Series<TimeSeriesESC, DateTime>(
         id: 'Speed',
         colorFn: (_, __) => charts.MaterialPalette.white,
-        domainFn: (TimeSeriesESC sales, _) => sales.time,
-        measureFn: (TimeSeriesESC sales, _) => sales.speed,
+        domainFn: (TimeSeriesESC escData, _) => escData.time,
+        measureFn: (TimeSeriesESC escData, _) => escData.speed,
         data: values,
-      ),
-    ];
-  }
+      ));
+
+      return chartData;
+    }
 
   @override
   void initState() {
@@ -204,6 +243,7 @@ class RideLogViewerState extends State<RideLogViewer> {
     }
 
     // Parse lines of log file as CSV
+    List<int> escIDsInLog = new List();
     thisRideLogEntries = thisRideLog.split("\n");
     print("rideLogViewer rideLogEntry count: ${thisRideLog.length}");
     for(int i=0; i<thisRideLogEntries.length; ++i) {
@@ -227,17 +267,64 @@ class RideLogViewerState extends State<RideLogViewer> {
         ///ESC Values
         else if (entry[1] == "values" && entry.length > 9) {
           //[2020-05-19T13:46:28.8, values, 12.9, -99.9, 29.0, 0.0, 0.0, 0.0, 0.0, 11884, 102]
-          escTimeSeriesData.add(new TimeSeriesESC(
-              DateTime.tryParse(entry[0]), //Date Time
-              double.tryParse(entry[2]), //Voltage
-              double.tryParse(entry[3]), //Motor Temp
-              double.tryParse(entry[4]), //Mosfet Temp
-              double.tryParse(entry[5]), //Duty Cycle
-              double.tryParse(entry[6]), //Motor Current
-              double.tryParse(entry[7]), //Input Current
-              myArguments.userSettings.settings.useImperial ? _kphToMph(_calculateSpeedKph(double.tryParse(entry[8]))) : _calculateSpeedKph(double.tryParse(entry[8])), //Speed
-              myArguments.userSettings.settings.useImperial ? _kmToMile(_calculateDistanceKm(double.tryParse(entry[9]))) : _calculateDistanceKm(double.tryParse(entry[9])), //Distance
-          ));
+          DateTime thisDt = DateTime.parse(entry[0]);
+          int thisESCID = int.parse(entry[10]);
+
+          if (!escIDsInLog.contains(thisESCID)) {
+            print("Adding ESC ID $thisESCID to list of known ESC IDs in this data set");
+            escIDsInLog.add(thisESCID);
+          }
+
+          bool foundEntry = false;
+          escTimeSeriesData.forEach((element) {
+            if (element.time == thisDt) {
+              foundEntry = true;
+              switch(escIDsInLog.indexOf(thisESCID)) {
+                case 0:
+                // Primary ESC
+                //TODO: consider what to do. nothing. update. or start dealing with milliseconds
+                  break;
+                case 1:
+                // Second ESC in multiESC configuration
+                  element.tempMotor2 = double.tryParse(entry[3]);
+                  element.tempMosfet2 = double.tryParse(entry[4]);
+                  element.currentMotor2 = double.tryParse(entry[6]);
+                  element.currentInput2 = double.tryParse(entry[7]);
+                  break;
+                case 2:
+                // Third ESC in multiESC configuration
+                  element.tempMotor3 = double.tryParse(entry[3]);
+                  element.tempMosfet3 = double.tryParse(entry[4]);
+                  element.currentMotor3 = double.tryParse(entry[6]);
+                  element.currentInput3 = double.tryParse(entry[7]);
+                  break;
+                case 3:
+                // Fourth ESC in multiESC configuration
+                  element.tempMotor4 = double.tryParse(entry[3]);
+                  element.tempMosfet4 = double.tryParse(entry[4]);
+                  element.currentMotor4 = double.tryParse(entry[6]);
+                  element.currentInput4 = double.tryParse(entry[7]);
+                  break;
+                default:
+                // Shit this was not supposed to happen
+                  print("Shit this was not supposed to happen. There appears to be a 5th ESC ID in the log file: $escIDsInLog");
+                  break;
+              }
+            }
+          });
+
+          if (!foundEntry && thisESCID == escIDsInLog[0]) {
+            escTimeSeriesData.add(new TimeSeriesESC( time: thisDt, //Date Time
+              voltage: double.tryParse(entry[2]), //Voltage
+              tempMotor: double.tryParse(entry[3]), //Motor Temp
+              tempMosfet: double.tryParse(entry[4]), //Mosfet Temp
+              dutyCycle: double.tryParse(entry[5]), //Duty Cycle
+              currentMotor: double.tryParse(entry[6]), //Motor Current
+              currentInput: double.tryParse(entry[7]), //Input Current
+              speed: myArguments.userSettings.settings.useImperial ? _kphToMph(_calculateSpeedKph(double.tryParse(entry[8]))) : _calculateSpeedKph(double.tryParse(entry[8])), //Speed
+              distance: myArguments.userSettings.settings.useImperial ? _kmToMile(_calculateDistanceKm(double.tryParse(entry[9]))) : _calculateDistanceKm(double.tryParse(entry[9])), //Distance
+            ));
+          }
         }
         ///Fault codes
         else if (entry[1] == "fault") {
@@ -259,7 +346,7 @@ class RideLogViewerState extends State<RideLogViewer> {
 
     print("rideLogViewer creating chart data");
     // Create charting data from ESC time series data
-    seriesList = _createChartingData(escTimeSeriesData);
+    seriesList = _createChartingData(escTimeSeriesData, escIDsInLog);
     print("rideLogViewer creating map polyline");
     // Create polyline to display GPS route on map
     Polyline routePolyLine = new Polyline(points: _positionEntries, strokeWidth: 3, color: Colors.red);
@@ -580,24 +667,48 @@ class TimeSeriesESC {
   final DateTime time;
   final double voltage;
   final double tempMotor;
+  double tempMotor2;
+  double tempMotor3;
+  double tempMotor4;
   final double tempMosfet;
+  double tempMosfet2;
+  double tempMosfet3;
+  double tempMosfet4;
   final double dutyCycle;
   final double currentMotor;
+  double currentMotor2;
+  double currentMotor3;
+  double currentMotor4;
   final double currentInput;
+  double currentInput2;
+  double currentInput3;
+  double currentInput4;
   final double speed;
   final double distance;
 
-  TimeSeriesESC(
+  TimeSeriesESC({
       this.time,
       this.voltage,
       this.tempMotor,
+      this.tempMotor2,
+      this.tempMotor3,
+      this.tempMotor4,
       this.tempMosfet,
+      this.tempMosfet2,
+      this.tempMosfet3,
+      this.tempMosfet4,
       this.dutyCycle,
       this.currentMotor,
+      this.currentMotor2,
+      this.currentMotor3,
+      this.currentMotor4,
       this.currentInput,
+      this.currentInput2,
+      this.currentInput3,
+      this.currentInput4,
       this.speed,
       this.distance,
-      );
+  });
 }
 /*
 class CustomCircleSymbolRenderer extends charts.CircleSymbolRenderer {
