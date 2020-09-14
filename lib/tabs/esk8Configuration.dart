@@ -118,10 +118,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     if (escProfile.l_watt_min != 0.0){
       byteData.setFloat32(31, escProfile.l_watt_min);
     } else {
-      byteData.setFloat32(31, widget.escMotorConfiguration.l_watt_max);
+      byteData.setFloat32(31, widget.escMotorConfiguration.l_watt_min);
     }
-    if (escProfile.l_watt_min != 0.0){
-      byteData.setFloat32(35, escProfile.l_watt_min);
+    if (escProfile.l_watt_max != 0.0){
+      byteData.setFloat32(35, escProfile.l_watt_max);
     } else {
       byteData.setFloat32(35, widget.escMotorConfiguration.l_watt_max);
     }

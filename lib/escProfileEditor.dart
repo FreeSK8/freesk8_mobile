@@ -106,16 +106,26 @@ class ESCProfileEditorState extends State<ESCProfileEditor> {
       }
     });
     tecWattsMax.addListener(() { myArguments.profile.l_watt_max = double.tryParse(tecWattsMax.text); });
-    tecWattsMin.addListener(() { myArguments.profile.l_watt_min = double.tryParse(tecWattsMin.text); });
+    tecWattsMin.addListener(() {
+      myArguments.profile.l_watt_min = double.tryParse(tecWattsMin.text);
+      // Watts regenerated must be a negative value
+      if (myArguments.profile.l_watt_min > 0.0) {
+        setState(() {
+          myArguments.profile.l_watt_min = -myArguments.profile.l_watt_min;
+        });
+      }
+    });
 
     // Set text editing controller values to arguments received
     tecProfileName.text = myArguments.profile.profileName;
     tecSpeedLimitFwd.text = myArguments.profile.speedKmh.toString();
     tecSpeedLimitRev.text = myArguments.profile.speedKmhRev.toString();
+    tecSpeedLimitRev.selection = TextSelection.fromPosition(TextPosition(offset: tecSpeedLimitRev.text.length));
     tecCurrentMax.text = (myArguments.profile.l_current_max_scale * 100).toString();
     tecCurrentMin.text = (myArguments.profile.l_current_min_scale * 100).toString();
-    tecWattsMax.text = myArguments.profile.l_watt_max.toString();
-    tecWattsMin.text = myArguments.profile.l_watt_min.toString();
+    tecWattsMax.text = myArguments.profile.l_watt_max.toInt().toString();
+    tecWattsMin.text = myArguments.profile.l_watt_min.toInt().toString();
+    tecWattsMin.selection = TextSelection.fromPosition(TextPosition(offset: tecWattsMin.text.length));
 
     return Scaffold(
       appBar: AppBar(
@@ -188,7 +198,7 @@ class ESCProfileEditorState extends State<ESCProfileEditor> {
 
               TextField(
                   controller: tecWattsMax,
-                  decoration: new InputDecoration(labelText: "Power Limit Maximum Watts (0.0 = No Change)"),
+                  decoration: new InputDecoration(labelText: "Power Limit Maximum Watts (0 = No Change)"),
                   keyboardType: TextInputType.numberWithOptions(decimal: true),
                   inputFormatters: <TextInputFormatter>[
                     NumberTextInputFormatter() //This allows for negative doubles
@@ -196,7 +206,7 @@ class ESCProfileEditorState extends State<ESCProfileEditor> {
               ),
               TextField(
                   controller: tecWattsMin,
-                  decoration: new InputDecoration(labelText: "Power Limit Regen Watts (0.0 = No Change)"),
+                  decoration: new InputDecoration(labelText: "Power Limit Regen Watts (0 = No Change)"),
                   keyboardType: TextInputType.numberWithOptions(decimal: true),
                   inputFormatters: <TextInputFormatter>[
                     NumberTextInputFormatter() //This allows for negative doubles
