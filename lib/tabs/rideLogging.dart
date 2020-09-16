@@ -5,6 +5,7 @@ import 'package:flutter_blue/flutter_blue.dart';
 
 import 'package:freesk8_mobile/databaseAssistant.dart';
 import 'package:freesk8_mobile/fileSyncViewer.dart';
+import 'package:freesk8_mobile/globalUtilities.dart';
 import 'package:freesk8_mobile/rideLogViewer.dart';
 import 'package:freesk8_mobile/userSettings.dart';
 
@@ -475,7 +476,7 @@ class RideLoggingState extends State<RideLogging> {
                   child: Text(widget.isLoggerLogging? "Stop Log" : "Start Log"),
                   onPressed: () async {
                     if (!widget.isRobogotchi) {
-                      return _alertLimitedFunctionality();
+                      return _alertLimitedFunctionality(context);
                     }
                     if (widget.isLoggerLogging) {
                       widget.theTXLoggerCharacteristic.write(utf8.encode("logstop~"));
@@ -486,16 +487,20 @@ class RideLoggingState extends State<RideLogging> {
 
               SizedBox(width: 5,),
               RaisedButton(
-                  child: Text(widget.syncInProgress?"Stop Sync":"Sync All"),
+                  child: Text(widget.syncInProgress?"Stop Sync":"Sync Logs"),
                   onPressed: () async {
                     if (!widget.isRobogotchi) {
-                      return _alertLimitedFunctionality();
+                      return _alertLimitedFunctionality(context);
+                    }
+                    if (widget.isLoggerLogging) {
+                      return genericAlert(context, "Hold up", Text("There is a log file recording. Please stop logging before sync."), "Oh, one sec!");
                     }
                     widget._handleSyncPress(); //Start or stop file sync routine
                   }),
 
 
 
+              /* Most users will not want to leave the log on the robogotchi but some developers might
               SizedBox(width: 5,),
               Column(children: <Widget>[
 
@@ -512,18 +517,9 @@ class RideLoggingState extends State<RideLogging> {
                   widget.onSyncEraseSwitch(newValue);
                 },
               )
-
-
-              /*
-              SizedBox(width: 5,),
-              RaisedButton(
-                  child: Text("set time"),
-                  onPressed: () async {
-                    widget.theTXLoggerCharacteristic.write(utf8.encode("settime ${DateTime.now().toIso8601String().substring(0,21).replaceAll("-", ":")}~"));
-                  }),
-               */
-
+              Disabled use of leaving files on device during Sync */
             ],),
+
 
             SizedBox(height: 5,)
 
@@ -533,31 +529,7 @@ class RideLoggingState extends State<RideLogging> {
     );
   }
 
-  Future<void> _alertLimitedFunctionality() async {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false, // user must tap button!
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Not a Robogotchi'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                Text('This feature only works with the FreeSK8 Robogotchi\n\n'),
-                Text('Please connect to a Robogotchi device.'),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            FlatButton(
-              child: Text('Shucks'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
+  Future<void> _alertLimitedFunctionality(BuildContext context) async {
+    return genericAlert(context, "Not a Robogotchi", Text('This feature only works with the FreeSK8 Robogotchi\n\nPlease connect to a Robogotchi device'), "Shucks");
   }
 }

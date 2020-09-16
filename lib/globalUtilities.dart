@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 Future<void> genericAlert(BuildContext context, String alertTitle, Widget alertBody, String alertButtonLabel) async {
   return showDialog<void>(
     context: context,
-    barrierDismissible: false, // user must tap button!
+    barrierDismissible: false, // user must tap button to dismiss
     builder: (BuildContext context) {
       return AlertDialog(
         title: Text(alertTitle),

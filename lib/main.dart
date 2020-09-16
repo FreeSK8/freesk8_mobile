@@ -363,6 +363,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       // Reset syncInProgress flag
       syncInProgress = false;
 
+      // Reset device is a Robogotchi flag
+      _deviceIsRobogotchi = false;
+
       // Reset current ESC motor configuration
       escMotorConfiguration = new MCCONF();
       _showESCProfiles = false;
@@ -571,7 +574,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static int catBytesTotal = 0;
   static List<FileToSync> fileList = new List<FileToSync>();
   static List<String> fileListToDelete = new List();
-  static bool syncEraseOnComplete = false;
+  static bool syncEraseOnComplete = true;
   static bool isLoggerLogging = false;
   // Handler for RideLogging's sync button
   void _handleBLESyncState(bool startSync) {
@@ -607,17 +610,21 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           if ( deviceHasDisconnected ){
             print("NOTICE: We have connected to the device that we were previously disconnected from");
             // We have reconnected to a device that disconnected
-            setState(() {
-              escRXDataSubscription?.cancel();
-              loggerRXDataSubscription?.cancel();
-              dieBieMSRXDataSubscription?.cancel();
-              prepareConnectedDevice();
+            escRXDataSubscription?.cancel();
+            loggerRXDataSubscription?.cancel();
+            dieBieMSRXDataSubscription?.cancel();
+            Future.delayed(const Duration(milliseconds: 750), () {
+              setState(() {
+                prepareConnectedDevice();
+              });
             });
           } else {
             print("Device has successfully connected.");
-            setState(() {
-              prepareConnectedDevice();
-              deviceIsConnected = true;
+            Future.delayed(const Duration(milliseconds: 750), () {
+              setState(() {
+                prepareConnectedDevice();
+                deviceIsConnected = true;
+              });
             });
           }
 
@@ -1357,7 +1364,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     var aboutChild = AboutListTile(
       child: Text("About"),
       applicationName: "FreeSK8 Mobile",
-      applicationVersion: "v0.4.1",
+      applicationVersion: "v0.4.2",
       applicationIcon: Icon(Icons.info, size: 40,),
       icon: Icon(Icons.info),
       aboutBoxChildren: <Widget>[

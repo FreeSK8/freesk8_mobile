@@ -364,6 +364,7 @@ class RealTimeDataState extends State<RealTimeData> {
     Oscilloscope scopeOne = Oscilloscope(
       backgroundColor: Colors.transparent,
       traceColor: Theme.of(context).accentColor,
+      showYAxis: true,
       yAxisMax: 5.0,
       yAxisMin: -5.0,
       dataSet: motorCurrentGraphPoints,
@@ -432,8 +433,19 @@ class RealTimeDataState extends State<RealTimeData> {
                     Container(width: doubleItemWidth, child: _gaugeEfficiency)
                   ]),
 
+              Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    Center( child:Text("Motor Current")),
+                    Text(widget.telemetryPacket.current_motor.toString()),
+                    SizedBox(width: doubleItemWidth, height: doubleItemWidth - 30, child: scopeOne),
+                  ]),
+            ],),
+
+            Row(children: <Widget>[
+
               Column(  children: <Widget>[
-                Center(child:Text("Mosfet")),
+                Center(child:Text("ESC")),
                 Text(temperatureMosfet),
                 SizedBox(
                     height:doubleItemWidth * 0.75,
@@ -441,17 +453,15 @@ class RealTimeDataState extends State<RealTimeData> {
                     child: Thermometer(
                       value: tempMosfet,
                       minValue: 0,
-                      maxValue: widget.currentSettings.settings.useFahrenheit ? cToF(65) : 65,
+                      maxValue: widget.currentSettings.settings.useFahrenheit ? cToF(80) : 80,
                       label: widget.currentSettings.settings.useFahrenheit ? ThermometerLabel.farenheit():ThermometerLabel.celsius(),
-                      scale: widget.currentSettings.settings.useFahrenheit ? IntervalScaleProvider(20) : IntervalScaleProvider(10),
+                      scale: widget.currentSettings.settings.useFahrenheit ? IntervalScaleProvider(25) : IntervalScaleProvider(15),
                       mercuryColor: Colors.pink,
                       outlineColor: Theme.of(context).textTheme.bodyText1.color,
                     )
                 ),
               ]),
-            ],),
 
-            Row(children: <Widget>[
               Column( children: <Widget>[
                 Center(child:Text("Motor")),
                 Text(temperatureMotor),
@@ -461,26 +471,20 @@ class RealTimeDataState extends State<RealTimeData> {
                     child: Thermometer(
                       value: tempMotor,
                       minValue: 0,
-                      maxValue: widget.currentSettings.settings.useFahrenheit ? cToF(85) : 85,
+                      maxValue: widget.currentSettings.settings.useFahrenheit ? cToF(90) : 90,
                       label: widget.currentSettings.settings.useFahrenheit ? ThermometerLabel.farenheit():ThermometerLabel.celsius(),
-                      scale: widget.currentSettings.settings.useFahrenheit ? IntervalScaleProvider(30) : IntervalScaleProvider(20),
+                      scale: widget.currentSettings.settings.useFahrenheit ? IntervalScaleProvider(25) : IntervalScaleProvider(15),
                       mercuryColor: Colors.pink,
                       outlineColor: Theme.of(context).textTheme.bodyText1.color,
                     )
                 ),
               ]),
 
-              Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: <Widget>[
-                    Center( child:Text("Motor Current")),
-                    Text(widget.telemetryPacket.current_motor.toString()),
-                    SizedBox(width: doubleItemWidth, height: doubleItemWidth, child: scopeOne),
-                  ]),
             ],),
 
 
 
+            SizedBox(height: 10),
 
             Table(children: [
               TableRow(children: [
@@ -531,6 +535,8 @@ class RealTimeDataState extends State<RealTimeData> {
                 Text(" ${widget.telemetryPacket.fault_code.index}")
               ]),
             ],),
+
+            SizedBox(height: 10),
 
             ///FlutterMapWidget
             Container(
