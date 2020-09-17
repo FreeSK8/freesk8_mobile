@@ -716,7 +716,7 @@ class RideLogViewerState extends State<RideLogViewer> {
   }
 
   double _calculateSpeedKph(double eRpm) {
-    double ratio = myArguments.userSettings.settings.pulleyMotorToothCount / myArguments.userSettings.settings.pulleyWheelToothCount;
+    double ratio = 1.0 / myArguments.userSettings.settings.gearRatio;
     int minutesToHour = 60;
     double ratioRpmSpeed = (ratio * minutesToHour * myArguments.userSettings.settings.wheelDiameterMillimeters * pi) / ((myArguments.userSettings.settings.motorPoles / 2) * 1000000);
     double speed = eRpm * ratioRpmSpeed;
@@ -727,7 +727,7 @@ class RideLogViewerState extends State<RideLogViewer> {
     return double.parse((speed).toStringAsFixed(2));
   }
   double _calculateDistanceKm(double eCount) {
-    double ratio = myArguments.userSettings.settings.pulleyMotorToothCount / myArguments.userSettings.settings.pulleyWheelToothCount;
+    double ratio = 1.0 / myArguments.userSettings.settings.gearRatio;
     double ratioPulseDistance = (ratio * myArguments.userSettings.settings.wheelDiameterMillimeters * pi) / ((myArguments.userSettings.settings.motorPoles * 3) * 1000000);
     double distance = eCount * ratioPulseDistance;
     return double.parse((distance).toStringAsFixed(2));

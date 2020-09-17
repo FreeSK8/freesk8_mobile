@@ -67,16 +67,15 @@ class RealTimeDataState extends State<RealTimeData> {
   static double doubleItemWidth = 150; //This changes on widget build
 
   double maxPossibleSpeedKph() {
-    double maxRPM = widget.currentSettings.settings.motorKV * widget.currentSettings.settings.batterySeriesCount * widget.currentSettings.settings.batteryCellMaxVoltage;
-    double ratio = widget.currentSettings.settings.pulleyMotorToothCount / widget.currentSettings.settings.pulleyWheelToothCount;
+    double ratio = 1.0 / widget.currentSettings.settings.gearRatio;
     int minutesToHour = 60;
     double ratioRpmSpeed = (ratio * minutesToHour * widget.currentSettings.settings.wheelDiameterMillimeters * pi) / 1000000;
-    double speed = maxRPM * ratioRpmSpeed * 0.85;
+    double speed = widget.currentSettings.settings.maxERPM * ratioRpmSpeed * 0.2;
     return double.parse((speed).toStringAsFixed(2));
   }
 
   double calculateSpeedKph(double eRpm) {
-    double ratio = widget.currentSettings.settings.pulleyMotorToothCount / widget.currentSettings.settings.pulleyWheelToothCount;
+    double ratio = 1.0 / widget.currentSettings.settings.gearRatio;
     int minutesToHour = 60;
     double ratioRpmSpeed = (ratio * minutesToHour * widget.currentSettings.settings.wheelDiameterMillimeters * pi) / ((widget.currentSettings.settings.motorPoles / 2) * 1000000);
     double speed = eRpm * ratioRpmSpeed;
@@ -84,7 +83,7 @@ class RealTimeDataState extends State<RealTimeData> {
   }
 
   double calculateDistanceKm(double eCount) {
-    double ratio = widget.currentSettings.settings.pulleyMotorToothCount / widget.currentSettings.settings.pulleyWheelToothCount;
+    double ratio = 1.0 / widget.currentSettings.settings.gearRatio;
     double ratioPulseDistance = (ratio * widget.currentSettings.settings.wheelDiameterMillimeters * pi) / ((widget.currentSettings.settings.motorPoles * 3) * 1000000);
     double distance = eCount * ratioPulseDistance;
     return double.parse((distance).toStringAsFixed(2));

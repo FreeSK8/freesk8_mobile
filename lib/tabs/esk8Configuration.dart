@@ -20,14 +20,18 @@ class ESK8Configuration extends StatefulWidget {
     this.showESCProfiles,
     this.theTXCharacteristic,
     this.escMotorConfiguration,
-    this.onFinished
+    this.onExitProfiles,
+    this.onAutoloadESCSettings, //TODO: this might be removable
+    this.showESCConfigurator
   });
   final UserSettings myUserSettings;
   final BluetoothDevice currentDevice;
   final bool showESCProfiles;
   final BluetoothCharacteristic theTXCharacteristic;
   final MCCONF escMotorConfiguration;
-  final ValueChanged<bool> onFinished;
+  final ValueChanged<bool> onExitProfiles;
+  final ValueChanged<bool> onAutoloadESCSettings;
+  final bool showESCConfigurator;
   ESK8ConfigurationState createState() => new ESK8ConfigurationState();
 
   static const String routeName = "/settings";
@@ -50,15 +54,12 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
   }
 
   final tecBoardAlias = TextEditingController();
+
   final tecBatterySeriesCount = TextEditingController();
   final tecBatteryCellmAH = TextEditingController();
-  final tecBatteryCellMinVoltage = TextEditingController();
-  final tecBatteryCellMaxVoltage = TextEditingController();
   final tecWheelDiameterMillimeters = TextEditingController();
-  final tecPulleyMotorToothCount = TextEditingController();
-  final tecPulleyWheelToothCount = TextEditingController();
-  final tecMotorKV = TextEditingController();
   final tecMotorPoles = TextEditingController();
+  final tecGearRatio = TextEditingController();
 
   @override
   void initState() {
@@ -68,15 +69,13 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
     //TODO: these try parse can return null.. then the device will remove null because it's not a number
     tecBoardAlias.addListener(() { widget.myUserSettings.settings.boardAlias = tecBoardAlias.text; });
-    tecBatterySeriesCount.addListener(() { widget.myUserSettings.settings.batterySeriesCount = int.tryParse(tecBatterySeriesCount.text); });
-    tecBatteryCellmAH.addListener(() { widget.myUserSettings.settings.batteryCellmAH = int.tryParse(tecBatteryCellmAH.text); });
-    tecBatteryCellMinVoltage.addListener(() { widget.myUserSettings.settings.batteryCellMinVoltage = double.tryParse(tecBatteryCellMinVoltage.text); });
-    tecBatteryCellMaxVoltage.addListener(() { widget.myUserSettings.settings.batteryCellMaxVoltage = double.tryParse(tecBatteryCellMaxVoltage.text); });
-    tecWheelDiameterMillimeters.addListener(() { widget.myUserSettings.settings.wheelDiameterMillimeters = int.tryParse(tecWheelDiameterMillimeters.text); });
-    tecPulleyMotorToothCount.addListener(() { widget.myUserSettings.settings.pulleyMotorToothCount = int.tryParse(tecPulleyMotorToothCount.text); });
-    tecPulleyWheelToothCount.addListener(() { widget.myUserSettings.settings.pulleyWheelToothCount = int.tryParse(tecPulleyWheelToothCount.text); });
-    tecMotorKV.addListener(() { widget.myUserSettings.settings.motorKV = int.tryParse(tecMotorKV.text); });
-    tecMotorPoles.addListener(() { widget.myUserSettings.settings.motorPoles = int.tryParse(tecMotorPoles.text); });
+
+    // TEC Listeners for ESC Configurator
+    tecBatterySeriesCount.addListener(() { widget.escMotorConfiguration.si_battery_cells = int.tryParse(tecBatterySeriesCount.text); });
+    tecBatteryCellmAH.addListener(() { widget.escMotorConfiguration.si_battery_ah = double.tryParse(tecBatteryCellmAH.text) / 1000.0; });
+    tecWheelDiameterMillimeters.addListener(() { widget.escMotorConfiguration.si_wheel_diameter = double.tryParse(tecWheelDiameterMillimeters.text) / 1000.0; });
+    tecMotorPoles.addListener(() { widget.escMotorConfiguration.si_motor_poles = int.tryParse(tecMotorPoles.text); });
+    tecGearRatio.addListener(() { widget.escMotorConfiguration.si_gear_ratio = double.tryParse(tecGearRatio.text); });
   }
 
 
@@ -85,15 +84,12 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     super.dispose();
 
     tecBoardAlias.dispose();
+
     tecBatterySeriesCount.dispose();
     tecBatteryCellmAH.dispose();
-    tecBatteryCellMinVoltage.dispose();
-    tecBatteryCellMaxVoltage.dispose();
     tecWheelDiameterMillimeters.dispose();
-    tecPulleyMotorToothCount.dispose();
-    tecPulleyWheelToothCount.dispose();
-    tecMotorKV.dispose();
     tecMotorPoles.dispose();
+    tecGearRatio.dispose();
   }
 
   void setMCCONFTemp(bool persistentChange, ESCProfile escProfile) {
@@ -220,8 +216,6 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                 Icon(Icons.exit_to_app),
                               ],),
                             onPressed: () async {
-                              //TODO: compute erpm based on current mcconf
-                              //TODO: set MCCONF
                               setMCCONFTemp(_applyESCProfilePermanently, await ESCHelper.getESCProfile(i));
                             },
                             color: Colors.transparent,
@@ -305,7 +299,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                     RaisedButton(child:
                       Row(mainAxisAlignment: MainAxisAlignment.center , children: <Widget>[Text("Finished"),Icon(Icons.check),],),
                         onPressed: () {
-                          widget.onFinished(false);
+                          widget.onExitProfiles(false);
                         })
                   ],)
                 ],
@@ -316,27 +310,154 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       );
     }
 
+    if (widget.showESCConfigurator) {
+      tecBatterySeriesCount.text = widget.escMotorConfiguration.si_battery_cells.toString();
+      tecBatterySeriesCount.selection = TextSelection.fromPosition(TextPosition(offset: tecBatterySeriesCount.text.length));
+      tecBatteryCellmAH.text = (widget.escMotorConfiguration.si_battery_ah * 1000.0).toInt().toString();
+      tecBatteryCellmAH.selection = TextSelection.fromPosition(TextPosition(offset: tecBatteryCellmAH.text.length));
+      tecWheelDiameterMillimeters.text = (widget.escMotorConfiguration.si_wheel_diameter * 1000.0).toInt().toString();
+      tecWheelDiameterMillimeters.selection = TextSelection.fromPosition(TextPosition(offset: tecWheelDiameterMillimeters.text.length));
+      tecMotorPoles.text = widget.escMotorConfiguration.si_motor_poles.toString();
+      tecMotorPoles.selection = TextSelection.fromPosition(TextPosition(offset: tecMotorPoles.text.length));
+      tecGearRatio.text = widget.escMotorConfiguration.si_gear_ratio.toString();
+      tecGearRatio.selection = TextSelection.fromPosition(TextPosition(offset: tecGearRatio.text.length));
+
+      return Container(
+        //padding: EdgeInsets.all(5),
+          child: Center(
+            child: GestureDetector(
+              onTap: () {
+                // Hide the keyboard
+                FocusScope.of(context).requestFocus(new FocusNode());
+              },
+              child: ListView(
+                padding: EdgeInsets.all(10),
+                children: <Widget>[
+
+                  SizedBox(height: 5,),
+
+                  Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+                    Icon(
+                      Icons.settings_applications,
+                      size: 80.0,
+                      color: Colors.blue,
+                    ),
+                    Text("ESC\nConfigurator", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
+                  ],),
+
+                  SizedBox(height:10),
+                  Center(child:
+                  Column(children: <Widget>[
+                    Text("ESC Information"),
+                    RaisedButton(
+                        child: Text("Request from ESC"),
+                        onPressed: () {
+                          if (widget.currentDevice != null) {
+                            setState(() {
+                              widget.onAutoloadESCSettings(true);
+                              Scaffold
+                                  .of(context)
+                                  .showSnackBar(SnackBar(content: Text("Requesting ESC configuration")));
+                            });
+                          }
+                        })
+                  ],)
+                  ),
+
+                  TextField(
+                      controller: tecBatterySeriesCount,
+                      decoration: new InputDecoration(labelText: "Battery Series Count"),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: <TextInputFormatter>[
+                        WhitelistingTextInputFormatter.digitsOnly
+                      ]
+                  ),
+                  TextField(
+                      controller: tecBatteryCellmAH,
+                      decoration: new InputDecoration(labelText: "Battery Cell mAH"),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: <TextInputFormatter>[
+                        WhitelistingTextInputFormatter.digitsOnly
+                      ]
+                  ),
+                  TextField(
+                    controller: tecWheelDiameterMillimeters,
+                    decoration: new InputDecoration(labelText: "Wheel Diameter in Millimeters"),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: <TextInputFormatter>[
+                      WhitelistingTextInputFormatter.digitsOnly
+                    ],
+                  ),
+                  TextField(
+                      controller: tecMotorPoles,
+                      decoration: new InputDecoration(labelText: "Motor Poles"),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: <TextInputFormatter>[
+                        WhitelistingTextInputFormatter.digitsOnly
+                      ]
+                  ),
+                  TextField(
+                      controller: tecGearRatio,
+                      decoration: new InputDecoration(labelText: "Gear Ratio"),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: <TextInputFormatter>[
+                        WhitelistingTextInputFormatter.digitsOnly
+                      ]
+                  ),
+
+
+                  Text("${widget.escMotorConfiguration.si_battery_type}"),
+
+                  Text("Reverse Motor ${widget.escMotorConfiguration.m_invert_direction}"),
+
+                  Text("${widget.escMotorConfiguration.motor_type}"),
+                  Text("${widget.escMotorConfiguration.sensor_mode}"),
+
+                  Text("l_current_max ${widget.escMotorConfiguration.l_current_max}"),
+                  Text("l_current_min ${widget.escMotorConfiguration.l_current_min}"),
+                  Text("l_in_current_max ${widget.escMotorConfiguration.l_in_current_max}"),
+                  Text("l_in_current_min ${widget.escMotorConfiguration.l_in_current_min}"),
+                  Text("l_abs_current_max ${widget.escMotorConfiguration.l_abs_current_max}"),
+
+                  Text("l_max_erpm ${widget.escMotorConfiguration.l_max_erpm.toInt()}"),
+                  Text("l_min_erpm ${widget.escMotorConfiguration.l_min_erpm.toInt()}"),
+
+                  Text("l_min_vin ${widget.escMotorConfiguration.l_min_vin}"),
+                  Text("l_max_vin ${widget.escMotorConfiguration.l_max_vin}"),
+                  Text("l_battery_cut_start ${widget.escMotorConfiguration.l_battery_cut_start}"),
+                  Text("l_battery_cut_end ${widget.escMotorConfiguration.l_battery_cut_end}"),
+
+                  Text("l_temp_fet_start ${widget.escMotorConfiguration.l_temp_fet_start}"),
+                  Text("l_temp_fet_end ${widget.escMotorConfiguration.l_temp_fet_end}"),
+                  Text("l_temp_motor_start ${widget.escMotorConfiguration.l_temp_motor_start}"),
+                  Text("l_temp_motor_end ${widget.escMotorConfiguration.l_temp_motor_end}"),
+
+                  Text("l_watt_min ${widget.escMotorConfiguration.l_watt_min}"),
+                  Text("l_watt_max ${widget.escMotorConfiguration.l_watt_max}"),
+                  Text("l_current_min_scale ${widget.escMotorConfiguration.l_current_min_scale}"),
+                  Text("l_current_max_scale ${widget.escMotorConfiguration.l_current_max_scale}"),
+
+                  Text("l_duty_start ${widget.escMotorConfiguration.l_duty_start}"),
+                  //Text(" ${widget.escMotorConfiguration.}"),
+
+                  RaisedButton(
+                      child: Text("Save to ESC"),
+                      onPressed: () {
+
+                      }),
+
+                ],
+              ),
+            ),
+          )
+      );
+    }
+
     tecBoardAlias.text = widget.myUserSettings.settings.boardAlias;
     tecBoardAlias.selection = TextSelection.fromPosition(TextPosition(offset: tecBoardAlias.text.length));
     if (widget.myUserSettings.settings.boardAvatarPath != null) _imageBoardAvatar = File(widget.myUserSettings.settings.boardAvatarPath);
-    tecBatterySeriesCount.text = widget.myUserSettings.settings.batterySeriesCount.toString();
-    tecBatterySeriesCount.selection = TextSelection.fromPosition(TextPosition(offset: tecBatterySeriesCount.text.length));
-    tecBatteryCellmAH.text = widget.myUserSettings.settings.batteryCellmAH.toString();
-    tecBatteryCellmAH.selection = TextSelection.fromPosition(TextPosition(offset: tecBatteryCellmAH.text.length));
-    tecBatteryCellMinVoltage.text = widget.myUserSettings.settings.batteryCellMinVoltage.toString();
-    tecBatteryCellMinVoltage.selection = TextSelection.fromPosition(TextPosition(offset: tecBatteryCellMinVoltage.text.length));
-    tecBatteryCellMaxVoltage.text = widget.myUserSettings.settings.batteryCellMaxVoltage.toString();
-    tecBatteryCellMaxVoltage.selection = TextSelection.fromPosition(TextPosition(offset: tecBatteryCellMaxVoltage.text.length));
-    tecWheelDiameterMillimeters.text = widget.myUserSettings.settings.wheelDiameterMillimeters.toString();
-    tecWheelDiameterMillimeters.selection = TextSelection.fromPosition(TextPosition(offset: tecWheelDiameterMillimeters.text.length));
-    tecPulleyMotorToothCount.text = widget.myUserSettings.settings.pulleyMotorToothCount.toString();
-    tecPulleyMotorToothCount.selection = TextSelection.fromPosition(TextPosition(offset: tecPulleyMotorToothCount.text.length));
-    tecPulleyWheelToothCount.text = widget.myUserSettings.settings.pulleyWheelToothCount.toString();
-    tecPulleyWheelToothCount.selection = TextSelection.fromPosition(TextPosition(offset: tecPulleyWheelToothCount.text.length));
-    tecMotorKV.text = widget.myUserSettings.settings.motorKV.toString();
-    tecMotorKV.selection = TextSelection.fromPosition(TextPosition(offset: tecMotorKV.text.length));
-    tecMotorPoles.text = widget.myUserSettings.settings.motorPoles.toString();
-    tecMotorPoles.selection = TextSelection.fromPosition(TextPosition(offset: tecMotorPoles.text.length));
+
+
 
     return Container(
       //padding: EdgeInsets.all(5),
@@ -349,12 +470,22 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
             child: ListView(
               padding: EdgeInsets.all(10),
               children: <Widget>[
-                Icon(
-                  Icons.settings,
-                  size: 160.0,
-                  color: Colors.blue,
-                ),
-                Center(child:Text("Configuration of things")),
+
+                SizedBox(height: 5,),
+
+
+
+
+
+                Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+                  Icon(
+                    Icons.settings,
+                    size: 80.0,
+                    color: Colors.blue,
+                  ),
+                  Text("Application\nConfiguration", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
+                ],),
+
 
                 SwitchListTile(
                   title: Text("Display imperial distances"),
@@ -369,146 +500,74 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                   secondary: const Icon(Icons.wb_sunny),
                 ),
 
-
-                Column(
-                    children: <Widget>[
-                      Center(child: CircleAvatar(
-                          backgroundImage: _imageBoardAvatar != null ? FileImage(_imageBoardAvatar) : AssetImage('assets/FreeSK8_Mobile.jpg'),
-                          radius: 100,
-                          backgroundColor: Colors.white)
-                      ),
-                      SizedBox(
-                        width: 125,
-                        child:  RaisedButton(
-                            child:
-                              Row(mainAxisAlignment: MainAxisAlignment.center , children: <Widget>[Text("Change "),Icon(Icons.camera_alt),],),
-
-                            onPressed: () {
-                              getImage();
-                            }),
-                      )
-                    ]
-
+                TextField(
+                  controller: tecBoardAlias,
+                  decoration: new InputDecoration(labelText: "Board Name / Alias"),
+                  keyboardType: TextInputType.text,
                 ),
 
+                SizedBox(height: 15),
+                Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+                  Column(children: <Widget>[
+                    Text("Board Avatar"),
+                    SizedBox(
+                      width: 125,
+                      child:  RaisedButton(
+                          child:
+                          Row(mainAxisAlignment: MainAxisAlignment.center , children: <Widget>[Text("Change "),Icon(Icons.camera_alt),],),
+
+                          onPressed: () {
+                            getImage();
+                          }),
+                    )
+                  ],),
+
+                  SizedBox(width: 15),
+                  CircleAvatar(
+                      backgroundImage: _imageBoardAvatar != null ? FileImage(_imageBoardAvatar) : AssetImage('assets/FreeSK8_Mobile.jpg'),
+                      radius: 100,
+                      backgroundColor: Colors.white)
+                ]),
+
+                SizedBox(height:10),
+                Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+                  RaisedButton(
+                      child: Text("Revert Settings"),
+                      onPressed: () {
+                        setState(() {
+                          widget.myUserSettings.reloadSettings();
+                          Scaffold
+                              .of(context)
+                              .showSnackBar(SnackBar(content: Text('Application settings loaded from last state')));
+                        });
+                      }),
+
+                  SizedBox(width:15),
+
+                  RaisedButton(
+                      child: Text("Save Settings"),
+                      onPressed: () async {
+                        FocusScope.of(context).requestFocus(new FocusNode()); //Hide keyboard
+                        try {
+                          if (tecBoardAlias.text.length < 1) tecBoardAlias.text = "Unnamed";
+                          widget.myUserSettings.settings.boardAlias = tecBoardAlias.text;
+                          widget.myUserSettings.settings.boardAvatarPath = _imageBoardAvatar != null ? _imageBoardAvatar.path : null;
+                          await widget.myUserSettings.saveSettings();
+
+                        } catch (e) {
+                          print("Save Settings Exception $e");
+                          Scaffold
+                              .of(context)
+                              .showSnackBar(SnackBar(content: Text('Sorry friend. Save settings failed =(')));
+                        }
+                        Scaffold
+                            .of(context)
+                            .showSnackBar(SnackBar(content: Text('Application settings saved')));
+                      }),
 
 
-                TextField(
-                    controller: tecBoardAlias,
-                    decoration: new InputDecoration(labelText: "Board Name / Alias"),
-                    keyboardType: TextInputType.text,
-                ),
-                TextField(
-                  controller: tecBatterySeriesCount,
-                  decoration: new InputDecoration(labelText: "Battery Series Count"),
-                  keyboardType: TextInputType.number,
-                  inputFormatters: <TextInputFormatter>[
-                    WhitelistingTextInputFormatter.digitsOnly
-                  ]
-                ),
-                TextField(
-                    controller: tecBatteryCellmAH,
-                    decoration: new InputDecoration(labelText: "Battery Cell mAH"),
-                    keyboardType: TextInputType.number,
-                    inputFormatters: <TextInputFormatter>[
-                      WhitelistingTextInputFormatter.digitsOnly
-                    ]
-                ),
-                TextField(
-                    controller: tecBatteryCellMinVoltage,
-                    decoration: new InputDecoration(labelText: "Battery Cell Minimum Voltage"),
-                    keyboardType: TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: <TextInputFormatter>[
-                      WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
-                    ]
-                ),
-                TextField(
-                    controller: tecBatteryCellMaxVoltage,
-                    decoration: new InputDecoration(labelText: "Battery Cell Maximum Voltage"),
-                    keyboardType: TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: <TextInputFormatter>[
-                      WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
-                    ]
-                ),
-                TextField(
-                  controller: tecWheelDiameterMillimeters,
-                  decoration: new InputDecoration(labelText: "Wheel Diameter in Millimeters"),
-                  keyboardType: TextInputType.number,
-                  inputFormatters: <TextInputFormatter>[
-                    WhitelistingTextInputFormatter.digitsOnly
-                  ],
-              ),
-                TextField(
-                  controller: tecPulleyMotorToothCount,
-                  decoration: new InputDecoration(labelText: "Motor Pulley Tooth Count"),
-                  keyboardType: TextInputType.number,
-                  inputFormatters: <TextInputFormatter>[
-                    WhitelistingTextInputFormatter.digitsOnly
-                  ],
-              ),
-                TextField(
-                  controller: tecPulleyWheelToothCount,
-                  decoration: new InputDecoration(labelText: "Wheel Pulley Tooth Count"),
-                  keyboardType: TextInputType.number,
-                  inputFormatters: <TextInputFormatter>[
-                    WhitelistingTextInputFormatter.digitsOnly
-                  ],
-              ),
-                TextField(
-                    controller: tecMotorKV,
-                    decoration: new InputDecoration(labelText: "Motor kV"),
-                    keyboardType: TextInputType.number,
-                    inputFormatters: <TextInputFormatter>[
-                      WhitelistingTextInputFormatter.digitsOnly
-                    ]
-                ),
-                TextField(
-                    controller: tecMotorPoles,
-                    decoration: new InputDecoration(labelText: "Motor Poles"),
-                    keyboardType: TextInputType.number,
-                    inputFormatters: <TextInputFormatter>[
-                      WhitelistingTextInputFormatter.digitsOnly
-                    ]
-                ),
-                RaisedButton(
-                  child: Text("Save Settings"),
-                  onPressed: () async {
-                    FocusScope.of(context).requestFocus(new FocusNode()); //Hide keyboard
-                    try {
-                      if (tecBoardAlias.text.length < 1) tecBoardAlias.text = "Unnamed";
-                      widget.myUserSettings.settings.boardAlias = tecBoardAlias.text;
-                      widget.myUserSettings.settings.boardAvatarPath = _imageBoardAvatar != null ? _imageBoardAvatar.path : null;
-                      widget.myUserSettings.settings.batterySeriesCount = int.parse(tecBatterySeriesCount.text);
-                      widget.myUserSettings.settings.batteryCellmAH = int.parse(tecBatteryCellmAH.text);
-                      widget.myUserSettings.settings.batteryCellMinVoltage = double.parse(tecBatteryCellMinVoltage.text);
-                      widget.myUserSettings.settings.batteryCellMaxVoltage = double.parse(tecBatteryCellMaxVoltage.text);
-                      widget.myUserSettings.settings.wheelDiameterMillimeters = int.parse(tecWheelDiameterMillimeters.text);
-                      widget.myUserSettings.settings.pulleyMotorToothCount = int.parse(tecPulleyMotorToothCount.text);
-                      widget.myUserSettings.settings.pulleyWheelToothCount = int.parse(tecPulleyWheelToothCount.text);
-                      widget.myUserSettings.settings.motorKV = int.parse(tecMotorKV.text);
-                      widget.myUserSettings.settings.motorPoles = int.parse(tecMotorPoles.text);
-                      await widget.myUserSettings.saveSettings();
+                ],),
 
-                    } catch (e) {
-                      print("Save Settings Exception $e");
-                      Scaffold
-                          .of(context)
-                          .showSnackBar(SnackBar(content: Text('Sorry friend. Save settings failed =(')));
-                    }
-                    Scaffold
-                        .of(context)
-                        .showSnackBar(SnackBar(content: Text('Settings saved')));
-                  }),
-                RaisedButton(
-                  child: Text("Reload Settings"),
-                  onPressed: () {
-                    setState(() {
-                      widget.myUserSettings.reloadSettings();
-                      Scaffold
-                          .of(context)
-                          .showSnackBar(SnackBar(content: Text('Settings loaded from last state')));
-                    });
-                  }),
             ],
           ),
         ),

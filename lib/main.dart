@@ -67,6 +67,7 @@ void main() {
         RobogotchiCfgEditor.routeName: (BuildContext context) => RobogotchiCfgEditor()
       },
       theme: ThemeData(
+        //TODO: Select satisfying colors for the light theme
         brightness: Brightness.light,
         primaryColor: Colors.pink,
         accentColor: Colors.pinkAccent,
@@ -75,6 +76,7 @@ void main() {
       darkTheme: ThemeData(
         brightness: Brightness.dark,
       ),
+      themeMode: ThemeMode.dark, //TODO: Always using the dark mode regardless of system preference
     )
   );
 }
@@ -281,11 +283,34 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     );
   }
 
+  void requestMCCONF() {
+    var byteData = new ByteData(6); //<start><payloadLen><packetID><crc1><crc2><end>
+    byteData.setUint8(0, 0x02);
+    byteData.setUint8(1, 0x01);
+    byteData.setUint8(2, COMM_PACKET_ID.COMM_GET_MCCONF.index);
+    int checksum = BLEHelper.crc16(byteData.buffer.asUint8List(), 2, 1);
+    byteData.setUint16(3, checksum);
+    byteData.setUint8(5, 0x03); //End of packet
+
+    the_tx_characteristic.write(byteData.buffer.asUint8List()).then((value){
+      print('COMM_GET_MCCONF requested');
+    }).catchError((e){
+      print("COMM_GET_MCCONF: Exception: $e");
+    });
+  }
+
   void _handleESCProfileFinished(bool newValue) {
     setState(() {
       _showESCProfiles = newValue;
     });
   }
+  void _handleAutoloadESCSettings(bool newValue) {
+    if(_connectedDevice != null) {
+      _autoloadESCSettings = true;
+      requestMCCONF();
+    }
+  }
+
   _addDeviceToList(final BluetoothDevice device) {
     if (!widget.devicesList.contains(device)) {
       setState(() {
@@ -558,7 +583,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static ESCTelemetry telemetryPacket = new ESCTelemetry();
   static DieBieMSTelemetry dieBieMSTelemetry = new DieBieMSTelemetry();
   static bool _showDieBieMS = false;
+  static bool _showESCConfigurator = false;
   static bool _showESCProfiles = false;
+  static bool _autoloadESCSettings = false; // Controls the population of ESC Information from MCCONF response
   static Timer telemetryTimer;
   static int bleTXErrorCount = 0;
   static bool _deviceIsRobogotchi = false;
@@ -1079,21 +1106,47 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           print("COMM_SET_MCCONF_TEMP_SETUP received! This is a good sign.. packetID(${COMM_PACKET_ID.COMM_SET_MCCONF_TEMP_SETUP.index})");
           //TODO: analyze packet before assuming success..
           _alertProfileSet();
+          _handleAutoloadESCSettings(true); // Reload ESC settings from applied configuration
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_GET_MCCONF.index) {
           ///ESC Motor Configuration
           escMotorConfiguration = escHelper.processMCCONF(bleHelper.payload); //bleHelper.payload.sublist(0,bleHelper.lenPayload);
 
-          //TODO: remove debug testing
-          ByteData serializedMcconf = escHelper.serializeMCCONF(escMotorConfiguration);
-          MCCONF refriedMcconf = escHelper.processMCCONF(serializedMcconf.buffer.asUint8List());
-          print("Oof.. MCCONF: $escMotorConfiguration");
+          //NOTE: for debug & testing
+          //ByteData serializedMcconf = escHelper.serializeMCCONF(escMotorConfiguration);
+          //MCCONF refriedMcconf = escHelper.processMCCONF(serializedMcconf.buffer.asUint8List());
+          //print("Break for MCCONF: $escMotorConfiguration");
 
-          //TODO: handle MCCONF data
+          // Check flag to show ESC Profiles when MCCONF data is received
           if (_showESCProfiles) {
             setState(() {
               controller.index = 2; // Navigate user to Configuration tab
             });
+          }
+
+          // Check flag to update application configuration with ESC motor configuration
+          if (_autoloadESCSettings) {
+            print("MCCONF is updating application settings specific to this board");
+            _autoloadESCSettings = false;
+            widget.myUserSettings.settings.batterySeriesCount = escMotorConfiguration.si_battery_cells;
+            widget.myUserSettings.settings.batteryCellmAH = (escMotorConfiguration.si_battery_ah * 1000).toInt();
+            switch (escMotorConfiguration.si_battery_type) {
+              case BATTERY_TYPE.BATTERY_TYPE_LIIRON_2_6__3_6:
+                widget.myUserSettings.settings.batteryCellMinVoltage = 2.6;
+                widget.myUserSettings.settings.batteryCellMaxVoltage = 3.6;
+                break;
+              default:
+                widget.myUserSettings.settings.batteryCellMinVoltage = 3.0;
+                widget.myUserSettings.settings.batteryCellMaxVoltage = 4.2;
+                break;
+            }
+
+            widget.myUserSettings.settings.wheelDiameterMillimeters = (escMotorConfiguration.si_wheel_diameter * 1000).toInt();
+            widget.myUserSettings.settings.motorPoles = escMotorConfiguration.si_motor_poles;
+            widget.myUserSettings.settings.maxERPM = escMotorConfiguration.l_max_erpm;
+            widget.myUserSettings.settings.gearRatio = escMotorConfiguration.si_gear_ratio;
+
+            widget.myUserSettings.saveSettings();
           }
 
           bleHelper.resetPacket();
@@ -1107,9 +1160,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_GET_APPCONF.index) {
-          print("WARNING: Whoa now. We received this horrid APPCONF data. Whatchu want to do?");
+          print("WARNING: Whoa now. We received this APPCONF data. Whatchu want to do?");
           //TODO: handle APPCONF data
-          print("Oof APPCONF: ${bleHelper.payload.sublist(0,bleHelper.lenPayload)}");
+          print("Debug APPCONF: ${bleHelper.payload.sublist(0,bleHelper.lenPayload)}");
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_DETECT_APPLY_ALL_FOC.index) {
           print("COMM_DETECT_APPLY_ALL_FOC packet received");
@@ -1180,11 +1233,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       }
     });
 
+    //TODO: begin an initMessageSequencer to handle all of the desired communication on connection
+    // Set the Robogotchi datetime
     if (foundTXLogger) {
       await theTXLoggerCharacteristic.write(utf8.encode("settime ${DateTime.now().toIso8601String().substring(0,21).replaceAll("-", ":")}~"));
     }
 
-    //Request firmware packet once connected
+    // Request firmware packet once connected
     await the_tx_characteristic.write([0x02, 0x01, 0x00, 0x00, 0x00, 0x03]);
 
     // Request the Robogotchi firmware version once connected
@@ -1210,6 +1265,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
     // Start a new log file
     FileManager.clearLogFile();
+
+    // Request the ESC configuration so the user doesn't have to enter settings
+    _handleAutoloadESCSettings(true);
 
     // Check if this is a known device when we connected/loaded it's settings
     if (!isConnectedDeviceKnown) {
@@ -1408,6 +1466,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       //getNavItem(Icons.home, "Home", "/"),
       //getNavItem(Icons.account_box, "RT", Second.routeName),
       aboutChild,
+
+      /* TODO: Moving these to Board Configuration
       getNavItem(Icons.donut_large, "FOC Wizard", ConfigureESC.routeName, FOCWizardArguments(the_tx_characteristic, bleHelper, escMotorConfigurationDefaults), true),
 
       ListTile(
@@ -1444,6 +1504,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           }
         },
       ),
+      */
 
       ListTile(
         leading: Icon(Icons.devices),
@@ -1562,20 +1623,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             // Set the flag to show ESC profiles. Display when MCCONF is returned
             _showESCProfiles = true;
 
-            var byteData = new ByteData(6); //<start><payloadLen><packetID><crc1><crc2><end>
-            byteData.setUint8(0, 0x02);
-            byteData.setUint8(1, 0x01);
-            byteData.setUint8(2, COMM_PACKET_ID.COMM_GET_MCCONF.index);
-            int checksum = BLEHelper.crc16(byteData.buffer.asUint8List(), 2, 1);
-            byteData.setUint16(3, checksum);
-            byteData.setUint8(5, 0x03); //End of packet
-
-            the_tx_characteristic.write(byteData.buffer.asUint8List()).then((value){
-              print('COMM_GET_MCCONF requested');
-              Navigator.pop(context); // Close the drawer
-            }).catchError((e){
-              print("COMM_GET_MCCONF: Exception: $e");
-            });
+            requestMCCONF();
+            Navigator.pop(context); // Close the drawer
           } else {
             showDialog(
               context: context,
@@ -1587,6 +1636,27 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               },
             );
           }
+        },
+      ),
+
+      ListTile(
+        leading: Icon(Icons.settings_applications),
+        title: Text(_showESCConfigurator ? "Hide ESC Configurator" : "Show ESC Configurator"),
+        onTap: () async {
+          if(_showESCConfigurator) {
+            setState(() {
+              _showESCConfigurator = false;
+            });
+            print("ESC Configurator Hidden");
+          } else {
+            setState(() {
+              _showESCConfigurator = true;
+              controller.index = 2;
+            });
+            print("ESC Configurator Displayed");
+          }
+          // Close the menu
+          Navigator.pop(context);
         },
       ),
     ];
@@ -1748,7 +1818,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             showESCProfiles: _showESCProfiles,
             theTXCharacteristic: the_tx_characteristic,
             escMotorConfiguration: escMotorConfiguration,
-            onFinished: _handleESCProfileFinished,
+            onExitProfiles: _handleESCProfileFinished,
+            onAutoloadESCSettings: _handleAutoloadESCSettings,
+            showESCConfigurator: _showESCConfigurator,
           ),
           RideLogging(
             myUserSettings: widget.myUserSettings,

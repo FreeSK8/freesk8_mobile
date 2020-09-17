@@ -17,11 +17,9 @@ class UserSettingsStructure {
   double batteryCellMaxVoltage;
 
   int wheelDiameterMillimeters;
-  int pulleyMotorToothCount;
-  int pulleyWheelToothCount;
-
-  int motorKV;
   int motorPoles;
+  double maxERPM;
+  double gearRatio;
 }
 
 
@@ -83,11 +81,10 @@ class UserSettings {
     settings.batteryCellMaxVoltage = prefs.getDouble('$currentDeviceID batteryCellMaxVoltage') ?? 4.2;
 
     settings.wheelDiameterMillimeters = prefs.getInt('$currentDeviceID wheelDiameterMillimeters') ?? 110;
-    settings.pulleyMotorToothCount = prefs.getInt('$currentDeviceID pulleyMotorToothCount') ?? 16;
-    settings.pulleyWheelToothCount = prefs.getInt('$currentDeviceID pulleyWheelToothCount') ?? 40;
-
-    settings.motorKV = prefs.getInt('$currentDeviceID motorKV') ?? 190;
     settings.motorPoles = prefs.getInt('$currentDeviceID motorPoles') ?? 14;
+
+    settings.maxERPM = prefs.getDouble('$currentDeviceID maxERPM') ?? 8800; //TODO: what is a good default maxERPM?
+    settings.gearRatio = prefs.getDouble('$currentDeviceID gearRatio') ?? 4.0;
   }
 
   Future<void> saveSettings() async {
@@ -109,11 +106,10 @@ class UserSettings {
     await prefs.setDouble('$currentDeviceID batteryCellMaxVoltage', settings.batteryCellMaxVoltage);
 
     await prefs.setInt('$currentDeviceID wheelDiameterMillimeters', settings.wheelDiameterMillimeters);
-    await prefs.setInt('$currentDeviceID pulleyMotorToothCount', settings.pulleyMotorToothCount);
-    await prefs.setInt('$currentDeviceID pulleyWheelToothCount', settings.pulleyWheelToothCount);
-
-    await prefs.setInt('$currentDeviceID motorKV', settings.motorKV);
     await prefs.setInt('$currentDeviceID motorPoles', settings.motorPoles);
+
+    await prefs.setDouble('$currentDeviceID maxERPM', settings.maxERPM);
+    await prefs.setDouble('$currentDeviceID gearRatio', settings.gearRatio);
 
     if ( !isKnownDevice() ) {
       knownDevices.add(currentDeviceID);
