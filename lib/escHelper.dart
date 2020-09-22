@@ -674,11 +674,150 @@ class ESCHelper {
 
     return mcconfData;
   }
-
+/* mSerializeOrder	<139 items>	QStringList
+		[0]	"pwm_mode"	QString
+		[1]	"comm_mode"	QString
+		[2]	"motor_type"	QString
+		[3]	"sensor_mode"	QString
+		[4]	"l_current_max"	QString
+		[5]	"l_current_min"	QString
+		[6]	"l_in_current_max"	QString
+		[7]	"l_in_current_min"	QString
+		[8]	"l_abs_current_max"	QString
+		[9]	"l_min_erpm"	QString
+		[10]	"l_max_erpm"	QString
+		[11]	"l_erpm_start"	QString
+		[12]	"l_max_erpm_fbrake"	QString
+		[13]	"l_max_erpm_fbrake_cc"	QString
+		[14]	"l_min_vin"	QString
+		[15]	"l_max_vin"	QString
+		[16]	"l_battery_cut_start"	QString
+		[17]	"l_battery_cut_end"	QString
+		[18]	"l_slow_abs_current"	QString
+		[19]	"l_temp_fet_start"	QString
+		[20]	"l_temp_fet_end"	QString
+		[21]	"l_temp_motor_start"	QString
+		[22]	"l_temp_motor_end"	QString
+		[23]	"l_temp_accel_dec"	QString
+		[24]	"l_min_duty"	QString
+		[25]	"l_max_duty"	QString
+		[26]	"l_watt_max"	QString
+		[27]	"l_watt_min"	QString
+		[28]	"l_current_max_scale"	QString
+		[29]	"l_current_min_scale"	QString
+		[30]	"l_duty_start"	QString
+		[31]	"sl_min_erpm"	QString
+		[32]	"sl_min_erpm_cycle_int_limit"	QString
+		[33]	"sl_max_fullbreak_current_dir_change"	QString
+		[34]	"sl_cycle_int_limit"	QString
+		[35]	"sl_phase_advance_at_br"	QString
+		[36]	"sl_cycle_int_rpm_br"	QString
+		[37]	"sl_bemf_coupling_k"	QString
+		[38]	"hall_table__0"	QString
+		[39]	"hall_table__1"	QString
+		[40]	"hall_table__2"	QString
+		[41]	"hall_table__3"	QString
+		[42]	"hall_table__4"	QString
+		[43]	"hall_table__5"	QString
+		[44]	"hall_table__6"	QString
+		[45]	"hall_table__7"	QString
+		[46]	"hall_sl_erpm"	QString
+		[47]	"foc_current_kp"	QString
+		[48]	"foc_current_ki"	QString
+		[49]	"foc_f_sw"	QString
+		[50]	"foc_dt_us"	QString
+		[51]	"foc_encoder_inverted"	QString
+		[52]	"foc_encoder_offset"	QString
+		[53]	"foc_encoder_ratio"	QString
+		[54]	"foc_encoder_sin_gain"	QString
+		[55]	"foc_encoder_cos_gain"	QString
+		[56]	"foc_encoder_sin_offset"	QString
+		[57]	"foc_encoder_cos_offset"	QString
+		[58]	"foc_encoder_sincos_filter_constant"	QString
+		[59]	"foc_sensor_mode"	QString
+		[60]	"foc_pll_kp"	QString
+		[61]	"foc_pll_ki"	QString
+		[62]	"foc_motor_l"	QString
+		[63]	"foc_motor_r"	QString
+		[64]	"foc_motor_flux_linkage"	QString
+		[65]	"foc_observer_gain"	QString
+		[66]	"foc_observer_gain_slow"	QString
+		[67]	"foc_duty_dowmramp_kp"	QString
+		[68]	"foc_duty_dowmramp_ki"	QString
+		[69]	"foc_openloop_rpm"	QString
+		[70]	"foc_sl_openloop_hyst"	QString
+		[71]	"foc_sl_openloop_time"	QString
+		[72]	"foc_sl_d_current_duty"	QString
+		[73]	"foc_sl_d_current_factor"	QString
+		[74]	"foc_hall_table__0"	QString
+		[75]	"foc_hall_table__1"	QString
+		[76]	"foc_hall_table__2"	QString
+		[77]	"foc_hall_table__3"	QString
+		[78]	"foc_hall_table__4"	QString
+		[79]	"foc_hall_table__5"	QString
+		[80]	"foc_hall_table__6"	QString
+		[81]	"foc_hall_table__7"	QString
+		[82]	"foc_sl_erpm"	QString
+		[83]	"foc_sample_v0_v7"	QString
+		[84]	"foc_sample_high_current"	QString
+		[85]	"foc_sat_comp"	QString
+		[86]	"foc_temp_comp"	QString
+		[87]	"foc_temp_comp_base_temp"	QString
+		[88]	"foc_current_filter_const"	QString
+		[89]	"foc_cc_decoupling"	QString
+		[90]	"foc_observer_type"	QString
+		[91]	"foc_hfi_voltage_start"	QString
+		[92]	"foc_hfi_voltage_run"	QString
+		[93]	"foc_hfi_voltage_max"	QString
+		[94]	"foc_sl_erpm_hfi"	QString
+		[95]	"foc_hfi_start_samples"	QString
+		[96]	"foc_hfi_obs_ovr_sec"	QString
+		[97]	"foc_hfi_samples"	QString
+		[98]	"gpd_buffer_notify_left"	QString
+		[99]	"gpd_buffer_interpol"	QString
+		[100]	"gpd_current_filter_const"	QString
+		[101]	"gpd_current_kp"	QString
+		[102]	"gpd_current_ki"	QString
+		[103]	"s_pid_kp"	QString
+		[104]	"s_pid_ki"	QString
+		[105]	"s_pid_kd"	QString
+		[106]	"s_pid_kd_filter"	QString
+		[107]	"s_pid_min_erpm"	QString
+		[108]	"s_pid_allow_braking"	QString
+		[109]	"p_pid_kp"	QString
+		[110]	"p_pid_ki"	QString
+		[111]	"p_pid_kd"	QString
+		[112]	"p_pid_kd_filter"	QString
+		[113]	"p_pid_ang_div"	QString
+		[114]	"cc_startup_boost_duty"	QString
+		[115]	"cc_min_current"	QString
+		[116]	"cc_gain"	QString
+		[117]	"cc_ramp_step_max"	QString
+		[118]	"m_fault_stop_time_ms"	QString
+		[119]	"m_duty_ramp_step"	QString
+		[120]	"m_current_backoff_gain"	QString
+		[121]	"m_encoder_counts"	QString
+		[122]	"m_sensor_port_mode"	QString
+		[123]	"m_invert_direction"	QString
+		[124]	"m_drv8301_oc_mode"	QString
+		[125]	"m_drv8301_oc_adj"	QString
+		[126]	"m_bldc_f_sw_min"	QString
+		[127]	"m_bldc_f_sw_max"	QString
+		[128]	"m_dc_f_sw"	QString
+		[129]	"m_ntc_motor_beta"	QString
+		[130]	"m_out_aux_mode"	QString
+		[131]	"m_motor_temp_sens_type"	QString
+		[132]	"m_ptc_motor_coeff"	QString
+		[133]	"si_motor_poles"	QString
+		[134]	"si_gear_ratio"	QString
+		[135]	"si_wheel_diameter"	QString
+		[136]	"si_battery_type"	QString
+		[137]	"si_battery_cells"	QString
+		[138]	"si_battery_ah"	QString
+ */
   ByteData serializeMCCONF(MCCONF conf) {
     int index = 0;
-    var response = new ByteData(512);
-    response.setUint8(index++, COMM_PACKET_ID.COMM_GET_MCCONF.index); //TODO: this is here for the processMCCONF method
+    ByteData response = new ByteData(437); //TODO: ByteData is not dynamic, setting exact size
     response.setUint32(index, MCCONF_SIGNATURE); index += 4;
 
     response.setUint8(index++, conf.pwm_mode.index);
@@ -821,6 +960,7 @@ class ESCHelper {
     response.setUint8(index++, conf.si_battery_cells);
     response.setFloat32(index, conf.si_battery_ah); index += 4;
 
+    print("serializeMCCONF final index is $index");
     return response;
   }
 

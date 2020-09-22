@@ -393,7 +393,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       // Reset current ESC motor configuration
       escMotorConfiguration = new MCCONF();
+
+      // Reset displaying ESC profiles flag
       _showESCProfiles = false;
+
+      // Reset displaying ESC Configurator flag
+      _showESCConfigurator = false;
 
       //Reset Robogotchi version
       robogotchiVersion = null;
@@ -1102,9 +1107,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               }
           }
           bleHelper.resetPacket();
+        } else if (packetID == COMM_PACKET_ID.COMM_SET_MCCONF.index ) {
+          print("HUZZAH!");
+          bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_SET_MCCONF_TEMP_SETUP.index ) {
           print("COMM_SET_MCCONF_TEMP_SETUP received! This is a good sign.. packetID(${COMM_PACKET_ID.COMM_SET_MCCONF_TEMP_SETUP.index})");
-          //TODO: analyze packet before assuming success..
+          //TODO: analyze packet before assuming success?
           _alertProfileSet();
           _handleAutoloadESCSettings(true); // Reload ESC settings from applied configuration
           bleHelper.resetPacket();
@@ -1112,6 +1120,18 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           ///ESC Motor Configuration
           escMotorConfiguration = escHelper.processMCCONF(bleHelper.payload); //bleHelper.payload.sublist(0,bleHelper.lenPayload);
 
+          if (escMotorConfiguration.si_battery_ah == null) {
+            // Show dialog
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text("Incompatible ESC"),
+                  content: Text("The selected ESC did not return a valid Motor Configuration"),
+                );
+              },
+            );
+          }
           //NOTE: for debug & testing
           //ByteData serializedMcconf = escHelper.serializeMCCONF(escMotorConfiguration);
           //MCCONF refriedMcconf = escHelper.processMCCONF(serializedMcconf.buffer.asUint8List());
@@ -1125,7 +1145,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           }
 
           // Check flag to update application configuration with ESC motor configuration
-          if (_autoloadESCSettings) {
+          else if (_autoloadESCSettings) {
             print("MCCONF is updating application settings specific to this board");
             _autoloadESCSettings = false;
             widget.myUserSettings.settings.batterySeriesCount = escMotorConfiguration.si_battery_cells;
@@ -1147,6 +1167,14 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             widget.myUserSettings.settings.gearRatio = escMotorConfiguration.si_gear_ratio;
 
             widget.myUserSettings.saveSettings();
+
+            setState(() {
+              // Update UI for ESC Configurator
+            });
+          } else {
+            setState(() {
+              // Update UI for ESC Configurator
+            });
           }
 
           bleHelper.resetPacket();
@@ -1813,14 +1841,15 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             dieBieMSTelemetry: dieBieMSTelemetry,
           ),
           ESK8Configuration(
-            myUserSettings: widget.myUserSettings,
-            currentDevice: _connectedDevice,
-            showESCProfiles: _showESCProfiles,
-            theTXCharacteristic: the_tx_characteristic,
-            escMotorConfiguration: escMotorConfiguration,
-            onExitProfiles: _handleESCProfileFinished,
-            onAutoloadESCSettings: _handleAutoloadESCSettings,
-            showESCConfigurator: _showESCConfigurator,
+              myUserSettings: widget.myUserSettings,
+              currentDevice: _connectedDevice,
+              showESCProfiles: _showESCProfiles,
+              theTXCharacteristic: the_tx_characteristic,
+              escMotorConfiguration: escMotorConfiguration,
+              onExitProfiles: _handleESCProfileFinished,
+              onAutoloadESCSettings: _handleAutoloadESCSettings,
+              showESCConfigurator: _showESCConfigurator,
+              discoveredCANDevices: _validCANBusDeviceIDs
           ),
           RideLogging(
             myUserSettings: widget.myUserSettings,

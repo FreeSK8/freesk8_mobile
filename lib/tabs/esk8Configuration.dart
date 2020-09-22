@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'package:freesk8_mobile/escProfileEditor.dart';
+import 'package:freesk8_mobile/globalUtilities.dart';
 
 import 'package:freesk8_mobile/userSettings.dart';
 import 'package:freesk8_mobile/escHelper.dart';
@@ -22,7 +23,8 @@ class ESK8Configuration extends StatefulWidget {
     this.escMotorConfiguration,
     this.onExitProfiles,
     this.onAutoloadESCSettings, //TODO: this might be removable
-    this.showESCConfigurator
+    this.showESCConfigurator,
+    this.discoveredCANDevices
   });
   final UserSettings myUserSettings;
   final BluetoothDevice currentDevice;
@@ -32,6 +34,7 @@ class ESK8Configuration extends StatefulWidget {
   final ValueChanged<bool> onExitProfiles;
   final ValueChanged<bool> onAutoloadESCSettings;
   final bool showESCConfigurator;
+  final List<int> discoveredCANDevices;
   ESK8ConfigurationState createState() => new ESK8ConfigurationState();
 
   static const String routeName = "/settings";
@@ -41,6 +44,9 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
   File _imageBoardAvatar;
   bool _applyESCProfilePermanently;
+
+  int _selectedCANFwdID;
+  int _invalidCANID;
 
   Future getImage() async {
     var image = await ImagePicker.pickImage(source: ImageSource.camera, maxWidth: 640, maxHeight: 640);
@@ -134,11 +140,91 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
   }
 
+  void requestMCCONFCAN(int canID) {
+    var byteData = new ByteData(8);
+    byteData.setUint8(0, 0x02);
+    byteData.setUint8(1, 0x03);
+    byteData.setUint8(2, COMM_PACKET_ID.COMM_FORWARD_CAN.index);
+    byteData.setUint8(3, canID);
+    byteData.setUint8(4, COMM_PACKET_ID.COMM_GET_MCCONF.index);
+    int checksum = BLEHelper.crc16(byteData.buffer.asUint8List(), 2, 3);
+    byteData.setUint16(5, checksum);
+    byteData.setUint8(7, 0x03); //End of packet
+
+    widget.theTXCharacteristic.write(byteData.buffer.asUint8List()).then((value){
+      print('COMM_GET_MCCONF requested from CAN ID $canID');
+      //TODO: indicate we are waiting for ESC response?
+    }).catchError((e){
+      print("COMM_GET_MCCONF: Exception: $e");
+    });
+  }
+
+  void saveMCCONF(int optionalCANID) async {
+    ESCHelper escHelper = new ESCHelper();
+    ByteData serializedMcconf = escHelper.serializeMCCONF(widget.escMotorConfiguration);
+
+    // Compute sizes and track buffer position
+    int packetIndex = 0;
+    int packetLength = 7; //<start><length><length> <command id><command data*><crc><crc><end>
+    int payloadSize = serializedMcconf.lengthInBytes + 1; //<command id>
+    if (optionalCANID != null) {
+      packetLength += 2; //<canfwd><canid>
+      payloadSize += 2;
+    }
+    packetLength += serializedMcconf.lengthInBytes; // Command Data
+
+    // Prepare BLE request
+    ByteData blePacket = new ByteData(packetLength);
+    blePacket.setUint8(packetIndex++, 0x03); // Start of >255 byte packet
+    blePacket.setUint16(packetIndex, payloadSize); packetIndex += 2; // Length of data
+    if (optionalCANID != null) {
+      blePacket.setUint8(packetIndex++, COMM_PACKET_ID.COMM_FORWARD_CAN.index); // CAN FWD
+      blePacket.setUint8(packetIndex++, optionalCANID); // CAN ID
+    }
+    blePacket.setUint8(packetIndex++, COMM_PACKET_ID.COMM_SET_MCCONF.index); // Command ID
+    //Copy serialized motor configuration to blePacket
+    for (int i=0;i<serializedMcconf.lengthInBytes;++i) {
+      blePacket.setInt8(packetIndex++, serializedMcconf.getInt8(i));
+    }
+    int checksum = BLEHelper.crc16(blePacket.buffer.asUint8List(), 3, payloadSize);
+    blePacket.setUint16(packetIndex, checksum); packetIndex += 2;
+    blePacket.setUint8(packetIndex, 0x03); //End of packet
+
+    print("packet len $packetLength, payload size $payloadSize, packet index $packetIndex");
+
+    /*
+    // Send in small chunks?
+    int bytesSent = 0;
+    while (bytesSent < packetLength) {
+      int endByte = bytesSent + 20;
+      if (endByte > packetLength) {
+        endByte = packetLength;
+      }
+      widget.theTXCharacteristic.write(blePacket.buffer.asUint8List().sublist(bytesSent,endByte));
+      bytesSent += 20;
+      await Future.delayed(const Duration(milliseconds: 100), () {});
+    }
+    print("done");
+     */
+    /**/
+    // Send in two big chunks?
+    widget.theTXCharacteristic.write(blePacket.buffer.asUint8List().sublist(0,240)).then((value){
+      Future.delayed(const Duration(milliseconds: 250), () {
+        widget.theTXCharacteristic.write(blePacket.buffer.asUint8List().sublist(240));
+        print("COMM_SET_MCCONF sent to ESC");
+      });
+
+    }).catchError((e){
+      print("COMM_SET_MCCONF: Exception: $e");
+    });
+
+  }
+
   @override
   Widget build(BuildContext context) {
     print("Build: ESK8Configuration");
     if (widget.showESCProfiles) {
-      //TODO: do stuff
+      ///ESC Speed Profiles
       double imperialFactor = widget.myUserSettings.settings.useImperial ? 0.621371192 : 1.0;
       String speedUnit = widget.myUserSettings.settings.useImperial ? "mph" : "km/h";
 
@@ -311,8 +397,19 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     }
 
     if (widget.showESCConfigurator) {
+      // Check if we are building with an invalid motor configuration (signature mismatch)
+      if (widget.escMotorConfiguration.si_battery_ah == null) {
+        // Invalid MCCONF received
+        _invalidCANID = _selectedCANFwdID; // Store invalid ID
+        _selectedCANFwdID = null; // Clear selected CAN device
+        widget.onAutoloadESCSettings(true); // Request primary ESC configuration
+        return Container(); // Empty view will be replaced when ESC responds with valid configuration
+      }
+
+      // Prepare text editing controllers
       tecBatterySeriesCount.text = widget.escMotorConfiguration.si_battery_cells.toString();
       tecBatterySeriesCount.selection = TextSelection.fromPosition(TextPosition(offset: tecBatterySeriesCount.text.length));
+      //TODO: this is not cell mAH this is total batter amp hours!
       tecBatteryCellmAH.text = (widget.escMotorConfiguration.si_battery_ah * 1000.0).toInt().toString();
       tecBatteryCellmAH.selection = TextSelection.fromPosition(TextPosition(offset: tecBatteryCellmAH.text.length));
       tecWheelDiameterMillimeters.text = (widget.escMotorConfiguration.si_wheel_diameter * 1000.0).toInt().toString();
@@ -322,6 +419,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       tecGearRatio.text = widget.escMotorConfiguration.si_gear_ratio.toString();
       tecGearRatio.selection = TextSelection.fromPosition(TextPosition(offset: tecGearRatio.text.length));
 
+      // Build ESC Configurator
       return Container(
         //padding: EdgeInsets.all(5),
           child: Center(
@@ -346,18 +444,94 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                   ],),
 
                   SizedBox(height:10),
+                  Center(child: Column( children: <Widget>[
+                    Text("Discovered CAN ID(s)"),
+                    SizedBox(
+                      height: 50,
+                      child: GridView.builder(
+                        primary: false,
+                        itemCount: widget.discoveredCANDevices.length,
+                        gridDelegate: new SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, childAspectRatio: 2, crossAxisSpacing: 1, mainAxisSpacing: 1),
+                        itemBuilder: (BuildContext context, int index) {
+                          bool isCANIDSelected = false;
+                          if (_selectedCANFwdID == widget.discoveredCANDevices[index]) {
+                            isCANIDSelected = true;
+                          }
+                          String invalidDevice = "";
+                          if (_invalidCANID == widget.discoveredCANDevices[index]) {
+                            invalidDevice = " (Invalid)";
+                          }
+                          return new Card(
+                            shadowColor: Colors.transparent,
+                            child: new GridTile(
+                              // GestureDetector to switch the currently selected CAN Forward ID
+                                child: new GestureDetector(
+                                  onTap: (){
+                                    if (isCANIDSelected) {
+                                      // Clear CAN Forward
+                                      _selectedCANFwdID = null;
+                                      // Request primary ESC settings
+                                      widget.onAutoloadESCSettings(true);
+                                    } else {
+                                      if (_invalidCANID != widget.discoveredCANDevices[index]) {
+                                        setState(() {
+                                          _selectedCANFwdID = widget.discoveredCANDevices[index];
+                                          // Request MCCONF from CAN device
+                                          requestMCCONFCAN(_selectedCANFwdID);
+                                          Scaffold
+                                              .of(context)
+                                              .showSnackBar(SnackBar(content: Text("Requesting ESC configuration from CAN ID $_selectedCANFwdID")));
+                                        });
+                                      }
+
+                                    }
+                                  },
+                                  child: Stack(
+                                    children: <Widget>[
+
+
+
+                                      new Center(child: Text("${widget.discoveredCANDevices[index]}${isCANIDSelected?" (Active)":""}$invalidDevice"),),
+                                      new ClipRRect(
+                                          borderRadius: new BorderRadius.circular(10),
+                                          child: new Container(
+                                            decoration: new BoxDecoration(
+                                              color: isCANIDSelected ? Theme.of(context).focusColor : Colors.transparent,
+                                            ),
+                                          )
+                                      )
+
+
+                                    ],
+                                  ),
+                                )
+                            ),
+                          );
+                        },
+                      ),
+                    )
+                  ],)
+                  ),
+
                   Center(child:
                   Column(children: <Widget>[
                     Text("ESC Information"),
                     RaisedButton(
-                        child: Text("Request from ESC"),
+                        child: Text("Request from ESC${_selectedCANFwdID != null ? "/CAN $_selectedCANFwdID" : ""}"),
                         onPressed: () {
                           if (widget.currentDevice != null) {
                             setState(() {
-                              widget.onAutoloadESCSettings(true);
-                              Scaffold
-                                  .of(context)
-                                  .showSnackBar(SnackBar(content: Text("Requesting ESC configuration")));
+                              if ( _selectedCANFwdID != null ) {
+                                requestMCCONFCAN(_selectedCANFwdID);
+                                Scaffold
+                                    .of(context)
+                                    .showSnackBar(SnackBar(content: Text("Requesting ESC configuration from CAN ID $_selectedCANFwdID")));
+                              } else {
+                                widget.onAutoloadESCSettings(true);
+                                Scaffold
+                                    .of(context)
+                                    .showSnackBar(SnackBar(content: Text("Requesting ESC configuration")));
+                              }
                             });
                           }
                         })
@@ -373,8 +547,9 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                       ]
                   ),
                   TextField(
+                      //TODO: change to amp hours
                       controller: tecBatteryCellmAH,
-                      decoration: new InputDecoration(labelText: "Battery Cell mAH"),
+                      decoration: new InputDecoration(labelText: "Battery Capacity mAh"),
                       keyboardType: TextInputType.number,
                       inputFormatters: <TextInputFormatter>[
                         WhitelistingTextInputFormatter.digitsOnly
@@ -441,9 +616,24 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                   //Text(" ${widget.escMotorConfiguration.}"),
 
                   RaisedButton(
-                      child: Text("Save to ESC"),
+                      child: Text("Save to ESC${_selectedCANFwdID != null ? "/CAN $_selectedCANFwdID" : ""}"),
                       onPressed: () {
-
+                        if (widget.currentDevice != null) {
+                          setState(() {
+                            // Save motor configuration CAN FWD ID can be null
+                            saveMCCONF(_selectedCANFwdID);
+                            // Notify user
+                            if ( _selectedCANFwdID != null ) {
+                              Scaffold
+                                  .of(context)
+                                  .showSnackBar(SnackBar(content: Text("Saving ESC configuration to CAN ID $_selectedCANFwdID")));
+                            } else {
+                              Scaffold
+                                  .of(context)
+                                  .showSnackBar(SnackBar(content: Text("Saving ESC configuration")));
+                            }
+                          });
+                        }
                       }),
 
                 ],
