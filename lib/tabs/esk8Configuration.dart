@@ -79,7 +79,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     // TEC Listeners for ESC Configurator
     tecBatterySeriesCount.addListener(() { widget.escMotorConfiguration.si_battery_cells = int.tryParse(tecBatterySeriesCount.text); });
     tecBatteryCellmAH.addListener(() { widget.escMotorConfiguration.si_battery_ah = double.tryParse(tecBatteryCellmAH.text) / 1000.0; });
-    tecWheelDiameterMillimeters.addListener(() { widget.escMotorConfiguration.si_wheel_diameter = double.tryParse(tecWheelDiameterMillimeters.text) / 1000.0; });
+    //TODO: doublePrecision() //tecWheelDiameterMillimeters.addListener(() { widget.escMotorConfiguration.si_wheel_diameter = double.tryParse(tecWheelDiameterMillimeters.text) / 1000.0; });
     tecMotorPoles.addListener(() { widget.escMotorConfiguration.si_motor_poles = int.tryParse(tecMotorPoles.text); });
     tecGearRatio.addListener(() { widget.escMotorConfiguration.si_gear_ratio = double.tryParse(tecGearRatio.text); });
   }
@@ -192,7 +192,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
     print("packet len $packetLength, payload size $payloadSize, packet index $packetIndex");
 
-    /*
+    /**/
     // Send in small chunks?
     int bytesSent = 0;
     while (bytesSent < packetLength) {
@@ -200,13 +200,13 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       if (endByte > packetLength) {
         endByte = packetLength;
       }
-      widget.theTXCharacteristic.write(blePacket.buffer.asUint8List().sublist(bytesSent,endByte));
+      widget.theTXCharacteristic.write(blePacket.buffer.asUint8List().sublist(bytesSent,endByte), withoutResponse: true);
       bytesSent += 20;
-      await Future.delayed(const Duration(milliseconds: 100), () {});
+      await Future.delayed(const Duration(milliseconds: 25), () {});
     }
     print("done");
-     */
-    /**/
+
+    /*
     // Send in two big chunks?
     widget.theTXCharacteristic.write(blePacket.buffer.asUint8List().sublist(0,240)).then((value){
       Future.delayed(const Duration(milliseconds: 250), () {
@@ -217,7 +217,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     }).catchError((e){
       print("COMM_SET_MCCONF: Exception: $e");
     });
-
+*/
   }
 
   @override
@@ -620,7 +620,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                       onPressed: () {
                         if (widget.currentDevice != null) {
                           setState(() {
-                            // Save motor configuration CAN FWD ID can be null
+                            // Save motor configuration; CAN FWD ID can be null
                             saveMCCONF(_selectedCANFwdID);
                             // Notify user
                             if ( _selectedCANFwdID != null ) {
