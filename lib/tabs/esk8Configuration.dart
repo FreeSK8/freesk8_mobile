@@ -62,10 +62,36 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
   final tecBoardAlias = TextEditingController();
 
   final tecBatterySeriesCount = TextEditingController();
-  final tecBatteryCellmAH = TextEditingController();
+  final tecBatteryCapacityAh = TextEditingController();
   final tecWheelDiameterMillimeters = TextEditingController();
   final tecMotorPoles = TextEditingController();
   final tecGearRatio = TextEditingController();
+
+  final tecCurrentMax = TextEditingController();
+  final tecCurrentMin = TextEditingController();
+  final tecInCurrentMax = TextEditingController();
+  final tecInCurrentMin = TextEditingController();
+  final tecABSCurrentMax = TextEditingController();
+
+  final tecMaxERPM = TextEditingController();
+  final tecMinERPM = TextEditingController();
+
+  final tecMinVIN = TextEditingController();
+  final tecMaxVIN = TextEditingController();
+  final tecBatteryCutStart = TextEditingController();
+  final tecBatteryCutEnd = TextEditingController();
+
+  final tecTempFETStart = TextEditingController();
+  final tecTempFETEnd = TextEditingController();
+  final tecTempMotorStart = TextEditingController();
+  final tecTempMotorEnd = TextEditingController();
+
+  final tecWattMin = TextEditingController();
+  final tecWattMax = TextEditingController();
+  final tecCurrentMinScale = TextEditingController();
+  final tecCurrentMaxScale = TextEditingController();
+
+  final tecDutyStart = TextEditingController();
 
   @override
   void initState() {
@@ -76,12 +102,70 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     //TODO: these try parse can return null.. then the device will remove null because it's not a number
     tecBoardAlias.addListener(() { widget.myUserSettings.settings.boardAlias = tecBoardAlias.text; });
 
-    // TEC Listeners for ESC Configurator
+    // TextEditingController Listeners for ESC Configurator
     tecBatterySeriesCount.addListener(() { widget.escMotorConfiguration.si_battery_cells = int.tryParse(tecBatterySeriesCount.text); });
-    tecBatteryCellmAH.addListener(() { widget.escMotorConfiguration.si_battery_ah = double.tryParse(tecBatteryCellmAH.text) / 1000.0; });
-    //TODO: doublePrecision() //tecWheelDiameterMillimeters.addListener(() { widget.escMotorConfiguration.si_wheel_diameter = double.tryParse(tecWheelDiameterMillimeters.text) / 1000.0; });
+    tecBatteryCapacityAh.addListener(() { widget.escMotorConfiguration.si_battery_ah = doublePrecision(double.tryParse(tecBatteryCapacityAh.text), 2) ; });
+    tecWheelDiameterMillimeters.addListener(() { widget.escMotorConfiguration.si_wheel_diameter = doublePrecision(double.tryParse(tecWheelDiameterMillimeters.text) / 1000.0, 2); });
     tecMotorPoles.addListener(() { widget.escMotorConfiguration.si_motor_poles = int.tryParse(tecMotorPoles.text); });
-    tecGearRatio.addListener(() { widget.escMotorConfiguration.si_gear_ratio = double.tryParse(tecGearRatio.text); });
+    tecGearRatio.addListener(() { widget.escMotorConfiguration.si_gear_ratio = doublePrecision(double.tryParse(tecGearRatio.text), 1); });
+    tecCurrentMax.addListener(() { widget.escMotorConfiguration.l_current_max = doublePrecision(double.tryParse(tecCurrentMax.text), 1); });
+    tecCurrentMin.addListener(() {
+      double newValue = double.tryParse(tecCurrentMin.text);
+      if(newValue==null) newValue = 0.0; //Ensure not null
+      if(newValue>0.0) newValue *= -1; //Ensure negative
+      widget.escMotorConfiguration.l_current_min = doublePrecision(newValue, 1);
+    });
+    tecInCurrentMax.addListener(() { widget.escMotorConfiguration.l_in_current_max = doublePrecision(double.tryParse(tecInCurrentMax.text), 1); });
+    tecInCurrentMin.addListener(() {
+      double newValue = double.tryParse(tecInCurrentMin.text);
+      if(newValue==null) newValue = 0.0; //Ensure not null
+      if(newValue>0.0) newValue *= -1; //Ensure negative
+      widget.escMotorConfiguration.l_in_current_min = doublePrecision(newValue, 1);
+    });
+    tecABSCurrentMax.addListener(() { widget.escMotorConfiguration.l_abs_current_max = doublePrecision(double.tryParse(tecABSCurrentMax.text), 1); });
+    tecMaxERPM.addListener(() { widget.escMotorConfiguration.l_max_erpm = int.tryParse(tecMaxERPM.text).toDouble(); });
+    tecMinERPM.addListener(() {
+      double newValue = double.tryParse(tecMinERPM.text);
+      if(newValue==null) newValue = 0.0; //Ensure not null
+      if(newValue>0.0) newValue *= -1; //Ensure negative
+      widget.escMotorConfiguration.l_min_erpm = newValue;
+    });
+    tecMinVIN.addListener(() { widget.escMotorConfiguration.l_min_vin = doublePrecision(double.tryParse(tecMinVIN.text), 1); });
+    tecMaxVIN.addListener(() { widget.escMotorConfiguration.l_max_vin = doublePrecision(double.tryParse(tecMaxVIN.text), 1); });
+    tecBatteryCutStart.addListener(() { widget.escMotorConfiguration.l_battery_cut_start = doublePrecision(double.tryParse(tecBatteryCutStart.text), 1); });
+    tecBatteryCutEnd.addListener(() { widget.escMotorConfiguration.l_battery_cut_end = doublePrecision(double.tryParse(tecBatteryCutEnd.text), 1); });
+    tecTempFETStart.addListener(() { widget.escMotorConfiguration.l_temp_fet_start = doublePrecision(double.tryParse(tecTempFETStart.text), 1); });
+    tecTempFETEnd.addListener(() { widget.escMotorConfiguration.l_temp_fet_end = doublePrecision(double.tryParse(tecTempFETEnd.text), 1); });
+    tecTempMotorStart.addListener(() { widget.escMotorConfiguration.l_temp_motor_start = doublePrecision(double.tryParse(tecTempMotorStart.text), 1); });
+    tecTempMotorEnd.addListener(() { widget.escMotorConfiguration.l_temp_motor_end = doublePrecision(double.tryParse(tecTempMotorEnd.text), 1); });
+    tecWattMin.addListener(() {
+      double newValue = double.tryParse(tecWattMin.text);
+      if(newValue==null) newValue = 0.0; //Ensure not null
+      if(newValue>0.0) newValue *= -1; //Ensure negative
+      widget.escMotorConfiguration.l_watt_min = doublePrecision(newValue, 1);
+    });
+    tecWattMax.addListener(() { widget.escMotorConfiguration.l_watt_max = doublePrecision(double.tryParse(tecWattMax.text), 1); });
+    tecCurrentMinScale.addListener(() {
+      double newValue = double.tryParse(tecCurrentMinScale.text);
+      if(newValue==null) newValue = 0.0; //Ensure not null
+      if(newValue>1.0) newValue = 1.0; //Ensure under 1.0
+      if(newValue<0.0) newValue = 0.0; //Ensure greater than 0.0
+      widget.escMotorConfiguration.l_current_min_scale = doublePrecision(newValue, 2);
+    });
+    tecCurrentMaxScale.addListener(() {
+      double newValue = double.tryParse(tecCurrentMaxScale.text);
+      if(newValue==null) newValue = 0.0; //Ensure not null
+      if(newValue>1.0) newValue = 1.0; //Ensure under 1.0
+      if(newValue<0.0) newValue = 0.0; //Ensure greater than 0.0
+      widget.escMotorConfiguration.l_current_max_scale = doublePrecision(newValue, 2);
+    });
+    tecDutyStart.addListener(() {
+      double newValue = double.tryParse(tecDutyStart.text);
+      if(newValue==null) newValue = 0.0; //Ensure not null
+      if(newValue>1.0) newValue = 1.0; //Ensure under 1.0
+      if(newValue<0.0) newValue = 0.0; //Ensure greater than 0.0
+      widget.escMotorConfiguration.l_duty_start = doublePrecision(newValue, 2);
+    });
   }
 
 
@@ -92,10 +176,31 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     tecBoardAlias.dispose();
 
     tecBatterySeriesCount.dispose();
-    tecBatteryCellmAH.dispose();
+    tecBatteryCapacityAh.dispose();
     tecWheelDiameterMillimeters.dispose();
     tecMotorPoles.dispose();
     tecGearRatio.dispose();
+
+    tecCurrentMax.dispose();
+    tecCurrentMin.dispose();
+    tecInCurrentMax.dispose();
+    tecInCurrentMin.dispose();
+    tecABSCurrentMax.dispose();
+    tecMaxERPM.dispose();
+    tecMinERPM.dispose();
+    tecMinVIN.dispose();
+    tecMaxVIN.dispose();
+    tecBatteryCutStart.dispose();
+    tecBatteryCutEnd.dispose();
+    tecTempFETStart.dispose();
+    tecTempFETEnd.dispose();
+    tecTempMotorStart.dispose();
+    tecTempMotorEnd.dispose();
+    tecWattMin.dispose();
+    tecWattMax.dispose();
+    tecCurrentMinScale.dispose();
+    tecCurrentMaxScale.dispose();
+    tecDutyStart.dispose();
   }
 
   void setMCCONFTemp(bool persistentChange, ESCProfile escProfile) {
@@ -192,7 +297,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
     print("packet len $packetLength, payload size $payloadSize, packet index $packetIndex");
 
-    /**/
+    /*
+    * TODO: determine the best way to deliver this data to the ESC
+    * TODO: The ESC does not like two big chunks and sometimes small chunks fails
+    */
     // Send in small chunks?
     int bytesSent = 0;
     while (bytesSent < packetLength) {
@@ -202,11 +310,12 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       }
       widget.theTXCharacteristic.write(blePacket.buffer.asUint8List().sublist(bytesSent,endByte), withoutResponse: true);
       bytesSent += 20;
-      await Future.delayed(const Duration(milliseconds: 25), () {});
+      await Future.delayed(const Duration(milliseconds: 30), () {});
     }
-    print("done");
+    print("COMM_SET_MCCONF bytes were blasted to ESC =/");
 
     /*
+    * TODO: Flutter Blue cannot send more than 244 bytes in a message
     // Send in two big chunks?
     widget.theTXCharacteristic.write(blePacket.buffer.asUint8List().sublist(0,240)).then((value){
       Future.delayed(const Duration(milliseconds: 250), () {
@@ -398,7 +507,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
     if (widget.showESCConfigurator) {
       // Check if we are building with an invalid motor configuration (signature mismatch)
-      if (widget.escMotorConfiguration.si_battery_ah == null) {
+      if (widget.escMotorConfiguration == null || widget.escMotorConfiguration.si_battery_ah == null) {
         // Invalid MCCONF received
         _invalidCANID = _selectedCANFwdID; // Store invalid ID
         _selectedCANFwdID = null; // Clear selected CAN device
@@ -409,9 +518,8 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       // Prepare text editing controllers
       tecBatterySeriesCount.text = widget.escMotorConfiguration.si_battery_cells.toString();
       tecBatterySeriesCount.selection = TextSelection.fromPosition(TextPosition(offset: tecBatterySeriesCount.text.length));
-      //TODO: this is not cell mAH this is total batter amp hours!
-      tecBatteryCellmAH.text = (widget.escMotorConfiguration.si_battery_ah * 1000.0).toInt().toString();
-      tecBatteryCellmAH.selection = TextSelection.fromPosition(TextPosition(offset: tecBatteryCellmAH.text.length));
+      tecBatteryCapacityAh.text = doublePrecision(widget.escMotorConfiguration.si_battery_ah,2).toString();
+      tecBatteryCapacityAh.selection = TextSelection.fromPosition(TextPosition(offset: tecBatteryCapacityAh.text.length));
       tecWheelDiameterMillimeters.text = (widget.escMotorConfiguration.si_wheel_diameter * 1000.0).toInt().toString();
       tecWheelDiameterMillimeters.selection = TextSelection.fromPosition(TextPosition(offset: tecWheelDiameterMillimeters.text.length));
       tecMotorPoles.text = widget.escMotorConfiguration.si_motor_poles.toString();
@@ -419,9 +527,53 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       tecGearRatio.text = widget.escMotorConfiguration.si_gear_ratio.toString();
       tecGearRatio.selection = TextSelection.fromPosition(TextPosition(offset: tecGearRatio.text.length));
 
+      // Populate text editing controllers
+      tecCurrentMax.text = widget.escMotorConfiguration.l_current_max.toString();
+      tecCurrentMin.text = widget.escMotorConfiguration.l_current_min.toString();
+      tecInCurrentMax.text = widget.escMotorConfiguration.l_in_current_max.toString();
+      tecInCurrentMin.text = widget.escMotorConfiguration.l_in_current_min.toString();
+      tecABSCurrentMax.text = widget.escMotorConfiguration.l_abs_current_max.toString();
+      tecMaxERPM.text = widget.escMotorConfiguration.l_max_erpm.toInt().toString();
+      tecMinERPM.text = widget.escMotorConfiguration.l_min_erpm.toInt().toString();
+      tecMinVIN.text = widget.escMotorConfiguration.l_min_vin.toString();
+      tecMaxVIN.text = widget.escMotorConfiguration.l_max_vin.toString();
+      tecBatteryCutStart.text = widget.escMotorConfiguration.l_battery_cut_start.toString();
+      tecBatteryCutEnd.text = widget.escMotorConfiguration.l_battery_cut_end.toString();
+      tecTempFETStart.text = widget.escMotorConfiguration.l_temp_fet_start.toString();
+      tecTempFETEnd.text = widget.escMotorConfiguration.l_temp_fet_end.toString();
+      tecTempMotorStart.text = widget.escMotorConfiguration.l_temp_motor_start.toString();
+      tecTempMotorEnd.text = widget.escMotorConfiguration.l_temp_motor_end.toString();
+      tecWattMin.text = widget.escMotorConfiguration.l_watt_min.toString();
+      tecWattMax.text = widget.escMotorConfiguration.l_watt_max.toString();
+      tecCurrentMinScale.text = widget.escMotorConfiguration.l_current_min_scale.toString();
+      tecCurrentMaxScale.text = widget.escMotorConfiguration.l_current_max_scale.toString();
+      tecDutyStart.text = widget.escMotorConfiguration.l_duty_start.toString();
+
+      // Set cursor position to end of text editing controllers
+      tecCurrentMax.selection = TextSelection.fromPosition(TextPosition(offset: tecCurrentMax.text.length));
+      tecCurrentMin.selection = TextSelection.fromPosition(TextPosition(offset: tecCurrentMin.text.length));
+      tecInCurrentMax.selection = TextSelection.fromPosition(TextPosition(offset: tecInCurrentMax.text.length));
+      tecInCurrentMin.selection = TextSelection.fromPosition(TextPosition(offset: tecInCurrentMin.text.length));
+      tecABSCurrentMax.selection = TextSelection.fromPosition(TextPosition(offset: tecABSCurrentMax.text.length));
+      tecMaxERPM.selection = TextSelection.fromPosition(TextPosition(offset: tecMaxERPM.text.length));
+      tecMinERPM.selection = TextSelection.fromPosition(TextPosition(offset: tecMinERPM.text.length));
+      tecMinVIN.selection = TextSelection.fromPosition(TextPosition(offset: tecMinVIN.text.length));
+      tecMaxVIN.selection = TextSelection.fromPosition(TextPosition(offset: tecMaxVIN.text.length));
+      tecBatteryCutStart.selection = TextSelection.fromPosition(TextPosition(offset: tecBatteryCutStart.text.length));
+      tecBatteryCutEnd.selection = TextSelection.fromPosition(TextPosition(offset: tecBatteryCutEnd.text.length));
+      tecTempFETStart.selection = TextSelection.fromPosition(TextPosition(offset: tecTempFETStart.text.length));
+      tecTempFETEnd.selection = TextSelection.fromPosition(TextPosition(offset: tecTempFETEnd.text.length));
+      tecTempMotorStart.selection = TextSelection.fromPosition(TextPosition(offset: tecTempMotorStart.text.length));
+      tecTempMotorEnd.selection = TextSelection.fromPosition(TextPosition(offset: tecTempMotorEnd.text.length));
+      tecWattMin.selection = TextSelection.fromPosition(TextPosition(offset: tecWattMin.text.length));
+      tecWattMax.selection = TextSelection.fromPosition(TextPosition(offset: tecWattMax.text.length));
+      tecCurrentMinScale.selection = TextSelection.fromPosition(TextPosition(offset: tecCurrentMinScale.text.length));
+      tecCurrentMaxScale.selection = TextSelection.fromPosition(TextPosition(offset: tecCurrentMaxScale.text.length));
+      tecDutyStart.selection = TextSelection.fromPosition(TextPosition(offset: tecDutyStart.text.length));
+
       // Build ESC Configurator
       return Container(
-        //padding: EdgeInsets.all(5),
+          padding: EdgeInsets.all(10),
           child: Center(
             child: GestureDetector(
               onTap: () {
@@ -538,6 +690,67 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                   ],)
                   ),
 
+                  //TODO: consider all unused struct members again
+                  //Text("${widget.escMotorConfiguration.motor_type}"),
+                  //Text("${widget.escMotorConfiguration.sensor_mode}"),
+
+                  SwitchListTile(
+                    title: Text("Reverse Motor (${widget.escMotorConfiguration.m_invert_direction})"),
+                    value: widget.escMotorConfiguration.m_invert_direction,
+                    onChanged: (bool newValue) { setState((){widget.escMotorConfiguration.m_invert_direction = newValue;}); },
+                    secondary: const Icon(Icons.sync),
+                  ),
+
+                  DropdownButton(
+                      value: widget.escMotorConfiguration.si_battery_type.index,
+                      items: [
+                        DropdownMenuItem(
+                          child: Text("Battery Type: Li-ion 3.0/4.2V"),
+                          value: 0,
+                        ),
+                        DropdownMenuItem(
+                          child: Text("Battery Type: LiFePO₄ 2.6/3.6V"),
+                          value: 1,
+                        ),
+                        DropdownMenuItem(
+                            child: Text("Battery Type: Lead Acid"),
+                            value: 2
+                        ),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          widget.escMotorConfiguration.si_battery_type = BATTERY_TYPE.values[value];
+                        });
+                      }),
+
+                  DropdownButton(
+                      value: widget.escMotorConfiguration.foc_sensor_mode.index,
+                      items: [
+                        DropdownMenuItem(
+                          child: Text("FOC_SENSOR_MODE_SENSORLESS"),
+                          value: 0,
+                        ),
+                        DropdownMenuItem(
+                          child: Text("FOC_SENSOR_MODE_ENCODER"),
+                          value: 1,
+                        ),
+                        DropdownMenuItem(
+                            child: Text("FOC_SENSOR_MODE_HALL"),
+                            value: 2
+                        ),
+                        DropdownMenuItem(
+                            child: Text("FOC_SENSOR_MODE_HFI"),
+                            value: 3
+                        ),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          widget.escMotorConfiguration.foc_sensor_mode = mc_foc_sensor_mode.values[value];
+                        });
+                      }),
+
+
+
                   TextField(
                       controller: tecBatterySeriesCount,
                       decoration: new InputDecoration(labelText: "Battery Series Count"),
@@ -547,12 +760,11 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                       ]
                   ),
                   TextField(
-                      //TODO: change to amp hours
-                      controller: tecBatteryCellmAH,
-                      decoration: new InputDecoration(labelText: "Battery Capacity mAh"),
-                      keyboardType: TextInputType.number,
+                      controller: tecBatteryCapacityAh,
+                      decoration: new InputDecoration(labelText: "Battery Capacity (Ah)"),
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
                       inputFormatters: <TextInputFormatter>[
-                        WhitelistingTextInputFormatter.digitsOnly
+                        WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
                       ]
                   ),
                   TextField(
@@ -574,45 +786,182 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                   TextField(
                       controller: tecGearRatio,
                       decoration: new InputDecoration(labelText: "Gear Ratio"),
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: <TextInputFormatter>[
+                        WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                      ]
+                  ),
+
+
+
+
+
+
+                  TextField(
+                      controller: tecCurrentMax,
+                      decoration: new InputDecoration(labelText: "Max Current (Amps)"),
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: <TextInputFormatter>[
+                        WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                      ]
+                  ),
+                  TextField(
+                      controller: tecCurrentMin,
+                      decoration: new InputDecoration(labelText: "Max Current Regen (Amps)"),
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: <TextInputFormatter>[
+                        NumberTextInputFormatter() //This allows for negative doubles
+                      ]
+                  ),
+                  TextField(
+                      controller: tecInCurrentMax,
+                      decoration: new InputDecoration(labelText: "Battery Max Current (Amps)"),
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: <TextInputFormatter>[
+                        WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                      ]
+                  ),
+                  TextField(
+                      controller: tecInCurrentMin,
+                      decoration: new InputDecoration(labelText: "Battery Max Current Regen (Amps)"),
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: <TextInputFormatter>[
+                        NumberTextInputFormatter() //This allows for negative doubles
+                      ]
+                  ),
+                  TextField(
+                      controller: tecABSCurrentMax,
+                      decoration: new InputDecoration(labelText: "ABS Max Current (Amps)"),
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: <TextInputFormatter>[
+                        WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                      ]
+                  ),
+
+                  TextField(
+                      controller: tecMaxERPM,
+                      decoration: new InputDecoration(labelText: "Max ERPM"),
                       keyboardType: TextInputType.number,
                       inputFormatters: <TextInputFormatter>[
                         WhitelistingTextInputFormatter.digitsOnly
                       ]
                   ),
+                  TextField(
+                      controller: tecMinERPM,
+                      decoration: new InputDecoration(labelText: "Min ERPM"),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: <TextInputFormatter>[
+                        WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                      ]
+                  ),
 
+                  TextField(
+                      controller: tecMinVIN,
+                      decoration: new InputDecoration(labelText: "Minimum Voltage Input"),
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: <TextInputFormatter>[
+                        WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                      ]
+                  ),
+                  TextField(
+                      controller: tecMaxVIN,
+                      decoration: new InputDecoration(labelText: "Maximum Voltage Input"),
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: <TextInputFormatter>[
+                        WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                      ]
+                  ),
 
-                  Text("${widget.escMotorConfiguration.si_battery_type}"),
+                  TextField(
+                      controller: tecBatteryCutStart,
+                      decoration: new InputDecoration(labelText: "Battery Cutoff Start (Volts)"),
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: <TextInputFormatter>[
+                        WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                      ]
+                  ),
+                  TextField(
+                      controller: tecBatteryCutEnd,
+                      decoration: new InputDecoration(labelText: "Battery Cutoff End (Volts)"),
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: <TextInputFormatter>[
+                        WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                      ]
+                  ),
+                  TextField(
+                      controller: tecTempFETStart,
+                      decoration: new InputDecoration(labelText: "ESC Temperature Cutoff Start (Celsius)"),
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: <TextInputFormatter>[
+                        WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                      ]
+                  ),
+                  TextField(
+                      controller: tecTempFETEnd,
+                      decoration: new InputDecoration(labelText: "ESC Temperature Cutoff End (Celsius)"),
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: <TextInputFormatter>[
+                        WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                      ]
+                  ),
+                  TextField(
+                      controller: tecTempMotorStart,
+                      decoration: new InputDecoration(labelText: "Motor Temperature Cutoff Start (Celsius)"),
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: <TextInputFormatter>[
+                        WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                      ]
+                  ),
+                  TextField(
+                      controller: tecTempMotorEnd,
+                      decoration: new InputDecoration(labelText: "Motor Temperature Cutoff End (Celsius)"),
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: <TextInputFormatter>[
+                        WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                      ]
+                  ),
 
-                  Text("Reverse Motor ${widget.escMotorConfiguration.m_invert_direction}"),
+                  TextField(
+                      controller: tecWattMin,
+                      decoration: new InputDecoration(labelText: "Maximum Braking Wattage"),
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: <TextInputFormatter>[
+                        NumberTextInputFormatter() //This allows for negative doubles
+                      ]
+                  ),
+                  TextField(
+                      controller: tecWattMax,
+                      decoration: new InputDecoration(labelText: "Maximum Wattage"),
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: <TextInputFormatter>[
+                        WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                      ]
+                  ),
+                  TextField(
+                      controller: tecCurrentMinScale,
+                      decoration: new InputDecoration(labelText: "Min Current Scale"),
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: <TextInputFormatter>[
+                        WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                      ]
+                  ),
+                  TextField(
+                      controller: tecCurrentMaxScale,
+                      decoration: new InputDecoration(labelText: "Max Current Scale"),
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: <TextInputFormatter>[
+                        WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                      ]
+                  ),
+                  TextField(
+                      controller: tecDutyStart,
+                      decoration: new InputDecoration(labelText: "Duty Cycle Current Limit Start"),
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: <TextInputFormatter>[
+                        WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                      ]
+                  ),
 
-                  Text("${widget.escMotorConfiguration.motor_type}"),
-                  Text("${widget.escMotorConfiguration.sensor_mode}"),
-
-                  Text("l_current_max ${widget.escMotorConfiguration.l_current_max}"),
-                  Text("l_current_min ${widget.escMotorConfiguration.l_current_min}"),
-                  Text("l_in_current_max ${widget.escMotorConfiguration.l_in_current_max}"),
-                  Text("l_in_current_min ${widget.escMotorConfiguration.l_in_current_min}"),
-                  Text("l_abs_current_max ${widget.escMotorConfiguration.l_abs_current_max}"),
-
-                  Text("l_max_erpm ${widget.escMotorConfiguration.l_max_erpm.toInt()}"),
-                  Text("l_min_erpm ${widget.escMotorConfiguration.l_min_erpm.toInt()}"),
-
-                  Text("l_min_vin ${widget.escMotorConfiguration.l_min_vin}"),
-                  Text("l_max_vin ${widget.escMotorConfiguration.l_max_vin}"),
-                  Text("l_battery_cut_start ${widget.escMotorConfiguration.l_battery_cut_start}"),
-                  Text("l_battery_cut_end ${widget.escMotorConfiguration.l_battery_cut_end}"),
-
-                  Text("l_temp_fet_start ${widget.escMotorConfiguration.l_temp_fet_start}"),
-                  Text("l_temp_fet_end ${widget.escMotorConfiguration.l_temp_fet_end}"),
-                  Text("l_temp_motor_start ${widget.escMotorConfiguration.l_temp_motor_start}"),
-                  Text("l_temp_motor_end ${widget.escMotorConfiguration.l_temp_motor_end}"),
-
-                  Text("l_watt_min ${widget.escMotorConfiguration.l_watt_min}"),
-                  Text("l_watt_max ${widget.escMotorConfiguration.l_watt_max}"),
-                  Text("l_current_min_scale ${widget.escMotorConfiguration.l_current_min_scale}"),
-                  Text("l_current_max_scale ${widget.escMotorConfiguration.l_current_max_scale}"),
-
-                  Text("l_duty_start ${widget.escMotorConfiguration.l_duty_start}"),
                   //Text(" ${widget.escMotorConfiguration.}"),
 
                   RaisedButton(

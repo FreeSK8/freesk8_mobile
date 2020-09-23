@@ -11,8 +11,6 @@ class UserSettingsStructure {
   String boardAvatarPath;
 
   int batterySeriesCount;
-
-  int batteryCellmAH;
   double batteryCellMinVoltage;
   double batteryCellMaxVoltage;
 
@@ -76,14 +74,13 @@ class UserSettings {
     settings.boardAvatarPath = prefs.getString('$currentDeviceID boardAvatarPath') ?? null;
 
     settings.batterySeriesCount = prefs.getInt('$currentDeviceID batterySeriesCount') ?? 12;
-    settings.batteryCellmAH = prefs.getInt('$currentDeviceID batteryCellmAH') ?? 3000;
     settings.batteryCellMinVoltage = prefs.getDouble('$currentDeviceID batteryCellMinVoltage') ?? 3.2;
     settings.batteryCellMaxVoltage = prefs.getDouble('$currentDeviceID batteryCellMaxVoltage') ?? 4.2;
 
     settings.wheelDiameterMillimeters = prefs.getInt('$currentDeviceID wheelDiameterMillimeters') ?? 110;
     settings.motorPoles = prefs.getInt('$currentDeviceID motorPoles') ?? 14;
 
-    settings.maxERPM = prefs.getDouble('$currentDeviceID maxERPM') ?? 8800; //TODO: what is a good default maxERPM?
+    settings.maxERPM = prefs.getDouble('$currentDeviceID maxERPM') ?? 100000;
     settings.gearRatio = prefs.getDouble('$currentDeviceID gearRatio') ?? 4.0;
   }
 
@@ -101,7 +98,6 @@ class UserSettings {
     }
 
     await prefs.setInt('$currentDeviceID batterySeriesCount', settings.batterySeriesCount);
-    await prefs.setInt('$currentDeviceID batteryCellmAH', settings.batteryCellmAH);
     await prefs.setDouble('$currentDeviceID batteryCellMinVoltage', settings.batteryCellMinVoltage);
     await prefs.setDouble('$currentDeviceID batteryCellMaxVoltage', settings.batteryCellMaxVoltage);
 

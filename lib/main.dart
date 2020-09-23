@@ -1109,6 +1109,17 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_SET_MCCONF.index ) {
           print("HUZZAH!");
+          print("COMM_PACKET_ID.COMM_SET_MCCONF: ${bleHelper.payload.sublist(0,bleHelper.lenPayload)}");
+          // Show dialog
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text("Success"),
+                content: Text("Motor configuration saved successfully!"),
+              );
+            },
+          );
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_SET_MCCONF_TEMP_SETUP.index ) {
           print("COMM_SET_MCCONF_TEMP_SETUP received! This is a good sign.. packetID(${COMM_PACKET_ID.COMM_SET_MCCONF_TEMP_SETUP.index})");
@@ -1149,7 +1160,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             print("MCCONF is updating application settings specific to this board");
             _autoloadESCSettings = false;
             widget.myUserSettings.settings.batterySeriesCount = escMotorConfiguration.si_battery_cells;
-            widget.myUserSettings.settings.batteryCellmAH = (escMotorConfiguration.si_battery_ah * 1000).toInt();
             switch (escMotorConfiguration.si_battery_type) {
               case BATTERY_TYPE.BATTERY_TYPE_LIIRON_2_6__3_6:
                 widget.myUserSettings.settings.batteryCellMinVoltage = 2.6;
