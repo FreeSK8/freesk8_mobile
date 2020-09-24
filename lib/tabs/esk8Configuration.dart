@@ -7,6 +7,7 @@ import 'package:freesk8_mobile/escProfileEditor.dart';
 import 'package:freesk8_mobile/globalUtilities.dart';
 
 import 'package:freesk8_mobile/userSettings.dart';
+import 'package:freesk8_mobile/focWizard.dart';
 import 'package:freesk8_mobile/escHelper.dart';
 import 'package:freesk8_mobile/bleHelper.dart';
 
@@ -47,6 +48,8 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
   int _selectedCANFwdID;
   int _invalidCANID;
+
+  bool _writeESCInProgress;
 
   Future getImage() async {
     var image = await ImagePicker.pickImage(source: ImageSource.camera, maxWidth: 640, maxHeight: 640);
@@ -98,6 +101,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     super.initState();
 
     _applyESCProfilePermanently = false;
+    _writeESCInProgress = false;
 
     //TODO: these try parse can return null.. then the device will remove null because it's not a number
     tecBoardAlias.addListener(() { widget.myUserSettings.settings.boardAlias = tecBoardAlias.text; });
@@ -265,6 +269,13 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
   }
 
   void saveMCCONF(int optionalCANID) async {
+    if (_writeESCInProgress) {
+      print("WARNING: esk8Configuration: saveMCCONF: _writeESCInProgress is true. Save aborted.");
+      return;
+    }
+
+    // Protect from interrupting a previous write attempt
+    _writeESCInProgress = true;
     ESCHelper escHelper = new ESCHelper();
     ByteData serializedMcconf = escHelper.serializeMCCONF(widget.escMotorConfiguration);
 
@@ -300,6 +311,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     /*
     * TODO: determine the best way to deliver this data to the ESC
     * TODO: The ESC does not like two big chunks and sometimes small chunks fails
+    * TODO: this is the only thing that works
     */
     // Send in small chunks?
     int bytesSent = 0;
@@ -316,6 +328,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
     /*
     * TODO: Flutter Blue cannot send more than 244 bytes in a message
+    * TODO: This does not work
     // Send in two big chunks?
     widget.theTXCharacteristic.write(blePacket.buffer.asUint8List().sublist(0,240)).then((value){
       Future.delayed(const Duration(milliseconds: 250), () {
@@ -327,6 +340,9 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       print("COMM_SET_MCCONF: Exception: $e");
     });
 */
+
+    // Finish with this save attempt
+    _writeESCInProgress = false;
   }
 
   @override
@@ -620,10 +636,15 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                 child: new GestureDetector(
                                   onTap: (){
                                     if (isCANIDSelected) {
-                                      // Clear CAN Forward
-                                      _selectedCANFwdID = null;
-                                      // Request primary ESC settings
-                                      widget.onAutoloadESCSettings(true);
+                                      setState(() {
+                                        // Clear CAN Forward
+                                        _selectedCANFwdID = null;
+                                        // Request primary ESC settings
+                                        widget.onAutoloadESCSettings(true);
+                                        Scaffold
+                                            .of(context)
+                                            .showSnackBar(SnackBar(content: Text("Requesting ESC configuration from primary ESC")));
+                                      });
                                     } else {
                                       if (_invalidCANID != widget.discoveredCANDevices[index]) {
                                         setState(() {
@@ -968,9 +989,11 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                       child: Text("Save to ESC${_selectedCANFwdID != null ? "/CAN $_selectedCANFwdID" : ""}"),
                       onPressed: () {
                         if (widget.currentDevice != null) {
-                          setState(() {
+                          //setState(() {
                             // Save motor configuration; CAN FWD ID can be null
                             saveMCCONF(_selectedCANFwdID);
+                            //TODO: Not going to notify the user because sometimes saveMCCONF fails and they have to try again
+                            /*
                             // Notify user
                             if ( _selectedCANFwdID != null ) {
                               Scaffold
@@ -981,9 +1004,78 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                   .of(context)
                                   .showSnackBar(SnackBar(content: Text("Saving ESC configuration")));
                             }
-                          });
+                             */
+                          //});
                         }
                       }),
+
+                  Divider(height: 10,),
+                  Center(child: Text("Additional Tools"),),
+                  Row( mainAxisAlignment: MainAxisAlignment.spaceBetween ,
+                    children: <Widget>[
+                    RaisedButton(
+                        //TODO: quick pair for CAN FWD device?
+                        child: Row(children: <Widget>[
+                          Icon(Icons.settings_remote),
+                          Text("nRF Quick Pair")
+                        ],),
+                        onPressed: () {
+                          // Don't write if not connected
+                          if (widget.theTXCharacteristic != null) {
+                            var byteData = new ByteData(10); //<start><payloadLen><packetID><int32_milliseconds><crc1><crc2><end>
+                            byteData.setUint8(0, 0x02);
+                            byteData.setUint8(1, 0x05);
+                            byteData.setUint8(2, COMM_PACKET_ID.COMM_NRF_START_PAIRING.index);
+                            byteData.setUint32(3, 10000); //milliseconds
+                            int checksum = BLEHelper.crc16(byteData.buffer.asUint8List(), 2, 5);
+                            byteData.setUint16(7, checksum);
+                            byteData.setUint8(9, 0x03); //End of packet
+
+                            //<start><payloadLen><packetID><int32_milliseconds><crc1><crc2><end>
+                            widget.theTXCharacteristic.write(byteData.buffer.asUint8List()).then((value){
+                              print('You have 10 seconds to power on your remote!');
+                            }).catchError((e){
+                              print("nRF Quick Pair: Exception: $e");
+                            });
+                          } else {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: Text("nRF Quick Pair"),
+                                  content: Text("Oops. Try connecting to your board first."),
+                                );
+                              },
+                            );
+                          }
+                        }),
+
+                    RaisedButton(
+                        child: Row(children: <Widget>[
+                          Icon(Icons.donut_large),
+                          Text("FOC Wizard")
+                        ],),
+                        onPressed: () {
+                          if(widget.theTXCharacteristic == null) {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: Text("Connection Required =("),
+                                  content: Text("This feature requires an active connection."),
+                                );
+                              },
+                            );
+                            return;
+                          }
+                          setState(() {
+                            // navigate to the route
+                            Navigator.of(context).pushNamed(ConfigureESC.routeName, arguments: FOCWizardArguments(widget.theTXCharacteristic, null));
+                          });
+                        })
+
+                  ],)
+
 
                 ],
               ),

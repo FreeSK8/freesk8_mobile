@@ -11,10 +11,9 @@ import 'package:freesk8_mobile/globalUtilities.dart';
 
 class FOCWizardArguments {
   final BluetoothCharacteristic txCharacteristic;
-  final BLEHelper bleHelper;
   final Uint8List escMotorConfigurationDefaults;
 
-  FOCWizardArguments(this.txCharacteristic, this.bleHelper, this.escMotorConfigurationDefaults);
+  FOCWizardArguments(this.txCharacteristic, this.escMotorConfigurationDefaults);
 }
 
 class Dialogs {

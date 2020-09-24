@@ -1116,7 +1116,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             builder: (BuildContext context) {
               return AlertDialog(
                 title: Text("Success"),
-                content: Text("Motor configuration saved successfully!"),
+                content: Text("ESC configuration saved successfully!"),
               );
             },
           );
@@ -1285,19 +1285,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       await theTXLoggerCharacteristic.write(utf8.encode("version~"));
     }
 
-    // Scan for CAN devices
-    Uint8List packetScanCAN = new Uint8List(6);
-    packetScanCAN[0] = 0x02; //Start packet
-    packetScanCAN[1] = 0x01; //Payload length
-    packetScanCAN[2] = COMM_PACKET_ID.COMM_PING_CAN.index; //Payload data
-    //3,4 are CRC computed below
-    packetScanCAN[5] = 0x03; //End packet
-    int checksum = BLEHelper.crc16(packetScanCAN, 2, 1);
-    packetScanCAN[3] = (checksum >> 8) & 0xff;
-    packetScanCAN[4] = checksum & 0xff;
-    //print("TEST packetScanCAN $packetScanCAN");
-    await the_tx_characteristic.write(packetScanCAN);
-
     // Keep the device on while connected
     Wakelock.enable();
 
@@ -1305,7 +1292,24 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     FileManager.clearLogFile();
 
     // Request the ESC configuration so the user doesn't have to enter settings
-    _handleAutoloadESCSettings(true);
+    Future.delayed(const Duration(milliseconds: 250), () {
+      _handleAutoloadESCSettings(true);
+    });
+
+    // Request the ESC provide the detected CAN devices for later use
+    Future.delayed(const Duration(milliseconds: 500), () {
+      // Scan for CAN devices
+      Uint8List packetScanCAN = new Uint8List(6);
+      packetScanCAN[0] = 0x02; //Start packet
+      packetScanCAN[1] = 0x01; //Payload length
+      packetScanCAN[2] = COMM_PACKET_ID.COMM_PING_CAN.index; //Payload data
+      //3,4 are CRC computed below
+      packetScanCAN[5] = 0x03; //End packet
+      int checksum = BLEHelper.crc16(packetScanCAN, 2, 1);
+      packetScanCAN[3] = (checksum >> 8) & 0xff;
+      packetScanCAN[4] = checksum & 0xff;
+      the_tx_characteristic.write(packetScanCAN);
+    });
 
     // Check if this is a known device when we connected/loaded it's settings
     if (!isConnectedDeviceKnown) {
@@ -1460,7 +1464,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     var aboutChild = AboutListTile(
       child: Text("About"),
       applicationName: "FreeSK8 Mobile",
-      applicationVersion: "v0.4.2",
+      applicationVersion: "v0.5.0",
       applicationIcon: Icon(Icons.info, size: 40,),
       icon: Icon(Icons.info),
       aboutBoxChildren: <Widget>[
@@ -1505,36 +1509,44 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       //getNavItem(Icons.account_box, "RT", Second.routeName),
       aboutChild,
 
-      /* TODO: Moving these to Board Configuration
-      getNavItem(Icons.donut_large, "FOC Wizard", ConfigureESC.routeName, FOCWizardArguments(the_tx_characteristic, bleHelper, escMotorConfigurationDefaults), true),
 
       ListTile(
-        leading: Icon(Icons.settings_remote),
-        title: Text("nRF Quick Pair"),
+        leading: Icon(Icons.battery_unknown),
+        title: Text(_showDieBieMS ? "Hide DieBieMS" : "Show DieBieMS"),
+        onTap: () async {
+          if(_showDieBieMS) {
+            setState(() {
+              _showDieBieMS = false;
+            });
+            print("DieBieMS RealTime Disabled");
+          } else {
+            setState(() {
+              _showDieBieMS = true;
+              controller.index = 1;
+            });
+            print("DieBieMS RealTime Enabled");
+            Navigator.pop(context); // Close drawer
+          }
+        },
+      ),
+
+      ListTile(
+        leading: Icon(Icons.timer),
+        title: Text("Speed Profiles"),
         onTap: () {
           // Don't write if not connected
           if (the_tx_characteristic != null) {
-            var byteData = new ByteData(10); //<start><payloadLen><packetID><int32_milliseconds><crc1><crc2><end>
-            byteData.setUint8(0, 0x02);
-            byteData.setUint8(1, 0x05);
-            byteData.setUint8(2, COMM_PACKET_ID.COMM_NRF_START_PAIRING.index);
-            byteData.setUint32(3, 10000); //milliseconds
-            int checksum = BLEHelper.crc16(byteData.buffer.asUint8List(), 2, 5);
-            byteData.setUint16(7, checksum);
-            byteData.setUint8(9, 0x03); //End of packet
+            // Set the flag to show ESC profiles. Display when MCCONF is returned
+            _showESCProfiles = true;
 
-            //<start><payloadLen><packetID><int32_milliseconds><crc1><crc2><end>
-            the_tx_characteristic.write(byteData.buffer.asUint8List()).then((value){
-              print('You have 10 seconds to power remote!');
-            }).catchError((e){
-              print("nRF Quick Pair: Exception: $e");
-            });
+            requestMCCONF();
+            Navigator.pop(context); // Close the drawer
           } else {
             showDialog(
               context: context,
               builder: (BuildContext context) {
                 return AlertDialog(
-                  title: Text("nRF Quick Pair"),
+                  title: Text("Debug"),
                   content: Text("Oops. Try connecting to your board first."),
                 );
               },
@@ -1542,8 +1554,52 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           }
         },
       ),
-      */
 
+      ListTile(
+        leading: Icon(Icons.settings_applications),
+        title: Text(_showESCConfigurator ? "Hide ESC Configurator" : "Show ESC Configurator"),
+        onTap: () async {
+          if(_showESCConfigurator) {
+            setState(() {
+              _showESCConfigurator = false;
+              _handleAutoloadESCSettings(true); // Reload ESC settings after user configuration
+            });
+            print("ESC Configurator Hidden");
+          } else {
+            setState(() {
+              _showESCConfigurator = true;
+              controller.index = 2;
+            });
+            print("ESC Configurator Displayed");
+          }
+          // Close the menu
+          Navigator.pop(context);
+        },
+      ),
+
+      Divider(height: 5, thickness: 2),
+      ListTile(
+        leading: Icon(Icons.settings),
+        title: Text("Robogotchi Config"),
+        onTap: () {
+          // Don't write if not connected
+          if (theTXLoggerCharacteristic != null) {
+            theTXLoggerCharacteristic.write(utf8.encode("getcfg~"))..catchError((e){
+              print("Gotchi User Config Request: Exception: $e");
+            });
+          } else {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text("Robogotchi Config"),
+                  content: Text("Oops. Try connecting to your robogotchi first."),
+                );
+              },
+            );
+          }
+        },
+      ),
       ListTile(
         leading: Icon(Icons.devices),
         title: Text("Robogotchi FW Update"),
@@ -1606,95 +1662,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               },
             );
           }
-        },
-      ),
-
-      ListTile(
-        leading: Icon(Icons.settings),
-        title: Text("Robogotchi Config"),
-        onTap: () {
-          // Don't write if not connected
-          if (theTXLoggerCharacteristic != null) {
-            theTXLoggerCharacteristic.write(utf8.encode("getcfg~"))..catchError((e){
-              print("Gotchi User Config Request: Exception: $e");
-            });
-          } else {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text("Robogotchi Config"),
-                  content: Text("Oops. Try connecting to your robogotchi first."),
-                );
-              },
-            );
-          }
-        },
-      ),
-
-      ListTile(
-        leading: Icon(Icons.battery_unknown),
-        title: Text(_showDieBieMS ? "Hide DieBieMS" : "Show DieBieMS"),
-        onTap: () async {
-          if(_showDieBieMS) {
-            setState(() {
-              _showDieBieMS = false;
-            });
-            print("DieBieMS RealTime Disabled");
-          } else {
-            setState(() {
-              _showDieBieMS = true;
-              controller.index = 1;
-            });
-            print("DieBieMS RealTime Enabled");
-            Navigator.pop(context); // Close drawer
-          }
-        },
-      ),
-
-      ListTile(
-        leading: Icon(Icons.timer),
-        title: Text("Speed Profiles"),
-        onTap: () {
-          // Don't write if not connected
-          if (the_tx_characteristic != null) {
-            // Set the flag to show ESC profiles. Display when MCCONF is returned
-            _showESCProfiles = true;
-
-            requestMCCONF();
-            Navigator.pop(context); // Close the drawer
-          } else {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text("Debug"),
-                  content: Text("Oops. Try connecting to your board first."),
-                );
-              },
-            );
-          }
-        },
-      ),
-
-      ListTile(
-        leading: Icon(Icons.settings_applications),
-        title: Text(_showESCConfigurator ? "Hide ESC Configurator" : "Show ESC Configurator"),
-        onTap: () async {
-          if(_showESCConfigurator) {
-            setState(() {
-              _showESCConfigurator = false;
-            });
-            print("ESC Configurator Hidden");
-          } else {
-            setState(() {
-              _showESCConfigurator = true;
-              controller.index = 2;
-            });
-            print("ESC Configurator Displayed");
-          }
-          // Close the menu
-          Navigator.pop(context);
         },
       ),
     ];
