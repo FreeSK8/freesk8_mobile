@@ -1452,11 +1452,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             onTap: ()
             {
               setState(() {
-                ++seriousBusinessCounter;
+                if (++seriousBusinessCounter > 8) seriousBusinessCounter = 0;
                 print("Things are getting serious $seriousBusinessCounter");
               });
             },
-            child: seriousBusinessCounter > 10 ? Image(image: AssetImage('assets/dri_about_serious.gif')) :
+            child: seriousBusinessCounter > 4 && seriousBusinessCounter < 7 ? Image(image: AssetImage('assets/dri_about_serious.gif')) :
             Image(image: AssetImage('assets/FreeSK8_MobileLogo.png'))
         ),
     );
@@ -1464,7 +1464,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     var aboutChild = AboutListTile(
       child: Text("About"),
       applicationName: "FreeSK8 Mobile",
-      applicationVersion: "v0.5.0",
+      applicationVersion: "v0.5.1",
       applicationIcon: Icon(Icons.info, size: 40,),
       icon: Icon(Icons.info),
       aboutBoxChildren: <Widget>[
@@ -1751,6 +1751,21 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     }
   }
 
+  void closeDieBieMSFunc(bool closeView) {
+    setState(() {
+      _showDieBieMS = false;
+    });
+    print("DieBieMS RealTime Disabled");
+  }
+
+  void closeESCConfiguratorFunc(bool closeView) {
+    setState(() {
+      _showESCConfigurator = false;
+      _handleAutoloadESCSettings(true); // Reload ESC settings after user configuration
+    });
+    print("Closed ESC Configurator");
+  }
+
   @override
   Widget build(BuildContext context) {
     if(syncInProgress && syncAdvanceProgress){
@@ -1816,6 +1831,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             startStopTelemetryFunc: startStopTelemetryTimer,
             showDieBieMS: _showDieBieMS,
             dieBieMSTelemetry: dieBieMSTelemetry,
+            closeDieBieMSFunc: closeDieBieMSFunc,
           ),
           ESK8Configuration(
               myUserSettings: widget.myUserSettings,
@@ -1826,7 +1842,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               onExitProfiles: _handleESCProfileFinished,
               onAutoloadESCSettings: _handleAutoloadESCSettings,
               showESCConfigurator: _showESCConfigurator,
-              discoveredCANDevices: _validCANBusDeviceIDs
+              discoveredCANDevices: _validCANBusDeviceIDs,
+              closeESCConfigurator: closeESCConfiguratorFunc,
           ),
           RideLogging(
             myUserSettings: widget.myUserSettings,

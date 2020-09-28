@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 
 import 'package:freesk8_mobile/dieBieMSHelper.dart';
 import 'package:freesk8_mobile/escHelper.dart';
+import 'package:freesk8_mobile/globalUtilities.dart';
 import 'package:freesk8_mobile/userSettings.dart';
 
 import 'package:flutter_thermometer/label.dart';
@@ -45,7 +46,8 @@ class RealTimeData extends StatefulWidget {
         @required this.currentSettings,
         this.startStopTelemetryFunc,
         this.showDieBieMS,
-        this.dieBieMSTelemetry
+        this.dieBieMSTelemetry,
+        this.closeDieBieMSFunc
       });
 
   final List<LatLng> routeTakenLocations;
@@ -54,6 +56,7 @@ class RealTimeData extends StatefulWidget {
   final ValueChanged<bool> startStopTelemetryFunc;
   final bool showDieBieMS;
   final DieBieMSTelemetry dieBieMSTelemetry;
+  final ValueChanged<bool> closeDieBieMSFunc;
 
   RealTimeDataState createState() => new RealTimeDataState();
 
@@ -197,118 +200,127 @@ class RealTimeDataState extends State<RealTimeData> {
             ),
           ],
         ),
-        body: Center(child:
-          Column(children: <Widget>[
-            Table(children: [
-              TableRow(children: [
-                Text("Pack Voltage: ", textAlign: TextAlign.right,textScaleFactor: 1.25,),
-                Text(" ${widget.dieBieMSTelemetry.packVoltage} (${widget.dieBieMSTelemetry.soc}%)", textScaleFactor: 1.25,)
-              ]),
-              TableRow(children: [
-                Text("Pack Current: ", textAlign: TextAlign.right,),
-                Text(" ${formatTriple.format(widget.dieBieMSTelemetry.packCurrent)} A")
-              ]),
-              TableRow(children: [
-                Text("Cell Voltage Average: ", textAlign: TextAlign.right,),
-                Text(" ${formatTriple.format(widget.dieBieMSTelemetry.cellVoltageAverage)} V")
-              ]),
-              TableRow(children: [
-                Text("Cell Voltage High: ", textAlign: TextAlign.right,),
-                Text(" ${formatTriple.format(widget.dieBieMSTelemetry.cellVoltageHigh)} V")
-              ]),
+        body: Stack(children: <Widget>[
 
-              TableRow(children: [
-                Text("Cell Voltage Low: ", textAlign: TextAlign.right,),
-                Text(" ${formatTriple.format(widget.dieBieMSTelemetry.cellVoltageLow)} V")
-              ]),
-              TableRow(children: [
-                Text("Cell Voltage Mismatch: ", textAlign: TextAlign.right,),
-                Text(" ${formatTriple.format(widget.dieBieMSTelemetry.cellVoltageMismatch)} V")
-              ]),
-              TableRow(children: [
-                Text("Battery Temp High: ", textAlign: TextAlign.right,),
-                Text(" ${widget.dieBieMSTelemetry.tempBatteryHigh} C")
-              ]),
-              TableRow(children: [
-                Text("Battery Temp Average: ", textAlign: TextAlign.right,),
-                Text(" ${widget.dieBieMSTelemetry.tempBatteryAverage} C")
-              ]),
-              TableRow(children: [
-                Text("BMS Temp High: ", textAlign: TextAlign.right,),
-                Text(" ${widget.dieBieMSTelemetry.tempBMSHigh} C")
-              ]),
-              TableRow(children: [
-                Text("BMS Temp Average: ", textAlign: TextAlign.right,),
-                Text(" ${widget.dieBieMSTelemetry.tempBMSAverage} C")
-              ]),
-            ],),
+          Center(child:
+            Column(children: <Widget>[
+              Table(children: [
+                TableRow(children: [
+                  Text("Pack Voltage: ", textAlign: TextAlign.right,textScaleFactor: 1.25,),
+                  Text(" ${widget.dieBieMSTelemetry.packVoltage} (${widget.dieBieMSTelemetry.soc}%)", textScaleFactor: 1.25,)
+                ]),
+                TableRow(children: [
+                  Text("Pack Current: ", textAlign: TextAlign.right,),
+                  Text(" ${formatTriple.format(widget.dieBieMSTelemetry.packCurrent)} A")
+                ]),
+                TableRow(children: [
+                  Text("Cell Voltage Average: ", textAlign: TextAlign.right,),
+                  Text(" ${formatTriple.format(widget.dieBieMSTelemetry.cellVoltageAverage)} V")
+                ]),
+                TableRow(children: [
+                  Text("Cell Voltage High: ", textAlign: TextAlign.right,),
+                  Text(" ${formatTriple.format(widget.dieBieMSTelemetry.cellVoltageHigh)} V")
+                ]),
 
-            Expanded(child: GridView.builder(
-              primary: false,
-              itemCount: widget.dieBieMSTelemetry.noOfCells,
-              gridDelegate: new SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, childAspectRatio: 3, crossAxisSpacing: 1, mainAxisSpacing: 1),
-              itemBuilder: (BuildContext context, int index) {
-                return new Card(
-                  shadowColor: Colors.transparent,
-                  child: new GridTile(
-                      child: new Stack(children: <Widget>[
-                        new SizedBox(height: 42,
+                TableRow(children: [
+                  Text("Cell Voltage Low: ", textAlign: TextAlign.right,),
+                  Text(" ${formatTriple.format(widget.dieBieMSTelemetry.cellVoltageLow)} V")
+                ]),
+                TableRow(children: [
+                  Text("Cell Voltage Mismatch: ", textAlign: TextAlign.right,),
+                  Text(" ${formatTriple.format(widget.dieBieMSTelemetry.cellVoltageMismatch)} V")
+                ]),
+                TableRow(children: [
+                  Text("Battery Temp High: ", textAlign: TextAlign.right,),
+                  Text(" ${widget.dieBieMSTelemetry.tempBatteryHigh} C")
+                ]),
+                TableRow(children: [
+                  Text("Battery Temp Average: ", textAlign: TextAlign.right,),
+                  Text(" ${widget.dieBieMSTelemetry.tempBatteryAverage} C")
+                ]),
+                TableRow(children: [
+                  Text("BMS Temp High: ", textAlign: TextAlign.right,),
+                  Text(" ${widget.dieBieMSTelemetry.tempBMSHigh} C")
+                ]),
+                TableRow(children: [
+                  Text("BMS Temp Average: ", textAlign: TextAlign.right,),
+                  Text(" ${widget.dieBieMSTelemetry.tempBMSAverage} C")
+                ]),
+              ],),
 
-                            child: new ClipRRect(
-                              borderRadius: new BorderRadius.only(topLeft: new Radius.circular(10), topRight: new Radius.circular(10)),
-                              child: new LinearProgressIndicator(
-                                  backgroundColor: Colors.grey,
-                                  valueColor: widget.dieBieMSTelemetry.cellVoltage[index] < 0 ?
-                                  new AlwaysStoppedAnimation<Color>(Colors.redAccent) :
-                                  new AlwaysStoppedAnimation<Color>(Colors.lightGreen),
-                                  value: sigmoidal(
-                                      widget.dieBieMSTelemetry.cellVoltage[index].abs(),
-                                      widget.currentSettings.settings.batteryCellMinVoltage,
-                                      widget.currentSettings.settings.batteryCellMaxVoltage)
-                              ),
-                            )
-                        ),
-                        new Positioned(
-                            top: 5, child: new Text(
-                          "  ${formatTriple.format(widget.dieBieMSTelemetry.cellVoltage[index])} V",
-                          style: TextStyle(color: Colors.black),
-                          textScaleFactor: 1.25,)),
-                        new Positioned(bottom: 2, child: new Text("  Cell $index")),
-                        new ClipRRect(
-                            borderRadius: new BorderRadius.circular(10),
-                            child: new Container(
-                              decoration: new BoxDecoration(
-                                color: Colors.transparent,
-                                border: new Border.all(color: Theme.of(context).accentColor, width: 3.0),
-                                borderRadius: new BorderRadius.circular(10.0),
-                              ),
-                            )
-                        ),
-                        /*
-                        new Positioned(
-                          right: -5,
-                          top: 15,
-                          child: new SizedBox(
-                            height: 30,
-                            width: 10,
-                            child: new Container(
-                              decoration: new BoxDecoration(
-                                color: Colors.red,
-                                border: new Border.all(color: Colors.red, width: 3.0),
-                                borderRadius: new BorderRadius.circular(10.0),
-                              ),
-                            )
+              Expanded(child: GridView.builder(
+                primary: false,
+                itemCount: widget.dieBieMSTelemetry.noOfCells,
+                gridDelegate: new SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, childAspectRatio: 3, crossAxisSpacing: 1, mainAxisSpacing: 1),
+                itemBuilder: (BuildContext context, int index) {
+                  return new Card(
+                    shadowColor: Colors.transparent,
+                    child: new GridTile(
+                        child: new Stack(children: <Widget>[
+                          new SizedBox(height: 42,
+
+                              child: new ClipRRect(
+                                borderRadius: new BorderRadius.only(topLeft: new Radius.circular(10), topRight: new Radius.circular(10)),
+                                child: new LinearProgressIndicator(
+                                    backgroundColor: Colors.grey,
+                                    valueColor: widget.dieBieMSTelemetry.cellVoltage[index] < 0 ?
+                                    new AlwaysStoppedAnimation<Color>(Colors.redAccent) :
+                                    new AlwaysStoppedAnimation<Color>(Colors.lightGreen),
+                                    value: sigmoidal(
+                                        widget.dieBieMSTelemetry.cellVoltage[index].abs(),
+                                        widget.currentSettings.settings.batteryCellMinVoltage,
+                                        widget.currentSettings.settings.batteryCellMaxVoltage)
+                                ),
+                              )
                           ),
-                        )
-                        */
-                      ],)
+                          new Positioned(
+                              top: 5, child: new Text(
+                            "  ${formatTriple.format(widget.dieBieMSTelemetry.cellVoltage[index])} V",
+                            style: TextStyle(color: Colors.black),
+                            textScaleFactor: 1.25,)),
+                          new Positioned(bottom: 2, child: new Text("  Cell $index")),
+                          new ClipRRect(
+                              borderRadius: new BorderRadius.circular(10),
+                              child: new Container(
+                                decoration: new BoxDecoration(
+                                  color: Colors.transparent,
+                                  border: new Border.all(color: Theme.of(context).accentColor, width: 3.0),
+                                  borderRadius: new BorderRadius.circular(10.0),
+                                ),
+                              )
+                          ),
+                          /*
+                          new Positioned(
+                            right: -5,
+                            top: 15,
+                            child: new SizedBox(
+                              height: 30,
+                              width: 10,
+                              child: new Container(
+                                decoration: new BoxDecoration(
+                                  color: Colors.red,
+                                  border: new Border.all(color: Colors.red, width: 3.0),
+                                  borderRadius: new BorderRadius.circular(10.0),
+                                ),
+                              )
+                            ),
+                          )
+                          */
+                        ],)
 
-                  ),
-                );
-              },
-            ))
-          ])
-        ),
+                    ),
+                  );
+                },
+              ))
+            ])
+          ),
+
+          Positioned(
+              right: 0,
+              top: 0,
+              child: IconButton(onPressed: (){print("User Close"); widget.closeDieBieMSFunc(true);},icon: Icon(Icons.clear),)
+          ),
+        ],)
       );
     }
     doubleItemWidth = MediaQuery.of(context).size.width /2 - 10;
@@ -490,27 +502,25 @@ class RealTimeDataState extends State<RealTimeData> {
                 Text("Distance Traveled: ", textAlign: TextAlign.right,),
                 Text(" $distance")
               ]),
-
-              TableRow(children: [
-                Text("Battery Current Now: ", textAlign: TextAlign.right,),
-                Text(" ${widget.telemetryPacket.current_in} A")
-              ]),
-              TableRow(children: [
-                Text("Amp Hours: ", textAlign: TextAlign.right,),
-                Text(" ${widget.telemetryPacket.amp_hours} Ah")
-              ]),
-              TableRow(children: [
-                Text("Amp Hours Charged: ", textAlign: TextAlign.right,),
-                Text(" ${widget.telemetryPacket.amp_hours_charged} Ah")
-              ]),
               TableRow(children: [
                 Text("Watt Hours: ", textAlign: TextAlign.right,),
-                Text(" ${widget.telemetryPacket.watt_hours} Wh")
+                Text(" ${doublePrecision(widget.telemetryPacket.watt_hours, 2)} Wh")
               ]),
               TableRow(children: [
                 Text("Watt Hours Charged: ", textAlign: TextAlign.right,),
-                Text(" ${widget.telemetryPacket.watt_hours_charged} Wh")
+                Text(" ${doublePrecision(widget.telemetryPacket.watt_hours_charged, 2)} Wh")
               ]),
+
+
+              TableRow(children: [
+                Text("Amp Hours: ", textAlign: TextAlign.right,),
+                Text(" ${doublePrecision(widget.telemetryPacket.amp_hours, 2)} Ah")
+              ]),
+              TableRow(children: [
+                Text("Amp Hours Charged: ", textAlign: TextAlign.right,),
+                Text(" ${doublePrecision(widget.telemetryPacket.amp_hours_charged, 2)} Ah")
+              ]),
+
               /*
               TableRow(children: [
                 Text("Mosfet 1 Temperature: ", textAlign: TextAlign.right,),
@@ -526,15 +536,19 @@ class RealTimeDataState extends State<RealTimeData> {
               ]),
               */
               TableRow(children: [
+                Text("Battery Current Now: ", textAlign: TextAlign.right,),
+                Text(" ${widget.telemetryPacket.current_in} A")
+              ]),
+              TableRow(children: [
                 Text("Last ESC ID: ", textAlign: TextAlign.right,),
                 Text(" ${widget.telemetryPacket.vesc_id}")
               ]),
               TableRow(children: [
                 Text("Fault Now: ", textAlign: TextAlign.right,),
-                Text(" ${widget.telemetryPacket.fault_code.index}")
+                Text("${widget.telemetryPacket.fault_code.index == 0 ? " 0":" Code ${widget.telemetryPacket.fault_code.index}"}")
               ]),
             ],),
-
+            widget.telemetryPacket.fault_code.index != 0 ? Center(child: Text("${widget.telemetryPacket.fault_code.toString().split('.')[1]}")) : Container(),
             SizedBox(height: 10),
 
             ///FlutterMapWidget
