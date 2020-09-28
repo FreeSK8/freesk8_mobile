@@ -608,6 +608,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static List<String> fileListToDelete = new List();
   static bool syncEraseOnComplete = true;
   static bool isLoggerLogging = false;
+  static int gotchiFaultCount = 0;
+  static int gotchiFaultCodes = 0;
   // Handler for RideLogging's sync button
   void _handleBLESyncState(bool startSync) {
     print("_handleBLESyncState: startSync: $startSync");
@@ -916,7 +918,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         print("Status packet received: $receiveStr");
         List<String> values = receiveStr.split(",");
         setState(() {
-          isLoggerLogging = values[2] == "1";
+          isLoggerLogging = (values[2] == "1");
+          gotchiFaultCount = int.tryParse(values[3]);
+          gotchiFaultCodes = int.tryParse(values[4]);
         });
       }
       else if(receiveStr.startsWith("version,")) {
