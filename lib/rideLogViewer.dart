@@ -476,7 +476,8 @@ class RideLogViewerState extends State<RideLogViewer> {
           Text(pageTitle),
         ],),
       ),
-      body: SlidingUpPanel(
+      body: SafeArea(
+        child: SlidingUpPanel(
           minHeight: 160,
           maxHeight: 420,
           color: Theme.of(context).primaryColor,
@@ -532,7 +533,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                     Text("Duration"),
                     Icon(Icons.watch_later),
                     escTimeSeriesList.length > 0 ?
-                      Text(duration.toString().substring(0,duration.toString().lastIndexOf(".")))
+                    Text(duration.toString().substring(0,duration.toString().lastIndexOf(".")))
                         :
                     Text(gpsDuration.toString().substring(0,gpsDuration.toString().lastIndexOf(".")))
                   ],),
@@ -560,39 +561,39 @@ class RideLogViewerState extends State<RideLogViewer> {
               ),
 
               Row(mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    RaisedButton(
-                        child: Text("Delete log"),
-                        onPressed: () async {
-                          //confirm with user
-                          showConfirmationDialog(context);
-                        }),
+                children: <Widget>[
+                  RaisedButton(
+                      child: Text("Delete log"),
+                      onPressed: () async {
+                        //confirm with user
+                        showConfirmationDialog(context);
+                      }),
 
-                    SizedBox(width: 10,),
+                  SizedBox(width: 10,),
 
-                    RaisedButton(
-                        child: Text("Share Log"),
-                        onPressed: () async {
-                          String fileSummary = 'Robogotchi gotchi!';
-                          fileSummary += "\nTop Speed: $maxSpeed";
-                          fileSummary += "\nAvg Speed: $avgSpeed";
-                          fileSummary += "\nDistance: $distance";
-                          fileSummary += "\nBattery Amps: $_maxAmpsBattery";
-                          fileSummary += "\nMotor Amps: $_maxAmpsMotor";
-                          fileSummary += "\nDuration: ${duration.toString().substring(0,duration.toString().lastIndexOf("."))}";
-                          fileSummary += "\n\nValues Format: DateTime, Voltage, Motor Temp, Mosfet Temp, DutyCycle, Motor Current, Battery Current, eRPM, eDistance, ESC ID";
-                          fileSummary += "\nPosition Format: latitude, longitude, sats_in_view, altitude, speed";
-                          await Share.file('FreeSK8Log', filename, utf8.encode(thisRideLog), 'text/csv', text: fileSummary);
-                        }),
-                  ],),
+                  RaisedButton(
+                      child: Text("Share Log"),
+                      onPressed: () async {
+                        String fileSummary = 'Robogotchi gotchi!';
+                        fileSummary += "\nTop Speed: $maxSpeed";
+                        fileSummary += "\nAvg Speed: $avgSpeed";
+                        fileSummary += "\nDistance: $distance";
+                        fileSummary += "\nBattery Amps: $_maxAmpsBattery";
+                        fileSummary += "\nMotor Amps: $_maxAmpsMotor";
+                        fileSummary += "\nDuration: ${duration.toString().substring(0,duration.toString().lastIndexOf("."))}";
+                        fileSummary += "\n\nValues Format: DateTime, Voltage, Motor Temp, Mosfet Temp, DutyCycle, Motor Current, Battery Current, eRPM, eDistance, ESC ID";
+                        fileSummary += "\nPosition Format: latitude, longitude, sats_in_view, altitude, speed";
+                        await Share.file('FreeSK8Log', filename, utf8.encode(thisRideLog), 'text/csv', text: fileSummary);
+                      }),
+                ],),
 
 
 
               Expanded(child:
-                SingleChildScrollView(
-                  scrollDirection: Axis.vertical,
-                  child: Text(thisRideLog.substring(0,thisRideLog.length > 10240 ? 10240 : thisRideLog.length ), softWrap: false,),
-                )
+              SingleChildScrollView(
+                scrollDirection: Axis.vertical,
+                child: Text(thisRideLog.substring(0,thisRideLog.length > 10240 ? 10240 : thisRideLog.length ), softWrap: false,),
+              )
               ),
             ],
           ),
@@ -607,60 +608,60 @@ class RideLogViewerState extends State<RideLogViewer> {
                   //MediaQuery.of(context).size.width / 3 * 2
 
                   _positionEntries.length > 0 ?
-                    SizedBox(height: 175,
-                      child: FlutterMap(
-                        options: new MapOptions(
-                          center: _positionEntries.first,
-                          zoom: 13.0,
-                        ),
-                        layers: [
-                          new TileLayerOptions(
-                              urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                              subdomains: ['a', 'b', 'c']
-                          ),
-                          new MarkerLayerOptions(
-                            markers: [
-                              new Marker(
-                                width: 160.0,
-                                height: 160.0,
-                                point: _positionEntries.first,
-                                builder: (ctx) =>
-                                new Container(
-                                  margin: EdgeInsets.fromLTRB(0, 0, 0, 80),
-                                  child: new Image(image: AssetImage("assets/home_map_marker.png")),
-                                ),
-                              ),
-                              new Marker(
-                                width: 160.0,
-                                height: 160.0,
-                                point: _positionEntries.last,
-                                builder: (ctx) =>
-                                new Container(
-                                  margin: EdgeInsets.fromLTRB(0, 0, 0, 80),
-                                  child: new Image(image: AssetImage("assets/skating_pin.png")),
-                                ),
-                              ),
-                            ],
-                          ),
-                          new PolylineLayerOptions(
-                              polylines: [routePolyLine]
-                          )
-                        ],
+                  SizedBox(height: 175,
+                    child: FlutterMap(
+                      options: new MapOptions(
+                        center: _positionEntries.first,
+                        zoom: 13.0,
                       ),
-                    ) :
+                      layers: [
+                        new TileLayerOptions(
+                            urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                            subdomains: ['a', 'b', 'c']
+                        ),
+                        new MarkerLayerOptions(
+                          markers: [
+                            new Marker(
+                              width: 160.0,
+                              height: 160.0,
+                              point: _positionEntries.first,
+                              builder: (ctx) =>
+                              new Container(
+                                margin: EdgeInsets.fromLTRB(0, 0, 0, 80),
+                                child: new Image(image: AssetImage("assets/home_map_marker.png")),
+                              ),
+                            ),
+                            new Marker(
+                              width: 160.0,
+                              height: 160.0,
+                              point: _positionEntries.last,
+                              builder: (ctx) =>
+                              new Container(
+                                margin: EdgeInsets.fromLTRB(0, 0, 0, 80),
+                                child: new Image(image: AssetImage("assets/skating_pin.png")),
+                              ),
+                            ),
+                          ],
+                        ),
+                        new PolylineLayerOptions(
+                            polylines: [routePolyLine]
+                        )
+                      ],
+                    ),
+                  ) :
                   SizedBox(height: 25, child: Text("GPS Data Not Recorded")),
 
                   Expanded( child:
-                    Stack( children: <Widget>[
+                  Stack( children: <Widget>[
 
-                      charts.TimeSeriesChart(
-                        seriesList,
-                        animate: false,
-                        /// Set zeroBound to false or we have lots of empty space in chart
-                        primaryMeasureAxis: new charts.NumericAxisSpec(
-                            tickProviderSpec: new charts.BasicNumericTickProviderSpec(zeroBound: false)),
-                        //TODO: Customize the domainAxis tickFormatterSpec causes PanAndZoomBehavior to stop working, WHY?
-                        /*
+                    charts.TimeSeriesChart(
+                      seriesList,
+                      animate: false,
+                      /// Set zeroBound to false or we have lots of empty space in chart
+                      primaryMeasureAxis: new charts.NumericAxisSpec(
+                          tickProviderSpec: new charts.BasicNumericTickProviderSpec(zeroBound: false)),
+                      //TODO: Customize the domainAxis tickFormatterSpec causes PanAndZoomBehavior to stop working, WHY?
+                      /*
                         domainAxis: new charts.DateTimeAxisSpec(
                             tickFormatterSpec: new charts.AutoDateTimeTickFormatterSpec(
                                 minute: new charts.TimeFormatterSpec(
@@ -670,38 +671,38 @@ class RideLogViewerState extends State<RideLogViewer> {
                             )
                         ),
                         */
-                        behaviors: [
-                          //TODO: "PanAndZoomBehavior()" causes "Exception caught by gesture" : "Bad state: No element" but works
-                          //TODO: charts.PointRenderer() line 255. Add: if (!componentBounds.containsPoint(point)) continue;
-                          //TODO: https://github.com/janstol/charts/commit/899476a06875422aafde82376cdf57ba0c2e65a5
-                          new charts.PanAndZoomBehavior(),
-                          new charts.SeriesLegend(desiredMaxColumns:3, position: charts.BehaviorPosition.bottom, cellPadding: EdgeInsets.all(5.0) ),
-                        ],
-                        /// Using selection model to generate value overlay
-                        selectionModels: [
-                          charts.SelectionModelConfig(
-                              changedListener: (charts.SelectionModel model) {
-                                if(model.hasDatumSelection) {
-                                  currentSelection = new RideLogChartData(model.selectedDatum.first.datum.time,  model.selectedDatum.first.datum);
-                                  eventObservable.add(currentSelection);
-                                  eventObservable.publish();
-                                }
+                      behaviors: [
+                        //TODO: "PanAndZoomBehavior()" causes "Exception caught by gesture" : "Bad state: No element" but works
+                        //TODO: charts.PointRenderer() line 255. Add: if (!componentBounds.containsPoint(point)) continue;
+                        //TODO: https://github.com/janstol/charts/commit/899476a06875422aafde82376cdf57ba0c2e65a5
+                        new charts.PanAndZoomBehavior(),
+                        new charts.SeriesLegend(desiredMaxColumns:3, position: charts.BehaviorPosition.bottom, cellPadding: EdgeInsets.all(5.0) ),
+                      ],
+                      /// Using selection model to generate value overlay
+                      selectionModels: [
+                        charts.SelectionModelConfig(
+                            changedListener: (charts.SelectionModel model) {
+                              if(model.hasDatumSelection) {
+                                currentSelection = new RideLogChartData(model.selectedDatum.first.datum.time,  model.selectedDatum.first.datum);
+                                eventObservable.add(currentSelection);
+                                eventObservable.publish();
                               }
-                          )
+                            }
+                        )
 
-                        ],
-                      ),
-
-
-                      //TODO: would be cool to position this near the user input
-                      Positioned(
-                        bottom: 21,
-                        right: 5,
-                        child: RideLogViewChartOverlay(eventObservable: eventObservable,),
-                      ),
+                      ],
+                    ),
 
 
-                    ],),),
+                    //TODO: would be cool to position this near the user input
+                    Positioned(
+                      bottom: 21,
+                      right: 5,
+                      child: RideLogViewChartOverlay(eventObservable: eventObservable,),
+                    ),
+
+
+                  ],),),
 
                   SizedBox(height: 250,), //This is the height of the slide drawer on the bottom, do not remove
 
@@ -711,6 +712,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           ),
 
 
+        ),
       )
     );
   }

@@ -183,65 +183,66 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
             Text("Config Editor"),
           ],),
         ),
-        body: GestureDetector(
-            onTap: () {
-              // Hide the keyboard
-              FocusScope.of(context).requestFocus(new FocusNode());
-            },
-            child: ListView(
-              padding: EdgeInsets.all(10),
-              children: <Widget>[
-                Icon(
-                  Icons.settings,
-                  size: 60.0,
-                  color: Colors.blue,
-                ),
+        body: SafeArea(
+          child: GestureDetector(
+              onTap: () {
+                // Hide the keyboard
+                FocusScope.of(context).requestFocus(new FocusNode());
+              },
+              child: ListView(
+                padding: EdgeInsets.all(10),
+                children: <Widget>[
+                  Icon(
+                    Icons.settings,
+                    size: 60.0,
+                    color: Colors.blue,
+                  ),
 
-                TextField(
-                  controller: tecLogAutoStopIdleTime,
-                  decoration: new InputDecoration(labelText: "Log Auto Stop/Idle Board Timeout (Seconds)"),
-                  keyboardType: TextInputType.number,
-                  inputFormatters: <TextInputFormatter>[
-                    WhitelistingTextInputFormatter.digitsOnly
-                  ]
-                ),
-                TextField(
-                  controller: tecLogAutoStopLowVoltage,
-                  decoration: new InputDecoration(labelText: "Log Auto Stop Low Voltage Threshold (Volts)"),
-                  keyboardType: TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: <TextInputFormatter>[
-                    WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
-                  ]
-                ),
-
-
-                Divider(thickness: 3),
-                Text("Log Auto Start Sensitivity (Duty Cycle ${myArguments.currentConfiguration.logAutoStartDutyCycle})"),
-                Slider(
-                  onChanged: (newValue){ setState(() {
-                    myArguments.currentConfiguration.logAutoStartDutyCycle = doublePrecision(0.2 - newValue, 2);
-                  }); },
-                  value: 0.2 - myArguments.currentConfiguration.logAutoStartDutyCycle,
-                  min: 0.01,
-                  max: 0.19,
-                ),
+                  TextField(
+                      controller: tecLogAutoStopIdleTime,
+                      decoration: new InputDecoration(labelText: "Log Auto Stop/Idle Board Timeout (Seconds)"),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: <TextInputFormatter>[
+                        WhitelistingTextInputFormatter.digitsOnly
+                      ]
+                  ),
+                  TextField(
+                      controller: tecLogAutoStopLowVoltage,
+                      decoration: new InputDecoration(labelText: "Log Auto Stop Low Voltage Threshold (Volts)"),
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: <TextInputFormatter>[
+                        WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                      ]
+                  ),
 
 
-                Divider(thickness: 3),
-                Text("Log Entries per Second (${myArguments.currentConfiguration.logIntervalHz}Hz)"),
-                Slider(
-                  onChanged: (newValue){ setState(() {
-                    myArguments.currentConfiguration.logIntervalHz = newValue.toInt();
-                  }); },
-                  value: myArguments.currentConfiguration.logIntervalHz.toDouble(),
-                  min: 1,
-                  max: 5,
-                ),
+                  Divider(thickness: 3),
+                  Text("Log Auto Start Sensitivity (Duty Cycle ${myArguments.currentConfiguration.logAutoStartDutyCycle})"),
+                  Slider(
+                    onChanged: (newValue){ setState(() {
+                      myArguments.currentConfiguration.logAutoStartDutyCycle = doublePrecision(0.2 - newValue, 2);
+                    }); },
+                    value: 0.2 - myArguments.currentConfiguration.logAutoStartDutyCycle,
+                    min: 0.01,
+                    max: 0.19,
+                  ),
 
 
-                Divider(thickness: 3),
-                Text("GPS Baud Rate"),
-                Center(child:
+                  Divider(thickness: 3),
+                  Text("Log Entries per Second (${myArguments.currentConfiguration.logIntervalHz}Hz)"),
+                  Slider(
+                    onChanged: (newValue){ setState(() {
+                      myArguments.currentConfiguration.logIntervalHz = newValue.toInt();
+                    }); },
+                    value: myArguments.currentConfiguration.logIntervalHz.toDouble(),
+                    min: 1,
+                    max: 5,
+                  ),
+
+
+                  Divider(thickness: 3),
+                  Text("GPS Baud Rate"),
+                  Center(child:
                   DropdownButton<ListItem>(
                     value: _selectedItem,
                     items: _dropdownMenuItems,
@@ -252,107 +253,108 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                       });
                     },
                   )
-                ),
+                  ),
 
 
-                Divider(thickness: 3),
-                SwitchListTile(
-                  title: Text("Multiple ESC Mode"),
-                  value: _multiESCMode,
-                  onChanged: (bool newValue) { setState((){ _multiESCMode = newValue;}); },
-                  secondary: const Icon(Icons.all_out),
-                ),
+                  Divider(thickness: 3),
+                  SwitchListTile(
+                    title: Text("Multiple ESC Mode"),
+                    value: _multiESCMode,
+                    onChanged: (bool newValue) { setState((){ _multiESCMode = newValue;}); },
+                    secondary: const Icon(Icons.all_out),
+                  ),
 
-                _multiESCMode ? SwitchListTile(
-                  title: Text(_multiESCModeQuad ? "Quad ESC Mode" : "Dual ESC Mode"),
-                  value: _multiESCModeQuad,
-                  onChanged: (bool newValue) { setState((){ _multiESCModeQuad = newValue;}); },
-                  secondary: _multiESCModeQuad ? const Icon(Icons.looks_4) : const Icon(Icons.looks_two),
-                ) : Container(),
+                  _multiESCMode ? SwitchListTile(
+                    title: Text(_multiESCModeQuad ? "Quad ESC Mode" : "Dual ESC Mode"),
+                    value: _multiESCModeQuad,
+                    onChanged: (bool newValue) { setState((){ _multiESCModeQuad = newValue;}); },
+                    secondary: _multiESCModeQuad ? const Icon(Icons.looks_4) : const Icon(Icons.looks_two),
+                  ) : Container(),
 
-                _multiESCMode ? MultiSelectFormField(
-                  autovalidate: false,
-                  titleText: _multiESCModeQuad ? "Select CAN IDs" : "Select CAN ID",
-                  validator: (value) {
-                    if (value == null || value.length != (_multiESCModeQuad ? 3 : 1)) {
-                      if(_multiESCModeQuad) {
-                        return "Please select 3 ESC CAN IDs";
-                      } else {
-                        return "Please select 1 ESC CAN ID";
+                  _multiESCMode ? MultiSelectFormField(
+                    autovalidate: false,
+                    titleText: _multiESCModeQuad ? "Select CAN IDs" : "Select CAN ID",
+                    validator: (value) {
+                      if (value == null || value.length != (_multiESCModeQuad ? 3 : 1)) {
+                        if(_multiESCModeQuad) {
+                          return "Please select 3 ESC CAN IDs";
+                        } else {
+                          return "Please select 1 ESC CAN ID";
+                        }
                       }
-                    }
-                    return null;
-                  },
-                  dataSource: _escCANIDs,
-                  textField: 'display',
-                  valueField: 'value',
-                  okButtonLabel: 'OK',
-                  cancelButtonLabel: 'CANCEL',
-                  // required: true,
-                  hintText: _multiESCModeQuad ? "Select 3 ESC CAN IDs" : "Select 1 ESC CAN ID",
-                  initialValue: _escCANIDsSelected,
-                  onSaved: (value) {
-                    if (value == null) return;
-                    setState(() {
-                      _escCANIDsSelected = value;
-                    });
-                  },
-                ) : Container(),
+                      return null;
+                    },
+                    dataSource: _escCANIDs,
+                    textField: 'display',
+                    valueField: 'value',
+                    okButtonLabel: 'OK',
+                    cancelButtonLabel: 'CANCEL',
+                    // required: true,
+                    hintText: _multiESCModeQuad ? "Select 3 ESC CAN IDs" : "Select 1 ESC CAN ID",
+                    initialValue: _escCANIDsSelected,
+                    onSaved: (value) {
+                      if (value == null) return;
+                      setState(() {
+                        _escCANIDsSelected = value;
+                      });
+                    },
+                  ) : Container(),
 
 
-                Divider(thickness: 3),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    RaisedButton(child:
-                    Row(mainAxisAlignment: MainAxisAlignment.center , children: <Widget>[Icon(Icons.cancel),Text("Cancel"),],),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        }),
-
-                    SizedBox(width: 10,),
-                    RaisedButton(child:
-                    Row(mainAxisAlignment: MainAxisAlignment.center , children: <Widget>[Text("Save"),Icon(Icons.save),],),
-                        onPressed: () async {
-                          // Validate user input
-                          if (_multiESCMode && _multiESCModeQuad && _escCANIDsSelected?.length != 3) {
-                            genericAlert(context, "CAN IDs required", Text("Please select 3 CAN IDs before saving"), "OK");
-                            return;
-                          }
-                          if (_multiESCMode && !_multiESCModeQuad && _escCANIDsSelected?.length != 1) {
-                            genericAlert(context, "CAN ID required", Text("Please select 1 CAN ID before saving"), "OK");
-                            return;
-                          }
-
-                          // Convert settings to robogotchi command
-                          int multiESCMode = 0;
-                          if (_multiESCMode && _multiESCModeQuad) {
-                            multiESCMode = 4;
-                          } else if (_multiESCMode) {
-                            multiESCMode = 2;
-                          }
-                          String newConfigCMD = "setcfg,${myArguments.currentConfiguration.logAutoStopIdleTime}"
-                              ",${myArguments.currentConfiguration.logAutoStopLowVoltage}"
-                              ",${myArguments.currentConfiguration.logAutoStartDutyCycle}"
-                              ",${myArguments.currentConfiguration.logIntervalHz}"
-                              ",$multiESCMode"
-                              ",${_escCANIDsSelected != null && _escCANIDsSelected.length > 0 ? _escCANIDsSelected[0] : 0}"
-                              ",${_escCANIDsSelected != null && _escCANIDsSelected.length > 1 ? _escCANIDsSelected[1] : 0}"
-                              ",${_escCANIDsSelected != null && _escCANIDsSelected.length > 2 ? _escCANIDsSelected[2] : 0}"
-                              ",0"
-                              ",${myArguments.currentConfiguration.gpsBaudRate}"
-                              ",${myArguments.currentConfiguration.cfgVersion}~";
-
-                          // Save
-                          print("Sending $newConfigCMD");
-                          await myArguments.txLoggerCharacteristic.write(utf8.encode(newConfigCMD)).whenComplete((){
-                            // Pop away the config page
+                  Divider(thickness: 3),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      RaisedButton(child:
+                      Row(mainAxisAlignment: MainAxisAlignment.center , children: <Widget>[Icon(Icons.cancel),Text("Cancel"),],),
+                          onPressed: () {
                             Navigator.of(context).pop();
-                          });
-                        })
-                  ],)
-              ],
-            )
+                          }),
+
+                      SizedBox(width: 10,),
+                      RaisedButton(child:
+                      Row(mainAxisAlignment: MainAxisAlignment.center , children: <Widget>[Text("Save"),Icon(Icons.save),],),
+                          onPressed: () async {
+                            // Validate user input
+                            if (_multiESCMode && _multiESCModeQuad && _escCANIDsSelected?.length != 3) {
+                              genericAlert(context, "CAN IDs required", Text("Please select 3 CAN IDs before saving"), "OK");
+                              return;
+                            }
+                            if (_multiESCMode && !_multiESCModeQuad && _escCANIDsSelected?.length != 1) {
+                              genericAlert(context, "CAN ID required", Text("Please select 1 CAN ID before saving"), "OK");
+                              return;
+                            }
+
+                            // Convert settings to robogotchi command
+                            int multiESCMode = 0;
+                            if (_multiESCMode && _multiESCModeQuad) {
+                              multiESCMode = 4;
+                            } else if (_multiESCMode) {
+                              multiESCMode = 2;
+                            }
+                            String newConfigCMD = "setcfg,${myArguments.currentConfiguration.logAutoStopIdleTime}"
+                                ",${myArguments.currentConfiguration.logAutoStopLowVoltage}"
+                                ",${myArguments.currentConfiguration.logAutoStartDutyCycle}"
+                                ",${myArguments.currentConfiguration.logIntervalHz}"
+                                ",$multiESCMode"
+                                ",${_escCANIDsSelected != null && _escCANIDsSelected.length > 0 ? _escCANIDsSelected[0] : 0}"
+                                ",${_escCANIDsSelected != null && _escCANIDsSelected.length > 1 ? _escCANIDsSelected[1] : 0}"
+                                ",${_escCANIDsSelected != null && _escCANIDsSelected.length > 2 ? _escCANIDsSelected[2] : 0}"
+                                ",0"
+                                ",${myArguments.currentConfiguration.gpsBaudRate}"
+                                ",${myArguments.currentConfiguration.cfgVersion}~";
+
+                            // Save
+                            print("Sending $newConfigCMD");
+                            await myArguments.txLoggerCharacteristic.write(utf8.encode(newConfigCMD)).whenComplete((){
+                              // Pop away the config page
+                              Navigator.of(context).pop();
+                            });
+                          })
+                    ],)
+                ],
+              )
+          ),
         )
     );
   }
