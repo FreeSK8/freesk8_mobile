@@ -1848,54 +1848,52 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             //bottom: getTabBar()
         ),
         // Set the TabBar view as the body of the Scaffold
-        body: SafeArea(
-          child: getTabBarView( <Widget>[
-            ConnectionStatus(
-                active:_scanActive,
-                bleDevicesGrid: _buildGridViewOfDevices(),
-                currentDevice: _connectedDevice,
-                currentFirmware: firmwarePacket,
-                userSettings: widget.myUserSettings,
-                onChanged: _handleBLEScanState,
-                robogotchiVersion: robogotchiVersion
-            ),
-            RealTimeData(
-              routeTakenLocations: routeTakenLocations,
-              telemetryPacket: telemetryPacket,
-              currentSettings: widget.myUserSettings,
-              startStopTelemetryFunc: startStopTelemetryTimer,
-              showDieBieMS: _showDieBieMS,
-              dieBieMSTelemetry: dieBieMSTelemetry,
-              closeDieBieMSFunc: closeDieBieMSFunc,
-            ),
-            ESK8Configuration(
-              myUserSettings: widget.myUserSettings,
+        body: getTabBarView( <Widget>[
+          ConnectionStatus(
+              active:_scanActive,
+              bleDevicesGrid: _buildGridViewOfDevices(),
               currentDevice: _connectedDevice,
-              showESCProfiles: _showESCProfiles,
-              theTXCharacteristic: the_tx_characteristic,
-              escMotorConfiguration: escMotorConfiguration,
-              onExitProfiles: _handleESCProfileFinished,
-              onAutoloadESCSettings: _handleAutoloadESCSettings,
-              showESCConfigurator: _showESCConfigurator,
-              discoveredCANDevices: _validCANBusDeviceIDs,
-              closeESCConfigurator: closeESCConfiguratorFunc,
-            ),
-            RideLogging(
-                myUserSettings: widget.myUserSettings,
-                theTXLoggerCharacteristic: theTXLoggerCharacteristic,
-                syncInProgress: syncInProgress, //TODO: RideLogging receives syncInProgress in syncStatus object
-                onSyncPress: _handleBLESyncState,
-                syncStatus: syncStatus,
-                eraseOnSync: syncEraseOnComplete,
-                onSyncEraseSwitch: _handleEraseOnSyncButton,
-                isLoggerLogging: isLoggerLogging,
-                isRobogotchi : _deviceIsRobogotchi
-            )
-          ])
-        ),
+              currentFirmware: firmwarePacket,
+              userSettings: widget.myUserSettings,
+              onChanged: _handleBLEScanState,
+              robogotchiVersion: robogotchiVersion
+          ),
+          RealTimeData(
+            routeTakenLocations: routeTakenLocations,
+            telemetryPacket: telemetryPacket,
+            currentSettings: widget.myUserSettings,
+            startStopTelemetryFunc: startStopTelemetryTimer,
+            showDieBieMS: _showDieBieMS,
+            dieBieMSTelemetry: dieBieMSTelemetry,
+            closeDieBieMSFunc: closeDieBieMSFunc,
+          ),
+          ESK8Configuration(
+            myUserSettings: widget.myUserSettings,
+            currentDevice: _connectedDevice,
+            showESCProfiles: _showESCProfiles,
+            theTXCharacteristic: the_tx_characteristic,
+            escMotorConfiguration: escMotorConfiguration,
+            onExitProfiles: _handleESCProfileFinished,
+            onAutoloadESCSettings: _handleAutoloadESCSettings,
+            showESCConfigurator: _showESCConfigurator,
+            discoveredCANDevices: _validCANBusDeviceIDs,
+            closeESCConfigurator: closeESCConfiguratorFunc,
+          ),
+          RideLogging(
+              myUserSettings: widget.myUserSettings,
+              theTXLoggerCharacteristic: theTXLoggerCharacteristic,
+              syncInProgress: syncInProgress, //TODO: RideLogging receives syncInProgress in syncStatus object
+              onSyncPress: _handleBLESyncState,
+              syncStatus: syncStatus,
+              eraseOnSync: syncEraseOnComplete,
+              onSyncEraseSwitch: _handleEraseOnSyncButton,
+              isLoggerLogging: isLoggerLogging,
+              isRobogotchi : _deviceIsRobogotchi
+          )
+        ]),
       bottomNavigationBar: Material(
         color: Theme.of(context).primaryColor,
-        child: getTabBar(),
+        child: SafeArea(child:getTabBar()),
       ),
       drawer: getNavDrawer(context),
     );
