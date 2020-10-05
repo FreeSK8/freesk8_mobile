@@ -5,11 +5,20 @@ class BLEHelper {
   int counter = 0;
   int endMessage = 512;
   bool messageRead = false;
-  Uint8List messageReceived = new Uint8List(512);
+  static Uint8List messageReceived = new Uint8List(512);
   int lenPayload = 0;
-  Uint8List payload = new Uint8List(512);
+  static Uint8List payload = new Uint8List(512);
   int payloadStart = 0;
 
+  Uint8List getMessage()
+  {
+    return messageReceived;
+  }
+
+  Uint8List getPayload()
+  {
+    return payload;
+  }
   static final List<int> dartCRCList = [0x0000, 0x1021, 0x2042, 0x3063, 0x4084,
     0x50a5, 0x60c6, 0x70e7, 0x8108, 0x9129, 0xa14a, 0xb16b, 0xc18c, 0xd1ad,
     0xe1ce, 0xf1ef, 0x1231, 0x0210, 0x3273, 0x2252, 0x52b5, 0x4294, 0x72f7,
@@ -53,7 +62,7 @@ class BLEHelper {
   }
 
   void resetPacket() {
-    //print("Resetting packet");
+    print("Resetting packet");
     messageRead = false;
     counter = 0;
     endMessage = 512;
@@ -145,7 +154,8 @@ class BLEHelper {
       //DEBUG:print("Message CRC passed. Counter is $counter. MessageReceived[$endMessage -1] is ${messageReceived[endMessage - 1]}");
       return lenPayload;
     } else {
-      //DEBUG:print("Message CRC did not pass. Counter is $counter. MessageReceived[$endMessage -1] is ${messageReceived[endMessage - 1]}");
+      //DEBUG:
+      print("Message CRC did not pass. Counter is $counter. MessageReceived[$endMessage -1] is ${messageReceived[endMessage - 1]}");
       return 0;
     }
   }
