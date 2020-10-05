@@ -137,6 +137,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static bool deviceHasDisconnected = false;
   static BluetoothDevice _connectedDevice;
   static bool isConnectedDeviceKnown = false;
+  static bool isESCResponding = false;
   static List<BluetoothService> _services;
   static StreamSubscription<BluetoothDeviceState> _connectedDeviceStreamSubscription;
   static StreamSubscription<Position> positionStream;
@@ -400,8 +401,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       // Reset displaying ESC Configurator flag
       _showESCConfigurator = false;
 
-      //Reset Robogotchi version
+      // Reset Robogotchi version
       robogotchiVersion = null;
+
+      // Reset is ESC responding flag
+      isESCResponding = false;
     }
   }
 
@@ -972,12 +976,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       if (bleHelper.processIncomingBytes(value) > 0){
 
         //Time to process the packet
-        int packetID = bleHelper.payload[0];
+        int packetID = bleHelper.getPayload()[0];
         if (packetID == COMM_PACKET_ID.COMM_FW_VERSION.index) {
 
           ///Firmware Packet
           setState(() {
-            firmwarePacket = escHelper.processFirmware(bleHelper.payload);
+            firmwarePacket = escHelper.processFirmware(bleHelper.getPayload());
+            isESCResponding = true;
           });
           var major = firmwarePacket.fw_version_major;
           var minor = firmwarePacket.fw_version_minor;
@@ -996,14 +1001,14 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         }
         else if ( packetID == DieBieMSHelper.COMM_GET_BMS_CELLS ) {
           setState(() {
-            dieBieMSTelemetry = dieBieMSHelper.processCells(bleHelper.payload);
+            dieBieMSTelemetry = dieBieMSHelper.processCells(bleHelper.getPayload());
           });
           bleHelper.resetPacket(); //Prepare for next packet
         }
         else if ( packetID == COMM_PACKET_ID.COMM_GET_VALUES.index ) {
           if(_showDieBieMS) {
             //TODO: Parse DieBieMS GET_VALUES packet - A shame they share the same ID as ESC values
-            dieBieMSTelemetry = dieBieMSHelper.processTelemetry(bleHelper.payload);
+            dieBieMSTelemetry = dieBieMSHelper.processTelemetry(bleHelper.getPayload());
             bleHelper.resetPacket(); //Prepare for next packet
             return;
           }
@@ -1011,7 +1016,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
           ///Telemetry packet
           final dtNow = DateTime.now();
-          telemetryPacket = escHelper.processTelemetry(bleHelper.payload);
+          telemetryPacket = escHelper.processTelemetry(bleHelper.getPayload());
 
 
           if(controller.index == 1) { //Only re-draw if we are on the real time data tab
@@ -1034,10 +1039,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           _validCANBusDeviceIDs.clear();
           //print(bleHelper.payload);
           for (int i = 1; i < bleHelper.lenPayload; ++i) {
-            if (bleHelper.payload[i] != 0) {
+            if (bleHelper.getPayload()[i] != 0) {
               print("CAN Device Found at ID ${bleHelper
-                  .payload[i]}. Is it an ESC? Stay tuned to find out more...");
-              _validCANBusDeviceIDs.add(bleHelper.payload[i]);
+                  .getPayload()[i]}. Is it an ESC? Stay tuned to find out more...");
+              _validCANBusDeviceIDs.add(bleHelper.getPayload()[i]);
             }
           }
 
@@ -1045,7 +1050,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           bleHelper.resetPacket();
         } else if ( packetID == COMM_PACKET_ID.COMM_NRF_START_PAIRING.index ) {
           print("NRF PAIRING packet received");
-          switch (bleHelper.payload[1]) {
+          switch (bleHelper.getPayload()[1]) {
             case 0:
               print("Pairing started");
               startStopTelemetryTimer(true); //Stop the telemetry timer
@@ -1113,7 +1118,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_SET_MCCONF.index ) {
           print("HUZZAH!");
-          print("COMM_PACKET_ID.COMM_SET_MCCONF: ${bleHelper.payload.sublist(0,bleHelper.lenPayload)}");
+          print("COMM_PACKET_ID.COMM_SET_MCCONF: ${bleHelper.getPayload().sublist(0,bleHelper.lenPayload)}");
           // Show dialog
           showDialog(
             context: context,
@@ -1133,7 +1138,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_GET_MCCONF.index) {
           ///ESC Motor Configuration
-          escMotorConfiguration = escHelper.processMCCONF(bleHelper.payload); //bleHelper.payload.sublist(0,bleHelper.lenPayload);
+          escMotorConfiguration = escHelper.processMCCONF(bleHelper.getPayload()); //bleHelper.payload.sublist(0,bleHelper.lenPayload);
 
           if (escMotorConfiguration.si_battery_ah == null) {
             // Show dialog
@@ -1196,7 +1201,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
           setState(() { // setState so focWizard receives updated MCCONF Defaults
             //TODO: focWizard never uses escMotorConfigurationDefaults
-            escMotorConfigurationDefaults = bleHelper.payload.sublist(0,bleHelper.lenPayload);
+            escMotorConfigurationDefaults = bleHelper.getPayload().sublist(0,bleHelper.lenPayload);
           });
           print("Oof.. MCCONF_DEFAULT: $escMotorConfigurationDefaults");
 
@@ -1204,12 +1209,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         } else if (packetID == COMM_PACKET_ID.COMM_GET_APPCONF.index) {
           print("WARNING: Whoa now. We received this APPCONF data. Whatchu want to do?");
           //TODO: handle APPCONF data
-          print("Debug APPCONF: ${bleHelper.payload.sublist(0,bleHelper.lenPayload)}");
+          print("Debug APPCONF: ${bleHelper.getPayload().sublist(0,bleHelper.lenPayload)}");
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_DETECT_APPLY_ALL_FOC.index) {
           print("COMM_DETECT_APPLY_ALL_FOC packet received");
           // Handle FOC detection results
-          print(bleHelper.payload.sublist(0,bleHelper.lenPayload)); //[58, 0, 1]
+          print(bleHelper.getPayload().sublist(0,bleHelper.lenPayload)); //[58, 0, 1]
           // * @return
           // * >=0: Success, see conf_general_autodetect_apply_sensors_foc codes
           // * 2: Success, AS5147 detected successfully
@@ -1219,7 +1224,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           // * -1: Detection failed
           // * -50: CAN detection timed out
           // * -51: CAN detection failed
-          var byteData = new ByteData.view(bleHelper.payload.buffer);
+          var byteData = new ByteData.view(bleHelper.getPayload().buffer);
           int resultFOCDetection = byteData.getInt16(1);
 
           Navigator.of(context).pop(); //Pop away the FOC wizard Loading Overlay
@@ -1269,7 +1274,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           bleHelper.resetPacket();
         } else {
           print("Unsupported packet ID: $packetID");
-          print("Unsupported packet Message: ${bleHelper.messageReceived.sublist(0,bleHelper.endMessage)}");
+          print("Unsupported packet Message: ${bleHelper.getMessage().sublist(0,bleHelper.endMessage)}");
           bleHelper.resetPacket();
         }
       }
@@ -1468,7 +1473,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     var aboutChild = AboutListTile(
       child: Text("About"),
       applicationName: "FreeSK8 Mobile",
-      applicationVersion: "v0.5.1",
+      applicationVersion: "v0.5.2",
       applicationIcon: Icon(Icons.info, size: 40,),
       icon: Icon(Icons.info),
       aboutBoxChildren: <Widget>[
@@ -1550,7 +1555,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               context: context,
               builder: (BuildContext context) {
                 return AlertDialog(
-                  title: Text("Debug"),
+                  title: Text("No Connection"),
                   content: Text("Oops. Try connecting to your board first."),
                 );
               },
@@ -1563,21 +1568,46 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         leading: Icon(Icons.settings_applications),
         title: Text(_showESCConfigurator ? "Hide ESC Configurator" : "Show ESC Configurator"),
         onTap: () async {
-          if(_showESCConfigurator) {
+          if (_connectedDevice == null) {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text("No connection"),
+                  content: Text("This feature requires an active connection. Please try again."),
+                );
+              },
+            );
+          }
+          else if (!isESCResponding) {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text("No data"),
+                  content: Text("There is an active connection but no communication from the ESC. Please check your configuration."),
+                );
+              },
+            );
+          }
+          else if(_showESCConfigurator) {
             setState(() {
               _showESCConfigurator = false;
               _handleAutoloadESCSettings(true); // Reload ESC settings after user configuration
             });
             print("ESC Configurator Hidden");
+            // Close the menu
+            Navigator.pop(context);
           } else {
             setState(() {
               _showESCConfigurator = true;
               controller.index = 2;
             });
             print("ESC Configurator Displayed");
+            // Close the menu
+            Navigator.pop(context);
           }
-          // Close the menu
-          Navigator.pop(context);
+
         },
       ),
 
@@ -1678,7 +1708,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   // Called by timer on interval to request telemetry packet
   static int telemetryRateLimiter = 0;
   void _requestTelemetry() async {
-    if ( _connectedDevice != null || !this.mounted){
+    if ( _connectedDevice != null || !this.mounted && isESCResponding){
 
       //Request telemetry packet; On error increase error counter
       if(_showDieBieMS) {
@@ -1818,26 +1848,27 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             //bottom: getTabBar()
         ),
         // Set the TabBar view as the body of the Scaffold
-        body: getTabBarView( <Widget>[
-          ConnectionStatus(
-              active:_scanActive,
-              bleDevicesGrid: _buildGridViewOfDevices(),
-              currentDevice: _connectedDevice,
-              currentFirmware: firmwarePacket,
-              userSettings: widget.myUserSettings,
-              onChanged: _handleBLEScanState,
-              robogotchiVersion: robogotchiVersion
-          ),
-          RealTimeData(
-            routeTakenLocations: routeTakenLocations,
-            telemetryPacket: telemetryPacket,
-            currentSettings: widget.myUserSettings,
-            startStopTelemetryFunc: startStopTelemetryTimer,
-            showDieBieMS: _showDieBieMS,
-            dieBieMSTelemetry: dieBieMSTelemetry,
-            closeDieBieMSFunc: closeDieBieMSFunc,
-          ),
-          ESK8Configuration(
+        body: SafeArea(
+          child: getTabBarView( <Widget>[
+            ConnectionStatus(
+                active:_scanActive,
+                bleDevicesGrid: _buildGridViewOfDevices(),
+                currentDevice: _connectedDevice,
+                currentFirmware: firmwarePacket,
+                userSettings: widget.myUserSettings,
+                onChanged: _handleBLEScanState,
+                robogotchiVersion: robogotchiVersion
+            ),
+            RealTimeData(
+              routeTakenLocations: routeTakenLocations,
+              telemetryPacket: telemetryPacket,
+              currentSettings: widget.myUserSettings,
+              startStopTelemetryFunc: startStopTelemetryTimer,
+              showDieBieMS: _showDieBieMS,
+              dieBieMSTelemetry: dieBieMSTelemetry,
+              closeDieBieMSFunc: closeDieBieMSFunc,
+            ),
+            ESK8Configuration(
               myUserSettings: widget.myUserSettings,
               currentDevice: _connectedDevice,
               showESCProfiles: _showESCProfiles,
@@ -1848,19 +1879,20 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               showESCConfigurator: _showESCConfigurator,
               discoveredCANDevices: _validCANBusDeviceIDs,
               closeESCConfigurator: closeESCConfiguratorFunc,
-          ),
-          RideLogging(
-            myUserSettings: widget.myUserSettings,
-            theTXLoggerCharacteristic: theTXLoggerCharacteristic,
-            syncInProgress: syncInProgress, //TODO: RideLogging receives syncInProgress in syncStatus object
-            onSyncPress: _handleBLESyncState,
-            syncStatus: syncStatus,
-            eraseOnSync: syncEraseOnComplete,
-            onSyncEraseSwitch: _handleEraseOnSyncButton,
-            isLoggerLogging: isLoggerLogging,
-            isRobogotchi : _deviceIsRobogotchi
-          )
-        ]),
+            ),
+            RideLogging(
+                myUserSettings: widget.myUserSettings,
+                theTXLoggerCharacteristic: theTXLoggerCharacteristic,
+                syncInProgress: syncInProgress, //TODO: RideLogging receives syncInProgress in syncStatus object
+                onSyncPress: _handleBLESyncState,
+                syncStatus: syncStatus,
+                eraseOnSync: syncEraseOnComplete,
+                onSyncEraseSwitch: _handleEraseOnSyncButton,
+                isLoggerLogging: isLoggerLogging,
+                isRobogotchi : _deviceIsRobogotchi
+            )
+          ])
+        ),
       bottomNavigationBar: Material(
         color: Theme.of(context).primaryColor,
         child: getTabBar(),
