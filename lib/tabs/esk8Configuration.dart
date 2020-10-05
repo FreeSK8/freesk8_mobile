@@ -530,7 +530,9 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
         _invalidCANID = _selectedCANFwdID; // Store invalid ID
         _selectedCANFwdID = null; // Clear selected CAN device
         widget.onAutoloadESCSettings(true); // Request primary ESC configuration
-        return Container(); // Empty view will be replaced when ESC responds with valid configuration
+        return Container( // This view will be replaced when ESC responds with valid configuration
+          child: Text("FreeSK8 has not received a valid Motor Configuration from the ESC")
+        );
       }
 
       // Prepare text editing controllers

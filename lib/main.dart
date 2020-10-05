@@ -86,7 +86,6 @@ class MyHome extends StatefulWidget {
   final FlutterBlue flutterBlue = FlutterBlue.instance;
   final List<BluetoothDevice> devicesList = new List<BluetoothDevice>();
 
-  final Map<Guid, List<int>> readValues = new Map<Guid, List<int>>();
   final UserSettings myUserSettings = new UserSettings();
 
   @override
