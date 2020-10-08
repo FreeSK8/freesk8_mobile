@@ -945,7 +945,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             multiESCMode: int.parse(values[5]),
             multiESCIDs: new List.from({int.parse(values[6]), int.parse(values[7]), int.parse(values[8]), int.parse(values[9])}),
             gpsBaudRate: int.parse(values[10]),
-            cfgVersion: int.parse(values[11])
+            alertVoltageLow: double.parse(values[11]),
+            alertESCTemp: double.parse(values[12]),
+            alertMotorTemp: double.parse(values[13]),
+            cfgVersion: int.parse(values[14])
         );
 
         //TODO: validate we received the expected cfgVersion from the module or else there could be trouble

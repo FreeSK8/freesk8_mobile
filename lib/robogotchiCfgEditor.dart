@@ -17,6 +17,9 @@ class RobogotchiConfiguration {
   int multiESCMode;
   List<int> multiESCIDs;
   int gpsBaudRate;
+  double alertVoltageLow;
+  double alertESCTemp;
+  double alertMotorTemp;
   int cfgVersion;
   RobogotchiConfiguration({
     this.logAutoStopIdleTime,
@@ -26,6 +29,9 @@ class RobogotchiConfiguration {
     this.multiESCMode,
     this.multiESCIDs,
     this.gpsBaudRate,
+    this.alertVoltageLow,
+    this.alertESCTemp,
+    this.alertMotorTemp,
     this.cfgVersion
   });
 }
@@ -76,6 +82,10 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
   TextEditingController tecLogAutoStopLowVoltage = TextEditingController();
   TextEditingController tecLogAutoStartDutyCycle = TextEditingController();
 
+  TextEditingController tecAlertVoltageLow = TextEditingController();
+  TextEditingController tecAlertESCTemp = TextEditingController();
+  TextEditingController tecAlertMotorTemp = TextEditingController();
+
   List<DropdownMenuItem<ListItem>> buildDropDownMenuItems(List listItems) {
     List<DropdownMenuItem<ListItem>> items = List();
     for (ListItem listItem in listItems) {
@@ -101,6 +111,9 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
     tecLogAutoStopIdleTime.dispose();
     tecLogAutoStopLowVoltage.dispose();
     tecLogAutoStartDutyCycle.dispose();
+    tecAlertVoltageLow.dispose();
+    tecAlertESCTemp.dispose();
+    tecAlertMotorTemp.dispose();
     super.dispose();
   }
 
@@ -111,7 +124,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
     // Check for valid arguments while building this widget
     RobogotchiCfgEditorArguments myArguments = ModalRoute.of(context).settings.arguments;
     if(myArguments == null){
-      return Container(child:Text("No arguments. BUG BUG."));
+      return Container(child:Text("No arguments. BUG BUG. This should not happen. Please fix?"));
     }
     if (_multiESCMode == null) {
       // Assign value received from gotchi
@@ -168,9 +181,37 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
         });
       }
     });
+    tecAlertVoltageLow.addListener(() {
+      myArguments.currentConfiguration.alertVoltageLow = doublePrecision(double.tryParse(tecAlertVoltageLow.text).abs(), 1);
+      if (myArguments.currentConfiguration.alertVoltageLow > 128.0) {
+        setState(() {
+          myArguments.currentConfiguration.alertVoltageLow = 128.0;
+        });
+      }
+    });
+    tecAlertESCTemp.addListener(() {
+      myArguments.currentConfiguration.alertESCTemp = doublePrecision(double.tryParse(tecAlertESCTemp.text).abs(), 1);
+      if (myArguments.currentConfiguration.alertESCTemp > 85.0) {
+        setState(() {
+          myArguments.currentConfiguration.alertESCTemp = 85.0;
+        });
+      }
+    });
+    tecAlertMotorTemp.addListener(() {
+      myArguments.currentConfiguration.alertMotorTemp = doublePrecision(double.tryParse(tecAlertMotorTemp.text).abs(), 1);
+      if (myArguments.currentConfiguration.alertMotorTemp > 120.0) {
+        setState(() {
+          myArguments.currentConfiguration.alertMotorTemp = 120.0;
+        });
+      }
+    });
     // Set text editing controller values to arguments received
     tecLogAutoStopIdleTime.text = myArguments.currentConfiguration.logAutoStopIdleTime.toString();
     tecLogAutoStopLowVoltage.text = myArguments.currentConfiguration.logAutoStopLowVoltage.toString();
+
+    tecAlertVoltageLow.text = myArguments.currentConfiguration.alertVoltageLow.toString();
+    tecAlertESCTemp.text = myArguments.currentConfiguration.alertESCTemp.toString();
+    tecAlertMotorTemp.text = myArguments.currentConfiguration.alertMotorTemp.toString();
 
 
     return Scaffold(
@@ -302,6 +343,32 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
 
 
                   Divider(thickness: 3),
+                  TextField(
+                      controller: tecAlertVoltageLow,
+                      decoration: new InputDecoration(labelText: "Alert Low Voltage (0 = no alert)"),
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: <TextInputFormatter>[
+                        WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                      ]
+                  ),
+                  TextField(
+                      controller: tecAlertESCTemp,
+                      decoration: new InputDecoration(labelText: "Alert ESC Temperature °C (0 = no alert)"),
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: <TextInputFormatter>[
+                        WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                      ]
+                  ),
+                  TextField(
+                      controller: tecAlertMotorTemp,
+                      decoration: new InputDecoration(labelText: "Alert Motor Temperature °C (0 = no alert)"),
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: <TextInputFormatter>[
+                        WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                      ]
+                  ),
+
+                  Divider(thickness: 3),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
@@ -342,6 +409,9 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                                 ",${_escCANIDsSelected != null && _escCANIDsSelected.length > 2 ? _escCANIDsSelected[2] : 0}"
                                 ",0"
                                 ",${myArguments.currentConfiguration.gpsBaudRate}"
+                                ",${myArguments.currentConfiguration.alertVoltageLow != null ? myArguments.currentConfiguration.alertVoltageLow : 0.0}"
+                                ",${myArguments.currentConfiguration.alertESCTemp != null ? myArguments.currentConfiguration.alertESCTemp : 0.0}"
+                                ",${myArguments.currentConfiguration.alertMotorTemp != null ? myArguments.currentConfiguration.alertMotorTemp : 0.0}"
                                 ",${myArguments.currentConfiguration.cfgVersion}~";
 
                             // Save
