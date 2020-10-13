@@ -1,10 +1,7 @@
 import 'dart:convert';
-import 'dart:isolate';
 import 'dart:ui';
 import 'dart:typed_data';
 import 'dart:async';
-import 'dart:math';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -495,10 +492,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                         return Text(snapshot.data != null ? snapshot.data : "unnamed", textAlign: TextAlign.center,);
                       }),
                   FutureBuilder<String>(
-                      future: UserSettings.getBoardAvatarPath(device.id.toString()),
+                      future: UserSettings.getBoardAvatarBase64(device.id.toString()),
                       builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
                         return CircleAvatar(
-                            backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.jpg'),
+                            backgroundImage: snapshot.data != null ? MemoryImage(base64Decode(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.jpg'),
                             radius: 60,
                             backgroundColor: Colors.white);
                       }),
@@ -1475,7 +1472,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     var aboutChild = AboutListTile(
       child: Text("About"),
       applicationName: "FreeSK8 Mobile",
-      applicationVersion: "v0.5.2",
+      applicationVersion: "v0.6.0-Test",
       applicationIcon: Icon(Icons.info, size: 40,),
       icon: Icon(Icons.info),
       aboutBoxChildren: <Widget>[

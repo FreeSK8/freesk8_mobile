@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -45,7 +47,7 @@ class ESK8Configuration extends StatefulWidget {
 
 class ESK8ConfigurationState extends State<ESK8Configuration> {
 
-  File _imageBoardAvatar;
+  MemoryImage _imageBoardAvatar;
   bool _applyESCProfilePermanently;
 
   int _selectedCANFwdID;
@@ -54,12 +56,13 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
   bool _writeESCInProgress;
 
   Future getImage() async {
-    var image = await ImagePicker.pickImage(source: ImageSource.camera, maxWidth: 640, maxHeight: 640);
+    File temporaryImage = await ImagePicker.pickImage(source: ImageSource.camera, maxWidth: 640, maxHeight: 640);
 
-    if ( image != null ) {
+    if ( temporaryImage != null ) {
+      // We have a new image, capture for display and update the settings in memory
       setState(() {
-        _imageBoardAvatar = image;
-        widget.myUserSettings.settings.boardAvatarPath = _imageBoardAvatar.path;
+        _imageBoardAvatar = MemoryImage(temporaryImage.readAsBytesSync());
+        widget.myUserSettings.settings.boardAvatarBase64 = base64.encode(temporaryImage.readAsBytesSync());
       });
     }
   }
@@ -1112,8 +1115,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
     tecBoardAlias.text = widget.myUserSettings.settings.boardAlias;
     tecBoardAlias.selection = TextSelection.fromPosition(TextPosition(offset: tecBoardAlias.text.length));
-    if (widget.myUserSettings.settings.boardAvatarPath != null) _imageBoardAvatar = File(widget.myUserSettings.settings.boardAvatarPath);
-
+    if (widget.myUserSettings.settings.boardAvatarBase64 != null) {
+      final decodedBytes = base64Decode(widget.myUserSettings.settings.boardAvatarBase64);
+      _imageBoardAvatar = MemoryImage(base64Decode(widget.myUserSettings.settings.boardAvatarBase64));
+    }
 
 
     return Container(
@@ -1181,7 +1186,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
                   SizedBox(width: 15),
                   CircleAvatar(
-                      backgroundImage: _imageBoardAvatar != null ? FileImage(_imageBoardAvatar) : AssetImage('assets/FreeSK8_Mobile.jpg'),
+                      backgroundImage: _imageBoardAvatar != null ? _imageBoardAvatar : AssetImage('assets/FreeSK8_Mobile.jpg'),
                       radius: 100,
                       backgroundColor: Colors.white)
                 ]),
@@ -1208,7 +1213,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                         try {
                           if (tecBoardAlias.text.length < 1) tecBoardAlias.text = "Unnamed";
                           widget.myUserSettings.settings.boardAlias = tecBoardAlias.text;
-                          widget.myUserSettings.settings.boardAvatarPath = _imageBoardAvatar != null ? _imageBoardAvatar.path : null;
+                          // NOTE: Board avatar is updated with the image picker
                           await widget.myUserSettings.saveSettings();
 
                         } catch (e) {

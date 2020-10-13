@@ -288,10 +288,10 @@ class RideLoggingState extends State<RideLogging> {
                                     SizedBox(width: 5,),
                                     SizedBox(width: 50, child:
                                     FutureBuilder<String>(
-                                        future: UserSettings.getBoardAvatarPath(rideLogsFromDatabase[index].boardID),
+                                        future: UserSettings.getBoardAvatarBase64(rideLogsFromDatabase[index].boardID),
                                         builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
                                           return CircleAvatar(
-                                              backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.jpg'),
+                                              backgroundImage: snapshot.data != null ? MemoryImage(base64Decode(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.jpg'),
                                               radius: 25,
                                               backgroundColor: Colors.white);
                                         })

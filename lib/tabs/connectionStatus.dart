@@ -1,11 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 
 import 'package:freesk8_mobile/escHelper.dart';
 import 'package:freesk8_mobile/userSettings.dart';
-
-import 'dart:io';
 
 class ConnectionStatus extends StatelessWidget {
 
@@ -30,9 +30,9 @@ class ConnectionStatus extends StatelessWidget {
     if (active == true) {
       return bleDevicesGrid;
     } else if (currentDevice != null) {
-      File imageBoardAvatar;
+      MemoryImage imageBoardAvatar;
       if (userSettings.isKnownDevice()) {
-        imageBoardAvatar = userSettings.settings.boardAvatarPath != null ? File(userSettings.settings.boardAvatarPath) : null;
+        imageBoardAvatar = userSettings.settings.boardAvatarBase64 != null ? MemoryImage(base64Decode(userSettings.settings.boardAvatarBase64)) : null;
       }
       return Container(
         child: Center(
@@ -44,7 +44,7 @@ class ConnectionStatus extends StatelessWidget {
               Text(userSettings.settings.boardAlias != null ? userSettings.settings.boardAlias : "unnamed",style: TextStyle(fontSize: 42, fontWeight: FontWeight.bold), textAlign: TextAlign.center,),
 
               CircleAvatar(
-                backgroundImage: imageBoardAvatar != null ? FileImage(imageBoardAvatar) : AssetImage('assets/FreeSK8_Mobile.jpg'),
+                backgroundImage: imageBoardAvatar != null ? imageBoardAvatar : AssetImage('assets/FreeSK8_Mobile.jpg'),
                 radius: 150,
                 backgroundColor: Colors.white,
               ),
