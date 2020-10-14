@@ -55,10 +55,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
   bool _writeESCInProgress;
 
-  Future getImage() async {
-    File temporaryImage = await ImagePicker.pickImage(source: ImageSource.camera, maxWidth: 640, maxHeight: 640);
+  Future getImage(bool fromUserGallery) async {
+    File temporaryImage = await ImagePicker.pickImage(source: fromUserGallery ? ImageSource.gallery : ImageSource.camera, maxWidth: 640, maxHeight: 640);
 
-    if ( temporaryImage != null ) {
+    if (temporaryImage != null) {
       // We have a new image, capture for display and update the settings in memory
       setState(() {
         _imageBoardAvatar = MemoryImage(temporaryImage.readAsBytesSync());
@@ -1176,10 +1176,20 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                       width: 125,
                       child:  RaisedButton(
                           child:
-                          Row(mainAxisAlignment: MainAxisAlignment.center , children: <Widget>[Text("Change "),Icon(Icons.camera_alt),],),
+                          Row(mainAxisAlignment: MainAxisAlignment.center , children: <Widget>[Text("Take "),Icon(Icons.camera_alt),],),
 
                           onPressed: () {
-                            getImage();
+                            getImage(false);
+                          }),
+                    ),
+                    SizedBox(
+                      width: 125,
+                      child:  RaisedButton(
+                          child:
+                          Row(mainAxisAlignment: MainAxisAlignment.center , children: <Widget>[Text("Select "),Icon(Icons.filter),],),
+
+                          onPressed: () {
+                            getImage(true);
                           }),
                     )
                   ],),
