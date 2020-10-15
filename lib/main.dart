@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:freesk8_mobile/dieBieMSHelper.dart';
 import 'package:freesk8_mobile/escProfileEditor.dart';
+import 'package:freesk8_mobile/globalUtilities.dart';
 import 'package:freesk8_mobile/robogotchiCfgEditor.dart';
 
 // UI Pages
@@ -951,17 +952,20 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             cfgVersion: int.parse(values[parseIndex])
         );
 
-        //TODO: validate we received the expected cfgVersion from the module or else there could be trouble
-
-        // Load the user configuration window
-        Navigator.of(context).pushNamed(
-            RobogotchiCfgEditor.routeName,
-            arguments: RobogotchiCfgEditorArguments(
-                txLoggerCharacteristic: theTXLoggerCharacteristic,
-                currentConfiguration: gotchConfig,
-                discoveredCANDevices: _validCANBusDeviceIDs
-            )
-        );
+        // Validate we received the expected cfgVersion from the module or else there could be trouble
+        if (gotchConfig.cfgVersion != 2) {
+          genericAlert(context, "Version mismatch", Text("Robogotchi provided an incorrect configuration version"), "OK");
+        } else {
+          // Load the user configuration window
+          Navigator.of(context).pushNamed(
+              RobogotchiCfgEditor.routeName,
+              arguments: RobogotchiCfgEditorArguments(
+                  txLoggerCharacteristic: theTXLoggerCharacteristic,
+                  currentConfiguration: gotchConfig,
+                  discoveredCANDevices: _validCANBusDeviceIDs
+              )
+          );
+        }
       }
       else {
         ///Unexpected response
