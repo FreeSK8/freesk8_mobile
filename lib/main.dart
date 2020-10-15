@@ -934,18 +934,21 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         print("Robogotchi User Configuration received: $receiveStr");
         // Parse the configuration
         List<String> values = receiveStr.split(",");
+        int parseIndex = 1;
         RobogotchiConfiguration gotchConfig = new RobogotchiConfiguration(
-            logAutoStopIdleTime: int.parse(values[1]),
-            logAutoStopLowVoltage: double.parse(values[2]),
-            logAutoStartDutyCycle: double.parse(values[3]),
-            logIntervalHz: int.parse(values[4]),
-            multiESCMode: int.parse(values[5]),
-            multiESCIDs: new List.from({int.parse(values[6]), int.parse(values[7]), int.parse(values[8]), int.parse(values[9])}),
-            gpsBaudRate: int.parse(values[10]),
-            alertVoltageLow: double.parse(values[11]),
-            alertESCTemp: double.parse(values[12]),
-            alertMotorTemp: double.parse(values[13]),
-            cfgVersion: int.parse(values[14])
+            logAutoStopIdleTime: int.parse(values[parseIndex++]),
+            logAutoStopLowVoltage: double.parse(values[parseIndex++]),
+            logAutoStartDutyCycle: double.parse(values[parseIndex++]),
+            logIntervalHz: int.parse(values[parseIndex++]),
+            logAutoEraseWhenFull: int.parse(values[parseIndex++]) == 1 ? true : false,
+            multiESCMode: int.parse(values[parseIndex++]),
+            multiESCIDs: new List.from({int.parse(values[parseIndex++]), int.parse(values[parseIndex++]), int.parse(values[parseIndex++]), int.parse(values[parseIndex++])}),
+            gpsBaudRate: int.parse(values[parseIndex++]),
+            alertVoltageLow: double.parse(values[parseIndex++]),
+            alertESCTemp: double.parse(values[parseIndex++]),
+            alertMotorTemp: double.parse(values[parseIndex++]),
+            alertStorageAtCapacity: int.parse(values[parseIndex++]),
+            cfgVersion: int.parse(values[parseIndex])
         );
 
         //TODO: validate we received the expected cfgVersion from the module or else there could be trouble

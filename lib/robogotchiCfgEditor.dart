@@ -14,24 +14,28 @@ class RobogotchiConfiguration {
   double logAutoStopLowVoltage;
   double logAutoStartDutyCycle;
   int logIntervalHz;
+  bool logAutoEraseWhenFull;
   int multiESCMode;
   List<int> multiESCIDs;
   int gpsBaudRate;
   double alertVoltageLow;
   double alertESCTemp;
   double alertMotorTemp;
+  int alertStorageAtCapacity;
   int cfgVersion;
   RobogotchiConfiguration({
     this.logAutoStopIdleTime,
     this.logAutoStopLowVoltage,
     this.logAutoStartDutyCycle,
     this.logIntervalHz,
+    this.logAutoEraseWhenFull,
     this.multiESCMode,
     this.multiESCIDs,
     this.gpsBaudRate,
     this.alertVoltageLow,
     this.alertESCTemp,
     this.alertMotorTemp,
+    this.alertStorageAtCapacity,
     this.cfgVersion
   });
 }
@@ -81,6 +85,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
   TextEditingController tecLogAutoStopIdleTime = TextEditingController();
   TextEditingController tecLogAutoStopLowVoltage = TextEditingController();
   TextEditingController tecLogAutoStartDutyCycle = TextEditingController();
+  bool  _logAutoEraseWhenFull;
 
   TextEditingController tecAlertVoltageLow = TextEditingController();
   TextEditingController tecAlertESCTemp = TextEditingController();
@@ -132,6 +137,9 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
     }
     if (_multiESCModeQuad == null) {
       _multiESCModeQuad = myArguments.currentConfiguration.multiESCMode == 4;
+    }
+    if (_logAutoEraseWhenFull == null) {
+      _logAutoEraseWhenFull = myArguments.currentConfiguration.logAutoEraseWhenFull;
     }
     if (myArguments.discoveredCANDevices.length > 0) {
       _escCANIDs.clear();
@@ -280,6 +288,13 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                     max: 5,
                   ),
 
+                  SwitchListTile(
+                    title: Text("Log Auto Erase When Full"),
+                    value: _logAutoEraseWhenFull,
+                    onChanged: (bool newValue) { setState((){ _logAutoEraseWhenFull = newValue;}); },
+                    secondary: const Icon(Icons.delete_forever),
+                  ),
+
 
                   Divider(thickness: 3),
                   Text("GPS Baud Rate"),
@@ -369,6 +384,17 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                   ),
 
                   Divider(thickness: 3),
+                  Text("Alert when Storage is at Capacity (${myArguments.currentConfiguration.alertStorageAtCapacity == 0 ? "0 = no alert" : "${myArguments.currentConfiguration.alertStorageAtCapacity}%"})"),
+                  Slider(
+                    onChanged: (newValue){ setState(() {
+                      myArguments.currentConfiguration.alertStorageAtCapacity = newValue.toInt();
+                    }); },
+                    value: myArguments.currentConfiguration.alertStorageAtCapacity.toDouble(),
+                    min: 0.0,
+                    max: 90.0,
+                  ),
+
+                  Divider(thickness: 3),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
@@ -403,6 +429,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                                 ",${myArguments.currentConfiguration.logAutoStopLowVoltage}"
                                 ",${myArguments.currentConfiguration.logAutoStartDutyCycle}"
                                 ",${myArguments.currentConfiguration.logIntervalHz}"
+                                ",$_logAutoEraseWhenFull"
                                 ",$multiESCMode"
                                 ",${_escCANIDsSelected != null && _escCANIDsSelected.length > 0 ? _escCANIDsSelected[0] : 0}"
                                 ",${_escCANIDsSelected != null && _escCANIDsSelected.length > 1 ? _escCANIDsSelected[1] : 0}"
@@ -412,6 +439,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                                 ",${myArguments.currentConfiguration.alertVoltageLow != null ? myArguments.currentConfiguration.alertVoltageLow : 0.0}"
                                 ",${myArguments.currentConfiguration.alertESCTemp != null ? myArguments.currentConfiguration.alertESCTemp : 0.0}"
                                 ",${myArguments.currentConfiguration.alertMotorTemp != null ? myArguments.currentConfiguration.alertMotorTemp : 0.0}"
+                                ",${myArguments.currentConfiguration.alertStorageAtCapacity}"
                                 ",${myArguments.currentConfiguration.cfgVersion}~";
 
                             // Save
