@@ -429,7 +429,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                                 ",${myArguments.currentConfiguration.logAutoStopLowVoltage}"
                                 ",${myArguments.currentConfiguration.logAutoStartDutyCycle}"
                                 ",${myArguments.currentConfiguration.logIntervalHz}"
-                                ",$_logAutoEraseWhenFull"
+                                ",${_logAutoEraseWhenFull == true ? "1": "0"}"
                                 ",$multiESCMode"
                                 ",${_escCANIDsSelected != null && _escCANIDsSelected.length > 0 ? _escCANIDsSelected[0] : 0}"
                                 ",${_escCANIDsSelected != null && _escCANIDsSelected.length > 1 ? _escCANIDsSelected[1] : 0}"
