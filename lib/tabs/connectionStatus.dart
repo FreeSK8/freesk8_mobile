@@ -9,8 +9,18 @@ import 'package:freesk8_mobile/userSettings.dart';
 
 class ConnectionStatus extends StatelessWidget {
 
-  ConnectionStatus({Key key, this.active: false, this.bleDevicesGrid, this.currentDevice, this.currentFirmware, @required this.userSettings, @required this.onChanged, this.robogotchiVersion})
-      : super(key: key);
+  ConnectionStatus(
+      {
+        Key key,
+        this.active: false,
+        this.bleDevicesGrid,
+        this.currentDevice,
+        this.currentFirmware,
+        @required this.userSettings,
+        @required this.onChanged,
+        this.robogotchiVersion,
+        this.imageBoardAvatar
+      } ) : super(key: key);
 
   final ESCFirmware currentFirmware;
   final UserSettings userSettings;
@@ -19,6 +29,7 @@ class ConnectionStatus extends StatelessWidget {
   final bool active;
   final ValueChanged<bool> onChanged;
   final String robogotchiVersion;
+  final MemoryImage imageBoardAvatar;
 
   void _handleTap() {
     onChanged(!active);
@@ -30,10 +41,6 @@ class ConnectionStatus extends StatelessWidget {
     if (active == true) {
       return bleDevicesGrid;
     } else if (currentDevice != null) {
-      MemoryImage imageBoardAvatar;
-      if (userSettings.isKnownDevice()) {
-        imageBoardAvatar = userSettings.settings.boardAvatarBase64 != null ? MemoryImage(base64Decode(userSettings.settings.boardAvatarBase64)) : null;
-      }
       return Container(
         child: Center(
           child: Column(

@@ -139,6 +139,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static StreamSubscription<BluetoothDeviceState> _connectedDeviceStreamSubscription;
   static StreamSubscription<Position> positionStream;
 
+  MemoryImage cachedBoardAvatar;
+
   @override
   void initState() {
     super.initState();
@@ -403,6 +405,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       // Reset is ESC responding flag
       isESCResponding = false;
+
+      // Clear cached board avatar
+      cachedBoardAvatar = null;
     }
   }
 
@@ -1340,6 +1345,19 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         },
       );
       controller.index = 2; // switch to configuration tab for now
+    } else {
+      // Load board avatar
+      _cacheAvatar(false);
+    }
+  }
+
+  void _cacheAvatar(bool doSetState) async {
+    // Since base64Decode takes time the board avatar can flicker on reloads so we cache it
+    cachedBoardAvatar = widget.myUserSettings.settings.boardAvatarBase64 != null ? MemoryImage(base64Decode(widget.myUserSettings.settings.boardAvatarBase64)) : null;
+    if (doSetState) {
+      setState(() {
+
+      });
     }
   }
 
@@ -1862,7 +1880,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               currentFirmware: firmwarePacket,
               userSettings: widget.myUserSettings,
               onChanged: _handleBLEScanState,
-              robogotchiVersion: robogotchiVersion
+              robogotchiVersion: robogotchiVersion,
+              imageBoardAvatar: cachedBoardAvatar,
           ),
           RealTimeData(
             routeTakenLocations: routeTakenLocations,
@@ -1884,6 +1903,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             showESCConfigurator: _showESCConfigurator,
             discoveredCANDevices: _validCANBusDeviceIDs,
             closeESCConfigurator: closeESCConfiguratorFunc,
+            updateCachedAvatar: _cacheAvatar
           ),
           RideLogging(
               myUserSettings: widget.myUserSettings,

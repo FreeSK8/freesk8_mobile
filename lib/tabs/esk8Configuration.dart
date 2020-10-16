@@ -28,7 +28,8 @@ class ESK8Configuration extends StatefulWidget {
     this.onAutoloadESCSettings, //TODO: this might be removable
     this.showESCConfigurator,
     this.discoveredCANDevices,
-    this.closeESCConfigurator
+    this.closeESCConfigurator,
+    this.updateCachedAvatar
   });
   final UserSettings myUserSettings;
   final BluetoothDevice currentDevice;
@@ -40,6 +41,7 @@ class ESK8Configuration extends StatefulWidget {
   final bool showESCConfigurator;
   final List<int> discoveredCANDevices;
   final ValueChanged<bool> closeESCConfigurator;
+  final ValueChanged<bool> updateCachedAvatar;
   ESK8ConfigurationState createState() => new ESK8ConfigurationState();
 
   static const String routeName = "/settings";
@@ -1225,6 +1227,8 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                           widget.myUserSettings.settings.boardAlias = tecBoardAlias.text;
                           // NOTE: Board avatar is updated with the image picker
                           await widget.myUserSettings.saveSettings();
+
+                          widget.updateCachedAvatar(true);
 
                         } catch (e) {
                           print("Save Settings Exception $e");
