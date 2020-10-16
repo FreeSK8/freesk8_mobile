@@ -336,7 +336,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       _scanActive = startScan;
       _bleDisconnect();
     });
-    widget.myUserSettings.loadSettings("default");
+    widget.myUserSettings.loadSettings("defaults");
   }
 
   void _bleDisconnect() {
