@@ -616,6 +616,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static bool isLoggerLogging = false;
   static int gotchiFaultCount = 0;
   static int gotchiFaultCodes = 0;
+  static int gotchiPercentFree = 0;
   // Handler for RideLogging's sync button
   void _handleBLESyncState(bool startSync) {
     print("_handleBLESyncState: startSync: $startSync");
@@ -927,6 +928,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           isLoggerLogging = (values[2] == "1");
           gotchiFaultCount = int.tryParse(values[3]);
           gotchiFaultCodes = int.tryParse(values[4]);
+          gotchiPercentFree = int.tryParse(values[5]);
         });
       }
       else if(receiveStr.startsWith("version,")) {
