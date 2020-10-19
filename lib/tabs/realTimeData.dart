@@ -358,7 +358,7 @@ class RealTimeDataState extends State<RealTimeData> {
 
     double powerMax = widget.currentSettings.settings.batterySeriesCount * widget.currentSettings.settings.batteryCellMaxVoltage;
     double powerMinimum = widget.currentSettings.settings.batterySeriesCount * widget.currentSettings.settings.batteryCellMinVoltage;
-    averageVoltageInput = (0.2 * widget.telemetryPacket.v_in) + (0.8 * averageVoltageInput);
+    averageVoltageInput = (0.2 * doublePrecision(widget.telemetryPacket.v_in, 1)) + (0.8 * averageVoltageInput);
     double powerRemaining = averageVoltageInput - powerMinimum;
     double percentRemaining = sigmoidal(averageVoltageInput, powerMinimum, powerMax) * 100;
     if(percentRemaining.isNaN) percentRemaining = 0;
