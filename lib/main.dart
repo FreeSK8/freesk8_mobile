@@ -307,6 +307,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   void _handleAutoloadESCSettings(bool newValue) {
     if(_connectedDevice != null) {
       _autoloadESCSettings = true;
+      //TODO: Testing resetPacket here to prevent `Missing Motor Configuration from the ESC` message
+      bleHelper.resetPacket();
       requestMCCONF();
     }
   }
