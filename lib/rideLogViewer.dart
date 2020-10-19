@@ -675,7 +675,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                         //TODO: "PanAndZoomBehavior()" causes "Exception caught by gesture" : "Bad state: No element" but works
                         //TODO: charts.PointRenderer() line 255. Add: if (!componentBounds.containsPoint(point)) continue;
                         //TODO: https://github.com/janstol/charts/commit/899476a06875422aafde82376cdf57ba0c2e65a5
-                        new charts.PanAndZoomBehavior(),
+                        //NOTE: disabled due to lack of optimization: new charts.PanAndZoomBehavior(),
                         new charts.SeriesLegend(desiredMaxColumns:3, position: charts.BehaviorPosition.bottom, cellPadding: EdgeInsets.all(5.0) ),
                       ],
                       /// Using selection model to generate value overlay
