@@ -1501,7 +1501,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     var aboutChild = AboutListTile(
       child: Text("About"),
       applicationName: "FreeSK8 Mobile",
-      applicationVersion: "v0.6.0-Test",
+      applicationVersion: "v0.6.0",
       applicationIcon: Icon(Icons.info, size: 40,),
       icon: Icon(Icons.info),
       aboutBoxChildren: <Widget>[
