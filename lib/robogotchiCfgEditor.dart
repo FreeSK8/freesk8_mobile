@@ -269,11 +269,11 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                   Text("Log Auto Start Sensitivity (Duty Cycle ${myArguments.currentConfiguration.logAutoStartDutyCycle})"),
                   Slider(
                     onChanged: (newValue){ setState(() {
-                      myArguments.currentConfiguration.logAutoStartDutyCycle = doublePrecision(0.2 - newValue, 2);
+                      myArguments.currentConfiguration.logAutoStartDutyCycle = doublePrecision(0.31 - newValue, 2);
                     }); },
-                    value: 0.2 - myArguments.currentConfiguration.logAutoStartDutyCycle,
+                    value: 0.31 - myArguments.currentConfiguration.logAutoStartDutyCycle,
                     min: 0.01,
-                    max: 0.19,
+                    max: 0.3,
                   ),
 
 
