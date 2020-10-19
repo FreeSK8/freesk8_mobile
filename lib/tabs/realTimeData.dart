@@ -69,6 +69,8 @@ class RealTimeDataState extends State<RealTimeData> {
 
   static double doubleItemWidth = 150; //This changes on widget build
 
+  static double averageVoltageInput = 0;
+
   double maxPossibleSpeedKph() {
     double ratio = 1.0 / widget.currentSettings.settings.gearRatio;
     int minutesToHour = 60;
@@ -356,10 +358,10 @@ class RealTimeDataState extends State<RealTimeData> {
 
     double powerMax = widget.currentSettings.settings.batterySeriesCount * widget.currentSettings.settings.batteryCellMaxVoltage;
     double powerMinimum = widget.currentSettings.settings.batterySeriesCount * widget.currentSettings.settings.batteryCellMinVoltage;
-    double powerRemaining = widget.telemetryPacket.v_in - powerMinimum;
-    double percentRemaining = sigmoidal(widget.telemetryPacket.v_in,powerMinimum,powerMax) * 100;
+    averageVoltageInput = (0.2 * widget.telemetryPacket.v_in) + (0.8 * averageVoltageInput);
+    double powerRemaining = averageVoltageInput - powerMinimum;
+    double percentRemaining = sigmoidal(averageVoltageInput, powerMinimum, powerMax) * 100;
     if(percentRemaining.isNaN) percentRemaining = 0;
-    //print("POWER min $powerMinimum current ${widget.telemetryPacket.v_in} remaining $powerRemaining percentage $percentRemaining");
     if(percentRemaining<0.0) {percentRemaining = 0.0;}
 
 
@@ -368,7 +370,7 @@ class RealTimeDataState extends State<RealTimeData> {
     FlutterGauge _gaugeSpeed = FlutterGauge(numberInAndOut: NumberInAndOut.inside, index: speedNow, start: -5, end: speedMax.ceil().toInt(),counterStyle: TextStyle(color: Theme.of(context).textTheme.bodyText1.color,fontSize: 25,),widthCircle: 10,secondsMarker: SecondsMarker.none,number: Number.all);
 
     FlutterGauge _gaugePowerRemaining = FlutterGauge(inactiveColor: Colors.red,activeColor: Colors.black,numberInAndOut: NumberInAndOut.inside, index: percentRemaining,counterStyle: TextStyle(color: Theme.of(context).textTheme.bodyText1.color,fontSize: 25,),widthCircle: 10,secondsMarker: SecondsMarker.secondsAndMinute,number: Number.all);
-    FlutterGauge _gaugeVolts = FlutterGauge(inactiveColor: Colors.red,activeColor: Colors.black,hand: Hand.short,index: widget.telemetryPacket.v_in,fontFamily: "Courier",start: powerMinimum.floor().toInt(), end: powerMax.ceil().toInt(),number: Number.endAndCenterAndStart,secondsMarker: SecondsMarker.secondsAndMinute,counterStyle: TextStyle(color: Theme.of(context).textTheme.bodyText1.color,fontSize: 25,));
+    FlutterGauge _gaugeVolts = FlutterGauge(inactiveColor: Colors.red,activeColor: Colors.black,hand: Hand.short,index: averageVoltageInput,fontFamily: "Courier",start: powerMinimum.floor().toInt(), end: powerMax.ceil().toInt(),number: Number.endAndCenterAndStart,secondsMarker: SecondsMarker.secondsAndMinute,counterStyle: TextStyle(color: Theme.of(context).textTheme.bodyText1.color,fontSize: 25,));
     //TODO: scale efficiency and adjust end value for imperial users
     FlutterGauge _gaugeEfficiency = FlutterGauge(reverseDial: true, reverseDigits: true, hand: Hand.short,index: efficiencyGauge,fontFamily: "Courier",start: 0, end: 42,number: Number.endAndStart,secondsMarker: SecondsMarker.secondsAndMinute,counterStyle: TextStyle(color: Theme.of(context).textTheme.bodyText1.color,fontSize: 25,));
 
