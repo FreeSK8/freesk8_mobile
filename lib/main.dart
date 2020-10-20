@@ -121,9 +121,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   // Create a tab controller
   TabController controller;
 
-  BLEHelper bleHelper = new BLEHelper();
-  ESCHelper escHelper = new ESCHelper();
-  DieBieMSHelper dieBieMSHelper = new DieBieMSHelper();
+  BLEHelper bleHelper;
+  ESCHelper escHelper;
+  DieBieMSHelper dieBieMSHelper;
 
   static MCCONF escMotorConfiguration;
   static Uint8List escMotorConfigurationDefaults;
@@ -146,6 +146,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     super.initState();
 
     print("main init state");
+
+    bleHelper = new BLEHelper();
+    escHelper = new ESCHelper();
+    dieBieMSHelper = new DieBieMSHelper();
 
     FileManager.createLogDirectory();
 
@@ -1365,7 +1369,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     }
   }
 
-  Future<void> _alertProfileSet() async {
+  Future<void> _alertProfileSet() {
     return showDialog<void>(
       context: context,
       barrierDismissible: false, // user must tap button!
@@ -1393,7 +1397,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     );
   }
 
-  Future<void> _alertInvalidDevice() async {
+  Future<void> _alertInvalidDevice() {
     return showDialog<void>(
       context: context,
       barrierDismissible: false, // user must tap button!
@@ -1422,7 +1426,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     );
   }
 
-  Future<void> _alertInvalidFirmware() async {
+  Future<void> _alertInvalidFirmware() {
     return showDialog<void>(
       context: context,
       barrierDismissible: false, // user must tap button!
@@ -1452,7 +1456,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   }
 
   static int seriousBusinessCounter = 0;
-  Future<void> _alertLoggerTest() async {
+  Future<void> _alertLoggerTest() {
     return showDialog<void>(
       context: context,
       barrierDismissible: false, // user must tap button!
