@@ -3,7 +3,17 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-Future<void> genericAlert(BuildContext context, String alertTitle, Widget alertBody, String alertButtonLabel) async {
+double kmToMile(double km) {
+  double distance = 0.621371 * km;
+  return doublePrecision(distance, 2);
+}
+
+double mileToKm(double mile) {
+  double distance = mile / 0.621371;
+  return doublePrecision(distance, 2);
+}
+
+Future<void> genericAlert(BuildContext context, String alertTitle, Widget alertBody, String alertButtonLabel) {
   return showDialog<void>(
     context: context,
     barrierDismissible: false, // user must tap button to dismiss
