@@ -20,11 +20,6 @@ import 'package:esys_flutter_share/esys_flutter_share.dart';
 
 import 'dart:math' show cos, sqrt, asin;
 
-double roundDouble(double value, int places){
-  double mod = pow(10.0, places);
-  return ((value * mod).round().toDouble() / mod);
-}
-
 class RideLogViewerArguments {
   final UserSettings userSettings;
   final String logFilePath;
@@ -102,7 +97,7 @@ class RideLogViewerState extends State<RideLogViewer> {
       List<charts.Series<TimeSeriesESC, DateTime>> chartData = new List();
 
       chartData.add(charts.Series<TimeSeriesESC, DateTime>(
-        id: 'VIN',
+        id: 'Battery',
         colorFn: (_, __) => charts.MaterialPalette.blue.shadeDefault,
         domainFn: (TimeSeriesESC escData, _) => escData.time,
         measureFn: (TimeSeriesESC escData, _) => escData.voltage,
@@ -174,7 +169,7 @@ class RideLogViewerState extends State<RideLogViewer> {
         ));
       }
       chartData.add(charts.Series<TimeSeriesESC, DateTime>(
-        id: 'Duty',
+        id: 'Duty Cycle',
         colorFn: (_, __) => charts.MaterialPalette.green.shadeDefault,
         domainFn: (TimeSeriesESC escData, _) => escData.time,
         measureFn: (TimeSeriesESC escData, _) => escData.dutyCycle * 100,
@@ -358,8 +353,8 @@ class RideLogViewerState extends State<RideLogViewer> {
               escTimeSeriesMap[thisDt].dutyCycle = double.tryParse(entry[5]);
               escTimeSeriesMap[thisDt].currentMotor = double.tryParse(entry[6]);
               escTimeSeriesMap[thisDt].currentInput = double.tryParse(entry[7]);
-              escTimeSeriesMap[thisDt].speed = myArguments.userSettings.settings.useImperial ? _kphToMph(_calculateSpeedKph(double.tryParse(entry[8]))) : _calculateSpeedKph(double.tryParse(entry[8]));
-              escTimeSeriesMap[thisDt].distance = myArguments.userSettings.settings.useImperial ? _kmToMile(_calculateDistanceKm(double.tryParse(entry[9]))) : _calculateDistanceKm(double.tryParse(entry[9]));
+              escTimeSeriesMap[thisDt].speed = myArguments.userSettings.settings.useImperial ? kmToMile(_calculateSpeedKph(double.tryParse(entry[8]))) : _calculateSpeedKph(double.tryParse(entry[8]));
+              escTimeSeriesMap[thisDt].distance = myArguments.userSettings.settings.useImperial ? kmToMile(_calculateDistanceKm(double.tryParse(entry[9]))) : _calculateDistanceKm(double.tryParse(entry[9]));
               if (distanceStartPrimary == null) {
                 distanceStartPrimary = escTimeSeriesMap[thisDt].distance;
               } else {
@@ -410,8 +405,8 @@ class RideLogViewerState extends State<RideLogViewer> {
       // Calculate GPS statistics
       gpsDuration = gpsEndTime.difference(gpsStartTime);
       gpsAverageSpeed /= _positionEntries.length;
-      gpsAverageSpeed = roundDouble(gpsAverageSpeed, 2);
-      gpsDistanceStr = myArguments.userSettings.settings.useImperial ? "${roundDouble(_kmToMile(gpsDistance), 2)} miles" : "${roundDouble(gpsDistance, 2)} km";
+      gpsAverageSpeed = doublePrecision(gpsAverageSpeed, 2);
+      gpsDistanceStr = myArguments.userSettings.settings.useImperial ? "${doublePrecision(kmToMile(gpsDistance), 2)} miles" : "${doublePrecision(gpsDistance, 2)} km";
     }
 
 
@@ -454,7 +449,7 @@ class RideLogViewerState extends State<RideLogViewer> {
       duration = escTimeSeriesList.last.time.difference(escTimeSeriesList.first.time);
 
       _avgSpeed /= escTimeSeriesList.length;
-      _avgSpeed = roundDouble(_avgSpeed, 2);
+      _avgSpeed = doublePrecision(_avgSpeed, 2);
     }
     String maxSpeed = myArguments.userSettings.settings.useImperial ? "$_maxSpeed mph" : "$_maxSpeed kph";
     String avgSpeed = myArguments.userSettings.settings.useImperial ? "$_avgSpeed mph" : "$_avgSpeed kph";
@@ -676,7 +671,12 @@ class RideLogViewerState extends State<RideLogViewer> {
                         //TODO: charts.PointRenderer() line 255. Add: if (!componentBounds.containsPoint(point)) continue;
                         //TODO: https://github.com/janstol/charts/commit/899476a06875422aafde82376cdf57ba0c2e65a5
                         //NOTE: disabled due to lack of optimization: new charts.PanAndZoomBehavior(),
-                        new charts.SeriesLegend(desiredMaxColumns:3, position: charts.BehaviorPosition.bottom, cellPadding: EdgeInsets.all(5.0) ),
+                        new charts.SeriesLegend(
+                            desiredMaxColumns:3,
+                            position: charts.BehaviorPosition.bottom,
+                            cellPadding: EdgeInsets.all(5.0),
+                            defaultHiddenSeries: ['Duty Cycle', 'Motor2 Temp', 'Motor2 Current', 'Motor Current', 'Motor Temp']
+                        ),
                       ],
                       /// Using selection model to generate value overlay
                       selectionModels: [
@@ -724,20 +724,14 @@ class RideLogViewerState extends State<RideLogViewer> {
     double speed = eRpm * ratioRpmSpeed;
     return double.parse((speed).toStringAsFixed(2));
   }
-  double _kphToMph(double kph) {
-    double speed = 0.621371 * kph;
-    return double.parse((speed).toStringAsFixed(2));
-  }
+
   double _calculateDistanceKm(double eCount) {
     double ratio = 1.0 / myArguments.userSettings.settings.gearRatio;
     double ratioPulseDistance = (ratio * myArguments.userSettings.settings.wheelDiameterMillimeters * pi) / ((myArguments.userSettings.settings.motorPoles * 3) * 1000000);
     double distance = eCount * ratioPulseDistance;
     return double.parse((distance).toStringAsFixed(2));
   }
-  double _kmToMile(double km) {
-    double distance = 0.621371 * km;
-    return double.parse((distance).toStringAsFixed(2));
-  }
+
 }
 /// Simple time series data type.
 class TimeSeriesESC {
