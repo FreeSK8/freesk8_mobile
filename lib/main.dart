@@ -950,23 +950,23 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         List<String> values = receiveStr.split(",");
         int parseIndex = 1;
         RobogotchiConfiguration gotchConfig = new RobogotchiConfiguration(
-            logAutoStopIdleTime: int.parse(values[parseIndex++]),
-            logAutoStopLowVoltage: double.parse(values[parseIndex++]),
-            logAutoStartDutyCycle: double.parse(values[parseIndex++]),
-            logIntervalHz: int.parse(values[parseIndex++]),
-            logAutoEraseWhenFull: int.parse(values[parseIndex++]) == 1 ? true : false,
-            multiESCMode: int.parse(values[parseIndex++]),
-            multiESCIDs: new List.from({int.parse(values[parseIndex++]), int.parse(values[parseIndex++]), int.parse(values[parseIndex++]), int.parse(values[parseIndex++])}),
-            gpsBaudRate: int.parse(values[parseIndex++]),
-            alertVoltageLow: double.parse(values[parseIndex++]),
-            alertESCTemp: double.parse(values[parseIndex++]),
-            alertMotorTemp: double.parse(values[parseIndex++]),
-            alertStorageAtCapacity: int.parse(values[parseIndex++]),
-            cfgVersion: int.parse(values[parseIndex])
+            logAutoStopIdleTime: int.tryParse(values[parseIndex++]),
+            logAutoStopLowVoltage: double.tryParse(values[parseIndex++]),
+            logAutoStartERPM: int.tryParse(values[parseIndex++]),
+            logIntervalHz: int.tryParse(values[parseIndex++]),
+            logAutoEraseWhenFull: int.tryParse(values[parseIndex++]) == 1 ? true : false,
+            multiESCMode: int.tryParse(values[parseIndex++]),
+            multiESCIDs: new List.from({int.tryParse(values[parseIndex++]), int.tryParse(values[parseIndex++]), int.tryParse(values[parseIndex++]), int.tryParse(values[parseIndex++])}),
+            gpsBaudRate: int.tryParse(values[parseIndex++]),
+            alertVoltageLow: double.tryParse(values[parseIndex++]),
+            alertESCTemp: double.tryParse(values[parseIndex++]),
+            alertMotorTemp: double.tryParse(values[parseIndex++]),
+            alertStorageAtCapacity: int.tryParse(values[parseIndex++]),
+            cfgVersion: int.tryParse(values[parseIndex])
         );
 
         // Validate we received the expected cfgVersion from the module or else there could be trouble
-        if (gotchConfig.cfgVersion != 2) {
+        if (gotchConfig.cfgVersion != 3) {
           genericAlert(context, "Version mismatch", Text("Robogotchi provided an incorrect configuration version"), "OK");
         } else {
           // Load the user configuration window
@@ -1505,7 +1505,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     var aboutChild = AboutListTile(
       child: Text("About"),
       applicationName: "FreeSK8 Mobile",
-      applicationVersion: "v0.6.0",
+      applicationVersion: "v0.6.1",
       applicationIcon: Icon(Icons.info, size: 40,),
       icon: Icon(Icons.info),
       aboutBoxChildren: <Widget>[

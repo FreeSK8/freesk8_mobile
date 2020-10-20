@@ -12,7 +12,7 @@ import 'package:multiselect_formfield/multiselect_formfield.dart';
 class RobogotchiConfiguration {
   int logAutoStopIdleTime;
   double logAutoStopLowVoltage;
-  double logAutoStartDutyCycle;
+  int logAutoStartERPM;
   int logIntervalHz;
   bool logAutoEraseWhenFull;
   int multiESCMode;
@@ -26,7 +26,7 @@ class RobogotchiConfiguration {
   RobogotchiConfiguration({
     this.logAutoStopIdleTime,
     this.logAutoStopLowVoltage,
-    this.logAutoStartDutyCycle,
+    this.logAutoStartERPM,
     this.logIntervalHz,
     this.logAutoEraseWhenFull,
     this.multiESCMode,
@@ -84,7 +84,6 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
   bool _multiESCModeQuad;
   TextEditingController tecLogAutoStopIdleTime = TextEditingController();
   TextEditingController tecLogAutoStopLowVoltage = TextEditingController();
-  TextEditingController tecLogAutoStartDutyCycle = TextEditingController();
   bool  _logAutoEraseWhenFull;
 
   TextEditingController tecAlertVoltageLow = TextEditingController();
@@ -115,7 +114,6 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
     _selectedItem = null;
     tecLogAutoStopIdleTime.dispose();
     tecLogAutoStopLowVoltage.dispose();
-    tecLogAutoStartDutyCycle.dispose();
     tecAlertVoltageLow.dispose();
     tecAlertESCTemp.dispose();
     tecAlertMotorTemp.dispose();
@@ -266,14 +264,14 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
 
 
                   Divider(thickness: 3),
-                  Text("Log Auto Start Sensitivity (Duty Cycle ${myArguments.currentConfiguration.logAutoStartDutyCycle})"),
+                  Text("Log Auto Start Sensitivity (eRPM ${myArguments.currentConfiguration.logAutoStartERPM})"),
                   Slider(
                     onChanged: (newValue){ setState(() {
-                      myArguments.currentConfiguration.logAutoStartDutyCycle = doublePrecision(0.31 - newValue, 2);
+                      myArguments.currentConfiguration.logAutoStartERPM = 6000 - newValue.toInt();
                     }); },
-                    value: 0.31 - myArguments.currentConfiguration.logAutoStartDutyCycle,
-                    min: 0.01,
-                    max: 0.3,
+                    value: 6000 - myArguments.currentConfiguration.logAutoStartERPM.toDouble(),
+                    min: 1000,
+                    max: 4999,
                   ),
 
 
@@ -427,7 +425,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                             }
                             String newConfigCMD = "setcfg,${myArguments.currentConfiguration.logAutoStopIdleTime}"
                                 ",${myArguments.currentConfiguration.logAutoStopLowVoltage}"
-                                ",${myArguments.currentConfiguration.logAutoStartDutyCycle}"
+                                ",${myArguments.currentConfiguration.logAutoStartERPM}"
                                 ",${myArguments.currentConfiguration.logIntervalHz}"
                                 ",${_logAutoEraseWhenFull == true ? "1": "0"}"
                                 ",$multiESCMode"
