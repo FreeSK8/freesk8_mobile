@@ -422,7 +422,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               ],),
                             onPressed: () async {
                               // navigate to the editor
-                              Navigator.of(context).pushNamed(ESCProfileEditor.routeName, arguments: ESCProfileEditorArguments(widget.theTXCharacteristic, await ESCHelper.getESCProfile(i), i));
+                              Navigator.of(context).pushNamed(ESCProfileEditor.routeName, arguments: ESCProfileEditorArguments(widget.theTXCharacteristic, await ESCHelper.getESCProfile(i), i, widget.myUserSettings.settings.useImperial));
                             },
                             color: Colors.transparent,
                           ),
@@ -454,12 +454,12 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                 TableRow(children: [
                                   Text("Speed Forward", textAlign: TextAlign.right),
                                   Text(":"),
-                                  Text("${snapshot.data.speedKmh} km/h")
+                                  Text("${widget.myUserSettings.settings.useImperial ? kmToMile(snapshot.data.speedKmh) : snapshot.data.speedKmh} ${widget.myUserSettings.settings.useImperial ? "mph" : "km/h"}")
                                 ]),
                                 TableRow(children: [
                                   Text("Speed Reverse", textAlign: TextAlign.right),
                                   Text(":"),
-                                  Text("${snapshot.data.speedKmhRev} km/h")
+                                  Text("${widget.myUserSettings.settings.useImperial ? kmToMile(snapshot.data.speedKmhRev) : snapshot.data.speedKmhRev} ${widget.myUserSettings.settings.useImperial ? "mph" : "km/h"}")
                                 ]),
                                 TableRow(children: [
                                   Text("Current Accel", textAlign: TextAlign.right),

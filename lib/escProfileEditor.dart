@@ -12,7 +12,8 @@ class ESCProfileEditorArguments {
   final BluetoothCharacteristic txCharacteristic;
   final ESCProfile profile;
   final int profileIndex;
-  ESCProfileEditorArguments(this.txCharacteristic, this.profile, this.profileIndex);
+  final bool useImperial;
+  ESCProfileEditorArguments(this.txCharacteristic, this.profile, this.profileIndex, this.useImperial);
 }
 
 class ESCProfileEditor extends StatefulWidget {
@@ -72,7 +73,7 @@ class ESCProfileEditorState extends State<ESCProfileEditor> {
       }
     });
     tecSpeedLimitFwd.addListener(() {
-      myArguments.profile.speedKmh = double.tryParse(tecSpeedLimitFwd.text);
+      myArguments.profile.speedKmh = myArguments.useImperial ? mileToKm(double.tryParse(tecSpeedLimitFwd.text)) : double.tryParse(tecSpeedLimitFwd.text);
       if (myArguments.profile.speedKmh > 256) {
         setState(() {
           myArguments.profile.speedKmh = 256;
@@ -80,7 +81,7 @@ class ESCProfileEditorState extends State<ESCProfileEditor> {
       }
     });
     tecSpeedLimitRev.addListener(() {
-      myArguments.profile.speedKmhRev = double.tryParse(tecSpeedLimitRev.text);
+      myArguments.profile.speedKmhRev = myArguments.useImperial ? mileToKm(double.tryParse(tecSpeedLimitRev.text)) : double.tryParse(tecSpeedLimitRev.text);
       if (myArguments.profile.speedKmhRev > 0.0) {
         setState(() {
           myArguments.profile.speedKmhRev = -myArguments.profile.speedKmhRev;
@@ -118,8 +119,8 @@ class ESCProfileEditorState extends State<ESCProfileEditor> {
 
     // Set text editing controller values to arguments received
     tecProfileName.text = myArguments.profile.profileName;
-    tecSpeedLimitFwd.text = myArguments.profile.speedKmh.toString();
-    tecSpeedLimitRev.text = myArguments.profile.speedKmhRev.toString();
+    tecSpeedLimitFwd.text = myArguments.useImperial ? kmToMile(myArguments.profile.speedKmh).toString() : myArguments.profile.speedKmh.toString();
+    tecSpeedLimitRev.text = myArguments.useImperial ? kmToMile(myArguments.profile.speedKmhRev).toString() : myArguments.profile.speedKmhRev.toString();
     tecSpeedLimitRev.selection = TextSelection.fromPosition(TextPosition(offset: tecSpeedLimitRev.text.length));
     tecCurrentMax.text = (myArguments.profile.l_current_max_scale * 100).toString();
     tecCurrentMin.text = (myArguments.profile.l_current_min_scale * 100).toString();
@@ -160,7 +161,7 @@ class ESCProfileEditorState extends State<ESCProfileEditor> {
 
               TextField(
                   controller: tecSpeedLimitFwd,
-                  decoration: new InputDecoration(labelText: "Speed Limit Forward (km/h)"),
+                  decoration: new InputDecoration(labelText: "Speed Limit Forward (${myArguments.useImperial ? "mph" : "km/h"})"),
                   keyboardType: TextInputType.numberWithOptions(decimal: true),
                   inputFormatters: <TextInputFormatter>[
                     NumberTextInputFormatter() //This allows for negative doubles
@@ -168,7 +169,7 @@ class ESCProfileEditorState extends State<ESCProfileEditor> {
               ),
               TextField(
                   controller: tecSpeedLimitRev,
-                  decoration: new InputDecoration(labelText: "Speed Limit Reverse (km/h)"),
+                  decoration: new InputDecoration(labelText: "Speed Limit Reverse (${myArguments.useImperial ? "mph" : "km/h"})"),
                   keyboardType: TextInputType.numberWithOptions(decimal: true),
                   inputFormatters: <TextInputFormatter>[
                     NumberTextInputFormatter() //This allows for negative doubles
