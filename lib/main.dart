@@ -629,8 +629,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     if (startSync) {
       // Start syncing all files by setting syncInProgress to true and request
       // the file list from the receiver
-      syncInProgress = true;
-      theTXLoggerCharacteristic.write(utf8.encode("ls~"));
+      setState(() {
+        syncInProgress = true;
+        theTXLoggerCharacteristic.write(utf8.encode("ls~"));
+      });
     } else {
       print("Stopping Sync Process");
       setState(() {
@@ -765,8 +767,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
           if(fileList.length == 0) {
             //Nothing to sync
-            syncInProgress = false;
-            loggerTestBuffer = "No logs are saved on the receiver";
+            setState(() {
+              syncInProgress = false;
+              loggerTestBuffer = "No logs are saved on the receiver";
+            });
           }
 
           if(syncInProgress){
@@ -1505,7 +1509,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     var aboutChild = AboutListTile(
       child: Text("About"),
       applicationName: "FreeSK8 Mobile",
-      applicationVersion: "v0.6.1",
+      applicationVersion: "v0.6.2",
       applicationIcon: Icon(Icons.info, size: 40,),
       icon: Icon(Icons.info),
       aboutBoxChildren: <Widget>[

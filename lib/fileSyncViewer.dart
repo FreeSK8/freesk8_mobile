@@ -55,11 +55,20 @@ class FileSyncViewerState extends State<FileSyncViewer> {
                 color: Colors.blue,
               )
             ),
-            Text("Files remaining: ${widget.syncStatus.fileList.length}"),
-            Text("Current file: ${widget.syncStatus.fileName}"),
-            Text("Progress: ${widget.syncStatus.fileBytesReceived}/${widget.syncStatus.fileBytesTotal} bytes"),
-            SizedBox(width: 200, height: 20, child:
-              LinearProgressIndicator( value: widget.syncStatus.fileBytesReceived / widget.syncStatus.fileBytesTotal)),
+            widget.syncStatus.fileList.length != 0 ? Column(
+              children: [
+                Text("Files remaining: ${widget.syncStatus.fileList.length}"),
+                Text("Current file: ${widget.syncStatus.fileName}"),
+                Text("Progress: ${widget.syncStatus.fileBytesReceived}/${widget.syncStatus.fileBytesTotal} bytes"),
+                SizedBox(width: 200, height: 20, child:
+                LinearProgressIndicator( value: widget.syncStatus.fileBytesReceived / widget.syncStatus.fileBytesTotal)),
+              ],
+            ) : Column(
+              children: [
+                Text("Checking file list...")
+              ],
+            ),
+
 
           ],
         ),
