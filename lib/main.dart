@@ -39,17 +39,7 @@ import 'package:wakelock/wakelock.dart';
 
 import 'databaseAssistant.dart';
 
-///
-/// FreeSK8 Mobile Known issues
-/// * Sync without Erase will not show last file until you switch back to logging tab
-/// * Sync with Erase while Logging is active will not erase files (could be robogotchi fw, see renee)
-/// * Chart in ride log viewer not optimized for large number of points. Try mp_charts
-///
-/// Robogotchi Known issues
-/// * Open Connection; A pairing mechanism should be implemented
-/// * Logging auto-stop voltage, auto-stop timeout and board in motion thresholds not configurable
-/// * Logging while viewing Real Time data results in large files
-///
+const String freeSK8ApplicationVersion = "0.6.2";
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -1509,7 +1499,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     var aboutChild = AboutListTile(
       child: Text("About"),
       applicationName: "FreeSK8 Mobile",
-      applicationVersion: "v0.6.2",
+      applicationVersion: "v$freeSK8ApplicationVersion",
       applicationIcon: Icon(Icons.info, size: 40,),
       icon: Icon(Icons.info),
       aboutBoxChildren: <Widget>[
@@ -1877,7 +1867,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     return Scaffold(
         // Appbar
         appBar: AppBar(
-            title: Text("FreeSK8 ($counter)"),
+            title: Text("FreeSK8 ($freeSK8ApplicationVersion.$counter)"),
             // Set the background color of the App Bar
             backgroundColor: Theme.of(context).primaryColor,
             // Set the bottom property of the Appbar to include a Tab Bar
