@@ -632,6 +632,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         lsInProgress = false;
         catInProgress = false;
         catCurrentFilename = "";
+        theTXLoggerCharacteristic.write(utf8.encode("syncstop~"));
       });
     }
   }
