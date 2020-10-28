@@ -1,5 +1,3 @@
-//part of 'main.dart';
-
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UserSettingsStructure {
@@ -8,7 +6,7 @@ class UserSettingsStructure {
 
   //TODO: these are technically board settings below
   String boardAlias;
-  String boardAvatarBase64;
+  String boardAvatarPath;
 
   int batterySeriesCount;
   double batteryCellMinVoltage;
@@ -71,7 +69,7 @@ class UserSettings {
 
     settings.boardAlias = prefs.getString('$currentDeviceID boardAlias') ?? "Unnamed";
 
-    settings.boardAvatarBase64 = prefs.getString('$currentDeviceID boardAvatarBase64') ?? null;
+    settings.boardAvatarPath = prefs.getString('$currentDeviceID boardAvatarPath') ?? null;
 
     settings.batterySeriesCount = prefs.getInt('$currentDeviceID batterySeriesCount') ?? 12;
     settings.batteryCellMinVoltage = prefs.getDouble('$currentDeviceID batteryCellMinVoltage') ?? 3.2;
@@ -94,7 +92,7 @@ class UserSettings {
     // Do not allow the internal "defaults" profile to update the board image or alias
     if(currentDeviceID != "defaults") {
       await prefs.setString('$currentDeviceID boardAlias', settings.boardAlias);
-      await prefs.setString('$currentDeviceID boardAvatarBase64', settings.boardAvatarBase64);
+      await prefs.setString('$currentDeviceID boardAvatarPath', settings.boardAvatarPath);
     }
 
     await prefs.setInt('$currentDeviceID batterySeriesCount', settings.batterySeriesCount);
@@ -115,9 +113,9 @@ class UserSettings {
   }
 
   ///Helper methods for FutureBuilders
-  static Future<String> getBoardAvatarBase64(String deviceID) async {
+  static Future<String> getBoardAvatarPath(String deviceID) async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('$deviceID boardAvatarBase64') ?? null;
+    return prefs.getString('$deviceID boardAvatarPath') ?? null;
   }
   static Future<String> getBoardAlias(String deviceID) async {
     final prefs = await SharedPreferences.getInstance();

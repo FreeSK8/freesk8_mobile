@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 
@@ -16,6 +15,8 @@ import 'package:freesk8_mobile/bleHelper.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'dart:io';
+
+import 'package:path_provider/path_provider.dart';
 
 class ESK8Configuration extends StatefulWidget {
   ESK8Configuration({
@@ -58,13 +59,27 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
   bool _writeESCInProgress;
 
   Future getImage(bool fromUserGallery) async {
+    final documentsDirectory = await getApplicationDocumentsDirectory();
     File temporaryImage = await ImagePicker.pickImage(source: fromUserGallery ? ImageSource.gallery : ImageSource.camera, maxWidth: 640, maxHeight: 640);
+
 
     if (temporaryImage != null) {
       // We have a new image, capture for display and update the settings in memory
+      String newPath = "${documentsDirectory.path}/avatars/${widget.currentDevice.id}";
+      File finalImage = await File(newPath).create(recursive: true);
+      temporaryImage.copySync(newPath);
+      print("Board avatar file destination: ${finalImage.path}");
+
       setState(() {
-        _imageBoardAvatar = MemoryImage(temporaryImage.readAsBytesSync());
-        widget.myUserSettings.settings.boardAvatarBase64 = base64.encode(temporaryImage.readAsBytesSync());
+        //NOTE: A FileImage is the fastest way to load these images but because
+        //      it's cached they will only update once. Unless you explicitly
+        //      clear the imageCache
+        // Clear the imageCache for FileImages used in rideLogging.dart
+        imageCache.clear();
+        imageCache.clearLiveImages();
+
+        _imageBoardAvatar = new MemoryImage(finalImage.readAsBytesSync());
+        widget.myUserSettings.settings.boardAvatarPath = finalImage.path;
       });
     }
   }
@@ -1117,9 +1132,8 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
     tecBoardAlias.text = widget.myUserSettings.settings.boardAlias;
     tecBoardAlias.selection = TextSelection.fromPosition(TextPosition(offset: tecBoardAlias.text.length));
-    if (widget.myUserSettings.settings.boardAvatarBase64 != null) {
-      final decodedBytes = base64Decode(widget.myUserSettings.settings.boardAvatarBase64);
-      _imageBoardAvatar = MemoryImage(base64Decode(widget.myUserSettings.settings.boardAvatarBase64));
+    if (widget.myUserSettings.settings.boardAvatarPath != null) {
+      _imageBoardAvatar = new MemoryImage(File(widget.myUserSettings.settings.boardAvatarPath).readAsBytesSync());
     }
 
 

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:ui';
 import 'dart:typed_data';
 import 'dart:async';
@@ -39,7 +40,7 @@ import 'package:wakelock/wakelock.dart';
 
 import 'databaseAssistant.dart';
 
-const String freeSK8ApplicationVersion = "0.6.2";
+const String freeSK8ApplicationVersion = "0.6.3";
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -494,10 +495,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                         return Text(snapshot.data != null ? snapshot.data : "unnamed", textAlign: TextAlign.center,);
                       }),
                   FutureBuilder<String>(
-                      future: UserSettings.getBoardAvatarBase64(device.id.toString()),
+                      future: UserSettings.getBoardAvatarPath(device.id.toString()),
                       builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
                         return CircleAvatar(
-                            backgroundImage: snapshot.data != null ? MemoryImage(base64Decode(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.jpg'),
+                            backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.jpg'),
                             radius: 60,
                             backgroundColor: Colors.white);
                       }),
@@ -1354,8 +1355,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   }
 
   void _cacheAvatar(bool doSetState) async {
-    // Since base64Decode takes time the board avatar can flicker on reloads so we cache it
-    cachedBoardAvatar = widget.myUserSettings.settings.boardAvatarBase64 != null ? MemoryImage(base64Decode(widget.myUserSettings.settings.boardAvatarBase64)) : null;
+    // Cache this so it does not flicker on setState()
+    cachedBoardAvatar = widget.myUserSettings.settings.boardAvatarPath != null ? MemoryImage(File(widget.myUserSettings.settings.boardAvatarPath).readAsBytesSync()) : null;
     if (doSetState) {
       setState(() {
 
