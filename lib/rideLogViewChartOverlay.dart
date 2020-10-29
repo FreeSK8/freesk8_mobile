@@ -73,7 +73,7 @@ class RideLogViewChartOverlayState extends State<RideLogViewChartOverlay> {
     }
 
     return Container(
-      height: 130,
+      height: 138,
       width: 182,
 
       color: Colors.black.withOpacity(0.85),
