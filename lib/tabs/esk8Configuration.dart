@@ -50,7 +50,6 @@ class ESK8Configuration extends StatefulWidget {
 
 class ESK8ConfigurationState extends State<ESK8Configuration> {
 
-  MemoryImage _imageBoardAvatar;
   bool _applyESCProfilePermanently;
 
   int _selectedCANFwdID;
@@ -78,8 +77,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
         imageCache.clear();
         imageCache.clearLiveImages();
 
-        _imageBoardAvatar = new MemoryImage(finalImage.readAsBytesSync());
-        widget.myUserSettings.settings.boardAvatarPath = finalImage.path;
+        widget.myUserSettings.settings.boardAvatarPath = "/avatars/${widget.currentDevice.id}";
       });
     }
   }
@@ -1132,9 +1130,6 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
     tecBoardAlias.text = widget.myUserSettings.settings.boardAlias;
     tecBoardAlias.selection = TextSelection.fromPosition(TextPosition(offset: tecBoardAlias.text.length));
-    if (widget.myUserSettings.settings.boardAvatarPath != null) {
-      _imageBoardAvatar = new MemoryImage(File(widget.myUserSettings.settings.boardAvatarPath).readAsBytesSync());
-    }
 
 
     return Container(
@@ -1211,10 +1206,18 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                   ],),
 
                   SizedBox(width: 15),
-                  CircleAvatar(
-                      backgroundImage: _imageBoardAvatar != null ? _imageBoardAvatar : AssetImage('assets/FreeSK8_Mobile.jpg'),
-                      radius: 100,
-                      backgroundColor: Colors.white)
+                  FutureBuilder<Directory>(
+                      future: getApplicationDocumentsDirectory(),
+                      builder: (BuildContext context, AsyncSnapshot<Directory> snapshot) {
+                        if(snapshot.connectionState == ConnectionState.waiting){
+                          return Container();
+                        }
+                        return CircleAvatar(
+                            backgroundImage: widget.myUserSettings.settings.boardAvatarPath != null ? FileImage(File("${snapshot.data.path}${widget.myUserSettings.settings.boardAvatarPath}")) : AssetImage('assets/FreeSK8_Mobile.jpg'),
+                            radius: 100,
+                            backgroundColor: Colors.white);
+                      }),
+
                 ]),
 
                 SizedBox(height:10),

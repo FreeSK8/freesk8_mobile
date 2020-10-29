@@ -29,6 +29,7 @@ import 'package:freesk8_mobile/file_manager.dart';
 import 'package:freesk8_mobile/autoStopHandler.dart';
 
 import 'package:flutter_blue/flutter_blue.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -806,7 +807,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           // Then generate database statistics
           // Then create database entry
           // Then rebuild state and continue sync process
-          FileManager.saveLogToDocuments(filename: catCurrentFilename).then((savedFilePath)
+          await FileManager.saveLogToDocuments(filename: catCurrentFilename).then((savedFilePath) async
           {
             /// Analyze log to generate database statistics
             double maxCurrentBattery = 0.0;
@@ -816,7 +817,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             double maxElevation;
             DateTime firstEntryTime;
             DateTime lastEntryTime;
-            FileManager.openLogFile(savedFilePath).then((value){
+            FileManager.openLogFile("${(await getApplicationDocumentsDirectory()).path}$savedFilePath").then((value){
               List<String> thisRideLogEntries = value.split("\n");
               for(int i=0; i<thisRideLogEntries.length; ++i) {
                 if(thisRideLogEntries[i] == null || thisRideLogEntries[i] == "") continue;
@@ -1357,7 +1358,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
   void _cacheAvatar(bool doSetState) async {
     // Cache this so it does not flicker on setState()
-    cachedBoardAvatar = widget.myUserSettings.settings.boardAvatarPath != null ? MemoryImage(File(widget.myUserSettings.settings.boardAvatarPath).readAsBytesSync()) : null;
+    cachedBoardAvatar = widget.myUserSettings.settings.boardAvatarPath != null ? MemoryImage(File(
+        "${(await getApplicationDocumentsDirectory()).path}${widget.myUserSettings.settings.boardAvatarPath}").readAsBytesSync()) : null;
     if (doSetState) {
       setState(() {
 

@@ -357,6 +357,7 @@ class RideLogViewerState extends State<RideLogViewer> {
               escTimeSeriesMap[thisDt].distance = myArguments.userSettings.settings.useImperial ? kmToMile(_calculateDistanceKm(double.tryParse(entry[9]))) : _calculateDistanceKm(double.tryParse(entry[9]));
               if (distanceStartPrimary == null) {
                 distanceStartPrimary = escTimeSeriesMap[thisDt].distance;
+                distanceEndPrimary = escTimeSeriesMap[thisDt].distance;
               } else {
                 distanceEndPrimary = escTimeSeriesMap[thisDt].distance;
               }

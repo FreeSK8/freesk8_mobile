@@ -40,7 +40,7 @@ class LogInfoItem {
     return {
       'board_id' : boardID,
       'board_alias' : boardAlias,
-      'log_file_path' : logFilePath,
+      'log_file_path' : logFilePath, //NOTE: relative path as iOS updates will create new container UUIDs
       'avg_speed' : avgSpeed,
       'max_speed' : maxSpeed,
       'elevation_change' : elevationChange,

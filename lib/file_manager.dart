@@ -42,7 +42,8 @@ class FileManager {
     await file.copy(newPath).then((value){
       //print("File copy returned: $value");
     });
-    return newPath;
+    //NOTE: return relative path as iOS updates will create new container UUIDs
+    return "/logs/${filename != null ? filename : now.toIso8601String()}.csv";
   }
 
   static Future<void> createLogDirectory() async {

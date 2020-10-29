@@ -1,3 +1,4 @@
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UserSettingsStructure {
@@ -115,8 +116,15 @@ class UserSettings {
   ///Helper methods for FutureBuilders
   static Future<String> getBoardAvatarPath(String deviceID) async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('$deviceID boardAvatarPath') ?? null;
+    String avatarPath = prefs.getString('$deviceID boardAvatarPath');
+
+    if (avatarPath != null) {
+      avatarPath = "${(await getApplicationDocumentsDirectory()).path}$avatarPath";
+    }
+
+    return avatarPath;
   }
+
   static Future<String> getBoardAlias(String deviceID) async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('$deviceID boardAlias') ?? null;

@@ -262,7 +262,7 @@ class RideLoggingState extends State<RideLogging> {
 
                         // navigate to the route by replacing the loading dialog
                         Navigator.of(context).pushReplacementNamed(RideLogViewer.routeName,
-                          arguments: RideLogViewerArguments(rideLogsFromDatabase[index].logFilePath, selectedBoardSettings),
+                          arguments: RideLogViewerArguments("${(await getApplicationDocumentsDirectory()).path}${rideLogsFromDatabase[index].logFilePath}", selectedBoardSettings),
                         ).then((value){
                           // Once finished re-list files and remove a potential snackBar item before re-draw of setState
                           _listFiles(true);
