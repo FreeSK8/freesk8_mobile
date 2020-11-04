@@ -214,13 +214,14 @@ class RideLoggingState extends State<RideLogging> {
                     // Each Dismissible must contain a Key. Keys allow Flutter to uniquely identify widgets.
                     // Use filename as key
                     key: Key(rideLogsFromDatabase[index].logFilePath.substring(rideLogsFromDatabase[index].logFilePath.lastIndexOf("/") + 1, rideLogsFromDatabase[index].logFilePath.lastIndexOf("/") + 20)),
-                    onDismissed: (direction) {
+                    onDismissed: (direction) async {
+                      final documentsDirectory = await getApplicationDocumentsDirectory();
                       // Remove the item from the data source.
                       setState(() {
                         //Remove from Database
                         DatabaseAssistant.dbRemoveLog(rideLogsFromDatabase[index].logFilePath);
                         //Remove from Filesystem
-                        File(rideLogsFromDatabase[index].logFilePath).delete();
+                        File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").delete();
                         //Remove from itemBuilder's list of entries
                         rideLogsFromDatabase.removeAt(index);
                       });
@@ -228,24 +229,19 @@ class RideLoggingState extends State<RideLogging> {
                     confirmDismiss: (DismissDirection direction) async {
                       print("rideLogging::Dismissible: ${direction.toString()}");
 
-                      return await showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: const Text("Delete file?"),
-                            content: const Text("Are you sure you wish to permanently erase this item?"),
-                            actions: <Widget>[
-                              FlatButton(
-                                  onPressed: () => Navigator.of(context).pop(true),
-                                  child: const Text("Delete")
-                              ),
-                              FlatButton(
-                                onPressed: () => Navigator.of(context).pop(false),
-                                child: const Text("Cancel"),
-                              ),
-                            ],
-                          );
-                        },
+                      return await genericConfirmationDialog(
+                        context,
+                        FlatButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            child: const Text("Delete")
+                        ),
+                        FlatButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: const Text("Cancel"),
+                        ),
+                          "Delete file?",
+                          Text("Are you sure you wish to permanently erase this item?")
+
                       );
                     },
                     child: GestureDetector(
@@ -262,7 +258,10 @@ class RideLoggingState extends State<RideLogging> {
 
                         // navigate to the route by replacing the loading dialog
                         Navigator.of(context).pushReplacementNamed(RideLogViewer.routeName,
-                          arguments: RideLogViewerArguments("${(await getApplicationDocumentsDirectory()).path}${rideLogsFromDatabase[index].logFilePath}", selectedBoardSettings),
+                          arguments: RideLogViewerArguments(
+                              rideLogsFromDatabase[index].logFilePath,
+                              selectedBoardSettings
+                          ),
                         ).then((value){
                           // Once finished re-list files and remove a potential snackBar item before re-draw of setState
                           _listFiles(true);
