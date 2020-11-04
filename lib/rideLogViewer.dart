@@ -46,43 +46,6 @@ class RideLogViewerState extends State<RideLogViewer> {
 
   PublishSubject<RideLogChartData> eventObservable = new PublishSubject();
 
-  showConfirmationDialog(BuildContext context) {
-    Widget cancelButton = FlatButton(
-      child: Text("Cancel"),
-      onPressed: () {
-        Navigator.of(context).pop();
-      },
-    );
-    Widget continueButton = FlatButton(
-      child: Text("Delete"),
-      onPressed: () async {
-        //Remove from Database
-        await DatabaseAssistant.dbRemoveLog(myArguments.logFilePath);
-        //Remove from Filesystem
-        await FileManager.eraseLogFile(myArguments.logFilePath);
-        Navigator.of(context).pop();
-        Navigator.of(context).pop();
-      },
-    );
-    // set up the AlertDialog
-    AlertDialog alert = AlertDialog(
-      title: Text("Delete file?"),
-      content: Text("Are you sure you want to permanently erase this log?"),
-      actions: [
-        cancelButton,
-        continueButton,
-      ],
-    );
-
-    // Show the dialog
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return alert;
-      },
-    );
-  }
-
   double calculateDistance(LatLng pointA, LatLng pointB){
     var p = 0.017453292519943295;
     var c = cos;
@@ -562,7 +525,28 @@ class RideLogViewerState extends State<RideLogViewer> {
                       child: Text("Delete log"),
                       onPressed: () async {
                         //confirm with user
-                        showConfirmationDialog(context);
+                        genericConfirmationDialog(
+                            context,
+                            FlatButton(
+                              child: Text("Cancel"),
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                            FlatButton(
+                              child: Text("Delete"),
+                              onPressed: () async {
+                                //Remove from Database
+                                await DatabaseAssistant.dbRemoveLog(myArguments.logFilePath);
+                                //Remove from Filesystem
+                                await FileManager.eraseLogFile(myArguments.logFilePath);
+                                Navigator.of(context).pop();
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                            "Delete file?",
+                            Text("Are you sure you want to permanently erase this log?")
+                        );
                       }),
 
                   SizedBox(width: 10,),
