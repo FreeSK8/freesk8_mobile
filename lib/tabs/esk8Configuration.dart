@@ -625,7 +625,6 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
       // Build ESC Configurator
       return Container(
-          padding: EdgeInsets.all(10),
           child: Stack(children: <Widget>[
             Center(
               child: GestureDetector(
@@ -633,404 +632,412 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                   // Hide the keyboard
                   FocusScope.of(context).requestFocus(new FocusNode());
                 },
-                child: ListView(
-                  padding: EdgeInsets.all(10),
-                  children: <Widget>[
+                child: Column(
+                  children: [
+                    Column(
+                      children: [
+                        SizedBox(height: 5,),
 
-                    SizedBox(height: 5,),
-
-                    Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-                      Icon(
-                        Icons.settings_applications,
-                        size: 80.0,
-                        color: Colors.blue,
-                      ),
-                      Text("ESC\nConfigurator", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
-                    ],),
-
-                    SizedBox(height:10),
-                    Center(child: Column( children: <Widget>[
-                      Text("Discovered CAN ID(s)"),
-                      SizedBox(
-                        height: 50,
-                        child: GridView.builder(
-                          primary: false,
-                          itemCount: widget.discoveredCANDevices.length,
-                          gridDelegate: new SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, childAspectRatio: 2, crossAxisSpacing: 1, mainAxisSpacing: 1),
-                          itemBuilder: (BuildContext context, int index) {
-                            bool isCANIDSelected = false;
-                            if (_selectedCANFwdID == widget.discoveredCANDevices[index]) {
-                              isCANIDSelected = true;
-                            }
-                            String invalidDevice = "";
-                            if (_invalidCANID == widget.discoveredCANDevices[index]) {
-                              invalidDevice = " (Invalid)";
-                            }
-                            return new Card(
-                              shadowColor: Colors.transparent,
-                              child: new GridTile(
-                                // GestureDetector to switch the currently selected CAN Forward ID
-                                  child: new GestureDetector(
-                                    onTap: (){
-                                      if (isCANIDSelected) {
-                                        setState(() {
-                                          // Clear CAN Forward
-                                          _selectedCANFwdID = null;
-                                          // Request primary ESC settings
-                                          widget.onAutoloadESCSettings(true);
-                                          Scaffold
-                                              .of(context)
-                                              .showSnackBar(SnackBar(content: Text("Requesting ESC configuration from primary ESC")));
-                                        });
-                                      } else {
-                                        if (_invalidCANID != widget.discoveredCANDevices[index]) {
-                                          setState(() {
-                                            _selectedCANFwdID = widget.discoveredCANDevices[index];
-                                            // Request MCCONF from CAN device
-                                            requestMCCONFCAN(_selectedCANFwdID);
-                                            Scaffold
-                                                .of(context)
-                                                .showSnackBar(SnackBar(content: Text("Requesting ESC configuration from CAN ID $_selectedCANFwdID")));
-                                          });
-                                        }
-
-                                      }
-                                    },
-                                    child: Stack(
-                                      children: <Widget>[
-
-
-
-                                        new Center(child: Text("${widget.discoveredCANDevices[index]}${isCANIDSelected?" (Active)":""}$invalidDevice"),),
-                                        new ClipRRect(
-                                            borderRadius: new BorderRadius.circular(10),
-                                            child: new Container(
-                                              decoration: new BoxDecoration(
-                                                color: isCANIDSelected ? Theme.of(context).focusColor : Colors.transparent,
-                                              ),
-                                            )
-                                        )
-
-
-                                      ],
-                                    ),
-                                  )
-                              ),
-                            );
-                          },
-                        ),
-                      )
-                    ],)
-                    ),
-
-                    Center(child:
-                    Column(children: <Widget>[
-                      Text("ESC Information"),
-                      RaisedButton(
-                          child: Text("Request from ESC${_selectedCANFwdID != null ? "/CAN $_selectedCANFwdID" : ""}"),
-                          onPressed: () {
-                            if (widget.currentDevice != null) {
-                              setState(() {
-                                if ( _selectedCANFwdID != null ) {
-                                  requestMCCONFCAN(_selectedCANFwdID);
-                                  Scaffold
-                                      .of(context)
-                                      .showSnackBar(SnackBar(content: Text("Requesting ESC configuration from CAN ID $_selectedCANFwdID")));
-                                } else {
-                                  widget.onAutoloadESCSettings(true);
-                                  Scaffold
-                                      .of(context)
-                                      .showSnackBar(SnackBar(content: Text("Requesting ESC configuration")));
-                                }
-                              });
-                            }
-                          })
-                    ],)
-                    ),
-
-                    //TODO: consider all unused struct members again
-                    //Text("${widget.escMotorConfiguration.motor_type}"),
-                    //Text("${widget.escMotorConfiguration.sensor_mode}"),
-
-                    SwitchListTile(
-                      title: Text("Reverse Motor (${widget.escMotorConfiguration.m_invert_direction})"),
-                      value: widget.escMotorConfiguration.m_invert_direction,
-                      onChanged: (bool newValue) { setState((){widget.escMotorConfiguration.m_invert_direction = newValue;}); },
-                      secondary: const Icon(Icons.sync),
-                    ),
-
-                    DropdownButton(
-                        value: widget.escMotorConfiguration.si_battery_type.index,
-                        items: [
-                          DropdownMenuItem(
-                            child: Text("Battery Type: Li-ion 3.0/4.2V"),
-                            value: 0,
+                        Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+                          Icon(
+                            Icons.settings_applications,
+                            size: 80.0,
+                            color: Colors.blue,
                           ),
-                          DropdownMenuItem(
-                            child: Text("Battery Type: LiFePO₄ 2.6/3.6V"),
-                            value: 1,
-                          ),
-                          DropdownMenuItem(
-                              child: Text("Battery Type: Lead Acid"),
-                              value: 2
-                          ),
-                        ],
-                        onChanged: (value) {
-                          setState(() {
-                            widget.escMotorConfiguration.si_battery_type = BATTERY_TYPE.values[value];
-                          });
-                        }),
+                          Text("ESC\nConfigurator", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
+                        ],),
 
-                    DropdownButton(
-                        value: widget.escMotorConfiguration.foc_sensor_mode.index,
-                        items: [
-                          DropdownMenuItem(
-                            child: Text("FOC_SENSOR_MODE_SENSORLESS"),
-                            value: 0,
-                          ),
-                          DropdownMenuItem(
-                            child: Text("FOC_SENSOR_MODE_ENCODER"),
-                            value: 1,
-                          ),
-                          DropdownMenuItem(
-                              child: Text("FOC_SENSOR_MODE_HALL"),
-                              value: 2
-                          ),
-                          DropdownMenuItem(
-                              child: Text("FOC_SENSOR_MODE_HFI"),
-                              value: 3
-                          ),
-                        ],
-                        onChanged: (value) {
-                          setState(() {
-                            widget.escMotorConfiguration.foc_sensor_mode = mc_foc_sensor_mode.values[value];
-                          });
-                        }),
-
-
-
-                    TextField(
-                        controller: tecBatterySeriesCount,
-                        decoration: new InputDecoration(labelText: "Battery Series Count"),
-                        keyboardType: TextInputType.number,
-                        inputFormatters: <TextInputFormatter>[
-                          WhitelistingTextInputFormatter.digitsOnly
-                        ]
-                    ),
-                    TextField(
-                        controller: tecBatteryCapacityAh,
-                        decoration: new InputDecoration(labelText: "Battery Capacity (Ah)"),
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: <TextInputFormatter>[
-                          WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
-                        ]
-                    ),
-                    TextField(
-                      controller: tecWheelDiameterMillimeters,
-                      decoration: new InputDecoration(labelText: "Wheel Diameter in Millimeters"),
-                      keyboardType: TextInputType.number,
-                      inputFormatters: <TextInputFormatter>[
-                        WhitelistingTextInputFormatter.digitsOnly
+                        SizedBox(height:10),
                       ],
                     ),
-                    TextField(
-                        controller: tecMotorPoles,
-                        decoration: new InputDecoration(labelText: "Motor Poles"),
-                        keyboardType: TextInputType.number,
-                        inputFormatters: <TextInputFormatter>[
-                          WhitelistingTextInputFormatter.digitsOnly
-                        ]
-                    ),
-                    TextField(
-                        controller: tecGearRatio,
-                        decoration: new InputDecoration(labelText: "Gear Ratio"),
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: <TextInputFormatter>[
-                          WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
-                        ]
-                    ),
+                    Expanded(
+                      child: ListView(
+                        padding: EdgeInsets.all(10),
+                        children: <Widget>[
+
+
+                          Center(child: Column( children: <Widget>[
+                            Text("Discovered CAN ID(s)"),
+                            SizedBox(
+                              height: 50,
+                              child: GridView.builder(
+                                primary: false,
+                                itemCount: widget.discoveredCANDevices.length,
+                                gridDelegate: new SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, childAspectRatio: 2, crossAxisSpacing: 1, mainAxisSpacing: 1),
+                                itemBuilder: (BuildContext context, int index) {
+                                  bool isCANIDSelected = false;
+                                  if (_selectedCANFwdID == widget.discoveredCANDevices[index]) {
+                                    isCANIDSelected = true;
+                                  }
+                                  String invalidDevice = "";
+                                  if (_invalidCANID == widget.discoveredCANDevices[index]) {
+                                    invalidDevice = " (Invalid)";
+                                  }
+                                  return new Card(
+                                    shadowColor: Colors.transparent,
+                                    child: new GridTile(
+                                      // GestureDetector to switch the currently selected CAN Forward ID
+                                        child: new GestureDetector(
+                                          onTap: (){
+                                            if (isCANIDSelected) {
+                                              setState(() {
+                                                // Clear CAN Forward
+                                                _selectedCANFwdID = null;
+                                                // Request primary ESC settings
+                                                widget.onAutoloadESCSettings(true);
+                                                Scaffold
+                                                    .of(context)
+                                                    .showSnackBar(SnackBar(content: Text("Requesting ESC configuration from primary ESC")));
+                                              });
+                                            } else {
+                                              if (_invalidCANID != widget.discoveredCANDevices[index]) {
+                                                setState(() {
+                                                  _selectedCANFwdID = widget.discoveredCANDevices[index];
+                                                  // Request MCCONF from CAN device
+                                                  requestMCCONFCAN(_selectedCANFwdID);
+                                                  Scaffold
+                                                      .of(context)
+                                                      .showSnackBar(SnackBar(content: Text("Requesting ESC configuration from CAN ID $_selectedCANFwdID")));
+                                                });
+                                              }
+
+                                            }
+                                          },
+                                          child: Stack(
+                                            children: <Widget>[
+
+
+
+                                              new Center(child: Text("${widget.discoveredCANDevices[index]}${isCANIDSelected?" (Active)":""}$invalidDevice"),),
+                                              new ClipRRect(
+                                                  borderRadius: new BorderRadius.circular(10),
+                                                  child: new Container(
+                                                    decoration: new BoxDecoration(
+                                                      color: isCANIDSelected ? Theme.of(context).focusColor : Colors.transparent,
+                                                    ),
+                                                  )
+                                              )
+
+
+                                            ],
+                                          ),
+                                        )
+                                    ),
+                                  );
+                                },
+                              ),
+                            )
+                          ],)
+                          ),
+
+                          Center(child:
+                          Column(children: <Widget>[
+                            Text("ESC Information"),
+                            RaisedButton(
+                                child: Text("Request from ESC${_selectedCANFwdID != null ? "/CAN $_selectedCANFwdID" : ""}"),
+                                onPressed: () {
+                                  if (widget.currentDevice != null) {
+                                    setState(() {
+                                      if ( _selectedCANFwdID != null ) {
+                                        requestMCCONFCAN(_selectedCANFwdID);
+                                        Scaffold
+                                            .of(context)
+                                            .showSnackBar(SnackBar(content: Text("Requesting ESC configuration from CAN ID $_selectedCANFwdID")));
+                                      } else {
+                                        widget.onAutoloadESCSettings(true);
+                                        Scaffold
+                                            .of(context)
+                                            .showSnackBar(SnackBar(content: Text("Requesting ESC configuration")));
+                                      }
+                                    });
+                                  }
+                                })
+                          ],)
+                          ),
+
+                          //TODO: consider all unused struct members again
+                          //Text("${widget.escMotorConfiguration.motor_type}"),
+                          //Text("${widget.escMotorConfiguration.sensor_mode}"),
+
+                          SwitchListTile(
+                            title: Text("Reverse Motor (${widget.escMotorConfiguration.m_invert_direction})"),
+                            value: widget.escMotorConfiguration.m_invert_direction,
+                            onChanged: (bool newValue) { setState((){widget.escMotorConfiguration.m_invert_direction = newValue;}); },
+                            secondary: const Icon(Icons.sync),
+                          ),
+
+                          DropdownButton(
+                              value: widget.escMotorConfiguration.si_battery_type.index,
+                              items: [
+                                DropdownMenuItem(
+                                  child: Text("Battery Type: Li-ion 3.0/4.2V"),
+                                  value: 0,
+                                ),
+                                DropdownMenuItem(
+                                  child: Text("Battery Type: LiFePO₄ 2.6/3.6V"),
+                                  value: 1,
+                                ),
+                                DropdownMenuItem(
+                                    child: Text("Battery Type: Lead Acid"),
+                                    value: 2
+                                ),
+                              ],
+                              onChanged: (value) {
+                                setState(() {
+                                  widget.escMotorConfiguration.si_battery_type = BATTERY_TYPE.values[value];
+                                });
+                              }),
+
+                          DropdownButton(
+                              value: widget.escMotorConfiguration.foc_sensor_mode.index,
+                              items: [
+                                DropdownMenuItem(
+                                  child: Text("FOC_SENSOR_MODE_SENSORLESS"),
+                                  value: 0,
+                                ),
+                                DropdownMenuItem(
+                                  child: Text("FOC_SENSOR_MODE_ENCODER"),
+                                  value: 1,
+                                ),
+                                DropdownMenuItem(
+                                    child: Text("FOC_SENSOR_MODE_HALL"),
+                                    value: 2
+                                ),
+                                DropdownMenuItem(
+                                    child: Text("FOC_SENSOR_MODE_HFI"),
+                                    value: 3
+                                ),
+                              ],
+                              onChanged: (value) {
+                                setState(() {
+                                  widget.escMotorConfiguration.foc_sensor_mode = mc_foc_sensor_mode.values[value];
+                                });
+                              }),
+
+
+
+                          TextField(
+                              controller: tecBatterySeriesCount,
+                              decoration: new InputDecoration(labelText: "Battery Series Count"),
+                              keyboardType: TextInputType.number,
+                              inputFormatters: <TextInputFormatter>[
+                                WhitelistingTextInputFormatter.digitsOnly
+                              ]
+                          ),
+                          TextField(
+                              controller: tecBatteryCapacityAh,
+                              decoration: new InputDecoration(labelText: "Battery Capacity (Ah)"),
+                              keyboardType: TextInputType.numberWithOptions(decimal: true),
+                              inputFormatters: <TextInputFormatter>[
+                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                              ]
+                          ),
+                          TextField(
+                            controller: tecWheelDiameterMillimeters,
+                            decoration: new InputDecoration(labelText: "Wheel Diameter in Millimeters"),
+                            keyboardType: TextInputType.number,
+                            inputFormatters: <TextInputFormatter>[
+                              WhitelistingTextInputFormatter.digitsOnly
+                            ],
+                          ),
+                          TextField(
+                              controller: tecMotorPoles,
+                              decoration: new InputDecoration(labelText: "Motor Poles"),
+                              keyboardType: TextInputType.number,
+                              inputFormatters: <TextInputFormatter>[
+                                WhitelistingTextInputFormatter.digitsOnly
+                              ]
+                          ),
+                          TextField(
+                              controller: tecGearRatio,
+                              decoration: new InputDecoration(labelText: "Gear Ratio"),
+                              keyboardType: TextInputType.numberWithOptions(decimal: true),
+                              inputFormatters: <TextInputFormatter>[
+                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                              ]
+                          ),
 
 
 
 
 
 
-                    TextField(
-                        controller: tecCurrentMax,
-                        decoration: new InputDecoration(labelText: "Max Current (Amps)"),
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: <TextInputFormatter>[
-                          WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
-                        ]
-                    ),
-                    TextField(
-                        controller: tecCurrentMin,
-                        decoration: new InputDecoration(labelText: "Max Current Regen (Amps)"),
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: <TextInputFormatter>[
-                          NumberTextInputFormatter() //This allows for negative doubles
-                        ]
-                    ),
-                    TextField(
-                        controller: tecInCurrentMax,
-                        decoration: new InputDecoration(labelText: "Battery Max Current (Amps)"),
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: <TextInputFormatter>[
-                          WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
-                        ]
-                    ),
-                    TextField(
-                        controller: tecInCurrentMin,
-                        decoration: new InputDecoration(labelText: "Battery Max Current Regen (Amps)"),
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: <TextInputFormatter>[
-                          NumberTextInputFormatter() //This allows for negative doubles
-                        ]
-                    ),
-                    TextField(
-                        controller: tecABSCurrentMax,
-                        decoration: new InputDecoration(labelText: "ABS Max Current (Amps)"),
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: <TextInputFormatter>[
-                          WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
-                        ]
-                    ),
+                          TextField(
+                              controller: tecCurrentMax,
+                              decoration: new InputDecoration(labelText: "Max Current (Amps)"),
+                              keyboardType: TextInputType.numberWithOptions(decimal: true),
+                              inputFormatters: <TextInputFormatter>[
+                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                              ]
+                          ),
+                          TextField(
+                              controller: tecCurrentMin,
+                              decoration: new InputDecoration(labelText: "Max Current Regen (Amps)"),
+                              keyboardType: TextInputType.numberWithOptions(decimal: true),
+                              inputFormatters: <TextInputFormatter>[
+                                NumberTextInputFormatter() //This allows for negative doubles
+                              ]
+                          ),
+                          TextField(
+                              controller: tecInCurrentMax,
+                              decoration: new InputDecoration(labelText: "Battery Max Current (Amps)"),
+                              keyboardType: TextInputType.numberWithOptions(decimal: true),
+                              inputFormatters: <TextInputFormatter>[
+                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                              ]
+                          ),
+                          TextField(
+                              controller: tecInCurrentMin,
+                              decoration: new InputDecoration(labelText: "Battery Max Current Regen (Amps)"),
+                              keyboardType: TextInputType.numberWithOptions(decimal: true),
+                              inputFormatters: <TextInputFormatter>[
+                                NumberTextInputFormatter() //This allows for negative doubles
+                              ]
+                          ),
+                          TextField(
+                              controller: tecABSCurrentMax,
+                              decoration: new InputDecoration(labelText: "ABS Max Current (Amps)"),
+                              keyboardType: TextInputType.numberWithOptions(decimal: true),
+                              inputFormatters: <TextInputFormatter>[
+                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                              ]
+                          ),
 
-                    TextField(
-                        controller: tecMaxERPM,
-                        decoration: new InputDecoration(labelText: "Max ERPM"),
-                        keyboardType: TextInputType.number,
-                        inputFormatters: <TextInputFormatter>[
-                          WhitelistingTextInputFormatter.digitsOnly
-                        ]
-                    ),
-                    TextField(
-                        controller: tecMinERPM,
-                        decoration: new InputDecoration(labelText: "Min ERPM"),
-                        keyboardType: TextInputType.number,
-                        inputFormatters: <TextInputFormatter>[
-                          WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
-                        ]
-                    ),
+                          TextField(
+                              controller: tecMaxERPM,
+                              decoration: new InputDecoration(labelText: "Max ERPM"),
+                              keyboardType: TextInputType.number,
+                              inputFormatters: <TextInputFormatter>[
+                                WhitelistingTextInputFormatter.digitsOnly
+                              ]
+                          ),
+                          TextField(
+                              controller: tecMinERPM,
+                              decoration: new InputDecoration(labelText: "Min ERPM"),
+                              keyboardType: TextInputType.number,
+                              inputFormatters: <TextInputFormatter>[
+                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                              ]
+                          ),
 
-                    TextField(
-                        controller: tecMinVIN,
-                        decoration: new InputDecoration(labelText: "Minimum Voltage Input"),
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: <TextInputFormatter>[
-                          WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
-                        ]
-                    ),
-                    TextField(
-                        controller: tecMaxVIN,
-                        decoration: new InputDecoration(labelText: "Maximum Voltage Input"),
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: <TextInputFormatter>[
-                          WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
-                        ]
-                    ),
+                          TextField(
+                              controller: tecMinVIN,
+                              decoration: new InputDecoration(labelText: "Minimum Voltage Input"),
+                              keyboardType: TextInputType.numberWithOptions(decimal: true),
+                              inputFormatters: <TextInputFormatter>[
+                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                              ]
+                          ),
+                          TextField(
+                              controller: tecMaxVIN,
+                              decoration: new InputDecoration(labelText: "Maximum Voltage Input"),
+                              keyboardType: TextInputType.numberWithOptions(decimal: true),
+                              inputFormatters: <TextInputFormatter>[
+                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                              ]
+                          ),
 
-                    TextField(
-                        controller: tecBatteryCutStart,
-                        decoration: new InputDecoration(labelText: "Battery Cutoff Start (Volts)"),
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: <TextInputFormatter>[
-                          WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
-                        ]
-                    ),
-                    TextField(
-                        controller: tecBatteryCutEnd,
-                        decoration: new InputDecoration(labelText: "Battery Cutoff End (Volts)"),
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: <TextInputFormatter>[
-                          WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
-                        ]
-                    ),
-                    TextField(
-                        controller: tecTempFETStart,
-                        decoration: new InputDecoration(labelText: "ESC Temperature Cutoff Start (Celsius)"),
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: <TextInputFormatter>[
-                          WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
-                        ]
-                    ),
-                    TextField(
-                        controller: tecTempFETEnd,
-                        decoration: new InputDecoration(labelText: "ESC Temperature Cutoff End (Celsius)"),
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: <TextInputFormatter>[
-                          WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
-                        ]
-                    ),
-                    TextField(
-                        controller: tecTempMotorStart,
-                        decoration: new InputDecoration(labelText: "Motor Temperature Cutoff Start (Celsius)"),
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: <TextInputFormatter>[
-                          WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
-                        ]
-                    ),
-                    TextField(
-                        controller: tecTempMotorEnd,
-                        decoration: new InputDecoration(labelText: "Motor Temperature Cutoff End (Celsius)"),
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: <TextInputFormatter>[
-                          WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
-                        ]
-                    ),
+                          TextField(
+                              controller: tecBatteryCutStart,
+                              decoration: new InputDecoration(labelText: "Battery Cutoff Start (Volts)"),
+                              keyboardType: TextInputType.numberWithOptions(decimal: true),
+                              inputFormatters: <TextInputFormatter>[
+                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                              ]
+                          ),
+                          TextField(
+                              controller: tecBatteryCutEnd,
+                              decoration: new InputDecoration(labelText: "Battery Cutoff End (Volts)"),
+                              keyboardType: TextInputType.numberWithOptions(decimal: true),
+                              inputFormatters: <TextInputFormatter>[
+                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                              ]
+                          ),
+                          TextField(
+                              controller: tecTempFETStart,
+                              decoration: new InputDecoration(labelText: "ESC Temperature Cutoff Start (Celsius)"),
+                              keyboardType: TextInputType.numberWithOptions(decimal: true),
+                              inputFormatters: <TextInputFormatter>[
+                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                              ]
+                          ),
+                          TextField(
+                              controller: tecTempFETEnd,
+                              decoration: new InputDecoration(labelText: "ESC Temperature Cutoff End (Celsius)"),
+                              keyboardType: TextInputType.numberWithOptions(decimal: true),
+                              inputFormatters: <TextInputFormatter>[
+                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                              ]
+                          ),
+                          TextField(
+                              controller: tecTempMotorStart,
+                              decoration: new InputDecoration(labelText: "Motor Temperature Cutoff Start (Celsius)"),
+                              keyboardType: TextInputType.numberWithOptions(decimal: true),
+                              inputFormatters: <TextInputFormatter>[
+                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                              ]
+                          ),
+                          TextField(
+                              controller: tecTempMotorEnd,
+                              decoration: new InputDecoration(labelText: "Motor Temperature Cutoff End (Celsius)"),
+                              keyboardType: TextInputType.numberWithOptions(decimal: true),
+                              inputFormatters: <TextInputFormatter>[
+                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                              ]
+                          ),
 
-                    TextField(
-                        controller: tecWattMin,
-                        decoration: new InputDecoration(labelText: "Maximum Braking Wattage"),
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: <TextInputFormatter>[
-                          NumberTextInputFormatter() //This allows for negative doubles
-                        ]
-                    ),
-                    TextField(
-                        controller: tecWattMax,
-                        decoration: new InputDecoration(labelText: "Maximum Wattage"),
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: <TextInputFormatter>[
-                          WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
-                        ]
-                    ),
-                    TextField(
-                        controller: tecCurrentMinScale,
-                        decoration: new InputDecoration(labelText: "Min Current Scale"),
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: <TextInputFormatter>[
-                          WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
-                        ]
-                    ),
-                    TextField(
-                        controller: tecCurrentMaxScale,
-                        decoration: new InputDecoration(labelText: "Max Current Scale"),
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: <TextInputFormatter>[
-                          WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
-                        ]
-                    ),
-                    TextField(
-                        controller: tecDutyStart,
-                        decoration: new InputDecoration(labelText: "Duty Cycle Current Limit Start"),
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: <TextInputFormatter>[
-                          WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
-                        ]
-                    ),
+                          TextField(
+                              controller: tecWattMin,
+                              decoration: new InputDecoration(labelText: "Maximum Braking Wattage"),
+                              keyboardType: TextInputType.numberWithOptions(decimal: true),
+                              inputFormatters: <TextInputFormatter>[
+                                NumberTextInputFormatter() //This allows for negative doubles
+                              ]
+                          ),
+                          TextField(
+                              controller: tecWattMax,
+                              decoration: new InputDecoration(labelText: "Maximum Wattage"),
+                              keyboardType: TextInputType.numberWithOptions(decimal: true),
+                              inputFormatters: <TextInputFormatter>[
+                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                              ]
+                          ),
+                          TextField(
+                              controller: tecCurrentMinScale,
+                              decoration: new InputDecoration(labelText: "Min Current Scale"),
+                              keyboardType: TextInputType.numberWithOptions(decimal: true),
+                              inputFormatters: <TextInputFormatter>[
+                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                              ]
+                          ),
+                          TextField(
+                              controller: tecCurrentMaxScale,
+                              decoration: new InputDecoration(labelText: "Max Current Scale"),
+                              keyboardType: TextInputType.numberWithOptions(decimal: true),
+                              inputFormatters: <TextInputFormatter>[
+                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                              ]
+                          ),
+                          TextField(
+                              controller: tecDutyStart,
+                              decoration: new InputDecoration(labelText: "Duty Cycle Current Limit Start"),
+                              keyboardType: TextInputType.numberWithOptions(decimal: true),
+                              inputFormatters: <TextInputFormatter>[
+                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                              ]
+                          ),
 
-                    //Text(" ${widget.escMotorConfiguration.}"),
+                          //Text(" ${widget.escMotorConfiguration.}"),
 
-                    RaisedButton(
-                        child: Text("Save to ESC${_selectedCANFwdID != null ? "/CAN $_selectedCANFwdID" : ""}"),
-                        onPressed: () {
-                          if (widget.currentDevice != null) {
-                            //setState(() {
-                            // Save motor configuration; CAN FWD ID can be null
-                            saveMCCONF(_selectedCANFwdID);
-                            //TODO: Not going to notify the user because sometimes saveMCCONF fails and they have to try again
-                            /*
+                          RaisedButton(
+                              child: Text("Save to ESC${_selectedCANFwdID != null ? "/CAN $_selectedCANFwdID" : ""}"),
+                              onPressed: () {
+                                if (widget.currentDevice != null) {
+                                  //setState(() {
+                                  // Save motor configuration; CAN FWD ID can be null
+                                  saveMCCONF(_selectedCANFwdID);
+                                  //TODO: Not going to notify the user because sometimes saveMCCONF fails and they have to try again
+                                  /*
                             // Notify user
                             if ( _selectedCANFwdID != null ) {
                               Scaffold
@@ -1042,78 +1049,81 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                   .showSnackBar(SnackBar(content: Text("Saving ESC configuration")));
                             }
                              */
-                            //});
-                          }
-                        }),
+                                  //});
+                                }
+                              }),
 
-                    Divider(height: 10,),
-                    Center(child: Text("Additional Tools"),),
-                    Row( mainAxisAlignment: MainAxisAlignment.spaceBetween ,
-                      children: <Widget>[
-                        RaisedButton(
-                          //TODO: quick pair for CAN FWD device?
-                            child: Row(children: <Widget>[
-                              Icon(Icons.settings_remote),
-                              Text("nRF Quick Pair")
-                            ],),
-                            onPressed: () {
-                              // Don't write if not connected
-                              if (widget.theTXCharacteristic != null) {
-                                var byteData = new ByteData(10); //<start><payloadLen><packetID><int32_milliseconds><crc1><crc2><end>
-                                byteData.setUint8(0, 0x02);
-                                byteData.setUint8(1, 0x05);
-                                byteData.setUint8(2, COMM_PACKET_ID.COMM_NRF_START_PAIRING.index);
-                                byteData.setUint32(3, 10000); //milliseconds
-                                int checksum = BLEHelper.crc16(byteData.buffer.asUint8List(), 2, 5);
-                                byteData.setUint16(7, checksum);
-                                byteData.setUint8(9, 0x03); //End of packet
+                          Divider(height: 10,),
+                          Center(child: Text("Additional Tools"),),
+                          Row( mainAxisAlignment: MainAxisAlignment.spaceBetween ,
+                            children: <Widget>[
+                              RaisedButton(
+                                //TODO: quick pair for CAN FWD device?
+                                  child: Row(children: <Widget>[
+                                    Icon(Icons.settings_remote),
+                                    Text("nRF Quick Pair")
+                                  ],),
+                                  onPressed: () {
+                                    // Don't write if not connected
+                                    if (widget.theTXCharacteristic != null) {
+                                      var byteData = new ByteData(10); //<start><payloadLen><packetID><int32_milliseconds><crc1><crc2><end>
+                                      byteData.setUint8(0, 0x02);
+                                      byteData.setUint8(1, 0x05);
+                                      byteData.setUint8(2, COMM_PACKET_ID.COMM_NRF_START_PAIRING.index);
+                                      byteData.setUint32(3, 10000); //milliseconds
+                                      int checksum = BLEHelper.crc16(byteData.buffer.asUint8List(), 2, 5);
+                                      byteData.setUint16(7, checksum);
+                                      byteData.setUint8(9, 0x03); //End of packet
 
-                                //<start><payloadLen><packetID><int32_milliseconds><crc1><crc2><end>
-                                widget.theTXCharacteristic.write(byteData.buffer.asUint8List()).then((value){
-                                  print('You have 10 seconds to power on your remote!');
-                                }).catchError((e){
-                                  print("nRF Quick Pair: Exception: $e");
-                                });
-                              } else {
-                                showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      title: Text("nRF Quick Pair"),
-                                      content: Text("Oops. Try connecting to your board first."),
-                                    );
-                                  },
-                                );
-                              }
-                            }),
+                                      //<start><payloadLen><packetID><int32_milliseconds><crc1><crc2><end>
+                                      widget.theTXCharacteristic.write(byteData.buffer.asUint8List()).then((value){
+                                        print('You have 10 seconds to power on your remote!');
+                                      }).catchError((e){
+                                        print("nRF Quick Pair: Exception: $e");
+                                      });
+                                    } else {
+                                      showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                            title: Text("nRF Quick Pair"),
+                                            content: Text("Oops. Try connecting to your board first."),
+                                          );
+                                        },
+                                      );
+                                    }
+                                  }),
 
-                        RaisedButton(
-                            child: Row(children: <Widget>[
-                              Icon(Icons.donut_large),
-                              Text("FOC Wizard")
-                            ],),
-                            onPressed: () {
-                              if(widget.theTXCharacteristic == null) {
-                                showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      title: Text("Connection Required =("),
-                                      content: Text("This feature requires an active connection."),
-                                    );
-                                  },
-                                );
-                                return;
-                              }
-                              setState(() {
-                                // navigate to the route
-                                Navigator.of(context).pushNamed(ConfigureESC.routeName, arguments: FOCWizardArguments(widget.theTXCharacteristic, null));
-                              });
-                            })
+                              RaisedButton(
+                                  child: Row(children: <Widget>[
+                                    Icon(Icons.donut_large),
+                                    Text("FOC Wizard")
+                                  ],),
+                                  onPressed: () {
+                                    if(widget.theTXCharacteristic == null) {
+                                      showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                            title: Text("Connection Required =("),
+                                            content: Text("This feature requires an active connection."),
+                                          );
+                                        },
+                                      );
+                                      return;
+                                    }
+                                    setState(() {
+                                      // navigate to the route
+                                      Navigator.of(context).pushNamed(ConfigureESC.routeName, arguments: FOCWizardArguments(widget.theTXCharacteristic, null));
+                                    });
+                                  })
 
-                      ],)
+                            ],)
 
 
+                        ],
+                      ),
+                    )
                   ],
                 ),
               ),
@@ -1122,7 +1132,30 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
             Positioned(
                 right: 0,
                 top: 0,
-                child: IconButton(onPressed: (){print("User Close ESC Configurator"); widget.closeESCConfigurator(true);},icon: Icon(Icons.clear),)
+                child: IconButton(
+                  icon: Icon(Icons.clear),
+                  onPressed: (){
+                    print("User Close ESC Configurator");
+                    genericConfirmationDialog(
+                      context,
+                      FlatButton(
+                        child: Text("Not yet"),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      FlatButton(
+                        child: Text("Yes"),
+                        onPressed: () async {
+                          Navigator.of(context).pop();
+                          widget.closeESCConfigurator(true);
+                        },
+                      ),
+                      "Exit Configurator?",
+                      Text("Unsaved changes will be lost.")
+                    );
+                  }
+                )
             ),
           ],)
       );
