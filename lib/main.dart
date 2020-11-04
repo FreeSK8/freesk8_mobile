@@ -342,6 +342,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   void _bleDisconnect() {
     if (_connectedDevice != null) {
       print("_bleDisconnect: disconnecting");
+      // Navigate back to the connection tab
+      controller.index = 0;
+
       setState(() {
         widget.devicesList.clear(); //TODO: clearing list on disconnect so build() does not attempt to pass images of knownDevices that have not yet been loaded
         _scanActive = false;
