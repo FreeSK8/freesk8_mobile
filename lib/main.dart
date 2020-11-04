@@ -41,7 +41,7 @@ import 'package:wakelock/wakelock.dart';
 
 import 'databaseAssistant.dart';
 
-const String freeSK8ApplicationVersion = "0.6.3";
+const String freeSK8ApplicationVersion = "0.6.4";
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -84,6 +84,8 @@ class MyHome extends StatefulWidget {
 
 // SingleTickerProviderStateMixin is used for animation
 class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
+
+  final GlobalKey<State> _keyLoader = new GlobalKey<State>();
 
   /* User's current location for map */
   var geolocator = Geolocator();
@@ -460,6 +462,27 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               onTap: () async {
                 /// Attempt connection
                 try {
+                  //TODO: display connection attempt in progress
+                  showDialog<void>(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (BuildContext context) {
+                        return new WillPopScope(
+                            onWillPop: () async => false,
+                            child: SimpleDialog(
+                                key: _keyLoader,
+                                backgroundColor: Colors.black54,
+                                children: <Widget>[
+                                  Center(
+                                    child: Column(children: [
+                                      Icon(Icons.bluetooth_searching, size: 80,),
+                                      SizedBox(height: 10,),
+                                      Text("Attempting connection...")
+                                    ]),
+                                  )
+                                ]));
+                      });
+
                   await device.connect();
                   await widget.flutterBlue.stopScan();
 
@@ -472,7 +495,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   });
 
                   await setupConnectedDeviceStreamListener();
+                  Navigator.of(context).pop();
                 } catch (e) {
+                  Navigator.of(context).pop();
                   print("trying device.connect() threw an exception $e");
                   //TODO: if we are already connected but trying to connect we might want to disconnect. Needs testing, should only happen during debug
                   //TODO: trying device.connect() threw an exception PlatformException(already_connected, connection with device already exists, null)
@@ -676,6 +701,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             print("WARNING: We have disconnected but FreeSK8 was expecting a connection");
             deviceHasDisconnected = true;
             startStopTelemetryTimer(true);
+            // Alert user that the connection was lost
+            genericAlert(context, "Disconnected", Text("The Bluetooth device has disconnected"), "OK");
+            //NOTE: On an Android this connection can automatically be resumed
+            //NOTE: On iOS this connection will never re-connection
+            // Disconnect
+            _bleDisconnect();
           }
           break;
         default:
@@ -817,7 +848,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             double maxElevation;
             DateTime firstEntryTime;
             DateTime lastEntryTime;
-            FileManager.openLogFile("${(await getApplicationDocumentsDirectory()).path}$savedFilePath").then((value){
+            FileManager.openLogFile(savedFilePath).then((value){
               List<String> thisRideLogEntries = value.split("\n");
               for(int i=0; i<thisRideLogEntries.length; ++i) {
                 if(thisRideLogEntries[i] == null || thisRideLogEntries[i] == "") continue;
