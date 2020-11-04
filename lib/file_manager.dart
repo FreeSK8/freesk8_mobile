@@ -56,14 +56,16 @@ class FileManager {
   }
 
   static Future<String> openLogFile(String filepath) async {
+    final documentsDirectory = await getApplicationDocumentsDirectory();
     //TODO: no safety checking here. Opening file must be on device
-    final file = File(filepath);
+    final file = File("${documentsDirectory.path}$filepath");
     return file.readAsString();
   }
 
   static Future<void> eraseLogFile(String filepath) async {
+    final documentsDirectory = await getApplicationDocumentsDirectory();
     //TODO: no safety checking here. Opening file must be on device
-    final file = File(filepath);
+    final file = File("${documentsDirectory.path}$filepath");
     await file.delete();
   }
 }
