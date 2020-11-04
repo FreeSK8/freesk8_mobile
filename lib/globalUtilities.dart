@@ -13,6 +13,26 @@ double mileToKm(double mile) {
   return doublePrecision(distance, 2);
 }
 
+Future<dynamic> genericConfirmationDialog(BuildContext context, Widget cancelButton, Widget continueButton, String alertTitle, Widget alertBody) {
+  // set up the AlertDialog
+  AlertDialog alert = AlertDialog(
+    title: Text(alertTitle),
+    content: alertBody,
+    actions: [
+      cancelButton,
+      continueButton,
+    ],
+  );
+
+  // Show the dialog
+  return showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return alert;
+    },
+  );
+}
+
 Future<void> genericAlert(BuildContext context, String alertTitle, Widget alertBody, String alertButtonLabel) {
   return showDialog<void>(
     context: context,
