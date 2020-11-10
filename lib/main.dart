@@ -41,7 +41,7 @@ import 'package:wakelock/wakelock.dart';
 
 import 'databaseAssistant.dart';
 
-const String freeSK8ApplicationVersion = "0.6.4";
+const String freeSK8ApplicationVersion = "0.6.5";
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -416,11 +416,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
   //This builds a grid view of found BLE devices... works pretty ok
   GridView _buildGridViewOfDevices() {
+    final int crossAxisCount = 2;
     List<Widget> containers = new List<Widget>();
 
     containers.add(
       Container(
-        height: 55,
+        width: MediaQuery.of(context).size.width / crossAxisCount,
         child: Column(
           children: <Widget>[
             //Expanded(
@@ -460,7 +461,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       if (widget.myUserSettings.isDeviceKnown(device.id.toString())) {
         Container element = Container(
             padding: EdgeInsets.all(5.0),
-            height: 150,
+            width: MediaQuery.of(context).size.width / crossAxisCount,
             child: GestureDetector(
               onTap: () async {
                 /// Attempt connection
@@ -543,7 +544,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       // Add unknown devices to list with name, ID and a connect button
       containers.add(
         Container(
-          height: 55,
+          width: MediaQuery.of(context).size.width / crossAxisCount,
           child: Column(
             children: <Widget>[
               //Expanded(
@@ -588,9 +589,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         ),
       ); //Adding container for unknown device
     }
-
-    int shitElementSize = 200; //TODO: can i get the size of the elements in the list? dunno. 
-    int crossAxisCount = MediaQuery.of(context).size.width ~/ shitElementSize;
 
     return GridView.count(
       crossAxisCount: crossAxisCount,
