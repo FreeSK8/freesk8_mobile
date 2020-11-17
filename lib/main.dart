@@ -455,9 +455,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   Padding(
                     padding: EdgeInsets.all(16.0),
                     child:
-                    Text("Searching for BLE devices",style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text("Searching for devices",style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
-                  Icon(Icons.search, size: 75 ),
+                  Icon(Icons.search, size: 60),
                 ],
               ),
             //),
