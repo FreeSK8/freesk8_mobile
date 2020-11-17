@@ -369,6 +369,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       startStopTelemetryTimer(true);
 
       // Stop the gotchi status timer
+      _gotchiStatusTimer?.cancel();
+      _gotchiStatusTimer = null;
 
       // Stop the RX data subscription
       escRXDataSubscription?.cancel();
