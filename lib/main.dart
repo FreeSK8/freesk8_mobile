@@ -1431,6 +1431,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         packetScanCAN[4] = checksum & 0xff;
         the_tx_characteristic.write(packetScanCAN);
         initMsgESCDevicesCANRequested = 1;
+
+        // Start the Robogotchi Status timer before the CAN responds (so slooooooooooooow)
+        Future.delayed(const Duration(milliseconds: 200), () {
+          startStopGotchiTimer(false);
+        });
       } else {
         print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FYI");
         if (++initMsgESCDevicesCANRequested == 20) {
