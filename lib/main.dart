@@ -433,6 +433,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       initMsgESCDevicesCAN = false;
       initMsgESCDevicesCANRequested = 0;
       initMsgSqeuencerCompleted = false;
+      _initMsgSequencer?.cancel();
+      _initMsgSequencer = null;
     }
   }
 
