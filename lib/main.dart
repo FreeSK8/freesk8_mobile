@@ -454,8 +454,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 children: <Widget>[
                   Padding(
                     padding: EdgeInsets.all(16.0),
-                    child:
-                    Text("Searching for devices",style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: Center(
+                      child: Text(
+                          "Searching for devices",
+                          style: TextStyle(fontWeight: FontWeight.bold)
+                      ),
+                    )
                   ),
                   Icon(Icons.search, size: 60),
                 ],
