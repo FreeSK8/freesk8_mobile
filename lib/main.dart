@@ -435,6 +435,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       initMsgSqeuencerCompleted = false;
       _initMsgSequencer?.cancel();
       _initMsgSequencer = null;
+
+      // Clear the Robogotchi status
+      gotchiStatus = new RobogotchiStatus();
     }
   }
 

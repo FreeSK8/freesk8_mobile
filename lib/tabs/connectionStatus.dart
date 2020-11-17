@@ -14,7 +14,7 @@ class RobogotchiStatus {
   int gpsFix;
   int gpsSatellites;
   RobogotchiStatus(){
-    isLogging = false;
+    isLogging = null;
     faultCount = 0;
     faultCode = 0;
     percentFree = 0;
@@ -66,7 +66,7 @@ class ConnectionStatus extends StatelessWidget {
             // center the children
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              robogotchiVersion != null ? Row(
+              gotchiStatus.isLogging != null ? Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   Column(
@@ -99,7 +99,7 @@ class ConnectionStatus extends StatelessWidget {
                 ],
               ) : Container(),
 
-              robogotchiVersion != null ? Divider(thickness: 2,) : Container(),
+              gotchiStatus.isLogging != null ? Divider(thickness: 2,) : Container(),
 
               Text("Connected to"),
               Text(userSettings.settings.boardAlias != null ? userSettings.settings.boardAlias : "unnamed",style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold), textAlign: TextAlign.center,),
