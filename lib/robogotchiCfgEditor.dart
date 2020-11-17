@@ -144,18 +144,18 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
       for (int i=0; i<myArguments.discoveredCANDevices.length; ++i) {
         _escCANIDs.add({
           "display": "ID ${myArguments.discoveredCANDevices[i]}",
-          "value": "${myArguments.discoveredCANDevices[i]}",
+          "value": myArguments.discoveredCANDevices[i],
         });
       }
     }
     //TODO: Select currently configured ESC CAN IDs; causes MultiSelect to break
     //TODO: Replace MultiSelect with a better solution
     if (_escCANIDsSelected == null) {
-      //_escCANIDsSelected = new List();
+      _escCANIDsSelected = new List();
       myArguments.currentConfiguration.multiESCIDs.forEach((element) {
         if (element != 0) {
-          //print("Adding user selected CAN ID: $element");
-          //_escCANIDsSelected.add(element);
+          print("Adding user selected CAN ID: $element");
+          _escCANIDsSelected.add(element.toInt());
         }
       });
     }
