@@ -196,17 +196,18 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     //TODO: watching AppLifecycleState but not doing anything
     WidgetsBinding.instance.addObserver(AutoStopHandler());
 
-    _timerMonitor = new Timer.periodic(Duration(seconds: 1), (Timer t) => foobar());
+    _timerMonitor = new Timer.periodic(Duration(seconds: 1), (Timer t) => _monitorGotchiTimer());
   }
 
-  void foobar() {
-    if (_gotchiStatusTimer == null && theTXLoggerCharacteristic != null && deviceIsConnected && (controller.index == 0 || controller.index == 3)) {
+  void _monitorGotchiTimer() {
+    if (_gotchiStatusTimer == null && theTXLoggerCharacteristic != null && initMsgSqeuencerCompleted && (controller.index == 0 || controller.index == 3)) {
       print("*****************************************************************_timerMonitor starting gotchiStatusTimer");
       startStopGotchiTimer(false);
     } else {
       print("timer monitor is alive");
     }
   }
+
   Future<void> checkLocationPermission() async {
     GeolocationStatus geolocationStatus  = await Geolocator().checkGeolocationPermissionStatus();
   }
@@ -423,6 +424,15 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       // Clear cached board avatar
       cachedBoardAvatar = null;
+
+      // Reset the init message sequencer
+      initMsgGotchiSettime = false;
+      initMsgGotchiVersion = false;
+      initMsgESCVersion = false;
+      initMsgESCMotorConfig = false;
+      initMsgESCDevicesCAN = false;
+      initMsgESCDevicesCANRequested = 0;
+      initMsgSqeuencerCompleted = false;
     }
   }
 
@@ -636,6 +646,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static Timer telemetryTimer;
   static Timer _gotchiStatusTimer;
   static Timer _timerMonitor;
+  static Timer _initMsgSequencer;
   static int bleTXErrorCount = 0;
   static bool _deviceIsRobogotchi = false;
 
@@ -986,6 +997,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       else if(receiveStr.startsWith("version,")) {
         print("Version packet received: $receiveStr");
         List<String> values = receiveStr.split(",");
+        // Flag the reception of an init message
+        initMsgGotchiVersion = true;
         setState(() {
           robogotchiVersion = values[1];
         });
@@ -1044,6 +1057,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         int packetID = bleHelper.getPayload()[0];
         if (packetID == COMM_PACKET_ID.COMM_FW_VERSION.index) {
 
+          // Flag the reception of an init message
+          initMsgESCVersion = true;
+
           ///Firmware Packet
           setState(() {
             firmwarePacket = escHelper.processFirmware(bleHelper.getPayload());
@@ -1101,6 +1117,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         } else if ( packetID == COMM_PACKET_ID.COMM_PING_CAN.index ) {
           ///Ping CAN packet
           print("Ping CAN packet received! ${bleHelper.lenPayload} bytes");
+
+          // Flag the reception of an init message
+          initMsgESCDevicesCAN = true;
+
+          // Populate a fresh _validCANBusDeviceIDs array
           _validCANBusDeviceIDs.clear();
           //print(bleHelper.payload);
           for (int i = 1; i < bleHelper.lenPayload; ++i) {
@@ -1221,6 +1242,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           //ByteData serializedMcconf = escHelper.serializeMCCONF(escMotorConfiguration);
           //MCCONF refriedMcconf = escHelper.processMCCONF(serializedMcconf.buffer.asUint8List());
           //print("Break for MCCONF: $escMotorConfiguration");
+
+          // Flag the reception of an init message
+          initMsgESCMotorConfig = true;
 
           // Check flag to show ESC Profiles when MCCONF data is received
           if (_showESCProfiles) {
@@ -1345,19 +1369,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       }
     });
 
-    //TODO: begin an initMessageSequencer to handle all of the desired communication on connection
-    // Set the Robogotchi datetime
-    if (foundTXLogger) {
-      await theTXLoggerCharacteristic.write(utf8.encode("settime ${DateTime.now().toIso8601String().substring(0,21).replaceAll("-", ":")}~"));
-    }
-
-    // Request firmware packet once connected
-    await the_tx_characteristic.write([0x02, 0x01, 0x00, 0x00, 0x00, 0x03]);
-
-    // Request the Robogotchi firmware version once connected
-    if (foundTXLogger) {
-      await theTXLoggerCharacteristic.write(utf8.encode("version~"));
-    }
+    // Begin initMessageSequencer to handle all of the desired communication on connection
+    _initMsgSequencer = new Timer.periodic(Duration(milliseconds: 200), (Timer t) => _requestInitMessages());
 
     // Keep the device on while connected
     Wakelock.enable();
@@ -1365,43 +1378,80 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     // Start a new log file
     FileManager.clearLogFile();
 
-    // Request the ESC configuration so the user doesn't have to enter settings
-    Future.delayed(const Duration(milliseconds: 250), () {
-      _handleAutoloadESCSettings(true);
-    });
-
-    // Request the ESC provide the detected CAN devices for later use
-    Future.delayed(const Duration(milliseconds: 500), () {
-      // Scan for CAN devices
-      Uint8List packetScanCAN = new Uint8List(6);
-      packetScanCAN[0] = 0x02; //Start packet
-      packetScanCAN[1] = 0x01; //Payload length
-      packetScanCAN[2] = COMM_PACKET_ID.COMM_PING_CAN.index; //Payload data
-      //3,4 are CRC computed below
-      packetScanCAN[5] = 0x03; //End packet
-      int checksum = BLEHelper.crc16(packetScanCAN, 2, 1);
-      packetScanCAN[3] = (checksum >> 8) & 0xff;
-      packetScanCAN[4] = checksum & 0xff;
-      the_tx_characteristic.write(packetScanCAN);
-    });
-
     // Check if this is a known device when we connected/loaded it's settings
-    if (!isConnectedDeviceKnown) {
-      print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% THIS IS A NEW DEVICE<>WONT YOU LOAD THE SETUP WIDGET? %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
-      //TODO: navigate to setup widget if we create one..
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text("Ooo! new device, who dis?"),
-            content: Text("You have connected to a new device. Take a picture, give it a name and specify your settings now for the best experience."),
-          );
-        },
-      );
-      controller.index = 2; // switch to configuration tab for now
-    } else {
+    if (isConnectedDeviceKnown) {
       // Load board avatar
       _cacheAvatar(false);
+    }
+  }
+
+  bool initMsgGotchiSettime = false;
+  bool initMsgGotchiVersion = false;
+  bool initMsgESCVersion = false;
+  bool initMsgESCMotorConfig = false;
+  bool initMsgESCDevicesCAN = false;
+  int initMsgESCDevicesCANRequested = 0;
+  bool initMsgSqeuencerCompleted = false;
+  void _requestInitMessages() {
+    if (_deviceIsRobogotchi && !initMsgGotchiVersion) {
+      // Request the Robogotchi version
+      theTXLoggerCharacteristic.write(utf8.encode("version~"));
+    } else if (_deviceIsRobogotchi && !initMsgGotchiSettime) {
+      // Set the Robogotchi time
+      theTXLoggerCharacteristic.write(utf8.encode("settime ${DateTime.now().toIso8601String().substring(0,21).replaceAll("-", ":")}~"));
+      //TODO: without a response we will assume this went as planned
+      initMsgGotchiSettime = true;
+    } else if (!initMsgESCVersion) {
+      // Request the ESC Firmware Packet
+      the_tx_characteristic.write([0x02, 0x01, 0x00, 0x00, 0x00, 0x03]);
+    } else if (!initMsgESCMotorConfig) {
+      // Request MCCONF
+      _handleAutoloadESCSettings(true);
+    } else if (!initMsgESCDevicesCAN) {
+      if (initMsgESCDevicesCANRequested == 0) {
+        // Request CAN Devices scan
+        Uint8List packetScanCAN = new Uint8List(6);
+        packetScanCAN[0] = 0x02; //Start packet
+        packetScanCAN[1] = 0x01; //Payload length
+        packetScanCAN[2] = COMM_PACKET_ID.COMM_PING_CAN.index; //Payload data
+        //3,4 are CRC computed below
+        packetScanCAN[5] = 0x03; //End packet
+        int checksum = BLEHelper.crc16(packetScanCAN, 2, 1);
+        packetScanCAN[3] = (checksum >> 8) & 0xff;
+        packetScanCAN[4] = checksum & 0xff;
+        the_tx_characteristic.write(packetScanCAN);
+        initMsgESCDevicesCANRequested = 1;
+      } else {
+        print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FYI");
+        if (++initMsgESCDevicesCANRequested == 20) {
+          print("initMsgESCDevicesCAN did not get a response. Retrying");
+          initMsgESCDevicesCANRequested = 0;
+        }
+      }
+    } else {
+      // Init complete
+      print("##################################################################### initMsgSequencer is complete! Great success!");
+
+      // Check if this is a known device when we connected/loaded it's settings
+      if (!isConnectedDeviceKnown) {
+        print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% THIS IS A NEW DEVICE<>WONT YOU LOAD THE SETUP WIDGET? %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+        //TODO: navigate to setup widget if we create one..
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text("Ooo! new device, who dis?"),
+              content: Text("You have connected to a new device. Take a picture, give it a name and specify your settings now for the best experience."),
+            );
+          },
+        );
+        controller.index = 2; // switch to configuration tab for now
+      }
+
+      _initMsgSequencer.cancel();
+      _initMsgSequencer = null;
+
+      initMsgSqeuencerCompleted = true;
     }
   }
 
