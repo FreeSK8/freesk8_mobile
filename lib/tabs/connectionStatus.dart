@@ -5,6 +5,25 @@ import 'package:flutter_blue/flutter_blue.dart';
 import 'package:freesk8_mobile/escHelper.dart';
 import 'package:freesk8_mobile/userSettings.dart';
 
+class RobogotchiStatus {
+  bool isLogging;
+  int faultCount;
+  int faultCode;
+  int percentFree;
+  int fileCount;
+  int gpsFix;
+  int gpsSatellites;
+  RobogotchiStatus(){
+    isLogging = false;
+    faultCount = 0;
+    faultCode = 0;
+    percentFree = 0;
+    fileCount = 0;
+    gpsFix = 0;
+    gpsSatellites = 0;
+  }
+}
+
 class ConnectionStatus extends StatelessWidget {
 
   ConnectionStatus(
@@ -17,7 +36,8 @@ class ConnectionStatus extends StatelessWidget {
         @required this.userSettings,
         @required this.onChanged,
         this.robogotchiVersion,
-        this.imageBoardAvatar
+        this.imageBoardAvatar,
+        this.gotchiStatus
       } ) : super(key: key);
 
   final ESCFirmware currentFirmware;
@@ -28,6 +48,7 @@ class ConnectionStatus extends StatelessWidget {
   final ValueChanged<bool> onChanged;
   final String robogotchiVersion;
   final MemoryImage imageBoardAvatar;
+  final RobogotchiStatus gotchiStatus;
 
   void _handleTap() {
     onChanged(!active);
@@ -45,19 +66,53 @@ class ConnectionStatus extends StatelessWidget {
             // center the children
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
+              robogotchiVersion != null ? Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Column(
+                    children: [
+                      Icon(gotchiStatus.isLogging ? Icons.save_outlined : Icons.save, color: gotchiStatus.isLogging ? Colors.orange: Colors.green),
+                      Text("${gotchiStatus.isLogging ? "Logging":"Log Idle"}"), //TODO: show if sync in progress
+                      Text("${gotchiStatus.fileCount} ${gotchiStatus.fileCount == 1 ? "file":"files"}"),
+                      Text("${gotchiStatus.percentFree}% Free"),
+
+                    ],
+                  ),
+
+                  Column(
+                    children: [
+                      Icon(gotchiStatus.faultCount > 0 ? Icons.error : Icons.check_circle, color: gotchiStatus.faultCount > 0 ? Colors.red : Colors.greenAccent, size: 25),
+                      Text("${gotchiStatus.faultCount} ${gotchiStatus.faultCount == 1 ? "fault" : "faults"}"),
+                      Text("FW: $robogotchiVersion"),
+                      Text("")
+                    ],
+                  ),
+
+                  Column(
+                    children: [
+                      Icon(Icons.satellite, color: gotchiStatus.gpsFix > 0 ? Colors.blue : Colors.grey),
+                      Text("${gotchiStatus.gpsFix > 0 ? "GPS OK": "No Fix"}"),
+                      Text("Sats: ${gotchiStatus.gpsSatellites}"),
+                      Text("")
+                    ],
+                  )
+                ],
+              ) : Container(),
+
+              robogotchiVersion != null ? Divider(thickness: 2,) : Container(),
+
               Text("Connected to"),
-              Text(userSettings.settings.boardAlias != null ? userSettings.settings.boardAlias : "unnamed",style: TextStyle(fontSize: 42, fontWeight: FontWeight.bold), textAlign: TextAlign.center,),
+              Text(userSettings.settings.boardAlias != null ? userSettings.settings.boardAlias : "unnamed",style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold), textAlign: TextAlign.center,),
 
               CircleAvatar(
                 backgroundImage: imageBoardAvatar != null ? imageBoardAvatar : AssetImage('assets/FreeSK8_Mobile.jpg'),
-                radius: 150,
+                radius: 125,
                 backgroundColor: Colors.white,
               ),
 
               Text(currentDevice.name == '' ? '(unknown device)' : currentDevice.name),
 
               //Text(currentDevice.id.toString()),
-              robogotchiVersion != null ? Text("Robogotchi Firmware: $robogotchiVersion") : Container(),
 
               Text("ESC Hardware: ${currentFirmware.hardware_name}"),
               Text("ESC Firmware: ${currentFirmware.fw_version_major}.${currentFirmware.fw_version_minor}"),

@@ -41,7 +41,7 @@ import 'package:wakelock/wakelock.dart';
 
 import 'databaseAssistant.dart';
 
-const String freeSK8ApplicationVersion = "0.6.5";
+const String freeSK8ApplicationVersion = "0.7.0";
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -195,8 +195,18 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
     //TODO: watching AppLifecycleState but not doing anything
     WidgetsBinding.instance.addObserver(AutoStopHandler());
+
+    _timerMonitor = new Timer.periodic(Duration(seconds: 1), (Timer t) => foobar());
   }
 
+  void foobar() {
+    if (_gotchiStatusTimer == null && theTXLoggerCharacteristic != null && deviceIsConnected && (controller.index == 0 || controller.index == 3)) {
+      print("*****************************************************************_timerMonitor starting gotchiStatusTimer");
+      startStopGotchiTimer(false);
+    } else {
+      print("timer monitor is alive");
+    }
+  }
   Future<void> checkLocationPermission() async {
     GeolocationStatus geolocationStatus  = await Geolocator().checkGeolocationPermissionStatus();
   }
@@ -234,11 +244,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
   @override
   void dispose() {
-    if(telemetryTimer != null){
-      print("Dispose cancelling telemetry timer");
-      telemetryTimer.cancel();
-      telemetryTimer = null;
-    }
+    telemetryTimer?.cancel();
+
+    _timerMonitor?.cancel();
+
+    _gotchiStatusTimer?.cancel();
 
     // Dispose of the Tab Controller
     controller.dispose();
@@ -356,6 +366,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       // Stop the telemetry timer
       startStopTelemetryTimer(true);
+
+      // Stop the gotchi status timer
 
       // Stop the RX data subscription
       escRXDataSubscription?.cancel();
@@ -622,6 +634,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static bool _showESCProfiles = false;
   static bool _autoloadESCSettings = false; // Controls the population of ESC Information from MCCONF response
   static Timer telemetryTimer;
+  static Timer _gotchiStatusTimer;
+  static Timer _timerMonitor;
   static int bleTXErrorCount = 0;
   static bool _deviceIsRobogotchi = false;
 
@@ -637,10 +651,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static List<FileToSync> fileList = new List<FileToSync>();
   static List<String> fileListToDelete = new List();
   static bool syncEraseOnComplete = true;
-  static bool isLoggerLogging = false;
-  static int gotchiFaultCount = 0;
-  static int gotchiFaultCodes = 0;
-  static int gotchiPercentFree = 0;
+  static bool isLoggerLogging = false; //TODO: this is redundant
+  static RobogotchiStatus gotchiStatus = new RobogotchiStatus();
+
   // Handler for RideLogging's sync button
   void _handleBLESyncState(bool startSync) {
     print("_handleBLESyncState: startSync: $startSync");
@@ -961,9 +974,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         List<String> values = receiveStr.split(",");
         setState(() {
           isLoggerLogging = (values[2] == "1");
-          gotchiFaultCount = int.tryParse(values[3]);
-          gotchiFaultCodes = int.tryParse(values[4]);
-          gotchiPercentFree = int.tryParse(values[5]);
+          gotchiStatus.isLogging = isLoggerLogging;
+          gotchiStatus.faultCount = int.tryParse(values[3]);
+          gotchiStatus.faultCode = int.tryParse(values[4]);
+          gotchiStatus.percentFree = int.tryParse(values[5]);
+          gotchiStatus.fileCount = int.tryParse(values[6]);
+          gotchiStatus.gpsFix = int.tryParse(values[7]);
+          gotchiStatus.gpsSatellites = int.tryParse(values[8]);
         });
       }
       else if(receiveStr.startsWith("version,")) {
@@ -1767,6 +1784,20 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     );
   }
 
+  // Called by timer on interval to request Robogotchi Status packet
+  void _requestGotchiStatus() async {
+    if ((controller.index != 0 && controller.index != 3 ) || syncInProgress || theTXLoggerCharacteristic == null) {
+      print("*******************************************************************Auto stop gotchi timer");
+      setState(() {
+        _gotchiStatusTimer?.cancel();
+        _gotchiStatusTimer = null;
+      });
+
+    } else {
+      theTXLoggerCharacteristic.write(utf8.encode("status~")); //Request next file
+    }
+  }
+
   // Called by timer on interval to request telemetry packet
   static int telemetryRateLimiter = 0;
   void _requestTelemetry() async {
@@ -1847,6 +1878,26 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     }
   }
 
+  // Start and stop Robogotchi Status timer
+  void startStopGotchiTimer(bool disableTimer) {
+    if (!disableTimer){
+      print("*******************************************************************Start gotchi timer");
+      const duration = const Duration(milliseconds:1000);
+
+      Future.delayed(const Duration(milliseconds: 500), () {
+        _gotchiStatusTimer = new Timer.periodic(duration, (Timer t) => _requestGotchiStatus());
+      });
+    } else {
+      print("*******************************************************************Cancel gotchi timer");
+      if (_gotchiStatusTimer != null) {
+        setState(() {
+          _gotchiStatusTimer?.cancel();
+          _gotchiStatusTimer = null;
+        });
+      }
+    }
+  }
+
   void closeDieBieMSFunc(bool closeView) {
     setState(() {
       _showDieBieMS = false;
@@ -1920,6 +1971,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               onChanged: _handleBLEScanState,
               robogotchiVersion: robogotchiVersion,
               imageBoardAvatar: cachedBoardAvatar,
+              gotchiStatus: gotchiStatus,
           ),
           RealTimeData(
             routeTakenLocations: routeTakenLocations,
