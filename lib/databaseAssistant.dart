@@ -4,6 +4,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 class LogInfoItem {
+  final DateTime dateTime;
   final String boardID;
   final String boardAlias;
   final String logFilePath;
@@ -19,6 +20,7 @@ class LogInfoItem {
   final String notes;
 
   LogInfoItem({
+    this.dateTime,
     this.boardID,
     this.boardAlias,
     this.logFilePath,
@@ -59,6 +61,13 @@ class DatabaseAssistant {
 
   static Future<Database> getDatabase() async {
     //print("DatabaseAssistant: getDatabase: called");
+    const migrationScripts = [
+      '', //Version 1 not released
+      '', //Version 2 not released
+      '', //Version 3 initial beta release with onCreate
+      'ALTER TABLE logs ADD COLUMN date_time INTEGER;', //Version 4 adds the ride time to schema for calendar view
+    ]; // Migration sql scripts
+
     return openDatabase(
       join(await getDatabasesPath(), 'logDatabase.db'), // Set the path to the database.
       onCreate: (db, version) async {
@@ -88,8 +97,29 @@ class DatabaseAssistant {
         int version = await db.getVersion();
         print("DatabaseAssistant: getDatabase: openDatabase: onOpen(). Version $version");
       },
+      onUpgrade: (Database db, int oldVersion, int newVersion) async {
+        print("DatabaseAssistant: getDatabase: openDatabase: onUpgrade(): oldVersion $oldVersion -> newVersion $newVersion");
+        for (var i = oldVersion; i < newVersion; ++i) {
+          await db.execute(migrationScripts[i]);
+
+          // Post process after SQL modifications
+          switch(i) {
+            case 3:
+              print("onUpgrade adding missing date_time field to existing records");
+              final List<Map<String, dynamic>> databaseEntries = await db.query('logs', columns: ['id','log_file_path']);
+              await db.execute('BEGIN TRANSACTION;');
+              databaseEntries.forEach((element) async {
+                String dtString = element['log_file_path'].substring(element['log_file_path'].lastIndexOf("/") + 1, element['log_file_path'].lastIndexOf("/") + 20);
+                DateTime thisDt = DateTime.parse(dtString);
+                await db.execute('UPDATE logs SET date_time = ${thisDt.millisecondsSinceEpoch / 1000} WHERE id = ${element['id']};');
+              });
+              await db.execute('COMMIT;');
+              break;
+          }
+        }
+      },
       // Set the version. This executes the onCreate function and provides a path to perform database upgrades and downgrades.
-      version: 3,
+      version: 4,
     );
   }
 
@@ -111,7 +141,9 @@ class DatabaseAssistant {
     final List<Map<String, dynamic>> rideLogEntries = await db.query('logs', orderBy: orderByClause);
 
     return List.generate(rideLogEntries.length, (i) {
+//TODO: dont commit dateTime change
       return LogInfoItem(
+          dateTime:        rideLogEntries[i]['date_time'] != null ? DateTime.fromMillisecondsSinceEpoch(rideLogEntries[i]['date_time'] * 1000) : DateTime.now(),
           boardID:         rideLogEntries[i]['board_id'],
           boardAlias:      rideLogEntries[i]['board_alias'],
           logFilePath:     rideLogEntries[i]['log_file_path'],
@@ -137,30 +169,5 @@ class DatabaseAssistant {
   static Future<void> close() async {
     final Database db = await getDatabase();
     await db.close();
-  }
-
-  //TODO: remove these
-  static Future<void> dbDEBUGDropTable() async {
-    final Database db = await getDatabase();
-    return db.execute("DROP TABLE 'logs'");
-  }
-  static Future<void> dbDEBUGCreateTable() async {
-    final Database db = await getDatabase();
-    return db.execute("CREATE TABLE IF NOT EXISTS logs("
-        "id INTEGER PRIMARY KEY, "
-        "date_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
-        "board_id TEXT, "
-        "board_alias TEXT, "
-        "log_file_path TEXT UNIQUE, "
-        "avg_speed REAL, "
-        "max_speed REAL, "
-        "elevation_change REAL, "
-        "max_amps_battery REAL, "
-        "max_amps_motors REAL, "
-        "distance_km REAL, "
-        "duration_seconds REAL, "
-        "fault_count INTEGER, "
-        "ride_name TEXT, "
-        "notes TEXT)",);
   }
 }
