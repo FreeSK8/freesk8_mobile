@@ -107,13 +107,11 @@ class DatabaseAssistant {
             case 3:
               print("onUpgrade adding missing date_time field to existing records");
               final List<Map<String, dynamic>> databaseEntries = await db.query('logs', columns: ['id','log_file_path']);
-              await db.execute('BEGIN TRANSACTION;');
               databaseEntries.forEach((element) async {
                 String dtString = element['log_file_path'].substring(element['log_file_path'].lastIndexOf("/") + 1, element['log_file_path'].lastIndexOf("/") + 20);
                 DateTime thisDt = DateTime.parse(dtString);
                 await db.execute('UPDATE logs SET date_time = ${thisDt.millisecondsSinceEpoch / 1000} WHERE id = ${element['id']};');
               });
-              await db.execute('COMMIT;');
               break;
           }
         }
