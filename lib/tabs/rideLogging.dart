@@ -8,8 +8,11 @@ import 'package:freesk8_mobile/fileSyncViewer.dart';
 import 'package:freesk8_mobile/globalUtilities.dart';
 import 'package:freesk8_mobile/rideLogViewer.dart';
 import 'package:freesk8_mobile/userSettings.dart';
+import 'package:intl/intl.dart';
 
 import 'package:path_provider/path_provider.dart';
+
+import 'package:table_calendar/table_calendar.dart';
 
 import 'dart:io';
 
@@ -69,8 +72,9 @@ class RideLogging extends StatefulWidget {
   static const String routeName = "/ridelogging";
 }
 
-class RideLoggingState extends State<RideLogging> {
+class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin {
 
+  static bool showListView = false; // Flag to control showing list view vs calendar
   String temporaryLog = "";
   List<FileSystemEntity> rideLogs = new List();
   List<FileStat> rideLogsFileStats = new List();
@@ -79,6 +83,12 @@ class RideLoggingState extends State<RideLogging> {
   String orderByClause = "date_created DESC";
 
   final tecRideNotes = TextEditingController();
+
+  Map<DateTime, List> _events = {};
+  List _selectedEvents = [];
+  CalendarController _calendarController;
+  AnimationController _animationController;
+  DateTime _selectedDay = DateTime.now();
 
   @override
   void initState() {
@@ -89,7 +99,18 @@ class RideLoggingState extends State<RideLogging> {
       });
     }
 
+    _selectedDay = DateTime.parse(new DateFormat("yyyy-MM-dd").format(DateTime.now()));
     _listFiles(true);
+
+    _calendarController = CalendarController();
+
+
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+
+    _animationController.forward();
   }
 
   @override
@@ -102,12 +123,200 @@ class RideLoggingState extends State<RideLogging> {
   void _listFiles(bool doSetState) async {
     rideLogsFromDatabase = await DatabaseAssistant.dbSelectLogs(orderByClause: orderByClause);
 
-    String directory = (await getApplicationDocumentsDirectory()).path;
+    // Prepare data for Calendar View
+    _events = {}; // Clear events before populating from database
+    rideLogsFromDatabase.forEach((element) {
+      DateTime thisDate = DateTime.parse(new DateFormat("yyyy-MM-dd").format(element.dateTime));
+      if (_events.containsKey(thisDate)) {
+        print("updating $thisDate");
+        _events[thisDate].add('${rideLogsFromDatabase.indexOf(element)}');
+      } else {
+        print("adding $thisDate");
+        _events[thisDate] = ['${rideLogsFromDatabase.indexOf(element)}'];
+      }
+    });
+    _selectedEvents = _events[_selectedDay] ?? [];
 
-
-    rideLogs = Directory("$directory/logs/").listSync();
-    rideLogs.sort((b, a) => a.path.compareTo(b.path)); // Sort descending
+    // Set state if requested and is an appropriate time
     if (doSetState && this.mounted) setState(() {});
+  }
+
+
+  // Simple TableCalendar configuration (using Styles)
+  Widget _buildTableCalendar() {
+    return TableCalendar(
+      initialCalendarFormat: CalendarFormat.twoWeeks,
+      calendarController: _calendarController,
+      events: _events,
+      //holidays: _holidays,
+      startingDayOfWeek: StartingDayOfWeek.sunday,
+      calendarStyle: CalendarStyle(
+        selectedColor: Colors.deepOrange[400],
+        todayColor: Colors.deepOrange[200],
+        markersColor: Colors.brown[700],
+        outsideDaysVisible: false,
+      ),
+      headerStyle: HeaderStyle(
+        formatButtonTextStyle:
+        TextStyle().copyWith(color: Colors.white, fontSize: 15.0),
+        formatButtonDecoration: BoxDecoration(
+          color: Colors.deepOrange[400],
+          borderRadius: BorderRadius.circular(16.0),
+        ),
+      ),
+      onDaySelected: _onDaySelected,
+      onVisibleDaysChanged: _onVisibleDaysChanged,
+      onCalendarCreated: _onCalendarCreated,
+    );
+  }
+
+  Widget _buildEventList() {
+    return ListView(
+      children: _selectedEvents
+          .map((event) => Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).dialogBackgroundColor,
+          border: Border.all(width: 0.8),
+          borderRadius: BorderRadius.circular(12.0),
+        ),
+        margin:
+        const EdgeInsets.symmetric(horizontal: 10.0, vertical: 1.0),
+        child: ListTile(
+
+          //TODO: this title's Column is essentially taken from the ListView Gesture Detector. simplify
+          title: Column(
+              children: <Widget>[
+                Container(color: Theme.of(context).dialogBackgroundColor,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: <Widget>[
+                        SizedBox(width: 5,),
+                        SizedBox(width: 50, child:
+                        FutureBuilder<String>(
+                            future: UserSettings.getBoardAvatarPath(rideLogsFromDatabase[int.parse(event)].boardID),
+                            builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+                              return CircleAvatar(
+                                  backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.jpg'),
+                                  radius: 25,
+                                  backgroundColor: Colors.white);
+                            })
+                          ,),
+                        SizedBox(width: 10,),
+
+                        Expanded(
+                          child: Text(rideLogsFromDatabase[int.parse(event)].logFilePath.substring(rideLogsFromDatabase[int.parse(event)].logFilePath.lastIndexOf("/") + 1, rideLogsFromDatabase[int.parse(event)].logFilePath.lastIndexOf("/") + 20).split("T").join("\r\n")),
+                        ),
+
+                        SizedBox(
+                          width: 32,
+                          child: Icon(
+                              rideLogsFromDatabase[int.parse(event)].faultCount < 1 ? Icons.check_circle_outline : Icons.error_outline,
+                              color: rideLogsFromDatabase[int.parse(event)].faultCount < 1 ? Colors.green : Colors.red),
+                        ),
+
+                        /// Ride Log Note Editor
+                        SizedBox(
+                          width: 32,
+                          child: GestureDetector(
+                            onTap: (){
+                              tecRideNotes.text = rideLogsFromDatabase[int.parse(event)].notes;
+
+                              showDialog(context: context,
+                                  child: AlertDialog(
+                                    title: const Icon(Icons.chat, size:40),
+                                    content: TextField(
+                                      controller: tecRideNotes,
+                                      decoration: new InputDecoration(labelText: "Notes:"),
+                                      keyboardType: TextInputType.text,
+                                    ),
+                                    actions: <Widget>[
+                                      FlatButton(
+                                          onPressed: () async {
+                                            // Update notes field in database
+                                            await DatabaseAssistant.dbUpdateNote(rideLogsFromDatabase[int.parse(event)].logFilePath, tecRideNotes.text);
+                                            _listFiles(true);
+                                            Navigator.of(context).pop(true);
+                                          },
+                                          child: const Text("Save")
+                                      ),
+                                      FlatButton(
+                                        onPressed: () => Navigator.of(context).pop(false),
+                                        child: const Text("Cancel"),
+                                      ),
+                                    ],
+                                  )
+                              );
+                            },
+                            child: Icon( rideLogsFromDatabase[int.parse(event)].notes.length > 0 ? Icons.chat : Icons.chat_bubble_outline, size: 32),
+                          ),
+                        ),
+
+                        SizedBox(
+                          width: 32,
+                          child: Icon(Icons.timer),
+                        ),
+                        SizedBox(
+                            width: 60,
+                            //child: Text("${(File(rideLogsFromDatabase[index].logFilePath).statSync().size / 1024).round()} kb"),
+                            child: Text("${Duration(seconds: rideLogsFromDatabase[int.parse(event)].durationSeconds).toString().substring(0,Duration(seconds: rideLogsFromDatabase[int.parse(event)].durationSeconds).toString().indexOf("."))}")
+                        ),
+                      ],
+                    )
+                ),
+                SizedBox(height: 5,)
+              ]
+          ),
+
+
+          onTap: () async {
+            await _loadLogFile(int.parse(event));
+          },
+        ),
+      ))
+          .toList(),
+    );
+  }
+
+  void _onDaySelected(DateTime day, List events, List holidays) {
+    print('CALLBACK: _onDaySelected');
+    setState(() {
+      _selectedDay = DateTime.parse(new DateFormat("yyyy-MM-dd").format(day));
+      _selectedEvents = events;
+    });
+  }
+
+  void _onVisibleDaysChanged(
+      DateTime first, DateTime last, CalendarFormat format) {
+    print('CALLBACK: _onVisibleDaysChanged');
+  }
+
+  void _onCalendarCreated(
+      DateTime first, DateTime last, CalendarFormat format) {
+    print('CALLBACK: _onCalendarCreated');
+  }
+
+  Future<void> _loadLogFile(int index) async {
+    // Show indication of loading
+    await Dialogs.showLoadingDialog(context, _keyLoader).timeout(Duration(milliseconds: 500)).catchError((error){});
+
+    // Fetch user settings for selected board, fallback to current settings if not found
+    UserSettings selectedBoardSettings = new UserSettings();
+    if (await selectedBoardSettings.loadSettings(rideLogsFromDatabase[index].boardID) == false) {
+      print("WARNING: Board ID ${rideLogsFromDatabase[index].boardID} has no settings on this device!");
+      selectedBoardSettings = widget.myUserSettings;
+    }
+
+    // navigate to the route by replacing the loading dialog
+    Navigator.of(context).pushReplacementNamed(RideLogViewer.routeName,
+      arguments: RideLogViewerArguments(
+          rideLogsFromDatabase[index].logFilePath,
+          selectedBoardSettings
+      ),
+    ).then((value){
+      // Once finished re-list files and remove a potential snackBar item before re-draw of setState
+      _listFiles(true);
+      Scaffold.of(context).removeCurrentSnackBar();
+    } );
   }
 
   @override
@@ -130,63 +339,73 @@ class RideLoggingState extends State<RideLogging> {
 
 
             Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-              //Text("Ride", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
-              Image(image: AssetImage("assets/dri_icon.png"),height: 80),
+              GestureDetector(
+                child: Image(image: AssetImage("assets/dri_icon.png"),height: 60),
+                onTap: (){
+                  setState(() {
+                    showListView = !showListView;
+                  });
+                },
+              ),
               Text("Ride\r\nLogging", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
             ],),
 
-            Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-
-              //TODO: Allow for ASCending sort order
-              SizedBox(width:50, child: Text("Sort by"),),
-
-              IconButton(
-                icon: Icon(Icons.account_circle),
-                tooltip: 'Sort by Board',
-                onPressed: () {
-                  orderByClause = "board_id DESC";
-                  _listFiles(true);
-                },
-              ),
-              IconButton(
-                icon: Icon(Icons.calendar_today),
-                tooltip: 'Sort by Date',
-                onPressed: () {
-                  orderByClause = "date_created DESC";
-                  _listFiles(true);
-                },
-              ),
 
 
 
+            showListView ? Container() : _buildTableCalendar(),
+            showListView ? Container() : SizedBox(height: 8.0),
+            showListView ? Container() : Expanded(child: _buildEventList()),
 
+            !showListView ? Container() : Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                //TODO: Allow for ASCending sort order
+                SizedBox(width:50, child: Text("Sort by"),),
 
+                IconButton(
+                  icon: Icon(Icons.account_circle),
+                  tooltip: 'Sort by Board',
+                  onPressed: () {
+                    orderByClause = "board_id DESC";
+                    _listFiles(true);
+                  },
+                ),
+                IconButton(
+                  icon: Icon(Icons.calendar_today),
+                  tooltip: 'Sort by Date',
+                  onPressed: () {
+                    orderByClause = "date_created DESC";
+                    _listFiles(true);
+                  },
+                ),
 
-              IconButton(
-                icon: Icon(Icons.check_circle_outline),
-                tooltip: 'Sort by Faults',
-                onPressed: () {
-                  orderByClause = "fault_count DESC";
-                  _listFiles(true);
-                },
-              ),
-              IconButton(
-                icon: Icon(Icons.chat_bubble),
-                tooltip: 'Sort by Notes',
-                onPressed: () {
-                  orderByClause = "length(notes) DESC";
-                  _listFiles(true);
-                },
-              ),
-              IconButton(
-                icon: Icon(Icons.timer),
-                tooltip: 'Sort by Duration',
-                onPressed: () {
-                  orderByClause = "duration_seconds DESC";
-                  _listFiles(true);
-                },
-              ),
-            ],),
+                IconButton(
+                  icon: Icon(Icons.check_circle_outline),
+                  tooltip: 'Sort by Faults',
+                  onPressed: () {
+                    orderByClause = "fault_count DESC";
+                    _listFiles(true);
+                  },
+                ),
+                IconButton(
+                  icon: Icon(Icons.chat_bubble),
+                  tooltip: 'Sort by Notes',
+                  onPressed: () {
+                    orderByClause = "length(notes) DESC";
+                    _listFiles(true);
+                  },
+                ),
+                IconButton(
+                  icon: Icon(Icons.timer),
+                  tooltip: 'Sort by Duration',
+                  onPressed: () {
+                    orderByClause = "duration_seconds DESC";
+                    _listFiles(true);
+                  },
+                ),
+              ],
+            ),
 
 
 
@@ -194,7 +413,7 @@ class RideLoggingState extends State<RideLogging> {
             //TODO show graphic if we have no rides to list?
 
             /// Show rides from database entries
-            Expanded( child:
+            !showListView ? Container() : Expanded( child:
               ListView.builder(
                 itemCount: rideLogsFromDatabase.length,
                 itemBuilder: (BuildContext context, int index){
@@ -246,27 +465,7 @@ class RideLoggingState extends State<RideLogging> {
                     },
                     child: GestureDetector(
                       onTap: () async {
-                        // Show indication of loading
-                        await Dialogs.showLoadingDialog(context, _keyLoader).timeout(Duration(milliseconds: 500)).catchError((error){});
-
-                        // Fetch user settings for selected board, fallback to current settings if not found
-                        UserSettings selectedBoardSettings = new UserSettings();
-                        if (await selectedBoardSettings.loadSettings(rideLogsFromDatabase[index].boardID) == false) {
-                          print("WARNING: Board ID ${rideLogsFromDatabase[index].boardID} has no settings on this device!");
-                          selectedBoardSettings = widget.myUserSettings;
-                        }
-
-                        // navigate to the route by replacing the loading dialog
-                        Navigator.of(context).pushReplacementNamed(RideLogViewer.routeName,
-                          arguments: RideLogViewerArguments(
-                              rideLogsFromDatabase[index].logFilePath,
-                              selectedBoardSettings
-                          ),
-                        ).then((value){
-                          // Once finished re-list files and remove a potential snackBar item before re-draw of setState
-                          _listFiles(true);
-                          Scaffold.of(context).removeCurrentSnackBar();
-                        } );
+                        await _loadLogFile(index);
                       },
                       child: Column(
                           children: <Widget>[
@@ -364,101 +563,6 @@ class RideLoggingState extends State<RideLogging> {
                   );
                 })),
 
-            /*
-              ///Display ride logs based on Files in log directory
-              Expanded(//height:300,
-                child: ListView.builder(
-                    itemCount: rideLogs.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      //Each item has dismissible wrapper
-                      return Dismissible(
-                        background: Container(
-                            color: Colors.red,
-                            margin: const EdgeInsets.only(bottom: 5.0),
-                            alignment: AlignmentDirectional.centerEnd,
-                            child: Padding(
-                              padding: EdgeInsets.fromLTRB(0.0, 0.0, 10.0, 0.0),
-                              child: Icon(Icons.delete, color: Colors.white,
-                              ),
-                            )
-                        ),
-                        // Each Dismissible must contain a Key. Keys allow Flutter to uniquely identify widgets.
-                        // Use filename as key
-                        key: Key(rideLogs[index].path.substring(rideLogs[index].path.lastIndexOf("/") + 1, rideLogs[index].path.lastIndexOf("/") + 19)),
-                        onDismissed: (direction) {
-                          // Remove the item from the data source.
-                          setState(() {
-                            File(rideLogs[index].path).delete();
-                            rideLogs.removeAt(index);
-                          });
-                        },
-                        confirmDismiss: (DismissDirection direction) async {
-                          return await showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: const Text("Delete file?"),
-                                content: const Text("Are you sure you wish to permanently erase this item?"),
-                                actions: <Widget>[
-                                  FlatButton(
-                                      onPressed: () => Navigator.of(context).pop(true),
-                                      child: const Text("Delete")
-                                  ),
-                                  FlatButton(
-                                    onPressed: () => Navigator.of(context).pop(false),
-                                    child: const Text("Cancel"),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        },
-                        child: GestureDetector(
-                          onTap: () async {
-                            // Show indication of loading
-                            await Dialogs.showLoadingDialog(context, _keyLoader).timeout(Duration(milliseconds: 500)).catchError((error){});
-
-                            // navigate to the route by replacing the loading dialog
-                            Navigator.of(context).pushReplacementNamed(RideLogViewer.routeName,
-                                arguments: RideLogViewerArguments(rideLogs[index].path, widget.myUserSettings),
-                            ).then((value){
-                              // Once finished re-list files and remove a potential snackBar item before re-draw of setState
-                              _listFiles();
-                              Scaffold.of(context).removeCurrentSnackBar();
-                            } );
-                          },
-                          child: Column(
-                              children: <Widget>[
-                                Container(height: 50,
-                                    width: MediaQuery.of(context).size.width - 20,
-                                    margin: const EdgeInsets.only(left: 10.0),
-                                    color: Theme.of(context).dialogBackgroundColor,
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                      children: <Widget>[
-                                        SizedBox(width: 20,),
-                                        Expanded(
-                                          child: Text(rideLogs[index].path.substring(rideLogs[index].path.lastIndexOf("/") + 1, rideLogs[index].path.lastIndexOf("/") + 19)),
-                                        ),
-                                        SizedBox(
-                                          width: 32,
-                                          child: Icon(Icons.open_in_new),
-                                        ),
-                                        SizedBox(
-                                          width: 80,
-                                          child: Text("${(rideLogs[index].statSync().size / 1024).round()} kb"),
-                                        ),
-                                      ],
-                                  )
-                                ),
-                                SizedBox(height: 5,)
-                              ]
-                          ),
-                        ),
-                      );
-                    }),
-              ),
-               */
             widget.syncStatus.syncInProgress?Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
