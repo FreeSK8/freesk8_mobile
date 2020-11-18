@@ -927,6 +927,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
               /// Insert record into database
               DatabaseAssistant.dbInsertLog(LogInfoItem(
+                  dateTime: firstEntryTime,
                   boardID: widget.myUserSettings.currentDeviceID,
                   boardAlias: widget.myUserSettings.settings.boardAlias,
                   logFilePath: savedFilePath,
