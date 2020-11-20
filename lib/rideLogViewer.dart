@@ -244,7 +244,7 @@ class RideLogViewerState extends State<RideLogViewer> {
     Map<DateTime, TimeSeriesESC> escTimeSeriesMap = new Map();
     List<charts.Series> seriesList;
     int faultCodeCount = 0;
-    double distanceStartPrimary = null;
+    double distanceStartPrimary;
     double distanceEndPrimary;
 
     //Mapping
