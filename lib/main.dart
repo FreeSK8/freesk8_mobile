@@ -1845,11 +1845,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   void _requestGotchiStatus() async {
     if ((controller.index != 0 && controller.index != 3 ) || syncInProgress || theTXLoggerCharacteristic == null) {
       print("*******************************************************************Auto stop gotchi timer");
-      setState(() {
-        _gotchiStatusTimer?.cancel();
-        _gotchiStatusTimer = null;
-      });
-
+      startStopGotchiTimer(true);
     } else {
       theTXLoggerCharacteristic.write(utf8.encode("status~")); //Request next file
     }
