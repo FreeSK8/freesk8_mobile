@@ -498,7 +498,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               onTap: () async {
                 /// Attempt connection
                 try {
-                  //TODO: display connection attempt in progress
+                  // Display connection attempt in progress
                   showDialog<void>(
                       context: context,
                       barrierDismissible: false,
@@ -510,11 +510,24 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                                 backgroundColor: Colors.black54,
                                 children: <Widget>[
                                   Center(
-                                    child: Column(children: [
-                                      Icon(Icons.bluetooth_searching, size: 80,),
-                                      SizedBox(height: 10,),
-                                      Text("Attempting connection...")
-                                    ]),
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        // Cancel connection attempt
+                                        device.disconnect().catchError((e){
+                                          print("GestureDetector device.disconnect() threw an exception: $e");
+                                        });
+                                        _bleDisconnect(); // Just in case we made it future than expected, disconnect
+                                        _scanActive = false;
+                                        Navigator.of(context).pop();
+                                      },
+                                      child: Column(children: [
+                                        Icon(Icons.bluetooth_searching, size: 80,),
+                                        SizedBox(height: 10,),
+                                        Text("Attempting connection..."),
+                                        Text("(tap to cancel)", style: TextStyle(fontSize: 10))
+                                        //TODO: allow for cancellation
+                                      ]),
+                                    ),
                                   )
                                 ]));
                       });
@@ -577,46 +590,34 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       containers.add(
         Container(
           width: MediaQuery.of(context).size.width / crossAxisCount,
-          child: Column(
-            children: <Widget>[
-              //Expanded(
-                //child:
-                Column(
-                  children: <Widget>[
-                    Padding(padding: EdgeInsets.only(top:16.0),
-                            child: Icon(Icons.device_unknown, size: 75)),
-                    Text(device.name == '' ? '(unknown device)' : device.name),
-                    Text(device.id.toString()),
-                  ],
-                ),
-              //),
-              FlatButton(
-                color: Theme.of(context).buttonColor,
-                child: Text(
-                  'Connect',
-                  style: TextStyle(color: Colors.white),
-                ),
-                onPressed: () async {
-                  try {
-                    await device.connect();
-                    await widget.flutterBlue.stopScan();
-                    //setState(() {
-                      _scanActive = false;
-                      _connectedDevice = device;
-                    //});
-                    widget.myUserSettings.loadSettings(device.id.toString()).then((thisDeviceIsKnown){
-                      print("_buildGridViewOfDevices():widget.myUserSettings.loadSettings() returned $thisDeviceIsKnown");
-                      isConnectedDeviceKnown = thisDeviceIsKnown;
-                    });
-                    await setupConnectedDeviceStreamListener();
-                  } catch (e) {
-                    if (e.code != 'already_connected') {
-                      throw e;
-                    }
-                  }
-                },
-              ),
-            ],
+          child: GestureDetector(
+            onTap: () async {
+              try {
+                await device.connect();
+                await widget.flutterBlue.stopScan();
+
+                _scanActive = false;
+                _connectedDevice = device;
+
+                widget.myUserSettings.loadSettings(device.id.toString()).then((thisDeviceIsKnown){
+                  print("_buildGridViewOfDevices():widget.myUserSettings.loadSettings() returned $thisDeviceIsKnown");
+                  isConnectedDeviceKnown = thisDeviceIsKnown;
+                });
+                await setupConnectedDeviceStreamListener();
+              } catch (e) {
+                if (e.code != 'already_connected') {
+                  throw e;
+                }
+              }
+            },
+            child: Column(
+              children: <Widget>[
+                Padding(padding: EdgeInsets.only(top:32.0),
+                    child: Icon(Icons.device_unknown, size: 75)),
+                Text(device.name == '' ? '(unknown device)' : device.name),
+                //NOTE: this is not MAC on iOS: Text(device.id.toString()),
+              ],
+            )
           ),
         ),
       ); //Adding container for unknown device
@@ -1808,7 +1809,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                     FlatButton(
                       child: Text('Yep!'),
                       onPressed: () {
-                        theTXLoggerCharacteristic.write(utf8.encode("dfumode~")).whenComplete((){
+                        theTXLoggerCharacteristic.write(utf8.encode("dfumode~")).timeout(Duration(milliseconds: 500)).whenComplete((){
                           print('Your robogotchi is ready to receive firmware!\nUse the nRF Toolbox application to upload new firmware.\nPower cycle board to cancel update.');
                           Navigator.of(context).pop();
                           showDialog(
