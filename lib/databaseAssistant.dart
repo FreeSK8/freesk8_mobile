@@ -78,6 +78,7 @@ class DatabaseAssistant {
           "CREATE TABLE IF NOT EXISTS logs("
               "id INTEGER PRIMARY KEY, "
               "date_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
+              "date_time INTEGER, "
               "board_id TEXT, "
               "board_alias TEXT, "
               "log_file_path TEXT UNIQUE, "
