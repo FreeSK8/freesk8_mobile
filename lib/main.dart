@@ -443,6 +443,72 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     }
   }
 
+  Future<void> _attemptDeviceConnection(BluetoothDevice device) async {
+    // If the user aborts device.connect() prevent this Future from taking action
+    bool _userAborted = false;
+    /// Attempt connection
+    try {
+      // Display connection attempt in progress
+      showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return new WillPopScope(
+                onWillPop: () async => false,
+                child: SimpleDialog(
+                    key: _keyLoader,
+                    backgroundColor: Colors.black54,
+                    children: <Widget>[
+                      Center(
+                        child: GestureDetector(
+                          onTap: () async {
+                            print("Cancelling connection attempt");
+                            // Cancel connection attempt
+                            await device.disconnect().catchError((e){
+                              print("GestureDetector device.disconnect() threw an exception: $e");
+                            });
+                            _userAborted = true;
+                            Navigator.of(context).pop(); // Remove attempting connection dialog
+                          },
+                          child: Column(children: [
+                            Icon(Icons.bluetooth_searching, size: 80,),
+                            SizedBox(height: 10,),
+                            Text("Attempting connection..."),
+                            Text("(tap to cancel)", style: TextStyle(fontSize: 10))
+                          ]),
+                        ),
+                      )
+                    ]));
+          });
+
+      await device.connect();
+      if (!_userAborted) {
+        await widget.flutterBlue.stopScan();
+
+        _scanActive = false;
+        _connectedDevice = device;
+
+        widget.myUserSettings.loadSettings(device.id.toString()).then((value){
+          print("_buildGridViewOfDevices():widget.myUserSettings.loadSettings() returned $value");
+          isConnectedDeviceKnown = value;
+        });
+
+        await setupConnectedDeviceStreamListener();
+        Navigator.of(context).pop(); // Remove attempting connection dialog
+      }
+    } catch (e) {
+      Navigator.of(context).pop(); // Remove attempting connection dialog
+      print("trying device.connect() threw an exception $e");
+      //TODO: if we are already connected but trying to connect we might want to disconnect. Needs testing, should only happen during debug
+      //TODO: trying device.connect() threw an exception PlatformException(already_connected, connection with device already exists, null)
+      device.disconnect().catchError((e){
+        print("While catching device.connect() exception, device.disconnect() threw an exception: $e");
+      });
+      if (e.code != 'already_connected') {
+        throw e;
+      }
+    }
+  }
   //This builds a grid view of found BLE devices... works pretty ok
   GridView _buildGridViewOfDevices() {
     final int crossAxisCount = 2;
@@ -496,67 +562,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             width: MediaQuery.of(context).size.width / crossAxisCount,
             child: GestureDetector(
               onTap: () async {
-                /// Attempt connection
-                try {
-                  // Display connection attempt in progress
-                  showDialog<void>(
-                      context: context,
-                      barrierDismissible: false,
-                      builder: (BuildContext context) {
-                        return new WillPopScope(
-                            onWillPop: () async => false,
-                            child: SimpleDialog(
-                                key: _keyLoader,
-                                backgroundColor: Colors.black54,
-                                children: <Widget>[
-                                  Center(
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        // Cancel connection attempt
-                                        device.disconnect().catchError((e){
-                                          print("GestureDetector device.disconnect() threw an exception: $e");
-                                        });
-                                        _bleDisconnect(); // Just in case we made it future than expected, disconnect
-                                        _scanActive = false;
-                                        Navigator.of(context).pop();
-                                      },
-                                      child: Column(children: [
-                                        Icon(Icons.bluetooth_searching, size: 80,),
-                                        SizedBox(height: 10,),
-                                        Text("Attempting connection..."),
-                                        Text("(tap to cancel)", style: TextStyle(fontSize: 10))
-                                        //TODO: allow for cancellation
-                                      ]),
-                                    ),
-                                  )
-                                ]));
-                      });
-
-                  await device.connect();
-                  await widget.flutterBlue.stopScan();
-
-                  _scanActive = false;
-                  _connectedDevice = device;
-
-                  widget.myUserSettings.loadSettings(device.id.toString()).then((value){
-                    print("_buildGridViewOfDevices():widget.myUserSettings.loadSettings() returned $value");
-                    isConnectedDeviceKnown = value;
-                  });
-
-                  await setupConnectedDeviceStreamListener();
-                  Navigator.of(context).pop();
-                } catch (e) {
-                  Navigator.of(context).pop();
-                  print("trying device.connect() threw an exception $e");
-                  //TODO: if we are already connected but trying to connect we might want to disconnect. Needs testing, should only happen during debug
-                  //TODO: trying device.connect() threw an exception PlatformException(already_connected, connection with device already exists, null)
-                  device.disconnect().catchError((e){
-                    print("While catching device.connect() exception, device.disconnect() threw an exception: $e");
-                  });
-                  if (e.code != 'already_connected') {
-                    throw e;
-                  }
-                }
+                await _attemptDeviceConnection(device);
               },
               child:
 
@@ -592,23 +598,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           width: MediaQuery.of(context).size.width / crossAxisCount,
           child: GestureDetector(
             onTap: () async {
-              try {
-                await device.connect();
-                await widget.flutterBlue.stopScan();
-
-                _scanActive = false;
-                _connectedDevice = device;
-
-                widget.myUserSettings.loadSettings(device.id.toString()).then((thisDeviceIsKnown){
-                  print("_buildGridViewOfDevices():widget.myUserSettings.loadSettings() returned $thisDeviceIsKnown");
-                  isConnectedDeviceKnown = thisDeviceIsKnown;
-                });
-                await setupConnectedDeviceStreamListener();
-              } catch (e) {
-                if (e.code != 'already_connected') {
-                  throw e;
-                }
-              }
+              await _attemptDeviceConnection(device);
             },
             child: Column(
               children: <Widget>[
