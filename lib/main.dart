@@ -204,7 +204,17 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       print("*****************************************************************_timerMonitor starting gotchiStatusTimer");
       startStopGotchiTimer(false);
     } else if (syncInProgress) {
-
+      // Monitor data reception for loss of communication
+      if (DateTime.now().millisecondsSinceEpoch - syncLastACK.millisecondsSinceEpoch > 5 * 1000) {
+        // It's been 5 seconds since you looked at me.
+        // Cocked your head to the side and said I'm angry
+        if (lsInProgress) {
+          theTXLoggerCharacteristic.write(utf8.encode("ls,${fileList.length},nack~"));
+        } else if (catInProgress) {
+          theTXLoggerCharacteristic.write(utf8.encode("cat,$catBytesReceived,nack~"));
+        }
+        syncLastACK = DateTime.now();
+      }
     } else {
       print("timer monitor is alive");
     }
@@ -667,6 +677,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static bool syncEraseOnComplete = true;
   static bool isLoggerLogging = false; //TODO: this is redundant
   static RobogotchiStatus gotchiStatus = new RobogotchiStatus();
+  static DateTime syncLastACK = DateTime.now();
 
   // Handler for RideLogging's sync button
   void _handleBLESyncState(bool startSync) {
@@ -847,6 +858,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           // Add file to list if it's greater than 0 bytes. (0 byte file usually means it's the active log)
           if (fileSize > 0) fileList.add(new FileToSync(fileName: values[2], fileSize: fileSize));
         }
+        syncLastACK = DateTime.now();
         await theTXLoggerCharacteristic.write(utf8.encode("ls,${fileList.length},ack~"));
       }
       else if(receiveStr.startsWith("ls,/FreeSK8Logs")){
@@ -854,6 +866,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         fileListToDelete.clear();
         lsInProgress = true;
         catInProgress = false;
+        syncLastACK = DateTime.now();
         await theTXLoggerCharacteristic.write(utf8.encode("ls,${fileList.length},ack~"));
       }
 
@@ -908,9 +921,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                     double batteryCurrent = double.tryParse(entry[7]); //Input Current
                     if (batteryCurrent>maxCurrentBattery) maxCurrentBattery = batteryCurrent;
                     if (motorCurrent>maxCurrentMotor) maxCurrentMotor = motorCurrent;
-                    //TODO: max speed
-                    //TODO: average speed
-                    //TODO: Distance
+                    //TODO: Compute max speed!
+                    //TODO: Compute average speed!
+                    //TODO: Compute Distance!
+                    //TODO: Add consumption calculation
                     // Determine date times
                     if(firstEntryTime ==null)firstEntryTime = DateTime.tryParse(entry[0]);
                     lastEntryTime = DateTime.tryParse(entry[0]);
@@ -962,6 +976,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         setState(() {
           catBytesReceived += receiveStr.length;
         });
+
+        syncLastACK = DateTime.now();
         await theTXLoggerCharacteristic.write(utf8.encode("cat,$catBytesReceived,ack~"));
       }
       else if(receiveStr.startsWith("cat,/FreeSK8Logs")){
@@ -971,6 +987,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         lsInProgress = false;
         catBytesReceived = 0;
         FileManager.clearLogFile();
+
+        syncLastACK = DateTime.now();
         await theTXLoggerCharacteristic.write(utf8.encode("cat,0,ack~"));
       }
 
