@@ -40,6 +40,7 @@ class LogInfoItem {
   // The keys correspond to the names of the columns in the database.
   Map<String, dynamic> toMap() {
     return {
+      'date_time' : dateTime.millisecondsSinceEpoch / 1000,
       'board_id' : boardID,
       'board_alias' : boardAlias,
       'log_file_path' : logFilePath, //NOTE: relative path as iOS updates will create new container UUIDs
@@ -97,6 +98,16 @@ class DatabaseAssistant {
       onOpen: (db) async {
         int version = await db.getVersion();
         print("DatabaseAssistant: getDatabase: openDatabase: onOpen(). Version $version");
+
+        //TODO: remove this patch after everyone moves on from my mistake (0.7.0/0.7.1 did not set the date_time for new files in LogInfoItem.toMap())
+        final List<Map<String, dynamic>> databaseEntries = await db.query('logs', columns: ['id','log_file_path','date_time'], where: 'date_time IS NULL');
+        print(databaseEntries.toString());
+        databaseEntries.forEach((element) async {
+          print("renee was too excited and didn't bug test enough so now we are updating ${element['log_file_path']}");
+          String dtString = element['log_file_path'].substring(element['log_file_path'].lastIndexOf("/") + 1, element['log_file_path'].lastIndexOf("/") + 20);
+          DateTime thisDt = DateTime.parse(dtString);
+          await db.execute('UPDATE logs SET date_time = ${thisDt.millisecondsSinceEpoch / 1000} WHERE id = ${element['id']};');
+        });
       },
       onUpgrade: (Database db, int oldVersion, int newVersion) async {
         print("DatabaseAssistant: getDatabase: openDatabase: onUpgrade(): oldVersion $oldVersion -> newVersion $newVersion");
@@ -140,9 +151,8 @@ class DatabaseAssistant {
     final List<Map<String, dynamic>> rideLogEntries = await db.query('logs', orderBy: orderByClause);
 
     return List.generate(rideLogEntries.length, (i) {
-//TODO: dont commit dateTime change
       return LogInfoItem(
-          dateTime:        rideLogEntries[i]['date_time'] != null ? DateTime.fromMillisecondsSinceEpoch(rideLogEntries[i]['date_time'] * 1000) : DateTime.now(),
+          dateTime:        DateTime.fromMillisecondsSinceEpoch(rideLogEntries[i]['date_time'] * 1000),
           boardID:         rideLogEntries[i]['board_id'],
           boardAlias:      rideLogEntries[i]['board_alias'],
           logFilePath:     rideLogEntries[i]['log_file_path'],
