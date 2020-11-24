@@ -674,6 +674,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       // the file list from the receiver
       setState(() {
         syncInProgress = true;
+        // Prevent the status timer from interrupting this request
+        _gotchiStatusTimer?.cancel();
+        _gotchiStatusTimer = null;
+        // Request the files to begin the process
         theTXLoggerCharacteristic.write(utf8.encode("ls~"));
       });
     } else {
@@ -1847,7 +1851,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       print("*******************************************************************Auto stop gotchi timer");
       startStopGotchiTimer(true);
     } else {
-      theTXLoggerCharacteristic.write(utf8.encode("status~")); //Request next file
+      theTXLoggerCharacteristic.write(utf8.encode("status~")).catchError((error){
+        print("_requestGotchiStatus: theTXLoggerCharacteristic was busy");
+      }); //Request next file
     }
   }
 
