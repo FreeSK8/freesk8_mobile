@@ -689,9 +689,10 @@ class RideLogViewerState extends State<RideLogViewer> {
 
                   ],),),
 
-                  //TODO: Testing SafeArea here to add padding to the SizedBox
+                  //TODO: Testing SafeArea here to add padding to the child element
                   SafeArea(
-                    child: SizedBox(height: 250,), //This is the height of the slide drawer on the bottom, do not remove
+                    maintainBottomViewPadding: true,
+                    child: SizedBox(height: 250,), //This is the space needed for slide drawer on the bottom, do not remove
                   )
 
                 ],
