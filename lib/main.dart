@@ -200,9 +200,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   }
 
   void _monitorGotchiTimer() {
-    if (_gotchiStatusTimer == null && theTXLoggerCharacteristic != null && initMsgSqeuencerCompleted && (controller.index == 0 || controller.index == 3)) {
+    if (_gotchiStatusTimer == null && theTXLoggerCharacteristic != null && initMsgSqeuencerCompleted && (controller.index == 0 || controller.index == 3) && !syncInProgress) {
       print("*****************************************************************_timerMonitor starting gotchiStatusTimer");
       startStopGotchiTimer(false);
+    } else if (syncInProgress) {
+
     } else {
       print("timer monitor is alive");
     }
