@@ -42,6 +42,7 @@ import 'package:wakelock/wakelock.dart';
 import 'databaseAssistant.dart';
 
 const String freeSK8ApplicationVersion = "0.7.2";
+const String robogotchiFirmwareExpectedVersion = "0.5.0";
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -1023,11 +1024,25 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       else if(receiveStr.startsWith("version,")) {
         print("Version packet received: $receiveStr");
         List<String> values = receiveStr.split(",");
+        // Update robogotchiVersion
+        robogotchiVersion = values[1];
+        // Check for latest firmware
+        if (robogotchiVersion != robogotchiFirmwareExpectedVersion) {
+          genericAlert(
+              context,
+              "Update available",
+              Column(children: [
+                Text("This app works best when Robogotchi is up to date!"),
+                SizedBox(height: 15),
+                Text("Please update from $robogotchiVersion to $robogotchiFirmwareExpectedVersion")
+              ]),
+              "OK"
+          );
+        }
         // Flag the reception of an init message
         initMsgGotchiVersion = true;
-        setState(() {
-          robogotchiVersion = values[1];
-        });
+        // Redraw UI
+        setState(() {});
       }
       else if(receiveStr.startsWith("getcfg,")) {
         print("Robogotchi User Configuration received: $receiveStr");
