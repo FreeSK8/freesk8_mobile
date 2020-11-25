@@ -41,7 +41,7 @@ import 'package:wakelock/wakelock.dart';
 
 import 'databaseAssistant.dart';
 
-const String freeSK8ApplicationVersion = "0.7.1";
+const String freeSK8ApplicationVersion = "0.7.2";
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
