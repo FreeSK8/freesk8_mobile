@@ -659,7 +659,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                         new charts.SeriesLegend(
                             desiredMaxColumns:3,
                             position: charts.BehaviorPosition.bottom,
-                            cellPadding: EdgeInsets.all(5.0),
+                            cellPadding: EdgeInsets.all(4.0),
                             defaultHiddenSeries: ['Duty Cycle', 'Motor2 Temp', 'Motor2 Current', 'Motor Current', 'Motor Temp']
                         ),
                       ],
@@ -689,11 +689,7 @@ class RideLogViewerState extends State<RideLogViewer> {
 
                   ],),),
 
-                  //TODO: Testing SafeArea here to add padding to the child element
-                  SafeArea(
-                    maintainBottomViewPadding: true,
-                    child: SizedBox(height: 250,), //This is the space needed for slide drawer on the bottom, do not remove
-                  )
+                  SizedBox(height: 264 + MediaQuery.of(context).padding.bottom), //This is the space needed for slide drawer on the bottom, do not remove
 
                 ],
               ),
