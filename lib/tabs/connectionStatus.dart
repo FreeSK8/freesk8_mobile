@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_blue/flutter_blue.dart';
@@ -37,7 +39,8 @@ class ConnectionStatus extends StatelessWidget {
         @required this.onChanged,
         this.robogotchiVersion,
         this.imageBoardAvatar,
-        this.gotchiStatus
+        this.gotchiStatus,
+        this.theTXLoggerCharacteristic,
       } ) : super(key: key);
 
   final ESCFirmware currentFirmware;
@@ -49,6 +52,7 @@ class ConnectionStatus extends StatelessWidget {
   final String robogotchiVersion;
   final MemoryImage imageBoardAvatar;
   final RobogotchiStatus gotchiStatus;
+  final BluetoothCharacteristic theTXLoggerCharacteristic;
 
   void _handleTap() {
     onChanged(!active);
@@ -79,14 +83,20 @@ class ConnectionStatus extends StatelessWidget {
                     ],
                   ),
 
-                  Column(
-                    children: [
-                      Icon(gotchiStatus.faultCount > 0 ? Icons.error : Icons.check_circle, color: gotchiStatus.faultCount > 0 ? Colors.red : Colors.greenAccent, size: 25),
-                      Text("${gotchiStatus.faultCount} ${gotchiStatus.faultCount == 1 ? "fault" : "faults"}"),
-                      Text("FW: $robogotchiVersion"),
-                      Text("")
-                    ],
+                  GestureDetector(
+                    onTap: (){
+                      theTXLoggerCharacteristic.write(utf8.encode("faults~"));
+                    },
+                    child: Column(
+                      children: [
+                        Icon(gotchiStatus.faultCount > 0 ? Icons.error : Icons.check_circle, color: gotchiStatus.faultCount > 0 ? Colors.red : Colors.greenAccent, size: 25),
+                        Text("${gotchiStatus.faultCount} ${gotchiStatus.faultCount == 1 ? "fault" : "faults"}"),
+                        Text("FW: $robogotchiVersion"),
+                        Text("")
+                      ],
+                    )
                   ),
+
 
                   Column(
                     children: [

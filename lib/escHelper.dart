@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:flutter/cupertino.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // VESC based ESC defines
@@ -471,9 +472,51 @@ class ESCFirmware {
   String hardware_name;
 }
 
+class ESCFault {
+  int faultCode;
+  int faultCount;
+  int escID;
+  DateTime firstSeen;
+  DateTime lastSeen;
+
+  ESCFault({this.faultCode, this.faultCount, this.escID, this.firstSeen, this.lastSeen});
+
+  String toString() {
+    return "${mc_fault_code.values[this.faultCode].toString().substring(14)} was seen ${this.faultCount} time${this.faultCount!=1?"s":""} on ESC ${this.escID} at ${this.firstSeen.toString().substring(0,19)}${this.faultCount > 1 ? " until ${this.lastSeen.toString().substring(11,19)}" : ""}";
+  }
+
+  TableRow toTableRow() {
+    return TableRow(children: [
+      Text(mc_fault_code.values[this.faultCode].toString().substring(14)),
+      Text(this.faultCount.toString()),
+      Text(this.escID.toString()),
+      Text(this.firstSeen.toString()),
+      Text(this.lastSeen.toString())
+    ]);
+  }
+}
+
 class ESCHelper {
   static const int MCCONF_SIGNATURE = 3698540221;
   static const int APPCONF_SIGNATURE = 2460147246;
+
+  List<ESCFault> processFaults(int faultCount, Uint8List payload) {
+    print(payload);
+    List<ESCFault> response = new List();
+    int index = 0;
+    for (int i=0; i<faultCount; ++i) {
+      ESCFault fault = new ESCFault();
+      fault.faultCode = payload[index++];
+      fault.faultCount = buffer_get_uint16(payload, index); index += 2;
+      fault.escID = buffer_get_uint16(payload, index); index += 2;
+      index += 3; //NOTE: Alignment
+      fault.firstSeen = new DateTime.fromMillisecondsSinceEpoch(buffer_get_uint64(payload, index, Endian.little) * 1000, isUtc: true); index += 8;
+      fault.lastSeen = new DateTime.fromMillisecondsSinceEpoch(buffer_get_uint64(payload, index, Endian.little) * 1000, isUtc: true); index += 8;
+      print(fault.toString());
+      response.add(fault);
+    }
+    return response;
+  }
 
   ESCFirmware processFirmware(Uint8List payload) {
     int index = 1;
@@ -982,6 +1025,11 @@ class ESCHelper {
   int buffer_get_uint32(Uint8List buffer, int index) {
     var byteData = new ByteData.view(buffer.buffer);
     return byteData.getUint32(index);
+  }
+
+  int buffer_get_uint64(Uint8List buffer, int index, [Endian endian = Endian.big]) {
+    var byteData = new ByteData.view(buffer.buffer);
+    return byteData.getUint64(index, endian);
   }
 
   double buffer_get_float16(Uint8List buffer, int index, double scale) {

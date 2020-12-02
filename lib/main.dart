@@ -39,9 +39,11 @@ import 'package:geolocator/geolocator.dart';
 
 import 'package:wakelock/wakelock.dart';
 
+import 'package:esys_flutter_share/esys_flutter_share.dart';
+
 import 'databaseAssistant.dart';
 
-const String freeSK8ApplicationVersion = "0.7.2";
+const String freeSK8ApplicationVersion = "0.8.0";
 const String robogotchiFirmwareExpectedVersion = "0.5.0";
 
 void main() {
@@ -679,6 +681,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static bool isLoggerLogging = false; //TODO: this is redundant
   static RobogotchiStatus gotchiStatus = new RobogotchiStatus();
   static DateTime syncLastACK = DateTime.now();
+  static List<ESCFault> escFaults = new List();
 
   // Handler for RideLogging's sync button
   void _handleBLESyncState(bool startSync) {
@@ -1020,6 +1023,41 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           gotchiStatus.gpsFix = int.tryParse(values[7]);
           gotchiStatus.gpsSatellites = int.tryParse(values[8]);
         });
+      }
+      else if(receiveStr.startsWith("faults,")) {
+        print("Faults packet received: $receiveStr");
+        List<String> values = receiveStr.split(",");
+        int count = int.tryParse(values[1]);
+        //TODO: Robogotchi firmware is limiting output to 6 faults
+        if (count > 6) {
+          count = 6;
+        }
+        // Capture fault data at end of buffer
+        const int startPosition = 10; // "faults,xx,"
+        const int sizeOfESCFault = 24; // sizeof(struct esc_fault)
+        Uint8List dataBuffer = new Uint8List.fromList(value.sublist(startPosition, startPosition + sizeOfESCFault*count));
+        // Extract faults
+        escFaults = escHelper.processFaults(count, dataBuffer);
+
+        String shareData = "";
+        List<Widget> children = new List();
+        escFaults.forEach((element) {
+          children.add(Text(element.toString()));
+          children.add(Text(""));
+          shareData += element.toString() + "\n\n";
+        });
+        //genericAlert(context, "Faults observed", Column(children: children), "OK");
+        genericConfirmationDialog(context, FlatButton(
+          child: Text("Copy / Share"),
+          onPressed: () {
+            Share.text('Faults observed', shareData, 'text/plain');
+          },
+        ), FlatButton(
+          child: Text("OK"),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ), "Faults observed", Column(children: children, mainAxisSize: MainAxisSize.min,));
       }
       else if(receiveStr.startsWith("version,")) {
         print("Version packet received: $receiveStr");
@@ -2066,6 +2104,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               robogotchiVersion: robogotchiVersion,
               imageBoardAvatar: cachedBoardAvatar,
               gotchiStatus: gotchiStatus,
+              theTXLoggerCharacteristic: theTXLoggerCharacteristic,
           ),
           RealTimeData(
             routeTakenLocations: routeTakenLocations,
