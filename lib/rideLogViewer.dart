@@ -20,6 +20,8 @@ import 'package:esys_flutter_share/esys_flutter_share.dart';
 
 import 'dart:math' show cos, sqrt, asin;
 
+import 'package:freesk8_mobile/escHelper.dart';
+
 class RideLogViewerArguments {
   final UserSettings userSettings;
   final String logFilePath;
@@ -41,6 +43,7 @@ class RideLogViewerState extends State<RideLogViewer> {
   String thisRideLog = "";
   List<String> thisRideLogEntries;
   List<LatLng> _positionEntries;
+  List<Marker> mapMakers = new List();
 
   RideLogChartData currentSelection;
 
@@ -356,7 +359,26 @@ class RideLogViewerState extends State<RideLogViewer> {
         ///Fault codes
         else if (entry[1] == "fault") {
           //TODO: improve fault display handling
+          // Count total fault messages
           ++faultCodeCount;
+          // Add a map point if we have position data
+          if (_positionEntries.length > 0) {
+            mapMakers.add(new Marker(
+              width: 50.0,
+              height: 50.0,
+              point: _positionEntries.last,
+              builder: (ctx) =>
+              new Container(
+                margin: EdgeInsets.fromLTRB(0, 0, 0, 0),
+                child: GestureDetector(
+                  onTap: (){
+                    genericAlert(context, "Fault", Text("${mc_fault_code.values[int.parse(entry[3])].toString().substring(14)} on ESC ${entry[4]} at ${entry[0]}"), "It's ok?");
+                  },
+                  child: Image(image: AssetImage("assets/map_marker_fault.png")),
+                ),
+              ),
+            ));
+          }
         }
       }
     }
@@ -423,6 +445,32 @@ class RideLogViewerState extends State<RideLogViewer> {
       Navigator.of(_keyLoader.currentContext,rootNavigator: true).pop();
 
     print("rideLogViewer statistics generated");
+
+    if (_positionEntries.length > 0) {
+      mapMakers.insert(0,
+          new Marker(
+            width: 160.0,
+            height: 160.0,
+            point: _positionEntries.first,
+            builder: (ctx) =>
+            new Container(
+              margin: EdgeInsets.fromLTRB(0, 0, 0, 80),
+              child: new Image(image: AssetImage("assets/home_map_marker.png")),
+            ),
+          )
+      );
+
+      mapMakers.insert(1, new Marker(
+        width: 160.0,
+        height: 160.0,
+        point: _positionEntries.last,
+        builder: (ctx) =>
+        new Container(
+          margin: EdgeInsets.fromLTRB(0, 0, 0, 80),
+          child: new Image(image: AssetImage("assets/skating_pin.png")),
+        ),
+      ));
+    }
 
     ///Build Widget
     return Scaffold(
@@ -599,33 +647,15 @@ class RideLogViewerState extends State<RideLogViewer> {
                             urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
                             subdomains: ['a', 'b', 'c']
                         ),
-                        new MarkerLayerOptions(
-                          markers: [
-                            new Marker(
-                              width: 160.0,
-                              height: 160.0,
-                              point: _positionEntries.first,
-                              builder: (ctx) =>
-                              new Container(
-                                margin: EdgeInsets.fromLTRB(0, 0, 0, 80),
-                                child: new Image(image: AssetImage("assets/home_map_marker.png")),
-                              ),
-                            ),
-                            new Marker(
-                              width: 160.0,
-                              height: 160.0,
-                              point: _positionEntries.last,
-                              builder: (ctx) =>
-                              new Container(
-                                margin: EdgeInsets.fromLTRB(0, 0, 0, 80),
-                                child: new Image(image: AssetImage("assets/skating_pin.png")),
-                              ),
-                            ),
-                          ],
-                        ),
+
                         new PolylineLayerOptions(
                             polylines: [routePolyLine]
-                        )
+                        ),
+
+                        new MarkerLayerOptions(
+                            markers: mapMakers
+
+                        ),
                       ],
                     ),
                   ) :
