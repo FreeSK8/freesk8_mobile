@@ -239,6 +239,16 @@ class RideLogViewerState extends State<RideLogViewer> {
     super.dispose();
   }
 
+  void updateFault(List<ESCFault> faults, int faultCode, int escID, DateTime dateTime) {
+    faults.forEach((element) {
+      if (element.faultCode == faultCode && element.escID == escID) {
+        print("updated fault");
+        ++element.faultCount;
+        element.lastSeen = dateTime;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     print("Build: rideLogViewer");
@@ -265,6 +275,7 @@ class RideLogViewerState extends State<RideLogViewer> {
     // Fault tracking
     DateTime lastReportedFaultDt;
     List<charts.RangeAnnotationSegment> faultRangeAnnotations = new List();
+    List<ESCFault> faultsObserved = new List();
 
     //Mapping
     thisRideLogEntries = new List<String>();
@@ -374,14 +385,34 @@ class RideLogViewerState extends State<RideLogViewer> {
         }
         ///Fault codes
         else if (entry[1] == "fault") {
-          //TODO: improve fault display handling
-
           // Count total fault messages
           ++faultCodeCount;
 
           // Parse time of event for tracking
           DateTime thisDt = DateTime.tryParse(entry[0]);
           int thisFaultCode = int.parse(entry[3]);
+          int escID = int.parse(entry[4]);
+
+          // Track faults for faults observed report
+          bool isNew = true;
+          faultsObserved.forEach((element) {
+            if (element.faultCode == thisFaultCode && element.escID == escID) {
+              print("this fault is old");
+              isNew = false;
+            }
+          });
+          if (isNew) {
+            print("adding $thisFaultCode $escID");
+            faultsObserved.add(new ESCFault(
+              faultCode: thisFaultCode,
+              escID: escID,
+              faultCount: 1,
+              firstSeen: thisDt,
+              lastSeen: thisDt,
+            ));
+          } else {
+            updateFault(faultsObserved, thisFaultCode, escID, thisDt);
+          }
 
           // Create TimeSeriesESC object if needed
           if (escTimeSeriesMap[thisDt] == null){
@@ -402,7 +433,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                 margin: EdgeInsets.fromLTRB(0, 0, 0, 0),
                 child: GestureDetector(
                   onTap: (){
-                    genericAlert(context, "Fault", Text("${mc_fault_code.values[thisFaultCode].toString().substring(14)} on ESC ${entry[4]} at ${entry[0]}"), "It's ok?");
+                    genericAlert(context, "Fault", Text("${mc_fault_code.values[thisFaultCode].toString().substring(14)} on ESC $escID at ${entry[0]}"), "It's ok?");
                   },
                   child: Image(image: AssetImage("assets/map_marker_fault.png")),
                 ),
@@ -610,11 +641,34 @@ class RideLogViewerState extends State<RideLogViewer> {
               Row(mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   faultCodeCount > 0 ?
-                  Column(children: <Widget>[
-                    Text("Fault codes"),
-                    Icon(Icons.error_outline, color: Colors.red,),
-                    Text("$faultCodeCount fault(s)"),
-                  ],)
+                  GestureDetector(
+                    onTap: () {
+                      String shareData = "";
+                      List<Widget> children = new List();
+                      faultsObserved.forEach((element) {
+                        children.add(Text(element.toString()));
+                        children.add(Text(""));
+                        shareData += element.toString() + "\n\n";
+                      });
+                      //genericAlert(context, "Faults observed", Column(children: children), "OK");
+                      genericConfirmationDialog(context, FlatButton(
+                        child: Text("Copy / Share"),
+                        onPressed: () {
+                          Share.text('Faults observed', shareData, 'text/plain');
+                        },
+                      ), FlatButton(
+                        child: Text("Close"),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ), "Faults observed", Column(children: children, mainAxisSize: MainAxisSize.min,));
+                    },
+                    child: Column(children: <Widget>[
+                      Text("Fault codes"),
+                      Icon(Icons.error_outline, color: Colors.red,),
+                      Text("$faultCodeCount fault(s)"),
+                    ],),
+                  )
                       :
                   Column(children: <Widget>[
                     Text("Fault codes"),
