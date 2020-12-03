@@ -1449,7 +1449,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     });
 
     // Begin initMessageSequencer to handle all of the desired communication on connection
-    _initMsgSequencer = new Timer.periodic(Duration(milliseconds: 200), (Timer t) => _requestInitMessages());
+    //NOTE: be sure to check if null, iOS could create a second timer
+    if (_initMsgSequencer == null) {
+      _initMsgSequencer = new Timer.periodic(Duration(milliseconds: 200), (Timer t) => _requestInitMessages());
+    }
 
     // Keep the device on while connected
     Wakelock.enable();
@@ -1919,7 +1922,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   }
 
   // Called by timer on interval to request Robogotchi Status packet
-  void _requestGotchiStatus() async {
+  void _requestGotchiStatus() {
     if ((controller.index != 0 && controller.index != 3 ) || syncInProgress || theTXLoggerCharacteristic == null) {
       print("*******************************************************************Auto stop gotchi timer");
       startStopGotchiTimer(true);
@@ -2013,19 +2016,21 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   // Start and stop Robogotchi Status timer
   void startStopGotchiTimer(bool disableTimer) {
     if (!disableTimer){
-      print("*******************************************************************Start gotchi timer");
-      const duration = const Duration(milliseconds:1000);
+      //NOTE: Be sure to check if this is null or iOS could create a second timer
+      if (_gotchiStatusTimer == null) {
+        print("*******************************************************************Start gotchi timer");
+        const duration = const Duration(milliseconds:1000);
 
-      Future.delayed(const Duration(milliseconds: 500), () {
-        _gotchiStatusTimer = new Timer.periodic(duration, (Timer t) => _requestGotchiStatus());
-      });
+        Future.delayed(const Duration(milliseconds: 500), () {
+          _gotchiStatusTimer = new Timer.periodic(duration, (Timer t) => _requestGotchiStatus());
+        });
+      }
     } else {
       print("*******************************************************************Cancel gotchi timer");
       if (_gotchiStatusTimer != null) {
-        setState(() {
-          _gotchiStatusTimer?.cancel();
-          _gotchiStatusTimer = null;
-        });
+        print("*******************************************************************Cancel gotchi timer OK");
+        _gotchiStatusTimer?.cancel();
+        _gotchiStatusTimer = null;
       }
     }
   }
