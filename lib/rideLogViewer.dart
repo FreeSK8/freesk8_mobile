@@ -59,9 +59,21 @@ class RideLogViewerState extends State<RideLogViewer> {
   }
 
   /// Create time series data for chart using ESC values
-  static List<charts.Series<TimeSeriesESC, DateTime>> _createChartingData( List<TimeSeriesESC> values, List<int> escIDsInLog ) {
+  static List<charts.Series<TimeSeriesESC, DateTime>> _createChartingData( List<TimeSeriesESC> values, List<int> escIDsInLog, int faultCodeCount ) {
       List<charts.Series<TimeSeriesESC, DateTime>> chartData = new List();
 
+      /* Good example but not necessary
+      if (faultCodeCount > 0) {
+        chartData.add(charts.Series<TimeSeriesESC, DateTime>(
+          id: 'Faults',
+          colorFn: (_, __) => charts.MaterialPalette.yellow.shadeDefault.lighter,
+          domainFn: (TimeSeriesESC escData, _) => escData.time,
+          measureFn: (TimeSeriesESC escData, _) => escData.faultCode,
+          data: values,
+        )// Configure our custom bar target renderer for this series.
+          ..setAttribute(charts.rendererIdKey, 'faultArea'));
+      }
+      */
       chartData.add(charts.Series<TimeSeriesESC, DateTime>(
         id: 'Battery',
         colorFn: (_, __) => charts.MaterialPalette.blue.shadeDefault,
@@ -250,6 +262,10 @@ class RideLogViewerState extends State<RideLogViewer> {
     double distanceStartPrimary;
     double distanceEndPrimary;
 
+    // Fault tracking
+    DateTime lastReportedFaultDt;
+    List<charts.RangeAnnotationSegment> faultRangeAnnotations = new List();
+
     //Mapping
     thisRideLogEntries = new List<String>();
     _positionEntries = new List<LatLng>();
@@ -359,10 +375,24 @@ class RideLogViewerState extends State<RideLogViewer> {
         ///Fault codes
         else if (entry[1] == "fault") {
           //TODO: improve fault display handling
+
           // Count total fault messages
           ++faultCodeCount;
-          // Add a map point if we have position data
-          if (_positionEntries.length > 0) {
+
+          // Parse time of event for tracking
+          DateTime thisDt = DateTime.tryParse(entry[0]);
+          int thisFaultCode = int.parse(entry[3]);
+
+          // Create TimeSeriesESC object if needed
+          if (escTimeSeriesMap[thisDt] == null){
+            escTimeSeriesMap[thisDt] = TimeSeriesESC(time: thisDt, dutyCycle: 0);
+          }
+          // Store the fault code
+          escTimeSeriesMap[thisDt].faultCode = thisFaultCode;
+
+          // Add a map point if we have position data and the last reported fault didn't happen in the recent minute
+          if (_positionEntries.length > 0 && (lastReportedFaultDt == null || thisDt.minute != lastReportedFaultDt.minute)) {
+            // Add fault marker to map
             mapMakers.add(new Marker(
               width: 50.0,
               height: 50.0,
@@ -372,12 +402,15 @@ class RideLogViewerState extends State<RideLogViewer> {
                 margin: EdgeInsets.fromLTRB(0, 0, 0, 0),
                 child: GestureDetector(
                   onTap: (){
-                    genericAlert(context, "Fault", Text("${mc_fault_code.values[int.parse(entry[3])].toString().substring(14)} on ESC ${entry[4]} at ${entry[0]}"), "It's ok?");
+                    genericAlert(context, "Fault", Text("${mc_fault_code.values[thisFaultCode].toString().substring(14)} on ESC ${entry[4]} at ${entry[0]}"), "It's ok?");
                   },
                   child: Image(image: AssetImage("assets/map_marker_fault.png")),
                 ),
               ),
             ));
+
+            // Update lastReportedFaultDt
+            lastReportedFaultDt = thisDt;
           }
         }
       }
@@ -385,6 +418,30 @@ class RideLogViewerState extends State<RideLogViewer> {
     print("rideLogViewer rideLogEntry iteration complete");
     escTimeSeriesMap.forEach((key, value) {
       escTimeSeriesList.add(value);
+    });
+
+    // Create fault range annotations for chart
+    DateTime faultStart;
+    //int faultCode;
+    escTimeSeriesList.forEach((element) {
+      if (element.faultCode != null && faultStart == null){
+        faultStart = element.time;
+        //faultCode = element.faultCode;
+      }
+      else if (element.faultCode == null && faultStart != null) {
+        // Create a new annotation
+        faultRangeAnnotations.add(new charts.RangeAnnotationSegment(
+            faultStart,
+            element.time,
+            charts.RangeAnnotationAxisType.domain,
+            //startLabel: '$faultCode',
+            labelAnchor: charts.AnnotationLabelAnchor.end,
+            color: charts.MaterialPalette.yellow.shadeDefault.lighter,
+            // Override the default vertical direction for domain labels.
+            labelDirection: charts.AnnotationLabelDirection.horizontal));
+        // Clear faultStart for next possible annotation
+        faultStart = null;
+      }
     });
 
     if(_positionEntries.length > 1) {
@@ -398,7 +455,7 @@ class RideLogViewerState extends State<RideLogViewer> {
 
     print("rideLogViewer creating chart data");
     // Create charting data from ESC time series data
-    seriesList = _createChartingData(escTimeSeriesList, escIDsInLog);
+    seriesList = _createChartingData(escTimeSeriesList, escIDsInLog, faultCodeCount);
     print("rideLogViewer creating map polyline");
     // Create polyline to display GPS route on map
     Polyline routePolyLine = new Polyline(points: _positionEntries, strokeWidth: 3, color: Colors.red);
@@ -670,17 +727,17 @@ class RideLogViewerState extends State<RideLogViewer> {
                       /// Set zeroBound to false or we have lots of empty space in chart
                       primaryMeasureAxis: new charts.NumericAxisSpec(
                           tickProviderSpec: new charts.BasicNumericTickProviderSpec(zeroBound: false)),
-                      //TODO: Customize the domainAxis tickFormatterSpec causes PanAndZoomBehavior to stop working, WHY?
-                      /*
-                        domainAxis: new charts.DateTimeAxisSpec(
-                            tickFormatterSpec: new charts.AutoDateTimeTickFormatterSpec(
-                                minute: new charts.TimeFormatterSpec(
-                                  format: 'HH:mm', // or even HH:mm here too
-                                  transitionFormat: 'HH:mm',
-                                ),
-                            )
-                        ),
-                        */
+
+                      //NOTE: Customizing the domainAxis tickFormatterSpec causes PanAndZoomBehavior to stop working, WHY?
+                      domainAxis: new charts.DateTimeAxisSpec(
+                          tickFormatterSpec: new charts.AutoDateTimeTickFormatterSpec(
+                            minute: new charts.TimeFormatterSpec(
+                              format: 'HH:mm', // or even HH:mm here too
+                              transitionFormat: 'HH:mm',
+                            ),
+                          )
+                      ),
+
                       behaviors: [
                         //TODO: "PanAndZoomBehavior()" causes "Exception caught by gesture" : "Bad state: No element" but works
                         //TODO: charts.PointRenderer() line 255. Add: if (!componentBounds.containsPoint(point)) continue;
@@ -692,6 +749,10 @@ class RideLogViewerState extends State<RideLogViewer> {
                             cellPadding: EdgeInsets.all(4.0),
                             defaultHiddenSeries: ['Duty Cycle', 'Motor2 Temp', 'Motor2 Current', 'Motor Current', 'Motor Temp']
                         ),
+
+                        // Define one domain and two measure annotations configured to render
+                        // labels in the chart margins.
+                        new charts.RangeAnnotation(faultRangeAnnotations)
                       ],
                       /// Using selection model to generate value overlay
                       selectionModels: [
@@ -706,6 +767,15 @@ class RideLogViewerState extends State<RideLogViewer> {
                         )
 
                       ],
+
+                      customSeriesRenderers: [
+                        new charts.LineRendererConfig(
+                          // ID used to link series to this renderer.
+                            customRendererId: 'faultArea',
+                            includeArea: faultCodeCount > 0,
+                            stacked: true),
+                      ]
+
                     ),
 
 
@@ -771,6 +841,7 @@ class TimeSeriesESC {
   double currentInput4;
   double speed;
   double distance;
+  int faultCode;
 
   TimeSeriesESC({
       this.time,
@@ -794,6 +865,7 @@ class TimeSeriesESC {
       this.currentInput4,
       this.speed,
       this.distance,
+      this.faultCode,
   });
 }
 /*

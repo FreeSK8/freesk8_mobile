@@ -70,6 +70,7 @@ class ConnectionStatus extends StatelessWidget {
             // center the children
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
+              gotchiStatus.isLogging != null ? Divider(thickness: 2,) : Container(),
               gotchiStatus.isLogging != null ? Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [

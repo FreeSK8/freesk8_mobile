@@ -44,7 +44,7 @@ import 'package:esys_flutter_share/esys_flutter_share.dart';
 import 'databaseAssistant.dart';
 
 const String freeSK8ApplicationVersion = "0.8.0";
-const String robogotchiFirmwareExpectedVersion = "0.5.0";
+const String robogotchiFirmwareExpectedVersion = "0.6.0";
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -1053,7 +1053,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             Share.text('Faults observed', shareData, 'text/plain');
           },
         ), FlatButton(
-          child: Text("OK"),
+          child: Text("Close"),
           onPressed: () {
             Navigator.of(context).pop();
           },
