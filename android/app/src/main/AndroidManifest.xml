@@ -24,7 +24,7 @@
          FlutterApplication and put your custom class here. -->
     <application
         android:name="io.flutter.app.FlutterApplication"
-        android:label="freesk8_mobile"
+        android:label="FreeSK8"
         android:icon="@mipmap/ic_launcher">
         <meta-data android:name="com.google.android.geo.API_KEY" android:value="AIzaSyCsIGgpekUPDXwYhEhbUDxGuZSf33yQQxI"/>
         <activity
