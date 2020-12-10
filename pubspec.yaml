@@ -19,7 +19,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_blue: 0.7.2
+  flutter_blue: 0.7.3
   shared_preferences: 0.5.7
 
   geolocator: ^5.3.2+2
