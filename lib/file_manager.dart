@@ -1,11 +1,17 @@
 
 import 'dart:io';
 
+import 'package:freesk8_mobile/logFileParser.dart';
 import 'package:path_provider/path_provider.dart';
 
 class FileManager {
 
   static DateTime logFileStartTime;
+
+  static Future<void> writeBytesToLogFile(List<int> bytes) async {
+    final file = await _getTempLogFile();
+    file.writeAsBytesSync(bytes, mode: FileMode.append);
+  }
 
   static Future<void> writeToLogFile(String log) async {
     final file = await _getTempLogFile();
@@ -19,7 +25,7 @@ class FileManager {
 
   static Future<File> _getTempLogFile() async {
     final temporaryDirectory = await getTemporaryDirectory();
-    final file = File('${temporaryDirectory.path}/log.txt');
+    final file = File('${temporaryDirectory.path}/temp.log');
     if (!await file.exists()) {
       await file.writeAsString('');
     }
@@ -33,15 +39,17 @@ class FileManager {
   }
 
   static Future<String> saveLogToDocuments({String filename}) async {
+    // Get temporary log file
     final file = await _getTempLogFile();
+    // Convert binary data to CSV
+    final fileParsed = await LogFileParser.parseFile(file);
+    // Create file at final destination
     final documentsDirectory = await getApplicationDocumentsDirectory();
     final now = DateTime.now();
     final newPath = "${documentsDirectory.path}/logs/${filename != null? filename: now.toIso8601String()}.csv";
-    //print("saveLogToDocuments: New file path: $newPath");
     new File(newPath).create(recursive: true);
-    await file.copy(newPath).then((value){
-      //print("File copy returned: $value");
-    });
+    // Copy CSV data to final destination
+    await fileParsed.copy(newPath);
     //NOTE: return relative path as iOS updates will create new container UUIDs
     return "/logs/${filename != null ? filename : now.toIso8601String()}.csv";
   }

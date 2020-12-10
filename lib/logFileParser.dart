@@ -54,10 +54,11 @@ class LogFileParser {
     await convertedFile.writeAsString('');
 
     // Write header contents
-    convertedFile.writeAsStringSync(",version,1\n", mode: FileMode.append);
-    convertedFile.writeAsStringSync(",format,esc,esc_id,voltage,motor_temp,esc_temp,duty_cycle,motor_current,battery_current,watt_hours,watt_hours_regen,e_rpm,e_distance,fault\n", mode: FileMode.append);
-    convertedFile.writeAsStringSync(",format,gps,satellites,altitude,speed,latitude,longitude\n", mode: FileMode.append);
-    convertedFile.writeAsStringSync(",format,err,fault_name,fault_code,esc_id\n", mode: FileMode.append);
+    convertedFile.writeAsStringSync("header,version,1\n", mode: FileMode.append);
+    //0 = dt, 1 = type, 2 = first value
+    convertedFile.writeAsStringSync("header,format,esc,esc_id,voltage,motor_temp,esc_temp,duty_cycle,motor_current,battery_current,watt_hours,watt_hours_regen,e_rpm,e_distance,fault\n", mode: FileMode.append);
+    convertedFile.writeAsStringSync("header,format,gps,satellites,altitude,speed,latitude,longitude\n", mode: FileMode.append);
+    convertedFile.writeAsStringSync("header,format,err,fault_name,fault_code,esc_id\n", mode: FileMode.append);
 
     // Iterate contents of file
     Uint8List bytes = file.readAsBytesSync();
@@ -137,12 +138,12 @@ class LogFileParser {
             print("Parsing GPS LOG entry");
             lastGPSPacket.dt = new DateTime.fromMillisecondsSinceEpoch(buffer_get_uint64(bytes, i, Endian.little) * 1000, isUtc: true); i+=8;
             lastGPSPacket.satellites = bytes[i++];
+            ++i; //NOTE: alignment
             lastGPSPacket.altitude = buffer_get_uint16(bytes, i, Endian.little) / 10.0; i+=2;
             lastGPSPacket.speed = buffer_get_uint16(bytes, i, Endian.little) / 10.0; i+=2;
-            ++i; //NOTE: alignment
             i+=2; //NOTE: alignment
-            lastGPSPacket.latitude = buffer_get_int32(bytes, i, Endian.little) / 1.0; i+=4;
-            lastGPSPacket.longitude = buffer_get_int32(bytes, i, Endian.little) / 1.0; i+=4;
+            lastGPSPacket.latitude = buffer_get_int32(bytes, i, Endian.little) / 10000.0; i+=4;
+            lastGPSPacket.longitude = buffer_get_int32(bytes, i, Endian.little) / 10000.0; i+=4;
             if (bytes[i] == PacketEnd) {
               // Write GPS CSV data
               convertedFile.writeAsStringSync("${lastGPSPacket.dt.toIso8601String().substring(0,19)},"

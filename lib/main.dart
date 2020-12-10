@@ -43,8 +43,8 @@ import 'package:esys_flutter_share/esys_flutter_share.dart';
 
 import 'databaseAssistant.dart';
 
-const String freeSK8ApplicationVersion = "0.8.0";
-const String robogotchiFirmwareExpectedVersion = "0.6.0";
+const String freeSK8ApplicationVersion = "0.9.0";
+const String robogotchiFirmwareExpectedVersion = "0.7.0";
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -901,40 +901,45 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               List<String> thisRideLogEntries = value.split("\n");
               for(int i=0; i<thisRideLogEntries.length; ++i) {
                 if(thisRideLogEntries[i] == null || thisRideLogEntries[i] == "") continue;
-//print("uhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh parsing: ${thisRideLogEntries[i]}");
+print("uhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh parsing: ${thisRideLogEntries[i]}");
                 final entry = thisRideLogEntries[i].split(",");
 
-                if(entry.length > 1){ // entry[0] = Time, entry[1] = Data type
+                if(entry.length > 1 && entry[0] != "header"){ // entry[0] = Time, entry[1] = Data type
                   ///GPS position entry
-                  if(entry[1] == "position" && entry.length>8) {
-                    //DateTime, 'position', lat, lon, accuracy, altitude, speed, speedAccuracy
+                  if(entry[1] == "gps" && entry.length >= 7) {
+                    //dt,gps,satellites,altitude,speed,latitude,longitude
+                    // Determine date times
+                    if(firstEntryTime ==null)firstEntryTime = DateTime.tryParse(entry[0]);
+                    lastEntryTime = DateTime.tryParse(entry[0]);
+
                     // Track elevation change
-                    double elevation = double.tryParse(entry[5]);
+                    double elevation = double.tryParse(entry[3]);
                     minElevation ??= elevation; //Set if null
                     maxElevation ??= elevation; //Set if null
                     if (elevation < minElevation) minElevation = elevation;
                     if (elevation > maxElevation) maxElevation = elevation;
+
+                  }
+                  ///ESC Values
+                  else if (entry[1] == "esc" && entry.length >= 14) {
+                    //dt,esc,esc_id,voltage,motor_temp,esc_temp,duty_cycle,motor_current,battery_current,watt_hours,watt_hours_regen,e_rpm,e_distance,fault
                     // Determine date times
                     if(firstEntryTime ==null)firstEntryTime = DateTime.tryParse(entry[0]);
                     lastEntryTime = DateTime.tryParse(entry[0]);
-                  }
-                  ///ESC Values
-                  else if (entry[1] == "values" && entry.length > 9) {
-                    //[2020-05-19T13:46:28.8, values, 12.9, -99.9, 29.0, 0.0, 0.0, 0.0, 0.0, 11884, 102]
-                    double motorCurrent = double.tryParse(entry[6]); //Motor Current
-                    double batteryCurrent = double.tryParse(entry[7]); //Input Current
+
+                    // Determine max values
+                    double motorCurrent = double.tryParse(entry[7]); //Motor Current
+                    double batteryCurrent = double.tryParse(entry[8]); //Input Current
+                    double eRPM = double.tryParse(entry[11]); //eRPM
                     if (batteryCurrent>maxCurrentBattery) maxCurrentBattery = batteryCurrent;
                     if (motorCurrent>maxCurrentMotor) maxCurrentMotor = motorCurrent;
                     //TODO: Compute max speed!
                     //TODO: Compute average speed!
                     //TODO: Compute Distance!
                     //TODO: Add consumption calculation
-                    // Determine date times
-                    if(firstEntryTime ==null)firstEntryTime = DateTime.tryParse(entry[0]);
-                    lastEntryTime = DateTime.tryParse(entry[0]);
                   }
                   ///Fault codes
-                  else if (entry[1] == "fault") {
+                  else if (entry[1] == "err") {
                     ++faultCodeCount;
                   }
                 }
@@ -974,7 +979,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         }
 
         // store chunk of log data
-        await FileManager.writeToLogFile(receiveStr);
+        //await FileManager.writeToLogFile(receiveStr);
+        print("receied ${value.sublist(0,receiveStr.length)}");
+        await FileManager.writeBytesToLogFile(value.sublist(0,receiveStr.length));
 
         print("cat received ${receiveStr.length} bytes");
         setState(() {
