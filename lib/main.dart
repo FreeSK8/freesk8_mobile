@@ -980,7 +980,7 @@ print("uhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh parsing: $
 
         // store chunk of log data
         //await FileManager.writeToLogFile(receiveStr);
-        print("receied ${value.sublist(0,receiveStr.length)}");
+        //print("receied ${value.sublist(0,receiveStr.length)}");
         await FileManager.writeBytesToLogFile(value.sublist(0,receiveStr.length));
 
         print("cat received ${receiveStr.length} bytes");

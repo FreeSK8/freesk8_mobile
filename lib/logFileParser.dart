@@ -77,7 +77,7 @@ class LogFileParser {
         }
         LOG_MSG_TYPES msgType = LOG_MSG_TYPES.values[msgTypeByte];
         int messageLength = bytes[i++]; // Increment i after we read
-        print("message length $messageLength @ byte ${i-1}");
+        //print("message length $messageLength @ byte ${i-1}");
         if (bytes[i+messageLength] != PacketEnd) {
           print("logFileParser::parseFile: Unexpected byte at end of message: bytes[${i+messageLength}] = ${bytes[i+messageLength]}");
         }
@@ -143,8 +143,8 @@ class LogFileParser {
             lastGPSPacket.altitude = buffer_get_uint16(bytes, i, Endian.little) / 10.0; i+=2;
             lastGPSPacket.speed = buffer_get_uint16(bytes, i, Endian.little) / 10.0; i+=2;
             i+=2; //NOTE: alignment
-            lastGPSPacket.latitude = buffer_get_int32(bytes, i, Endian.little) / 10000.0; i+=4;
-            lastGPSPacket.longitude = buffer_get_int32(bytes, i, Endian.little) / 10000.0; i+=4;
+            lastGPSPacket.latitude = buffer_get_int32(bytes, i, Endian.little) / 100000.0; i+=4;
+            lastGPSPacket.longitude = buffer_get_int32(bytes, i, Endian.little) / 100000.0; i+=4;
             if (bytes[i] == PacketEnd) {
               // Write GPS CSV data
               convertedFile.writeAsStringSync("${lastGPSPacket.dt.toIso8601String().substring(0,19)},"
@@ -164,16 +164,16 @@ class LogFileParser {
             int deltaSatellites = buffer_get_int8(bytes, i++);
             double deltaAltitude = buffer_get_int8(bytes, i++) / 10.0;
             double deltaSpeed = buffer_get_int8(bytes, i++) / 10.0;
-            double deltaLatitude = buffer_get_int16(bytes, i, Endian.little) / 10000.0; i+=2;
-            double deltaLongitude = buffer_get_int16(bytes, i, Endian.little) / 10000.0; i+=2;
+            double deltaLatitude = buffer_get_int16(bytes, i, Endian.little) / 100000.0; i+=2;
+            double deltaLongitude = buffer_get_int16(bytes, i, Endian.little) / 100000.0; i+=2;
             print("GPS DELTA Time $deltaDt Satellites $deltaSatellites Altitude $deltaAltitude Speed $deltaSpeed Latitude $deltaLatitude Longitude $deltaLongitude");
             if (bytes[i] == PacketEnd) {
               lastGPSPacket.dt.add(Duration(seconds: deltaDt));
               lastGPSPacket.satellites += deltaSatellites;
-              lastGPSPacket.altitude += deltaAltitude;
+              lastGPSPacket.altitude = doublePrecision(lastGPSPacket.altitude + deltaAltitude, 1);
               lastGPSPacket.speed = doublePrecision(lastGPSPacket.speed - deltaSpeed, 1);
-              lastGPSPacket.latitude += doublePrecision(deltaLatitude, 4);
-              lastGPSPacket.longitude += doublePrecision(deltaLongitude, 4);
+              lastGPSPacket.latitude = doublePrecision(lastGPSPacket.latitude + deltaLatitude, 5);
+              lastGPSPacket.longitude = doublePrecision(lastGPSPacket.longitude + deltaLongitude, 5);
               // Write GPS CSV data
               convertedFile.writeAsStringSync("${lastGPSPacket.dt.toIso8601String().substring(0,19)},"
                   "gps,"

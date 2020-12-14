@@ -128,10 +128,10 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
     rideLogsFromDatabase.forEach((element) {
       DateTime thisDate = DateTime.parse(new DateFormat("yyyy-MM-dd").format(element.dateTime));
       if (_events.containsKey(thisDate)) {
-        print("updating $thisDate");
+        //print("updating $thisDate");
         _events[thisDate].add('${rideLogsFromDatabase.indexOf(element)}');
       } else {
-        print("adding $thisDate");
+        //print("adding $thisDate");
         _events[thisDate] = ['${rideLogsFromDatabase.indexOf(element)}'];
       }
     });
