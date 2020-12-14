@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:freesk8_mobile/escHelper.dart';
+import 'package:freesk8_mobile/globalUtilities.dart';
 import 'package:path_provider/path_provider.dart';
 
 const int PacketStart = 0x0d;
@@ -62,9 +63,9 @@ class LogFileParser {
 
     // Iterate contents of file
     Uint8List bytes = file.readAsBytesSync();
-    for (int i=0; i<bytes.length; ++i) {
-      print("bytes[$i] = ${bytes[i]}");
-    }
+    //for (int i=0; i<bytes.length; ++i) {
+    //  print("bytes[$i] = ${bytes[i]}");
+    //}
     for (int i=0; i<bytes.length; ++i) {
       if (bytes[i] == PacketStart) {
         ++i; // Skip to next byte (1)
@@ -158,6 +159,32 @@ class LogFileParser {
             }
             break;
           case LOG_MSG_TYPES.GPS_DELTA:
+            print("Parsing GPS DELTA LOG entry");
+            int deltaDt = bytes[i++];
+            int deltaSatellites = buffer_get_int8(bytes, i++);
+            double deltaAltitude = buffer_get_int8(bytes, i++) / 10.0;
+            double deltaSpeed = buffer_get_int8(bytes, i++) / 10.0;
+            double deltaLatitude = buffer_get_int16(bytes, i, Endian.little) / 10000.0; i+=2;
+            double deltaLongitude = buffer_get_int16(bytes, i, Endian.little) / 10000.0; i+=2;
+            print("GPS DELTA Time $deltaDt Satellites $deltaSatellites Altitude $deltaAltitude Speed $deltaSpeed Latitude $deltaLatitude Longitude $deltaLongitude");
+            if (bytes[i] == PacketEnd) {
+              lastGPSPacket.dt.add(Duration(seconds: deltaDt));
+              lastGPSPacket.satellites += deltaSatellites;
+              lastGPSPacket.altitude += deltaAltitude;
+              lastGPSPacket.speed = doublePrecision(lastGPSPacket.speed - deltaSpeed, 1);
+              lastGPSPacket.latitude += doublePrecision(deltaLatitude, 4);
+              lastGPSPacket.longitude += doublePrecision(deltaLongitude, 4);
+              // Write GPS CSV data
+              convertedFile.writeAsStringSync("${lastGPSPacket.dt.toIso8601String().substring(0,19)},"
+                  "gps,"
+                  "${lastGPSPacket.satellites},"
+                  "${lastGPSPacket.altitude},"
+                  "${lastGPSPacket.speed},"
+                  "${lastGPSPacket.latitude},"
+                  "${lastGPSPacket.longitude}\n", mode: FileMode.append);
+            } else {
+              print("logFileParser::parseFile: Unexpected byte at end of packet: bytes[$i] = ${bytes[i]}");
+            }
             break;
           case LOG_MSG_TYPES.IMU:
             break;
@@ -182,6 +209,16 @@ class LogFileParser {
   static int buffer_get_uint16(Uint8List buffer, int index, [Endian endian = Endian.big]) {
     var byteData = new ByteData.view(buffer.buffer);
     return byteData.getUint16(index, endian);
+  }
+
+  static int buffer_get_int8(Uint8List buffer, int index) {
+    var byteData = new ByteData.view(buffer.buffer);
+    return byteData.getInt8(index);
+  }
+
+  static int buffer_get_int16(Uint8List buffer, int index, [Endian endian = Endian.big]) {
+    var byteData = new ByteData.view(buffer.buffer);
+    return byteData.getInt16(index, endian);
   }
 
   static int buffer_get_int32(Uint8List buffer, int index, [Endian endian = Endian.big]) {
