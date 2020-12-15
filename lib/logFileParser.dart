@@ -101,7 +101,7 @@ class LogFileParser {
             lastESCPacket.faultCode = bytes[i++];
             ++i; //NOTE: alignment
             i+=4; //NOTE: alignment
-            lastESCPacket.eRPM = buffer_get_uint32(bytes, i, Endian.little); i+=4;
+            lastESCPacket.eRPM = buffer_get_int32(bytes, i, Endian.little); i+=4;
             lastESCPacket.eDistance = buffer_get_uint32(bytes, i, Endian.little); i+=4;
 
             if (bytes[i] == PacketEnd) {
@@ -142,14 +142,14 @@ class LogFileParser {
             i+=1; //NOTE: alignment
             double deltaMotorTemp = buffer_get_int8(bytes, i++) / 10.0;
             double deltaESCTemp = buffer_get_int8(bytes, i++) / 10.0;
-            double deltaDuty = buffer_get_int16(bytes, i) / 10.0; i+=2;
-            double deltaMotorCurrent = buffer_get_int16(bytes, i) / 10.0; i+=2;
-            double deltaBatteryCurrent = buffer_get_int16(bytes, i) / 10.0; i+=2;
+            double deltaDuty = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
+            double deltaMotorCurrent = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
+            double deltaBatteryCurrent = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
             double deltaWattHours = buffer_get_int8(bytes, i++) / 10.0;
 
             double deltaWattHoursRegen = buffer_get_int8(bytes, i++) / 10.0;
-            int deltaERPM = buffer_get_int16(bytes, i); i+=2;
-            int deltaEDistance = buffer_get_int16(bytes, i); i+=2;
+            int deltaERPM = buffer_get_int16(bytes, i, Endian.little); i+=2;
+            int deltaEDistance = buffer_get_int16(bytes, i, Endian.little); i+=2;
             int faultCode = bytes[i++];
             i+=1; //NOTE: alignment
             print("ESC DELTA dt $deltaDT id $escID vin $deltaVin mt $deltaMotorTemp et $deltaESCTemp duty $deltaDuty mc $deltaMotorCurrent bc $deltaBatteryCurrent wh $deltaWattHours whr $deltaWattHoursRegen erpm $deltaERPM edist $deltaEDistance f $faultCode");
