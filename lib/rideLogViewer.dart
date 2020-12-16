@@ -384,7 +384,7 @@ class RideLogViewerState extends State<RideLogViewer> {
 
         }
         ///Fault codes
-        else if (entry[1] == "err") {
+        else if (entry[1] == "err" || entry[1] == "fault") {
           //dt,err,fault_name,fault_code,esc_id
           // Count total fault messages
           ++faultCodeCount;
@@ -445,12 +445,116 @@ class RideLogViewerState extends State<RideLogViewer> {
             lastReportedFaultDt = thisDt;
           }
         }
+        // TODO: NOTE Early tester file format follows:
+        else if(entry[1] == "position") {
+          //DateTime, 'position', lat, lon, accuracy, altitude, speed, speedAccuracy
+          LatLng thisPosition = new LatLng(double.parse(entry[2]),double.parse(entry[3]));
+          if ( _positionEntries.length > 0){
+            gpsDistance += calculateDistance(_positionEntries.last, thisPosition);
+          }
+          _positionEntries.add(thisPosition);
+          if (gpsStartTime == null) {gpsStartTime = DateTime.tryParse(entry[0]);}
+          gpsEndTime = DateTime.tryParse(entry[0]);
+          double thisSpeed = double.tryParse(entry[6]);
+          gpsAverageSpeed += thisSpeed;
+          if (thisSpeed > gpsMaxSpeed) {gpsMaxSpeed = thisSpeed;}
+        }
+        else if (entry[1] == "values" && entry.length > 9) {
+          //[2020-05-19T13:46:28.8, values, 12.9, -99.9, 29.0, 0.0, 0.0, 0.0, 0.0, 11884, 102]
+          DateTime thisDt = DateTime.parse(entry[0]);
+          int thisESCID = int.parse(entry[10]);
+
+          if (!escIDsInLog.contains(thisESCID)) {
+            print("Adding ESC ID $thisESCID to list of known ESC IDs in this data set");
+            escIDsInLog.add(thisESCID);
+          }
+
+          // Create TimeSeriesESC object if needed
+          if (escTimeSeriesMap[thisDt] == null){
+            escTimeSeriesMap[thisDt] = TimeSeriesESC(time: thisDt, dutyCycle: 0);
+          }
+
+          // Populate TimeSeriesESC
+          switch(escIDsInLog.indexOf(thisESCID)) {
+            case 0:
+            // Primary ESC
+              escTimeSeriesMap[thisDt].voltage = double.tryParse(entry[2]);
+              escTimeSeriesMap[thisDt].tempMotor = double.tryParse(entry[3]);
+              escTimeSeriesMap[thisDt].tempMosfet = double.tryParse(entry[4]);
+              escTimeSeriesMap[thisDt].dutyCycle = double.tryParse(entry[5]);
+              escTimeSeriesMap[thisDt].currentMotor = double.tryParse(entry[6]);
+              escTimeSeriesMap[thisDt].currentInput = double.tryParse(entry[7]);
+              escTimeSeriesMap[thisDt].speed = myArguments.userSettings.settings.useImperial ? kmToMile(_calculateSpeedKph(double.tryParse(entry[8]))) : _calculateSpeedKph(double.tryParse(entry[8]));
+              escTimeSeriesMap[thisDt].distance = myArguments.userSettings.settings.useImperial ? kmToMile(_calculateDistanceKm(double.tryParse(entry[9]))) : _calculateDistanceKm(double.tryParse(entry[9]));
+              if (distanceStartPrimary == null) {
+                distanceStartPrimary = escTimeSeriesMap[thisDt].distance;
+                distanceEndPrimary = escTimeSeriesMap[thisDt].distance;
+              } else {
+                distanceEndPrimary = escTimeSeriesMap[thisDt].distance;
+              }
+              break;
+            case 1:
+            // Second ESC in multiESC configuration
+              escTimeSeriesMap[thisDt].tempMotor2 = double.tryParse(entry[3]);
+              escTimeSeriesMap[thisDt].tempMosfet2 = double.tryParse(entry[4]);
+              escTimeSeriesMap[thisDt].currentMotor2 = double.tryParse(entry[6]);
+              escTimeSeriesMap[thisDt].currentInput2 = double.tryParse(entry[7]);
+              break;
+            case 2:
+            // Third ESC in multiESC configuration
+              escTimeSeriesMap[thisDt].tempMotor3 = double.tryParse(entry[3]);
+              escTimeSeriesMap[thisDt].tempMosfet3 = double.tryParse(entry[4]);
+              escTimeSeriesMap[thisDt].currentMotor3 = double.tryParse(entry[6]);
+              escTimeSeriesMap[thisDt].currentInput3 = double.tryParse(entry[7]);
+              break;
+            case 3:
+            // Fourth ESC in multiESC configuration
+              escTimeSeriesMap[thisDt].tempMotor4 = double.tryParse(entry[3]);
+              escTimeSeriesMap[thisDt].tempMosfet4 = double.tryParse(entry[4]);
+              escTimeSeriesMap[thisDt].currentMotor4 = double.tryParse(entry[6]);
+              escTimeSeriesMap[thisDt].currentInput4 = double.tryParse(entry[7]);
+              break;
+            default:
+            // Shit this was not supposed to happen
+              print("Shit this was not supposed to happen. There appears to be a 5th ESC ID in the log file: $escIDsInLog");
+              break;
+          }
+
+        }
       }
     }
     print("rideLogViewer rideLogEntry iteration complete");
     escTimeSeriesMap.forEach((key, value) {
       escTimeSeriesList.add(value);
     });
+    escTimeSeriesMap.clear();
+    print("rideLogViewer escTimeSeriesList length is ${escTimeSeriesList.length}");
+    //TODO: Reduce number of ESC points to keep things moving on phones
+    while(escTimeSeriesList.length > 1200) {
+      int pos = 0;
+      for (int i=0; i<escTimeSeriesList.length; ++i, ++pos) {
+        escTimeSeriesList[pos] = escTimeSeriesList[i++]; // Increment i
+        // Check next record that we intend to remove for a fault
+        if (i<escTimeSeriesList.length && escTimeSeriesList[i].faultCode != null) {
+          print("Saving fault record");
+          // Keep the next record because it contains a fault
+          escTimeSeriesList[++pos] = escTimeSeriesList[i++];
+        }
+        // Skip some records if we have multiple ESCs of data
+        else {
+          switch(escIDsInLog.length) {
+            case 2:
+              ++i;
+            break;
+            case 4:
+              i+=3;
+            break;
+          }
+        }
+      }
+      escTimeSeriesList.removeRange(pos, escTimeSeriesList.length);
+      print("rideLogViewer reduced escTimeSeriesList length to ${escTimeSeriesList.length}");
+    }
 
     // Create fault range annotations for chart
     DateTime faultStart;
@@ -488,7 +592,17 @@ class RideLogViewerState extends State<RideLogViewer> {
     print("rideLogViewer creating chart data");
     // Create charting data from ESC time series data
     seriesList = _createChartingData(escTimeSeriesList, escIDsInLog, faultCodeCount);
-    print("rideLogViewer creating map polyline");
+
+    print("rideLogViewer creating map polyline from ${_positionEntries.length} points");
+    //TODO: Reduce number of GPS points to keep things moving on phones
+    while(_positionEntries.length > 1200) {
+      int pos = 0;
+      for (int i=0; i<_positionEntries.length; i+=2, ++pos) {
+        _positionEntries[pos] = _positionEntries[i];
+      }
+      _positionEntries.removeRange(pos, _positionEntries.length);
+      print("rideLogViewer reduced map polyline to ${_positionEntries.length} points");
+    }
     // Create polyline to display GPS route on map
     Polyline routePolyLine = new Polyline(points: _positionEntries, strokeWidth: 3, color: Colors.red);
 
