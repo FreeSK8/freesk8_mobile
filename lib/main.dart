@@ -901,7 +901,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               List<String> thisRideLogEntries = value.split("\n");
               for(int i=0; i<thisRideLogEntries.length; ++i) {
                 if(thisRideLogEntries[i] == null || thisRideLogEntries[i] == "") continue;
-print("uhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh parsing: ${thisRideLogEntries[i]}");
+//print("uhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh parsing: ${thisRideLogEntries[i]}");
                 final entry = thisRideLogEntries[i].split(",");
 
                 if(entry.length > 1 && entry[0] != "header"){ // entry[0] = Time, entry[1] = Data type

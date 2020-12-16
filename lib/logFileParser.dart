@@ -152,7 +152,7 @@ class LogFileParser {
             int deltaEDistance = buffer_get_int16(bytes, i, Endian.little); i+=2;
             int faultCode = bytes[i++];
             i+=1; //NOTE: alignment
-            print("ESC DELTA dt $deltaDT id $escID vin $deltaVin mt $deltaMotorTemp et $deltaESCTemp duty $deltaDuty mc $deltaMotorCurrent bc $deltaBatteryCurrent wh $deltaWattHours whr $deltaWattHoursRegen erpm $deltaERPM edist $deltaEDistance f $faultCode");
+            //print("ESC DELTA dt $deltaDT id $escID vin $deltaVin mt $deltaMotorTemp et $deltaESCTemp duty $deltaDuty mc $deltaMotorCurrent bc $deltaBatteryCurrent wh $deltaWattHours whr $deltaWattHoursRegen erpm $deltaERPM edist $deltaEDistance f $faultCode");
 
             if (bytes[i] == PacketEnd) {
               // Update ESC packet with delta values
@@ -230,7 +230,7 @@ class LogFileParser {
             double deltaSpeed = buffer_get_int8(bytes, i++) / 10.0;
             double deltaLatitude = buffer_get_int16(bytes, i, Endian.little) / 100000.0; i+=2;
             double deltaLongitude = buffer_get_int16(bytes, i, Endian.little) / 100000.0; i+=2;
-            print("GPS DELTA Time $deltaDt Satellites $deltaSatellites Altitude $deltaAltitude Speed $deltaSpeed Latitude $deltaLatitude Longitude $deltaLongitude");
+            //print("GPS DELTA Time $deltaDt Satellites $deltaSatellites Altitude $deltaAltitude Speed $deltaSpeed Latitude $deltaLatitude Longitude $deltaLongitude");
             if (bytes[i] == PacketEnd) {
               lastGPSPacket.dt = lastGPSPacket.dt.add(Duration(seconds: deltaDt));
               lastGPSPacket.satellites += deltaSatellites;
