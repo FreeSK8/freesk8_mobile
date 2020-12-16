@@ -57,19 +57,19 @@ class RideLogViewChartOverlayState extends State<RideLogViewChartOverlay> {
       return Container();
     }
 
-    String tempMotor = "${selectedESCData.tempMotor}";
+    String tempMotor = "${selectedESCData.tempMotor == null ? "--" : selectedESCData.tempMotor}";
     if (selectedESCData.tempMotor2 != null) {
       tempMotor += ", ${selectedESCData.tempMotor2}";
     }
-    String tempMosfet = "${selectedESCData.tempMosfet}";
+    String tempMosfet = "${selectedESCData.tempMosfet == null ? "--" : selectedESCData.tempMosfet}";
     if (selectedESCData.tempMosfet2 != null) {
       tempMosfet += ", ${selectedESCData.tempMosfet2}";
     }
-    String currentMotor = "${selectedESCData.currentMotor} A";
+    String currentMotor = "${selectedESCData.currentMotor == null ? "--" : selectedESCData.currentMotor} A";
     if (selectedESCData.currentMotor2 != null) {
       currentMotor += ", ${selectedESCData.currentMotor2} A";
     }
-    String currentInput = "${selectedESCData.currentInput} A";
+    String currentInput = "${selectedESCData.currentInput == null ? "--" : selectedESCData.currentInput} A";
     if (selectedESCData.currentInput2 != null) {
       currentInput += ", ${selectedESCData.currentInput2} A";
     }
@@ -94,7 +94,7 @@ class RideLogViewChartOverlayState extends State<RideLogViewChartOverlay> {
                   children: [
                   TableRow( children: [
                     Text("VDC"),
-                    Text("${selectedESCData.voltage}", textAlign: TextAlign.center),
+                    Text("${selectedESCData.voltage != null ? selectedESCData.voltage : "--"}", textAlign: TextAlign.center),
                   ]),
                   TableRow( children: [
                     Text("MotorTemp"),
@@ -118,7 +118,7 @@ class RideLogViewChartOverlayState extends State<RideLogViewChartOverlay> {
                   ]),
                   TableRow( children: [
                     Text("Speed"),
-                    Text("${selectedESCData.speed}", textAlign: TextAlign.center),
+                    Text("${selectedESCData.speed != null ? selectedESCData.speed : "--"}", textAlign: TextAlign.center),
                   ]),
                 ],)
             ),
