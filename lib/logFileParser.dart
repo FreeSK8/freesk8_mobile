@@ -96,8 +96,8 @@ class LogFileParser {
             lastESCPacket.dutyCycle = buffer_get_uint16(bytes, i, Endian.little) / 10.0; i+=2;
             lastESCPacket.motorCurrent = buffer_get_uint16(bytes, i, Endian.little) / 10.0; i+=2;
             lastESCPacket.batteryCurrent = buffer_get_uint16(bytes, i, Endian.little) / 10.0; i+=2;
-            lastESCPacket.wattHours = buffer_get_uint16(bytes, i, Endian.little) / 10.0; i+=2;
-            lastESCPacket.wattHoursRegen = buffer_get_uint16(bytes, i, Endian.little) / 10.0; i+=2;
+            lastESCPacket.wattHours = buffer_get_uint16(bytes, i, Endian.little) / 100.0; i+=2;
+            lastESCPacket.wattHoursRegen = buffer_get_uint16(bytes, i, Endian.little) / 100.0; i+=2;
             lastESCPacket.faultCode = bytes[i++];
             ++i; //NOTE: alignment
             i+=4; //NOTE: alignment
@@ -145,9 +145,9 @@ class LogFileParser {
             double deltaDuty = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
             double deltaMotorCurrent = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
             double deltaBatteryCurrent = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
-            double deltaWattHours = buffer_get_int8(bytes, i++) / 10.0;
+            double deltaWattHours = buffer_get_int8(bytes, i++) / 100.0;
 
-            double deltaWattHoursRegen = buffer_get_int8(bytes, i++) / 10.0;
+            double deltaWattHoursRegen = buffer_get_int8(bytes, i++) / 100.0;
             int deltaERPM = buffer_get_int16(bytes, i, Endian.little); i+=2;
             int deltaEDistance = buffer_get_int16(bytes, i, Endian.little); i+=2;
             int faultCode = bytes[i++];
@@ -160,12 +160,12 @@ class LogFileParser {
               lastESCPacket.escID = escID;
               lastESCPacket.vIn = doublePrecision(lastESCPacket.vIn + deltaVin, 1);
               lastESCPacket.motorTemp = doublePrecision(lastESCPacket.motorTemp + deltaMotorTemp, 1);
-              lastESCPacket.mosfetTemp = doublePrecision(lastESCPacket.mosfetTemp + deltaESCTemp,1);
-              lastESCPacket.dutyCycle += deltaDuty;
-              lastESCPacket.motorCurrent += deltaMotorCurrent;
-              lastESCPacket.batteryCurrent += deltaBatteryCurrent;
-              lastESCPacket.wattHours += deltaWattHours;
-              lastESCPacket.wattHoursRegen += deltaWattHoursRegen;
+              lastESCPacket.mosfetTemp = doublePrecision(lastESCPacket.mosfetTemp + deltaESCTemp, 1);
+              lastESCPacket.dutyCycle = doublePrecision(lastESCPacket.dutyCycle + deltaDuty, 1);
+              lastESCPacket.motorCurrent = doublePrecision(lastESCPacket.motorCurrent + deltaMotorCurrent, 1);
+              lastESCPacket.batteryCurrent = doublePrecision(lastESCPacket.batteryCurrent + deltaBatteryCurrent, 1);
+              lastESCPacket.wattHours = doublePrecision(lastESCPacket.wattHours + deltaWattHours, 2);
+              lastESCPacket.wattHoursRegen = doublePrecision(lastESCPacket.wattHoursRegen + deltaWattHoursRegen, 2);
               lastESCPacket.eRPM += deltaERPM;
               lastESCPacket.eDistance += deltaEDistance;
               lastESCPacket.faultCode = faultCode;
