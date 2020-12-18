@@ -76,7 +76,7 @@ class RideLogViewChartOverlayState extends State<RideLogViewChartOverlay> {
 
     return Container(
       padding: EdgeInsets.fromLTRB(0, 3, 0, 3),
-      width: 182,
+      width: 200,
 
       color: Colors.black.withOpacity(0.85),
       child: GestureDetector(onTap: (){
