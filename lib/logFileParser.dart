@@ -91,11 +91,11 @@ class LogFileParser {
             lastESCPacket.dt = new DateTime.fromMillisecondsSinceEpoch(buffer_get_uint64(bytes, i, Endian.little) * 1000, isUtc: true); i+=8;
             lastESCPacket.escID = buffer_get_uint16(bytes, i, Endian.little); i+=2;
             lastESCPacket.vIn = buffer_get_uint16(bytes, i, Endian.little) / 10.0; i+=2;
-            lastESCPacket.motorTemp = buffer_get_uint16(bytes, i, Endian.little) / 10.0; i+=2;
-            lastESCPacket.mosfetTemp = buffer_get_uint16(bytes, i, Endian.little) / 10.0; i+=2;
-            lastESCPacket.dutyCycle = buffer_get_uint16(bytes, i, Endian.little) / 10.0; i+=2;
-            lastESCPacket.motorCurrent = buffer_get_uint16(bytes, i, Endian.little) / 10.0; i+=2;
-            lastESCPacket.batteryCurrent = buffer_get_uint16(bytes, i, Endian.little) / 10.0; i+=2;
+            lastESCPacket.motorTemp = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
+            lastESCPacket.mosfetTemp = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
+            lastESCPacket.dutyCycle = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
+            lastESCPacket.motorCurrent = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
+            lastESCPacket.batteryCurrent = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
             lastESCPacket.wattHours = buffer_get_uint16(bytes, i, Endian.little) / 100.0; i+=2;
             lastESCPacket.wattHoursRegen = buffer_get_uint16(bytes, i, Endian.little) / 100.0; i+=2;
             lastESCPacket.faultCode = bytes[i++];
