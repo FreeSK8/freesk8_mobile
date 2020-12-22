@@ -673,6 +673,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static bool syncAdvanceProgress = false;
   static bool lsInProgress = false;
   static bool catInProgress = false;
+  static List<int> catBytesRaw = new List();
   static int catBytesReceived = 0;
   static int catBytesTotal = 0;
   static List<FileToSync> fileList = new List<FileToSync>();
@@ -849,6 +850,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             //When cat is complete we will call setState which will request the next file
             catCurrentFilename = fileList.first.fileName;
             catBytesTotal = fileList.first.fileSize;
+            catBytesRaw.clear();
             theTXLoggerCharacteristic.write(utf8.encode("cat ${fileList.first.fileName}~"));
           }else _alertLoggerTest();
           return;
@@ -882,6 +884,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           //TODO: validate file transmission. We need a proper packet definition and CRC
           // Add successful transfer to list of files to delete during sync operation
           fileListToDelete.add(catCurrentFilename);
+
+          await FileManager.writeBytesToLogFile(catBytesRaw);
+          catBytesRaw.clear();
 
           // Save temporary log data to final filename
           // Then generate database statistics
@@ -981,7 +986,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         // store chunk of log data
         //await FileManager.writeToLogFile(receiveStr);
         //print("receied ${value.sublist(0,receiveStr.length)}");
-        await FileManager.writeBytesToLogFile(value.sublist(0,receiveStr.length));
+        catBytesRaw.addAll(value.sublist(0,receiveStr.length));
+        //await FileManager.writeBytesToLogFile(value.sublist(0,receiveStr.length));
 
         print("cat received ${receiveStr.length} bytes");
         setState(() {
