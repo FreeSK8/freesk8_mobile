@@ -41,12 +41,37 @@ class FileSyncViewerState extends State<FileSyncViewer> {
 
     syncIconAngle -= 0.1;
 
+    bool unPackingNow = false;
+    List<Widget> zeChildren = new List();
+    if (widget.syncStatus.fileList.length > 0 && widget.syncStatus.fileBytesReceived == widget.syncStatus.fileBytesTotal) {
+      zeChildren.add(Text("Files remaining: ${widget.syncStatus.fileList.length}"));
+      zeChildren.add(Text("Current file: ${widget.syncStatus.fileName}"));
+      zeChildren.add(Text("Unpacking contents"));
+      zeChildren.add(SizedBox(width: 200, height: 20, child: LinearProgressIndicator( value: widget.syncStatus.fileBytesReceived / widget.syncStatus.fileBytesTotal)));
+      unPackingNow = true;
+    } else if(widget.syncStatus.fileList.length > 0) {
+      zeChildren.add(Text("Files remaining: ${widget.syncStatus.fileList.length}"));
+      zeChildren.add(Text("Current file: ${widget.syncStatus.fileName}"));
+      zeChildren.add(Text("Progress: ${widget.syncStatus.fileBytesReceived}/${widget.syncStatus.fileBytesTotal} bytes"));
+      zeChildren.add(SizedBox(width: 200, height: 20, child: LinearProgressIndicator( value: widget.syncStatus.fileBytesReceived / widget.syncStatus.fileBytesTotal)));
+    } else {
+      zeChildren.add(Text("Checking file list..."));
+    }
+
     return Container(
       child: Center(
         child: Column(
           // center the children
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
+
+            // Display Icon
+            unPackingNow ?
+            Icon(
+              Icons.expand,
+              size: 60.0,
+              color: Colors.blue,
+            ) :
             Transform.rotate(
               angle: syncIconAngle,
               child: Icon(
@@ -55,20 +80,11 @@ class FileSyncViewerState extends State<FileSyncViewer> {
                 color: Colors.blue,
               )
             ),
-            widget.syncStatus.fileList.length != 0 ? Column(
-              children: [
-                Text("Files remaining: ${widget.syncStatus.fileList.length}"),
-                Text("Current file: ${widget.syncStatus.fileName}"),
-                Text("Progress: ${widget.syncStatus.fileBytesReceived}/${widget.syncStatus.fileBytesTotal} bytes"),
-                SizedBox(width: 200, height: 20, child:
-                LinearProgressIndicator( value: widget.syncStatus.fileBytesReceived / widget.syncStatus.fileBytesTotal)),
-              ],
-            ) : Column(
-              children: [
-                Text("Checking file list...")
-              ],
-            ),
 
+            //Display children
+            Column(
+              children: zeChildren
+            )
 
           ],
         ),
