@@ -191,7 +191,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: <Widget>[
-                        SizedBox(width: 5,),
+
                         SizedBox(width: 50, child:
                         FutureBuilder<String>(
                             future: UserSettings.getBoardAvatarPath(rideLogsFromDatabase[int.parse(event)].boardID),
@@ -257,7 +257,6 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                           child: Icon(Icons.timer),
                         ),
                         SizedBox(
-                            width: 60,
                             //child: Text("${(File(rideLogsFromDatabase[index].logFilePath).statSync().size / 1024).round()} kb"),
                             child: Text("${Duration(seconds: rideLogsFromDatabase[int.parse(event)].durationSeconds).toString().substring(0,Duration(seconds: rideLogsFromDatabase[int.parse(event)].durationSeconds).toString().indexOf("."))}")
                         ),
