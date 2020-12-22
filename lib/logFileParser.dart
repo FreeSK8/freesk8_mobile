@@ -66,6 +66,8 @@ class LogFileParser {
     //for (int i=0; i<bytes.length; ++i) {
     //  print("bytes[$i] = ${bytes[i]}");
     //}
+    print("logFileParser::parseFile: Unpacking binary data received from Robogotchi");
+
     String parsedResults = "";
     for (int i=0; i<bytes.length; ++i) {
       if (bytes[i] == PacketStart) {
@@ -88,7 +90,7 @@ class LogFileParser {
           case LOG_MSG_TYPES.HEADER:
             break;
           case LOG_MSG_TYPES.ESC:
-            print("Parsing ESC LOG entry");
+            //print("Parsing ESC LOG entry");
             lastESCPacket.dt = new DateTime.fromMillisecondsSinceEpoch(buffer_get_uint64(bytes, i, Endian.little) * 1000, isUtc: true); i+=8;
             lastESCPacket.escID = buffer_get_uint16(bytes, i, Endian.little); i+=2;
             lastESCPacket.vIn = buffer_get_uint16(bytes, i, Endian.little) / 100.0; i+=2;
@@ -135,7 +137,7 @@ class LogFileParser {
             }
             break;
           case LOG_MSG_TYPES.ESC_DELTA:
-            print("Parsing ESC DELTA LOG entry");
+            //print("Parsing ESC DELTA LOG entry");
             int deltaDT = bytes[i++];
             ++i; //NOTE: alignment
             int escID = buffer_get_uint16(bytes, i, Endian.little); i+=2;
@@ -201,7 +203,7 @@ class LogFileParser {
             }
             break;
           case LOG_MSG_TYPES.GPS:
-            print("Parsing GPS LOG entry");
+            //print("Parsing GPS LOG entry");
             lastGPSPacket.dt = new DateTime.fromMillisecondsSinceEpoch(buffer_get_uint64(bytes, i, Endian.little) * 1000, isUtc: true); i+=8;
             lastGPSPacket.satellites = bytes[i++];
             ++i; //NOTE: alignment
@@ -224,7 +226,7 @@ class LogFileParser {
             }
             break;
           case LOG_MSG_TYPES.GPS_DELTA:
-            print("Parsing GPS DELTA LOG entry");
+            //print("Parsing GPS DELTA LOG entry");
             int deltaDt = bytes[i++];
             int deltaSatellites = buffer_get_int8(bytes, i++);
             double deltaAltitude = buffer_get_int8(bytes, i++) / 10.0;
@@ -263,6 +265,8 @@ class LogFileParser {
         print("logFileParser::parseFile: Unexpected start of packet at byte $i of ${bytes.length}: ${bytes[i]}");
       }
     }
+
+    print("logFileParser::parseFile: Unpacking complete. Saving to filesystem");
 
     // Write parsed CSV to filesystem
     convertedFile.writeAsStringSync(parsedResults);
