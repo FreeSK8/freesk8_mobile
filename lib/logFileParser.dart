@@ -66,6 +66,7 @@ class LogFileParser {
     //for (int i=0; i<bytes.length; ++i) {
     //  print("bytes[$i] = ${bytes[i]}");
     //}
+    String parsedResults = "";
     for (int i=0; i<bytes.length; ++i) {
       if (bytes[i] == PacketStart) {
         ++i; // Skip to next byte (1)
@@ -105,8 +106,8 @@ class LogFileParser {
             lastESCPacket.eDistance = buffer_get_uint32(bytes, i, Endian.little); i+=4;
 
             if (bytes[i] == PacketEnd) {
-              // Write ESC CSV data
-              convertedFile.writeAsStringSync("${lastESCPacket.dt.toIso8601String().substring(0,19)},"
+              // Store ESC CSV data
+              parsedResults += "${lastESCPacket.dt.toIso8601String().substring(0,19)},"
                   "esc,"
                   "${lastESCPacket.escID},"
                   "${lastESCPacket.vIn},"
@@ -119,15 +120,15 @@ class LogFileParser {
                   "${lastESCPacket.wattHoursRegen},"
                   "${lastESCPacket.eRPM},"
                   "${lastESCPacket.eDistance},"
-                  "${lastESCPacket.faultCode}\n", mode: FileMode.append);
+                  "${lastESCPacket.faultCode}\n";
 
-              // Write faults on their own line
+              // Store faults on their own line
               if (lastESCPacket.faultCode != 0) {
-                convertedFile.writeAsStringSync("${lastESCPacket.dt.toIso8601String().substring(0,19)},"
+                parsedResults += "${lastESCPacket.dt.toIso8601String().substring(0,19)},"
                     "err,"
                     "${mc_fault_code.values[lastESCPacket.faultCode].toString().substring(14)},"
                     "${lastESCPacket.faultCode},"
-                    "${lastESCPacket.escID}\n", mode: FileMode.append);
+                    "${lastESCPacket.escID}\n";
               }
             } else {
               print("logFileParser::parseFile: Unexpected byte at end of packet: bytes[$i] = ${bytes[i]}");
@@ -171,8 +172,8 @@ class LogFileParser {
               lastESCPacket.faultCode = faultCode;
 
               //TODO: duplicated code
-              // Write ESC CSV data
-              convertedFile.writeAsStringSync("${lastESCPacket.dt.toIso8601String().substring(0,19)},"
+              // Store ESC CSV data
+              parsedResults += "${lastESCPacket.dt.toIso8601String().substring(0,19)},"
                   "esc,"
                   "${lastESCPacket.escID},"
                   "${lastESCPacket.vIn},"
@@ -185,15 +186,15 @@ class LogFileParser {
                   "${lastESCPacket.wattHoursRegen},"
                   "${lastESCPacket.eRPM},"
                   "${lastESCPacket.eDistance},"
-                  "${lastESCPacket.faultCode}\n", mode: FileMode.append);
+                  "${lastESCPacket.faultCode}\n";
 
-              // Write faults on their own line
+              // Store faults on their own line
               if (lastESCPacket.faultCode != 0) {
-                convertedFile.writeAsStringSync("${lastESCPacket.dt.toIso8601String().substring(0,19)},"
+                parsedResults += "${lastESCPacket.dt.toIso8601String().substring(0,19)},"
                     "err,"
                     "${mc_fault_code.values[lastESCPacket.faultCode].toString().substring(14)},"
                     "${lastESCPacket.faultCode},"
-                    "${lastESCPacket.escID}\n", mode: FileMode.append);
+                    "${lastESCPacket.escID}\n";
               }
             } else {
               print("logFileParser::parseFile: Unexpected byte at end of packet: bytes[$i] = ${bytes[i]}");
@@ -210,14 +211,14 @@ class LogFileParser {
             lastGPSPacket.latitude = buffer_get_int32(bytes, i, Endian.little) / 100000.0; i+=4;
             lastGPSPacket.longitude = buffer_get_int32(bytes, i, Endian.little) / 100000.0; i+=4;
             if (bytes[i] == PacketEnd) {
-              // Write GPS CSV data
-              convertedFile.writeAsStringSync("${lastGPSPacket.dt.toIso8601String().substring(0,19)},"
+              // Store GPS CSV data
+              parsedResults += "${lastGPSPacket.dt.toIso8601String().substring(0,19)},"
                   "gps,"
                   "${lastGPSPacket.satellites},"
                   "${lastGPSPacket.altitude},"
                   "${lastGPSPacket.speed},"
                   "${lastGPSPacket.latitude},"
-                  "${lastGPSPacket.longitude}\n", mode: FileMode.append);
+                  "${lastGPSPacket.longitude}\n";
             } else {
               print("logFileParser::parseFile: Unexpected byte at end of packet: bytes[$i] = ${bytes[i]}");
             }
@@ -238,14 +239,15 @@ class LogFileParser {
               lastGPSPacket.speed = doublePrecision(lastGPSPacket.speed - deltaSpeed, 1);
               lastGPSPacket.latitude = doublePrecision(lastGPSPacket.latitude + deltaLatitude, 5);
               lastGPSPacket.longitude = doublePrecision(lastGPSPacket.longitude + deltaLongitude, 5);
-              // Write GPS CSV data
-              convertedFile.writeAsStringSync("${lastGPSPacket.dt.toIso8601String().substring(0,19)},"
+
+              // Store GPS CSV data
+              parsedResults += "${lastGPSPacket.dt.toIso8601String().substring(0,19)},"
                   "gps,"
                   "${lastGPSPacket.satellites},"
                   "${lastGPSPacket.altitude},"
                   "${lastGPSPacket.speed},"
                   "${lastGPSPacket.latitude},"
-                  "${lastGPSPacket.longitude}\n", mode: FileMode.append);
+                  "${lastGPSPacket.longitude}\n";
             } else {
               print("logFileParser::parseFile: Unexpected byte at end of packet: bytes[$i] = ${bytes[i]}");
             }
@@ -261,6 +263,9 @@ class LogFileParser {
         print("logFileParser::parseFile: Unexpected start of packet at byte $i of ${bytes.length}: ${bytes[i]}");
       }
     }
+
+    // Write parsed CSV to filesystem
+    convertedFile.writeAsStringSync(parsedResults);
 
     return convertedFile;
   }
