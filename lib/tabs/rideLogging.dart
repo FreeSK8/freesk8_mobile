@@ -74,6 +74,7 @@ class RideLogging extends StatefulWidget {
 
 class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin {
 
+  static bool showDevTools = false; // Flag to control shoting developer stuffs
   static bool showListView = false; // Flag to control showing list view vs calendar
   String temporaryLog = "";
   List<FileSystemEntity> rideLogs = new List();
@@ -346,6 +347,11 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                     showListView = !showListView;
                   });
                 },
+                onLongPress: () {
+                  setState(() {
+                    showDevTools = !showDevTools;
+                  });
+                },
               ),
               Text("Ride\r\nLogging", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
             ],),
@@ -603,24 +609,28 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
 
 
 
-              /* Most users will not want to leave the log on the robogotchi but some developers might
-              SizedBox(width: 5,),
-              Column(children: <Widget>[
+              /* Most users will not want to leave the log on the robogotchi but some developers might */
+              showDevTools ? Row(
+                children: [
+                  SizedBox(width: 5,),
+                  Column(children: <Widget>[
 
-                Icon(widget.eraseOnSync?Icons.delete_forever:Icons.save,
-                    color: widget.eraseOnSync?Colors.orange:Colors.green
-                ),
-                Text(widget.eraseOnSync?"Erase":"Keep"),
-              ],),
+                    Icon(widget.eraseOnSync?Icons.delete_forever:Icons.save,
+                        color: widget.eraseOnSync?Colors.orange:Colors.green
+                    ),
+                    Text(widget.eraseOnSync?"Take":"Leave"),
+                  ],),
 
-              Switch(
-                value: widget.eraseOnSync,
-                onChanged: (bool newValue){
-                  print("erase on sync $newValue");
-                  widget.onSyncEraseSwitch(newValue);
-                },
-              )
-              Disabled use of leaving files on device during Sync */
+                  Switch(
+                    value: widget.eraseOnSync,
+                    onChanged: (bool newValue){
+                      print("erase on sync $newValue");
+                      widget.onSyncEraseSwitch(newValue);
+                    },
+                  )
+                ],
+              ) : Container(),
+
             ],),
 
 
