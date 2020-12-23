@@ -686,7 +686,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static List<ESCFault> escFaults = new List();
 
   // Handler for RideLogging's sync button
-  void _handleBLESyncState(bool startSync) {
+  void _handleBLESyncState(bool startSync) async {
     print("_handleBLESyncState: startSync: $startSync");
     if (startSync) {
       // Start syncing all files by setting syncInProgress to true and request
@@ -707,8 +707,17 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         lsInProgress = false;
         catInProgress = false;
         catCurrentFilename = "";
-        theTXLoggerCharacteristic.write(utf8.encode("syncstop~"));
       });
+      // After stopping the sync on this end, request stop on the Robogotchi
+      dynamic errorCheck = 0;
+      while (errorCheck != null && _connectedDevice != null) {
+        errorCheck = null;
+        await theTXLoggerCharacteristic.write(utf8.encode("syncstop~")).catchError((error){
+          errorCheck = error;
+          print("Failed to write syncstop command: $errorCheck");
+        });
+      }
+      print("syncstop sent successfully");
     }
   }
   void _handleEraseOnSyncButton(bool eraseOnSync) {
