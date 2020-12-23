@@ -655,6 +655,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static ESCFirmware firmwarePacket = new ESCFirmware();
   static ESCTelemetry telemetryPacket = new ESCTelemetry();
   static DieBieMSTelemetry dieBieMSTelemetry = new DieBieMSTelemetry();
+  static int smartBMSCANID = 10;
   static bool _showDieBieMS = false;
   static bool _showESCConfigurator = false;
   static bool _showESCProfiles = false;
@@ -1750,7 +1751,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       ListTile(
         leading: Icon(Icons.battery_unknown),
-        title: Text(_showDieBieMS ? "Hide DieBieMS" : "Show DieBieMS"),
+        title: Text(_showDieBieMS ? "Hide Flexi/DieBieMS" : "Show Flexi/DieBieMS"),
         onTap: () async {
           if(_showDieBieMS) {
             setState(() {
@@ -1964,7 +1965,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         byteData.setUint8(0, 0x02); //Start of packet
         byteData.setUint8(1, packetLength);
         byteData.setUint8(2, COMM_PACKET_ID.COMM_FORWARD_CAN.index);
-        byteData.setUint8(3, 10); //CAN ID
+        byteData.setUint8(3, smartBMSCANID); //CAN ID
         byteData.setUint8(4, COMM_PACKET_ID.COMM_GET_VALUES.index);
         int checksum = BLEHelper.crc16(byteData.buffer.asUint8List(), 2, packetLength);
         byteData.setUint16(5, checksum);
@@ -1981,7 +1982,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         byteData.setUint8(0, 0x02); //Start of packet
         byteData.setUint8(1, packetLength);
         byteData.setUint8(2, COMM_PACKET_ID.COMM_FORWARD_CAN.index);
-        byteData.setUint8(3, 10); //CAN ID
+        byteData.setUint8(3, smartBMSCANID); //CAN ID
         byteData.setUint8(4, DieBieMSHelper.COMM_GET_BMS_CELLS);
         checksum = BLEHelper.crc16(byteData.buffer.asUint8List(), 2, packetLength);
         byteData.setUint16(5, checksum);
@@ -2063,6 +2064,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     print("Closed ESC Configurator");
   }
 
+  void changeSmartBMSIDFunc(int nextID) {
+    setState(() {
+      smartBMSCANID = nextID;
+    });
+    print("Setting smart BMS CAN FWD ID to $smartBMSCANID");
+  }
+
   @override
   Widget build(BuildContext context) {
     if(syncInProgress && syncAdvanceProgress){
@@ -2132,6 +2140,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             showDieBieMS: _showDieBieMS,
             dieBieMSTelemetry: dieBieMSTelemetry,
             closeDieBieMSFunc: closeDieBieMSFunc,
+            changeSmartBMSID: changeSmartBMSIDFunc,
+            smartBMSID: smartBMSCANID,
           ),
           ESK8Configuration(
             myUserSettings: widget.myUserSettings,

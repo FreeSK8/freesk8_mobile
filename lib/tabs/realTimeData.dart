@@ -47,7 +47,9 @@ class RealTimeData extends StatefulWidget {
         this.startStopTelemetryFunc,
         this.showDieBieMS,
         this.dieBieMSTelemetry,
-        this.closeDieBieMSFunc
+        this.closeDieBieMSFunc,
+        this.changeSmartBMSID,
+        this.smartBMSID,
       });
 
   final List<LatLng> routeTakenLocations;
@@ -57,6 +59,8 @@ class RealTimeData extends StatefulWidget {
   final bool showDieBieMS;
   final DieBieMSTelemetry dieBieMSTelemetry;
   final ValueChanged<bool> closeDieBieMSFunc;
+  final ValueChanged<int> changeSmartBMSID;
+  final int smartBMSID;
 
   RealTimeDataState createState() => new RealTimeDataState();
 
@@ -321,6 +325,26 @@ class RealTimeDataState extends State<RealTimeData> {
               right: 0,
               top: 0,
               child: IconButton(onPressed: (){print("User Close"); widget.closeDieBieMSFunc(true);},icon: Icon(Icons.clear),)
+          ),
+          Positioned(
+              left: 0,
+              top: 0,
+              child: SizedBox(
+                width: 42,
+                child: GestureDetector(
+                  child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.device_hub),
+                        Text("CAN"),
+                        Text("ID ${widget.smartBMSID}")
+                      ]
+                  ),
+                  onTap: (){
+                    widget.changeSmartBMSID(widget.smartBMSID == 10 ? 11 : 10);
+                  },
+                )
+              )
           ),
         ],)
       );
