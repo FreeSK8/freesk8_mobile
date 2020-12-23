@@ -26,6 +26,12 @@ class FileSyncViewer extends StatefulWidget {
 
 class FileSyncViewerState extends State<FileSyncViewer> {
 
+  static double bytesPerSecond;
+  static int bytesReceivedLastSecond;
+  static DateTime bytesReceivedLastUpdated;
+  static String bytesReceivedLastFile;
+  static double estimatedSecondsRemaining;
+
   FileSyncViewerArguments myArguments;
   double syncIconAngle = 0.0;
 
@@ -39,8 +45,10 @@ class FileSyncViewerState extends State<FileSyncViewer> {
   Widget build(BuildContext context) {
     print("Build: fileSyncViewer");
 
+    // Update icon angle every state refresh
     syncIconAngle -= 0.1;
 
+    // Compute which children to show
     bool unPackingNow = false;
     List<Widget> zeChildren = new List();
     if (widget.syncStatus.fileList.length > 0 && widget.syncStatus.fileBytesReceived == widget.syncStatus.fileBytesTotal) {
@@ -56,6 +64,36 @@ class FileSyncViewerState extends State<FileSyncViewer> {
       zeChildren.add(SizedBox(width: 200, height: 20, child: LinearProgressIndicator( value: widget.syncStatus.fileBytesReceived / widget.syncStatus.fileBytesTotal)));
     } else {
       zeChildren.add(Text("Checking file list..."));
+    }
+
+    // Estimate sync time remaining
+    if (bytesReceivedLastFile != widget.syncStatus.fileName) {
+      bytesReceivedLastFile = widget.syncStatus.fileName;
+      bytesPerSecond = 0;
+      bytesReceivedLastSecond = 0;
+      bytesReceivedLastUpdated = DateTime.now();
+      print("Starting new sync time estimate");
+    }
+    else if (!unPackingNow) {
+      int secondsElapsed = DateTime.now().difference(bytesReceivedLastUpdated).inSeconds;
+      if (secondsElapsed > 0) {
+        int byesLastSecond = widget.syncStatus.fileBytesReceived - bytesReceivedLastSecond;
+
+        bytesReceivedLastSecond = widget.syncStatus.fileBytesReceived;
+        bytesReceivedLastUpdated = DateTime.now();
+
+        if (bytesPerSecond == 0) {
+          bytesPerSecond = byesLastSecond / secondsElapsed;
+        }
+        bytesPerSecond = bytesPerSecond * 0.8 + (byesLastSecond / secondsElapsed) * 0.2;
+
+        estimatedSecondsRemaining = (widget.syncStatus.fileBytesTotal - widget.syncStatus.fileBytesReceived) / bytesPerSecond;
+      }
+      if (bytesPerSecond > 0 && widget.syncStatus.fileList.length > 0) {
+        zeChildren.add(Text("Estimated time remaining: ${estimatedSecondsRemaining.toInt()} ${estimatedSecondsRemaining.toInt() == 1 ? "second" : "seconds"}"));
+      } else {
+        zeChildren.add(Text("Estimated time remaining: Calculating..."));
+      }
     }
 
     return Container(
