@@ -488,7 +488,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                           child: Column(children: [
                             Icon(Icons.bluetooth_searching, size: 80,),
                             SizedBox(height: 10,),
-                            Text("Attempting connection..."),
+                            Text("Establishing connection..."),
                             Text("(tap to cancel)", style: TextStyle(fontSize: 10))
                           ]),
                         ),
@@ -509,7 +509,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         });
 
         await setupConnectedDeviceStreamListener();
-        Navigator.of(context).pop(); // Remove attempting connection dialog
+        //NOTE: removing once we have all our init messages //Navigator.of(context).pop(); // Remove attempting connection dialog
       }
     } catch (e) {
       Navigator.of(context).pop(); // Remove attempting connection dialog
@@ -902,7 +902,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           // Then generate database statistics
           // Then create database entry
           // Then rebuild state and continue sync process
-          await FileManager.saveLogToDocuments(filename: catCurrentFilename).then((savedFilePath) async
+          String savedFilePath = await FileManager.saveLogToDocuments(filename: catCurrentFilename);
           {
             /// Analyze log to generate database statistics
             double maxCurrentBattery = 0.0;
@@ -912,8 +912,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             double maxElevation;
             DateTime firstEntryTime;
             DateTime lastEntryTime;
-            FileManager.openLogFile(savedFilePath).then((value){
-              List<String> thisRideLogEntries = value.split("\n");
+            String logFileContents = await FileManager.openLogFile(savedFilePath);
+            {
+              List<String> thisRideLogEntries = logFileContents.split("\n");
               for(int i=0; i<thisRideLogEntries.length; ++i) {
                 if(thisRideLogEntries[i] == null || thisRideLogEntries[i] == "") continue;
 //print("uhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh parsing: ${thisRideLogEntries[i]}");
@@ -924,7 +925,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   if(entry[1] == "gps" && entry.length >= 7) {
                     //dt,gps,satellites,altitude,speed,latitude,longitude
                     // Determine date times
-                    if(firstEntryTime ==null)firstEntryTime = DateTime.tryParse(entry[0]);
+                    firstEntryTime ??= DateTime.tryParse(entry[0]);
                     lastEntryTime = DateTime.tryParse(entry[0]);
 
                     // Track elevation change
@@ -939,7 +940,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   else if (entry[1] == "esc" && entry.length >= 14) {
                     //dt,esc,esc_id,voltage,motor_temp,esc_temp,duty_cycle,motor_current,battery_current,watt_hours,watt_hours_regen,e_rpm,e_distance,fault
                     // Determine date times
-                    if(firstEntryTime ==null)firstEntryTime = DateTime.tryParse(entry[0]);
+                    firstEntryTime ??= DateTime.tryParse(entry[0]);
                     lastEntryTime = DateTime.tryParse(entry[0]);
 
                     // Determine max values
@@ -961,41 +962,56 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               }
 
               /// Insert record into database
-              DatabaseAssistant.dbInsertLog(LogInfoItem(
-                  dateTime: firstEntryTime,
-                  boardID: widget.myUserSettings.currentDeviceID,
-                  boardAlias: widget.myUserSettings.settings.boardAlias,
-                  logFilePath: savedFilePath,
-                  avgSpeed: -1.0,
-                  maxSpeed: -1.0,
-                  elevationChange: maxElevation != null ? maxElevation - minElevation : -1.0,
-                  maxAmpsBattery: maxCurrentBattery,
-                  maxAmpsMotors: maxCurrentMotor,
-                  distance: -1.0,
-                  durationSeconds: lastEntryTime.difference(firstEntryTime).inSeconds,
-                  faultCount: faultCodeCount,
-                  rideName: "",
-                  notes: ""
-              )).then((value){
+              if (lastEntryTime != null && firstEntryTime != null) {
+                await DatabaseAssistant.dbInsertLog(LogInfoItem(
+                    dateTime: firstEntryTime,
+                    boardID: widget.myUserSettings.currentDeviceID,
+                    boardAlias: widget.myUserSettings.settings.boardAlias,
+                    logFilePath: savedFilePath,
+                    avgSpeed: -1.0,
+                    maxSpeed: -1.0,
+                    elevationChange: maxElevation != null ? maxElevation - minElevation : -1.0,
+                    maxAmpsBattery: maxCurrentBattery,
+                    maxAmpsMotors: maxCurrentMotor,
+                    distance: -1.0,
+                    durationSeconds: lastEntryTime.difference(firstEntryTime).inSeconds,
+                    faultCount: faultCodeCount,
+                    rideName: "",
+                    notes: ""
+                ));
+              } else {
+                genericConfirmationDialog(context, FlatButton(
+                  child: Text("Copy / Share"),
+                  onPressed: () {
+                    Share.text(catCurrentFilename, "$logFileContents\n\ncatBytesRaw[$catBytesTotal]:\n${catBytesRaw.toString()}", 'text/plain');
+                  },
+                ), FlatButton(
+                  child: Text("Close"),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ), "Oh crap", Text("Something unexpected happened. Please share with renee@derelictrobot.com"));
+              }
+
+              /// Advance the sync process
+              {
                 //TODO: BUG: get rideLogging widget to reList the last file after sync without erase
                 loggerTestBuffer = receiveStr;
                 if(!syncInProgress) _alertLoggerTest();
                 setState(() {
                   syncAdvanceProgress = true;
-                  //Cat completed
-                  //Setting state so this widget rebuilds. On build it will
-                  //check if syncInProgress and start the next file
+                  ///Cat completed
+                  ///Setting state so this widget rebuilds. On build it will
+                  ///check if syncInProgress and start the next file
                 });
-              });
-            });
-          }); //Save file operation complete
+              }
+            }
+          } //Save file operation complete
           catInProgress = false;
           return;
         }
 
         // store chunk of log data
-        //await FileManager.writeToLogFile(receiveStr);
-        //print("receied ${value.sublist(0,receiveStr.length)}");
         catBytesRaw.addAll(value.sublist(0,receiveStr.length));
         //await FileManager.writeBytesToLogFile(value.sublist(0,receiveStr.length));
 
@@ -1177,7 +1193,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           // Check if compatible firmware
           if(major != 5) {
             // Do something
-            _alertInvalidFirmware();
+            _alertInvalidFirmware("Firmware: $major.$minor\nHardware: $hardName");
             return _bleDisconnect();
           }
 
@@ -1540,6 +1556,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       }
     } else {
       // Init complete
+      Navigator.of(context).pop(); // Remove attempting connection dialog
       print("##################################################################### initMsgSequencer is complete! Great success!");
 
       // Check if this is a known device when we connected/loaded it's settings
@@ -1614,7 +1631,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
-                Text('Hey sorry guy.'),
+                Text('Hey sorry buddy.'),
                 Text('The required services and characteristics'),
                 Text('were not found on the selected device...'),
               ],
@@ -1633,7 +1650,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     );
   }
 
-  Future<void> _alertInvalidFirmware() {
+  Future<void> _alertInvalidFirmware(String escDetails) {
     return showDialog<void>(
       context: context,
       barrierDismissible: false, // user must tap button!
@@ -1643,9 +1660,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
-                Text('Wouldn\'t you know it..'),
-                Text('This app talks with FW5 and the'),
-                Text('connected device says it is incompatible'),
+                Text('FreeSK8 Mobile talks with ESCs using FW5+ and the connected device says it is incompatible:'),
+                SizedBox(height:10),
+                Text(escDetails),
               ],
             ),
           ),
