@@ -225,6 +225,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
   Future<void> checkLocationPermission() async {
     GeolocationStatus geolocationStatus  = await Geolocator().checkGeolocationPermissionStatus();
+
+    if (await Geolocator().isLocationServiceEnabled() != true) {
+      genericAlert(context, "Location service unavailable", Text('Please enable location services on your mobile device'), "OK");
+    }
   }
 
   Future<void> updateLocationForRoute(LatLng data) async {
