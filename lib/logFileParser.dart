@@ -93,9 +93,9 @@ class LogFileParser {
             //print("Parsing ESC LOG entry");
             lastESCPacket.dt = new DateTime.fromMillisecondsSinceEpoch(buffer_get_uint64(bytes, i, Endian.little) * 1000, isUtc: true); i+=8;
             lastESCPacket.escID = buffer_get_uint16(bytes, i, Endian.little); i+=2;
-            lastESCPacket.vIn = buffer_get_uint16(bytes, i, Endian.little) / 100.0; i+=2;
-            lastESCPacket.motorTemp = buffer_get_int16(bytes, i, Endian.little) / 100.0; i+=2;
-            lastESCPacket.mosfetTemp = buffer_get_int16(bytes, i, Endian.little) / 100.0; i+=2;
+            lastESCPacket.vIn = buffer_get_uint16(bytes, i, Endian.little) / 10.0; i+=2;
+            lastESCPacket.motorTemp = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
+            lastESCPacket.mosfetTemp = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
             lastESCPacket.dutyCycle = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
             lastESCPacket.motorCurrent = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
             lastESCPacket.batteryCurrent = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
@@ -141,10 +141,10 @@ class LogFileParser {
             int deltaDT = bytes[i++];
             ++i; //NOTE: alignment
             int escID = buffer_get_uint16(bytes, i, Endian.little); i+=2;
-            double deltaVin = buffer_get_int8(bytes, i++) / 100.0;
+            double deltaVin = buffer_get_int8(bytes, i++) / 10.0;
             i+=1; //NOTE: alignment
-            double deltaMotorTemp = buffer_get_int8(bytes, i++) / 100.0;
-            double deltaESCTemp = buffer_get_int8(bytes, i++) / 100.0;
+            double deltaMotorTemp = buffer_get_int8(bytes, i++) / 10.0;
+            double deltaESCTemp = buffer_get_int8(bytes, i++) / 10.0;
             double deltaDuty = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
             double deltaMotorCurrent = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
             double deltaBatteryCurrent = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
@@ -161,9 +161,9 @@ class LogFileParser {
               // Update ESC packet with delta values
               lastESCPacket.dt = lastESCPacket.dt.add(Duration(seconds: deltaDT));
               lastESCPacket.escID = escID;
-              lastESCPacket.vIn = doublePrecision(lastESCPacket.vIn + deltaVin, 2);
-              lastESCPacket.motorTemp = doublePrecision(lastESCPacket.motorTemp + deltaMotorTemp, 2);
-              lastESCPacket.mosfetTemp = doublePrecision(lastESCPacket.mosfetTemp + deltaESCTemp, 2);
+              lastESCPacket.vIn = doublePrecision(lastESCPacket.vIn + deltaVin, 1);
+              lastESCPacket.motorTemp = doublePrecision(lastESCPacket.motorTemp + deltaMotorTemp, 1);
+              lastESCPacket.mosfetTemp = doublePrecision(lastESCPacket.mosfetTemp + deltaESCTemp, 1);
               lastESCPacket.dutyCycle = doublePrecision(lastESCPacket.dutyCycle + deltaDuty, 1);
               lastESCPacket.motorCurrent = doublePrecision(lastESCPacket.motorCurrent + deltaMotorCurrent, 1);
               lastESCPacket.batteryCurrent = doublePrecision(lastESCPacket.batteryCurrent + deltaBatteryCurrent, 1);
