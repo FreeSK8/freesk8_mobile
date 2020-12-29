@@ -87,9 +87,12 @@ flutter:
   assets:
     - assets/FreeSK8_Mobile.jpg
     - assets/FreeSK8_MobileLogo.png
-    - assets/map_marker_fault.png
-    - assets/home_map_marker.png
-    - assets/skating_pin.png
+    - assets/map_fault.png
+    - assets/map_start.png
+    - assets/map_end.png
+    - assets/map_top_speed.png
+    - assets/map_max_amps.png
+    - assets/map_efficiency.png
     - assets/dri_about.png
     - assets/dri_icon.png
     - assets/dri_about_serious.gif

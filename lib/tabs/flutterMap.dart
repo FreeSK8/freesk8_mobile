@@ -49,7 +49,7 @@ class FlutterMapWidgetState extends State<FlutterMapWidget> {
       builder: (ctx) =>
       new Container(
         margin: EdgeInsets.fromLTRB(0, 0, 0, 80),
-        child: new Image(image: AssetImage("assets/home_map_marker.png")),
+        child: new Image(image: AssetImage("assets/map_start.png")),
       ),
     );
 
@@ -72,8 +72,8 @@ class FlutterMapWidgetState extends State<FlutterMapWidget> {
               point: widget.routeTakenLocations.last,
               builder: (ctx) =>
               new Container(
-                margin: EdgeInsets.fromLTRB(0, 0, 0, 80),
-                child: new Image(image: AssetImage("assets/skating_pin.png")),
+                margin: EdgeInsets.fromLTRB(50, 0, 0, 80),
+                child: new Image(image: AssetImage("assets/map_end.png")),
               ),
             ),
           ],

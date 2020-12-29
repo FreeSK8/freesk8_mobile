@@ -436,7 +436,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                   onTap: (){
                     genericAlert(context, "Fault", Text("${mc_fault_code.values[thisFaultCode].toString().substring(14)} on ESC $escID at ${entry[0]}"), "It's ok?");
                   },
-                  child: Image(image: AssetImage("assets/map_marker_fault.png")),
+                  child: Image(image: AssetImage("assets/map_fault.png")),
                 ),
               ),
             ));
@@ -652,25 +652,25 @@ class RideLogViewerState extends State<RideLogViewer> {
     if (_positionEntries.length > 0) {
       mapMakers.insert(0,
           new Marker(
-            width: 160.0,
-            height: 160.0,
+            width: 100.0,
+            height: 100.0,
             point: _positionEntries.first,
             builder: (ctx) =>
             new Container(
-              margin: EdgeInsets.fromLTRB(0, 0, 0, 80),
-              child: new Image(image: AssetImage("assets/home_map_marker.png")),
+              margin: EdgeInsets.fromLTRB(0, 0, 0, 50),
+              child: new Image(image: AssetImage("assets/map_start.png")),
             ),
           )
       );
 
       mapMakers.insert(1, new Marker(
-        width: 160.0,
-        height: 160.0,
+        width: 100.0,
+        height: 100.0,
         point: _positionEntries.last,
         builder: (ctx) =>
         new Container(
-          margin: EdgeInsets.fromLTRB(0, 0, 0, 80),
-          child: new Image(image: AssetImage("assets/skating_pin.png")),
+          margin: EdgeInsets.fromLTRB(30, 0, 0, 50),
+          child: new Image(image: AssetImage("assets/map_end.png")),
         ),
       ));
     }
