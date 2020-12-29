@@ -615,21 +615,71 @@ class RideLogViewerState extends State<RideLogViewer> {
     double _avgSpeed = 0.0;
     double _maxAmpsBattery = 0.0;
     double _maxAmpsMotor = 0.0;
+    TimeSeriesESC _tsESCMaxSpeed = new TimeSeriesESC();
+    TimeSeriesESC _tsESCMaxESCTemp = new TimeSeriesESC();
     for(int i=0; i<escTimeSeriesList.length;++i) {
       if(escTimeSeriesList[i].speed != null && escTimeSeriesList[i].speed > _maxSpeed){
         _maxSpeed = escTimeSeriesList[i].speed;
+        // Store time series moment for map point generation and data popup
+        _tsESCMaxSpeed = escTimeSeriesList[i];
       }
       if (escTimeSeriesList[i].speed != null) {
         _avgSpeed += escTimeSeriesList[i].speed;
       }
 
+      // Monitor Battery Current
       if(escTimeSeriesList[i].currentInput != null && escTimeSeriesList[i].currentInput > _maxAmpsBattery){
         _maxAmpsBattery = escTimeSeriesList[i].currentInput;
       }
+      // Monitor Motor Current
       if(escTimeSeriesList[i].currentMotor != null && escTimeSeriesList[i].currentMotor > _maxAmpsMotor){
         _maxAmpsMotor = escTimeSeriesList[i].currentMotor;
       }
+      // Monitor Max ESC Temp
+      if(_tsESCMaxESCTemp.tempMosfet == null || escTimeSeriesList[i].tempMosfet != null && escTimeSeriesList[i].tempMosfet > _tsESCMaxESCTemp.tempMosfet){
+        // Store time series moment for map point generation and data popup
+        _tsESCMaxESCTemp = escTimeSeriesList[i];
+      }
     }
+    // Add map marker for the hottest ESC temp
+    if(_tsESCMaxESCTemp != null) {
+      // Add fault marker to map
+      mapMakers.add(new Marker(
+        width: 50.0,
+        height: 50.0,
+        point: _positionEntries.last,
+        builder: (ctx) =>
+        new Container(
+          margin: EdgeInsets.fromLTRB(0, 0, 0, 25),
+          child: GestureDetector(
+            onTap: (){
+              genericAlert(context, "Max ESC Temperature", Text("${_tsESCMaxESCTemp.tempMosfet} degrees at ${_tsESCMaxESCTemp.time.toIso8601String().substring(0,19)}"), "Hot dog!");
+            },
+            child: Image(image: AssetImage("assets/map_max_temp.png")),
+          ),
+        ),
+      ));
+    }
+    // Add map marker for the fastest speed
+    if(_tsESCMaxSpeed != null) {
+      // Add fault marker to map
+      mapMakers.add(new Marker(
+        width: 50.0,
+        height: 50.0,
+        point: _positionEntries.last,
+        builder: (ctx) =>
+        new Container(
+          margin: EdgeInsets.fromLTRB(0, 0, 0, 25),
+          child: GestureDetector(
+            onTap: (){
+              genericAlert(context, "Top Speed", Text("${_tsESCMaxESCTemp.speed} ${myArguments.userSettings.settings.useImperial ? "mph" : "kph"} at ${_tsESCMaxESCTemp.time.toIso8601String().substring(0,19)}"), "Woo!");
+            },
+            child: Image(image: AssetImage("assets/map_top_speed.png")),
+          ),
+        ),
+      ));
+    }
+
     String distance = "N/A";
     Duration duration = Duration(seconds:0);
     if(escTimeSeriesList.length > 0) {
@@ -649,6 +699,7 @@ class RideLogViewerState extends State<RideLogViewer> {
 
     print("rideLogViewer statistics generated");
 
+    // Add starting and ending map markers to the beginning of the mapMarkers list
     if (_positionEntries.length > 0) {
       mapMakers.insert(0,
           new Marker(
