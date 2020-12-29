@@ -1115,7 +1115,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               Column(children: [
                 Text("This app works best when Robogotchi is up to date!"),
                 SizedBox(height: 15),
-                Text("Please update from $robogotchiVersion to $robogotchiFirmwareExpectedVersion")
+                Text("Please update the Robogotchi firmware from $robogotchiVersion to $robogotchiFirmwareExpectedVersion")
               ]),
               "OK"
           );
