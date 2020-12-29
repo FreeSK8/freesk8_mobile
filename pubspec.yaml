@@ -92,6 +92,7 @@ flutter:
     - assets/map_end.png
     - assets/map_top_speed.png
     - assets/map_max_amps.png
+    - assets/map_max_temp.png
     - assets/map_efficiency.png
     - assets/dri_about.png
     - assets/dri_icon.png
