@@ -9,6 +9,9 @@ import 'package:freesk8_mobile/globalUtilities.dart';
 
 import 'package:multiselect_formfield/multiselect_formfield.dart';
 
+import 'components/sliderThumbImage.dart';
+import 'dart:ui' as ui;
+
 class RobogotchiConfiguration {
   int logAutoStopIdleTime;
   double logAutoStopLowVoltage;
@@ -103,10 +106,26 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
     return items;
   }
 
+  int timeToPlay = 0;
+  ui.Image sliderImage;
+  Future<ui.Image> load(String asset) async {
+    ByteData data = await rootBundle.load(asset);
+    ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+    ui.FrameInfo fi = await codec.getNextFrame();
+    return fi.image;
+  }
+
   @override
   void initState() {
-    super.initState();
+    load('assets/butt.png').then((image) {
+      setState(() {
+        sliderImage = image;
+      });
+    });
+
     _dropdownMenuItems = buildDropDownMenuItems(_dropdownItems);
+
+    super.initState();
   }
 
   @override
@@ -148,8 +167,8 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
         });
       }
     }
-    //TODO: Select currently configured ESC CAN IDs; causes MultiSelect to break
-    //TODO: Replace MultiSelect with a better solution
+
+    // Preselect user configured CAN IDs
     if (_escCANIDsSelected == null) {
       _escCANIDsSelected = new List();
       myArguments.currentConfiguration.multiESCIDs.forEach((element) {
@@ -239,10 +258,19 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
               child: ListView(
                 padding: EdgeInsets.all(10),
                 children: <Widget>[
-                  Icon(
-                    Icons.settings,
-                    size: 60.0,
-                    color: Colors.blue,
+                  GestureDetector(
+                    onTap: (){
+                      setState(() {
+                        if (++timeToPlay > 3) {
+                          timeToPlay = 0;
+                        }
+                      });
+                    },
+                    child: Icon(
+                      Icons.settings,
+                      size: 60.0,
+                      color: Colors.blue,
+                    )
                   ),
 
                   TextField(
@@ -265,25 +293,34 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
 
                   Divider(thickness: 3),
                   Text("Log Auto Start Sensitivity (eRPM ${myArguments.currentConfiguration.logAutoStartERPM})"),
-                  Slider(
-                    onChanged: (newValue){ setState(() {
-                      myArguments.currentConfiguration.logAutoStartERPM = 6000 - newValue.toInt();
-                    }); },
-                    value: 6000 - myArguments.currentConfiguration.logAutoStartERPM.toDouble(),
-                    min: 1000,
-                    max: 4999,
-                  ),
+                  SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        thumbShape: timeToPlay == 3 ? SliderThumbImage(sliderImage) : RoundSliderThumbShape(enabledThumbRadius: 10)
+                      ),
+                      child: Slider(
+                        onChanged: (newValue){ setState(() {
+                          myArguments.currentConfiguration.logAutoStartERPM = 6000 - newValue.toInt();
+                        }); },
+                        value: 6000 - myArguments.currentConfiguration.logAutoStartERPM.toDouble(),
+                        min: 1000,
+                        max: 4999,
+                      )),
 
 
                   Divider(thickness: 3),
                   Text("Log Entries per Second (${myArguments.currentConfiguration.logIntervalHz}Hz)"),
-                  Slider(
-                    onChanged: (newValue){ setState(() {
-                      myArguments.currentConfiguration.logIntervalHz = newValue.toInt();
-                    }); },
-                    value: myArguments.currentConfiguration.logIntervalHz.toDouble(),
-                    min: 1,
-                    max: 5,
+                  SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                          thumbShape: timeToPlay == 3 ? SliderThumbImage(sliderImage) : RoundSliderThumbShape(enabledThumbRadius: 10)
+                      ),
+                      child: Slider(
+                        onChanged: (newValue){ setState(() {
+                          myArguments.currentConfiguration.logIntervalHz = newValue.toInt();
+                        }); },
+                        value: myArguments.currentConfiguration.logIntervalHz.toDouble(),
+                        min: 1,
+                        max: 5,
+                      )
                   ),
 
                   SwitchListTile(
@@ -383,13 +420,18 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
 
                   Divider(thickness: 3),
                   Text("Alert when Storage is at Capacity (${myArguments.currentConfiguration.alertStorageAtCapacity == 0 ? "0 = no alert" : "${myArguments.currentConfiguration.alertStorageAtCapacity}%"})"),
-                  Slider(
-                    onChanged: (newValue){ setState(() {
-                      myArguments.currentConfiguration.alertStorageAtCapacity = newValue.toInt();
-                    }); },
-                    value: myArguments.currentConfiguration.alertStorageAtCapacity.toDouble(),
-                    min: 0.0,
-                    max: 90.0,
+                  SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                          thumbShape: timeToPlay == 3 ? SliderThumbImage(sliderImage) : RoundSliderThumbShape(enabledThumbRadius: 10)
+                      ),
+                      child: Slider(
+                        onChanged: (newValue){ setState(() {
+                          myArguments.currentConfiguration.alertStorageAtCapacity = newValue.toInt();
+                        }); },
+                        value: myArguments.currentConfiguration.alertStorageAtCapacity.toDouble(),
+                        min: 0.0,
+                        max: 90.0,
+                      )
                   ),
 
                   Divider(thickness: 3),
