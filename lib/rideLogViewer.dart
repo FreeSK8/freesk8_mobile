@@ -530,6 +530,7 @@ class RideLogViewerState extends State<RideLogViewer> {
     escTimeSeriesMap.clear();
     print("rideLogViewer escTimeSeriesList length is ${escTimeSeriesList.length}");
     //TODO: Reduce number of ESC points to keep things moving on phones
+    //TODO: We will need to know the logging rate in the file
     while(escTimeSeriesList.length > 1200) {
       int pos = 0;
       for (int i=0; i<escTimeSeriesList.length; ++i, ++pos) {
@@ -642,12 +643,13 @@ class RideLogViewerState extends State<RideLogViewer> {
       }
     }
     // Add map marker for the hottest ESC temp
-    if(_tsESCMaxESCTemp != null) {
+    if(_tsESCMaxESCTemp != null && _positionEntries.length > 0) {
       // Add fault marker to map
       mapMakers.add(new Marker(
         width: 50.0,
         height: 50.0,
-        point: _positionEntries.last,
+        //TODO: select point nearest this timestamp
+        point: _positionEntries.first,
         builder: (ctx) =>
         new Container(
           margin: EdgeInsets.fromLTRB(0, 0, 0, 25),
@@ -661,11 +663,12 @@ class RideLogViewerState extends State<RideLogViewer> {
       ));
     }
     // Add map marker for the fastest speed
-    if(_tsESCMaxSpeed != null) {
+    if(_tsESCMaxSpeed != null && _positionEntries.length > 0) {
       // Add fault marker to map
       mapMakers.add(new Marker(
         width: 50.0,
         height: 50.0,
+        //TODO: select point nearest this timestamp
         point: _positionEntries.last,
         builder: (ctx) =>
         new Container(
