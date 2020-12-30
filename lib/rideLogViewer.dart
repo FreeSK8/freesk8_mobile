@@ -297,6 +297,7 @@ class RideLogViewerState extends State<RideLogViewer> {
     thisRideLogEntries = new List<String>();
     _positionEntries = new List<LatLng>();
     Map<DateTime, LatLng> gpsLatLngMap = new Map();
+    MapController _mapController = new MapController();
 
     //Receive arguments building this widget
     myArguments = ModalRoute.of(context).settings.arguments;
@@ -943,6 +944,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                   _positionEntries.length > 0 ?
                   SizedBox(height: 175,
                     child: FlutterMap(
+                      mapController: _mapController,
                       options: new MapOptions(
                         center: _positionEntries.first,
                         zoom: 13.0,
@@ -1010,6 +1012,10 @@ class RideLogViewerState extends State<RideLogViewer> {
                                 currentSelection = new RideLogChartData(model.selectedDatum.first.datum.time,  model.selectedDatum.first.datum);
                                 eventObservable.add(currentSelection);
                                 eventObservable.publish();
+                                // Set the map center to this position in time
+                                if (gpsLatLngMap.length > 0) {
+                                  _mapController.move(selectNearestGPSPoint(model.selectedDatum.first.datum.time, gpsLatLngMap), _mapController.zoom);
+                                }
                               }
                             }
                         )
