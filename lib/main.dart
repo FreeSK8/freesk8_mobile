@@ -1664,7 +1664,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
-                Text('FreeSK8 Mobile talks with ESCs using FW5+ and the connected device says it is incompatible:'),
+                Text('FreeSK8 Mobile talks with ESCs using firmware 5+ and the connected ESC says it is incompatible:'),
                 SizedBox(height:10),
                 Text(escDetails),
               ],
@@ -1672,7 +1672,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           ),
           actions: <Widget>[
             FlatButton(
-              child: Text('Give it another go'),
+              child: Text('OK'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
