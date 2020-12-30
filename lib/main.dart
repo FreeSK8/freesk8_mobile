@@ -987,7 +987,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 genericConfirmationDialog(context, FlatButton(
                   child: Text("Copy / Share"),
                   onPressed: () {
-                    Share.text(catCurrentFilename, "$logFileContents\n\ncatBytesRaw[$catBytesTotal]:\n${catBytesRaw.toString()}", 'text/plain');
+                    Share.text(catCurrentFilename, "logFileContents:\n$logFileContents\n\ncatBytesRaw[$catBytesTotal]:\n${catBytesRaw.toList().toString()}", 'text/plain');
                   },
                 ), FlatButton(
                   child: Text("Close"),
