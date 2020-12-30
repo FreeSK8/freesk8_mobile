@@ -249,6 +249,22 @@ class RideLogViewerState extends State<RideLogViewer> {
     });
   }
 
+  LatLng selectNearestGPSPoint(DateTime desiredTime, Map<DateTime, LatLng> gpsLatLngMap) {
+    if (gpsLatLngMap[desiredTime] != null) {
+      return gpsLatLngMap[desiredTime];
+    }
+
+    for (int i=0; i<gpsLatLngMap.length; ++i) {
+      if (gpsLatLngMap.entries.elementAt(i).key.isAfter(desiredTime)) {
+        print("nearest $desiredTime is ${gpsLatLngMap.entries.elementAt(i).key}");
+        return gpsLatLngMap.entries.elementAt(i).value;
+      }
+    }
+
+    print("selectNearestGPSPoint: Returning last point =(");
+    return gpsLatLngMap.entries.last.value;
+  }
+
   @override
   Widget build(BuildContext context) {
     print("Build: rideLogViewer");
@@ -280,6 +296,7 @@ class RideLogViewerState extends State<RideLogViewer> {
     //Mapping
     thisRideLogEntries = new List<String>();
     _positionEntries = new List<LatLng>();
+    Map<DateTime, LatLng> gpsLatLngMap = new Map();
 
     //Receive arguments building this widget
     myArguments = ModalRoute.of(context).settings.arguments;
@@ -314,11 +331,16 @@ class RideLogViewerState extends State<RideLogViewer> {
             gpsDistance += calculateDistance(_positionEntries.last, thisPosition);
           }
           _positionEntries.add(thisPosition);
-          if (gpsStartTime == null) {gpsStartTime = DateTime.tryParse(entry[0]);}
-          gpsEndTime = DateTime.tryParse(entry[0]);
+          DateTime thisGPSTime = DateTime.tryParse(entry[0]);
+          // Set the GPS start time if null
+          gpsStartTime ??= thisGPSTime;
+          // Set the GPS end time to the last message parsed
+          gpsEndTime = thisGPSTime;
           double thisSpeed = double.tryParse(entry[4]);
           gpsAverageSpeed += thisSpeed;
           if (thisSpeed > gpsMaxSpeed) {gpsMaxSpeed = thisSpeed;}
+          // Map DateTime to LatLng
+          gpsLatLngMap[thisGPSTime] = thisPosition;
         }
         ///ESC Values
         else if (entry[1] == "esc" && entry.length >= 14) {
@@ -453,11 +475,16 @@ class RideLogViewerState extends State<RideLogViewer> {
             gpsDistance += calculateDistance(_positionEntries.last, thisPosition);
           }
           _positionEntries.add(thisPosition);
-          if (gpsStartTime == null) {gpsStartTime = DateTime.tryParse(entry[0]);}
-          gpsEndTime = DateTime.tryParse(entry[0]);
+          DateTime thisGPSTime = DateTime.tryParse(entry[0]);
+          // Set the GPS start time if null
+          gpsStartTime ??= thisGPSTime;
+          // Set the GPS end time to the last message parsed
+          gpsEndTime = thisGPSTime;
           double thisSpeed = double.tryParse(entry[6]);
           gpsAverageSpeed += thisSpeed;
           if (thisSpeed > gpsMaxSpeed) {gpsMaxSpeed = thisSpeed;}
+          // Map DateTime to LatLng
+          gpsLatLngMap[thisGPSTime] = thisPosition;
         }
         else if (entry[1] == "values" && entry.length > 9) {
           //[2020-05-19T13:46:28.8, values, 12.9, -99.9, 29.0, 0.0, 0.0, 0.0, 0.0, 11884, 102]
@@ -616,8 +643,8 @@ class RideLogViewerState extends State<RideLogViewer> {
     double _avgSpeed = 0.0;
     double _maxAmpsBattery = 0.0;
     double _maxAmpsMotor = 0.0;
-    TimeSeriesESC _tsESCMaxSpeed = new TimeSeriesESC();
-    TimeSeriesESC _tsESCMaxESCTemp = new TimeSeriesESC();
+    TimeSeriesESC _tsESCMaxSpeed;
+    TimeSeriesESC _tsESCMaxESCTemp;
     for(int i=0; i<escTimeSeriesList.length;++i) {
       if(escTimeSeriesList[i].speed != null && escTimeSeriesList[i].speed > _maxSpeed){
         _maxSpeed = escTimeSeriesList[i].speed;
@@ -637,19 +664,18 @@ class RideLogViewerState extends State<RideLogViewer> {
         _maxAmpsMotor = escTimeSeriesList[i].currentMotor;
       }
       // Monitor Max ESC Temp
-      if(_tsESCMaxESCTemp.tempMosfet == null || escTimeSeriesList[i].tempMosfet != null && escTimeSeriesList[i].tempMosfet > _tsESCMaxESCTemp.tempMosfet){
+      if(_tsESCMaxESCTemp == null || escTimeSeriesList[i].tempMosfet != null && escTimeSeriesList[i].tempMosfet > _tsESCMaxESCTemp.tempMosfet){
         // Store time series moment for map point generation and data popup
         _tsESCMaxESCTemp = escTimeSeriesList[i];
       }
     }
     // Add map marker for the hottest ESC temp
-    if(_tsESCMaxESCTemp != null && _positionEntries.length > 0) {
+    if(_tsESCMaxESCTemp != null && gpsLatLngMap.length > 0) {
       // Add fault marker to map
       mapMakers.add(new Marker(
         width: 50.0,
         height: 50.0,
-        //TODO: select point nearest this timestamp
-        point: _positionEntries.first,
+        point: selectNearestGPSPoint(_tsESCMaxESCTemp.time,gpsLatLngMap),
         builder: (ctx) =>
         new Container(
           margin: EdgeInsets.fromLTRB(0, 0, 0, 25),
@@ -663,19 +689,18 @@ class RideLogViewerState extends State<RideLogViewer> {
       ));
     }
     // Add map marker for the fastest speed
-    if(_tsESCMaxSpeed != null && _positionEntries.length > 0) {
+    if(_tsESCMaxSpeed != null && gpsLatLngMap.length > 0) {
       // Add fault marker to map
       mapMakers.add(new Marker(
         width: 50.0,
         height: 50.0,
-        //TODO: select point nearest this timestamp
-        point: _positionEntries.last,
+        point: selectNearestGPSPoint(_tsESCMaxSpeed.time,gpsLatLngMap),
         builder: (ctx) =>
         new Container(
           margin: EdgeInsets.fromLTRB(0, 0, 0, 25),
           child: GestureDetector(
             onTap: (){
-              genericAlert(context, "Top Speed", Text("${_tsESCMaxESCTemp.speed} ${myArguments.userSettings.settings.useImperial ? "mph" : "kph"} at ${_tsESCMaxESCTemp.time.toIso8601String().substring(0,19)}"), "Woo!");
+              genericAlert(context, "Top Speed", Text("${_tsESCMaxSpeed.speed} ${myArguments.userSettings.settings.useImperial ? "mph" : "kph"} at ${_tsESCMaxSpeed.time.toIso8601String().substring(0,19)}"), "Woo!");
             },
             child: Image(image: AssetImage("assets/map_top_speed.png")),
           ),
