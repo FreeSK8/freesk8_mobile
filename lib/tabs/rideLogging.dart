@@ -1,9 +1,11 @@
 import 'dart:convert';
 
+import 'package:esys_flutter_share/esys_flutter_share.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 
 import 'package:freesk8_mobile/databaseAssistant.dart';
+import 'package:freesk8_mobile/file_manager.dart';
 import 'package:freesk8_mobile/fileSyncViewer.dart';
 import 'package:freesk8_mobile/globalUtilities.dart';
 import 'package:freesk8_mobile/rideLogViewer.dart';
@@ -425,13 +427,23 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                   //TODO: consider https://pub.dev/packages/flutter_slidable for extended functionality
                   //Each item has dismissible wrapper
                   return Dismissible(
-                    background: Container(
+                    secondaryBackground: Container(
                         color: Colors.red,
                         margin: const EdgeInsets.only(bottom: 5.0),
                         alignment: AlignmentDirectional.centerEnd,
                         child: Padding(
                           padding: EdgeInsets.fromLTRB(0.0, 0.0, 10.0, 0.0),
                           child: Icon(Icons.delete, color: Colors.white,
+                          ),
+                        )
+                    ),
+                    background: Container(
+                        color: Colors.blue,
+                        margin: const EdgeInsets.only(bottom: 5.0),
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Padding(
+                          padding: EdgeInsets.fromLTRB(10.0, 0.0, 0.0, 0.0),
+                          child: Icon(Icons.share, color: Colors.white,
                           ),
                         )
                     ),
@@ -452,21 +464,29 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                     },
                     confirmDismiss: (DismissDirection direction) async {
                       print("rideLogging::Dismissible: ${direction.toString()}");
-
-                      return await genericConfirmationDialog(
-                        context,
-                        FlatButton(
-                            onPressed: () => Navigator.of(context).pop(true),
-                            child: const Text("Delete")
-                        ),
-                        FlatButton(
-                          onPressed: () => Navigator.of(context).pop(false),
-                          child: const Text("Cancel"),
-                        ),
-                          "Delete file?",
-                          Text("Are you sure you wish to permanently erase this item?")
-
-                      );
+                      // Swipe Right to Share
+                      if (direction == DismissDirection.startToEnd) {
+                        //TODO: share file dialog
+                        String fileSummary = 'Robogotchi gotchi!';
+                        String fileContents = await FileManager.openLogFile(rideLogsFromDatabase[index].logFilePath);
+                        await Share.file('FreeSK8Log', "${rideLogsFromDatabase[index].logFilePath.substring(rideLogsFromDatabase[index].logFilePath.lastIndexOf("/") + 1)}", utf8.encode(fileContents), 'text/csv', text: fileSummary);
+                        return false;
+                      } else {
+                        // Swipe Left to Erase
+                        return await genericConfirmationDialog(
+                            context,
+                            FlatButton(
+                                onPressed: () => Navigator.of(context).pop(true),
+                                child: const Text("Delete")
+                            ),
+                            FlatButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: const Text("Cancel"),
+                            ),
+                            "Delete file?",
+                            Text("Are you sure you wish to permanently erase this item?")
+                        );
+                      }
                     },
                     child: GestureDetector(
                       onTap: () async {
