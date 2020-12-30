@@ -78,7 +78,7 @@ class RealTimeDataState extends State<RealTimeData> {
   double maxPossibleSpeedKph() {
     double ratio = 1.0 / widget.currentSettings.settings.gearRatio;
     int minutesToHour = 60;
-    double ratioRpmSpeed = (ratio * minutesToHour * widget.currentSettings.settings.wheelDiameterMillimeters * pi) / 1000000;
+    double ratioRpmSpeed = (ratio * minutesToHour * widget.currentSettings.settings.wheelDiameterMillimeters * pi) / ((widget.currentSettings.settings.motorPoles / 2) * 1000000);
     double speed = widget.currentSettings.settings.maxERPM * ratioRpmSpeed * 0.2;
     return double.parse((speed).toStringAsFixed(2));
   }
