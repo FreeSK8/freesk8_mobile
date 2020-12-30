@@ -269,7 +269,7 @@ class LogFileParser {
     print("logFileParser::parseFile: Unpacking complete. Saving to filesystem");
 
     // Write parsed CSV to filesystem
-    convertedFile.writeAsStringSync(parsedResults);
+    convertedFile.writeAsStringSync(parsedResults,mode: FileMode.append);
 
     return convertedFile;
   }
