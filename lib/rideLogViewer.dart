@@ -915,8 +915,6 @@ class RideLogViewerState extends State<RideLogViewer> {
                         fileSummary += "\nBattery Amps: $_maxAmpsBattery";
                         fileSummary += "\nMotor Amps: $_maxAmpsMotor";
                         fileSummary += "\nDuration: ${duration.toString().substring(0,duration.toString().lastIndexOf("."))}";
-                        fileSummary += "\n\nValues Format: DateTime, Voltage, Motor Temp, Mosfet Temp, DutyCycle, Motor Current, Battery Current, eRPM, eDistance, ESC ID";
-                        fileSummary += "\nPosition Format: latitude, longitude, sats_in_view, altitude, speed";
                         await Share.file('FreeSK8Log', filename, utf8.encode(thisRideLog), 'text/csv', text: fileSummary);
                       }),
                 ],),
