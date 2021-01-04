@@ -75,14 +75,6 @@ class RealTimeDataState extends State<RealTimeData> {
 
   static double averageVoltageInput = 0;
 
-  double maxPossibleSpeedKph() {
-    double ratio = 1.0 / widget.currentSettings.settings.gearRatio;
-    int minutesToHour = 60;
-    double ratioRpmSpeed = (ratio * minutesToHour * widget.currentSettings.settings.wheelDiameterMillimeters * pi) / ((widget.currentSettings.settings.motorPoles / 2) * 1000000);
-    double speed = widget.currentSettings.settings.maxERPM * ratioRpmSpeed * 0.2;
-    return double.parse((speed).toStringAsFixed(2));
-  }
-
   double calculateSpeedKph(double eRpm) {
     double ratio = 1.0 / widget.currentSettings.settings.gearRatio;
     int minutesToHour = 60;
@@ -366,7 +358,8 @@ class RealTimeDataState extends State<RealTimeData> {
     String temperatureMosfet3 = widget.currentSettings.settings.useFahrenheit ? "${cToF(widget.telemetryPacket.temp_mos_3)} F" : "${widget.telemetryPacket.temp_mos_3} C";
     String temperatureMotor = widget.currentSettings.settings.useFahrenheit ? "$tempMotor F" : "$tempMotor C";
 
-    double speedMax = widget.currentSettings.settings.useImperial ? kphToMph(maxPossibleSpeedKph()) : maxPossibleSpeedKph();
+    double speedMaxFromERPM = calculateSpeedKph(widget.currentSettings.settings.maxERPM);
+    double speedMax = widget.currentSettings.settings.useImperial ? kphToMph(speedMaxFromERPM<80?speedMaxFromERPM:80) : speedMaxFromERPM<80?speedMaxFromERPM:80;
     double speedNow = widget.currentSettings.settings.useImperial ? kphToMph(calculateSpeedKph(widget.telemetryPacket.rpm)) : calculateSpeedKph(widget.telemetryPacket.rpm);
     //String speed = widget.currentSettings.settings.useImperial ? "$speedNow mph" : "$speedNow kph";
 
