@@ -492,6 +492,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                           child: Column(children: [
                             Icon(Icons.bluetooth_searching, size: 80,),
                             SizedBox(height: 10,),
+                            //TODO: Update status of connection
+                            //TODO: https://stackoverflow.com/questions/51962272/how-to-refresh-an-alertdialog-in-flutter
                             Text("Establishing connection..."),
                             Text("(tap to cancel)", style: TextStyle(fontSize: 10))
                           ]),
