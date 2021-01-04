@@ -1197,7 +1197,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           bleHelper.resetPacket(); //Be ready for another packet
 
           // Check if compatible firmware
-          if(major != 5) {
+          if(major != 5 || minor != 1) {
             // Do something
             _alertInvalidFirmware("Firmware: $major.$minor\nHardware: $hardName");
             return _bleDisconnect();
@@ -1659,14 +1659,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   Future<void> _alertInvalidFirmware(String escDetails) {
     return showDialog<void>(
       context: context,
-      barrierDismissible: false, // user must tap button!
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('Uh oh'),
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
-                Text('FreeSK8 Mobile talks with ESCs using firmware 5+ and the connected ESC says it is incompatible:'),
+                Text('FreeSK8 currently works with ESCs using firmware 5.1 and the connected ESC says it is incompatible:'),
                 SizedBox(height:10),
                 Text(escDetails),
               ],
