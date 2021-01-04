@@ -90,6 +90,7 @@ flutter:
     - assets/map_fault.png
     - assets/map_start.png
     - assets/map_end.png
+    - assets/map_position.png
     - assets/map_top_speed.png
     - assets/map_max_amps.png
     - assets/map_max_temp.png
