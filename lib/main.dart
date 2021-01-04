@@ -1170,6 +1170,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         if (values[1] == "OK") {
           // Close Robogotchi Configuration Editor
           Navigator.of(context).pop();
+          genericAlert(context, "Success", Text("Robogotchi configuration updated!"), "OK");
         } else {
           // Alert user setcfg failed!
           genericAlert(context, "oof!", Text("Setting Robogotchi configuration failed:\n\n$receiveStr"), "Help!");
