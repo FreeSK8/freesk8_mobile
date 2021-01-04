@@ -150,7 +150,7 @@ class RideLogViewerState extends State<RideLogViewer> {
         id: 'Duty Cycle',
         colorFn: (_, __) => charts.MaterialPalette.green.shadeDefault,
         domainFn: (TimeSeriesESC escData, _) => escData.time,
-        measureFn: (TimeSeriesESC escData, _) => escData.dutyCycle * 100,
+        measureFn: (TimeSeriesESC escData, _) => escData.dutyCycle * 100.0,
         data: values,
       ));
       chartData.add(charts.Series<TimeSeriesESC, DateTime>(

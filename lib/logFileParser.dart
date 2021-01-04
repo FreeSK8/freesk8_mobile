@@ -96,7 +96,7 @@ class LogFileParser {
             lastESCPacket.vIn = buffer_get_uint16(bytes, i, Endian.little) / 10.0; i+=2;
             lastESCPacket.motorTemp = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
             lastESCPacket.mosfetTemp = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
-            lastESCPacket.dutyCycle = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
+            lastESCPacket.dutyCycle = buffer_get_int16(bytes, i, Endian.little) / 1000.0; i+=2;
             lastESCPacket.motorCurrent = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
             lastESCPacket.batteryCurrent = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
             lastESCPacket.wattHours = buffer_get_uint16(bytes, i, Endian.little) / 100.0; i+=2;
@@ -145,7 +145,7 @@ class LogFileParser {
             i+=1; //NOTE: alignment
             double deltaMotorTemp = buffer_get_int8(bytes, i++) / 10.0;
             double deltaESCTemp = buffer_get_int8(bytes, i++) / 10.0;
-            double deltaDuty = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
+            double deltaDuty = buffer_get_int16(bytes, i, Endian.little) / 1000.0; i+=2;
             double deltaMotorCurrent = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
             double deltaBatteryCurrent = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
             double deltaWattHours = buffer_get_int8(bytes, i++) / 100.0;
