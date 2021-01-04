@@ -937,10 +937,8 @@ class RideLogViewerState extends State<RideLogViewer> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
 
-                  //MediaQuery.of(context).size.width / 3 * 2
-
                   _positionEntries.length > 0 ?
-                  SizedBox(height: 175,
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.25,
                     child: FlutterMap(
                       mapController: _mapController,
                       options: new MapOptions(
