@@ -311,7 +311,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     );
   }
 
-  void requestMCCONF() {
+  void requestMCCONF() async {
     var byteData = new ByteData(6); //<start><payloadLen><packetID><crc1><crc2><end>
     byteData.setUint8(0, 0x02);
     byteData.setUint8(1, 0x01);
@@ -320,11 +320,15 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     byteData.setUint16(3, checksum);
     byteData.setUint8(5, 0x03); //End of packet
 
-    the_tx_characteristic.write(byteData.buffer.asUint8List()).then((value){
-      print('COMM_GET_MCCONF requested');
-    }).catchError((e){
-      print("COMM_GET_MCCONF: Exception: $e");
-    });
+    // Request MCCONF from the ESC
+    dynamic errorCheck = 0;
+    while (errorCheck != null && _connectedDevice != null) {
+      errorCheck = null;
+      await the_tx_characteristic.write(byteData.buffer.asUint8List()).catchError((error){
+        errorCheck = error;
+        print("COMM_GET_MCCONF: Exception: $errorCheck");
+      });
+    }
   }
 
   void _handleESCProfileFinished(bool newValue) {
