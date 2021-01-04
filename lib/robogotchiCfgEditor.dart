@@ -484,9 +484,9 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
 
                             // Save
                             print("Sending $newConfigCMD");
-                            await myArguments.txLoggerCharacteristic.write(utf8.encode(newConfigCMD)).whenComplete((){
-                              // Pop away the config page
-                              Navigator.of(context).pop();
+                            await myArguments.txLoggerCharacteristic.write(utf8.encode(newConfigCMD)).catchError((error){
+                              // Do nothing
+                              return;
                             });
                           })
                     ],)

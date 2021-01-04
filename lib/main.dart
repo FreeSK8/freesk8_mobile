@@ -1163,6 +1163,18 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           );
         }
       }
+      else if(receiveStr.startsWith("setcfg,")) {
+        print("Robogotchi User Configuration updated: $receiveStr");
+        // Parse the configuration
+        List<String> values = receiveStr.split(",");
+        if (values[1] == "OK") {
+          // Close Robogotchi Configuration Editor
+          Navigator.of(context).pop();
+        } else {
+          // Alert user setcfg failed!
+          genericAlert(context, "oof!", Text("Setting Robogotchi configuration failed:\n\n$receiveStr"), "Help!");
+        }
+      }
       else {
         ///Unexpected response
         print("loggerReceived and unexpected response: ${new String.fromCharCodes(value)}");
