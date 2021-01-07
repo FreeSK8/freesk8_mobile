@@ -36,7 +36,6 @@ Future<dynamic> genericConfirmationDialog(BuildContext context, Widget cancelBut
 Future<void> genericAlert(BuildContext context, String alertTitle, Widget alertBody, String alertButtonLabel) {
   return showDialog<void>(
     context: context,
-    barrierDismissible: false, // user must tap button to dismiss
     builder: (BuildContext context) {
       return AlertDialog(
         title: Text(alertTitle),

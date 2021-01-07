@@ -24,6 +24,7 @@ import 'package:freesk8_mobile/focWizard.dart';
 // Supporting packages
 import 'package:freesk8_mobile/bleHelper.dart';
 import 'package:freesk8_mobile/escHelper.dart';
+import 'package:freesk8_mobile/escHelper/appConf.dart';
 import 'package:freesk8_mobile/userSettings.dart';
 import 'package:freesk8_mobile/file_manager.dart';
 import 'package:freesk8_mobile/autoStopHandler.dart';
@@ -123,6 +124,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   DieBieMSHelper dieBieMSHelper;
 
   static MCCONF escMotorConfiguration;
+  static APPCONF escApplicationConfiguration;
   static Uint8List escMotorConfigurationDefaults;
   static List<int> _validCANBusDeviceIDs = new List();
   static String robogotchiVersion;
@@ -309,6 +311,29 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       // set the controller
       controller: controller,
     );
+  }
+
+  //TODO: method to assemble simple esc requests
+  //TODO: method to request until success or disconnect
+  //TODO: sooooo much duplicated code
+  void requestAPPCONF() async {
+    var byteData = new ByteData(6); //<start><payloadLen><packetID><crc1><crc2><end>
+    byteData.setUint8(0, 0x02);
+    byteData.setUint8(1, 0x01);
+    byteData.setUint8(2, COMM_PACKET_ID.COMM_GET_APPCONF.index);
+    int checksum = BLEHelper.crc16(byteData.buffer.asUint8List(), 2, 1);
+    byteData.setUint16(3, checksum);
+    byteData.setUint8(5, 0x03); //End of packet
+
+    // Request APPCONF from the ESC
+    dynamic errorCheck = 0;
+    while (errorCheck != null && _connectedDevice != null) {
+      errorCheck = null;
+      await the_tx_characteristic.write(byteData.buffer.asUint8List()).catchError((error){
+        errorCheck = error;
+        print("COMM_GET_APPCONF: Exception: $errorCheck");
+      });
+    }
   }
 
   void requestMCCONF() async {
@@ -1439,7 +1464,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         } else if (packetID == COMM_PACKET_ID.COMM_GET_APPCONF.index) {
           print("WARNING: Whoa now. We received this APPCONF data. Whatchu want to do?");
           //TODO: handle APPCONF data
-          print("Debug APPCONF: ${bleHelper.getPayload().sublist(0,bleHelper.lenPayload)}");
+          ///ESC Application Configuration
+          escApplicationConfiguration = escHelper.processAPPCONF(bleHelper.getPayload());
+
+          if (escApplicationConfiguration.imu_conf.gyro_offset_comp_clamp != null) {
+            print("SUCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCESSSSS?");
+          }
+
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_DETECT_APPLY_ALL_FOC.index) {
           print("COMM_DETECT_APPLY_ALL_FOC packet received");
@@ -1970,6 +2001,27 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 return AlertDialog(
                   title: Text("Firmware Update"),
                   content: Text("Oops. Try connecting to your robogotchi first."),
+                );
+              },
+            );
+          }
+        },
+      ),
+
+      ListTile(
+        leading: Icon(Icons.timer),
+        title: Text("App Conf Debug"),
+        onTap: () {
+          // Don't write if not connected
+          if (the_tx_characteristic != null) {
+            requestAPPCONF();
+          } else {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text("No Connection"),
+                  content: Text("Oops. Try connecting to your board first."),
                 );
               },
             );
