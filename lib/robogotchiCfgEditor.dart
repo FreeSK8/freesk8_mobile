@@ -172,7 +172,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
     if (_escCANIDsSelected == null) {
       _escCANIDsSelected = new List();
       myArguments.currentConfiguration.multiESCIDs.forEach((element) {
-        if (element != 0) {
+        if (element != 0 && myArguments.discoveredCANDevices.contains(element.toInt())) {
           print("Adding user selected CAN ID: $element");
           _escCANIDsSelected.add(element.toInt());
         }
