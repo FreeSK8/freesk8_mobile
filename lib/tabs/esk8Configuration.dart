@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -68,14 +67,14 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
   Future getImage(bool fromUserGallery) async {
     final documentsDirectory = await getApplicationDocumentsDirectory();
-    File temporaryImage = await ImagePicker.pickImage(source: fromUserGallery ? ImageSource.gallery : ImageSource.camera, maxWidth: 640, maxHeight: 640);
-
+    final imagePicker = ImagePicker();
+    PickedFile temporaryImage = await imagePicker.getImage(source: fromUserGallery ? ImageSource.gallery : ImageSource.camera, maxWidth: 640, maxHeight: 640);
 
     if (temporaryImage != null) {
       // We have a new image, capture for display and update the settings in memory
       String newPath = "${documentsDirectory.path}/avatars/${widget.currentDevice.id}";
       File finalImage = await File(newPath).create(recursive: true);
-      temporaryImage.copySync(newPath);
+      finalImage.writeAsBytesSync(await temporaryImage.readAsBytes());
       print("Board avatar file destination: ${finalImage.path}");
 
       setState(() {
@@ -237,9 +236,6 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
   }
 
   void setMCCONFTemp(bool persistentChange, ESCProfile escProfile) {
-    double speedFactor = ((widget.escMotorConfiguration.si_motor_poles / 2.0) * 60.0 *
-        widget.escMotorConfiguration.si_gear_ratio) /
-        (widget.escMotorConfiguration.si_wheel_diameter * pi);
 
     var byteData = new ByteData(42); //<start><payloadLen><payload><crc1><crc2><end>
     byteData.setUint8(0, 0x02); //Start of packet <255 in length
@@ -379,9 +375,6 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     print("Build: ESK8Configuration");
     if (widget.showESCProfiles) {
       ///ESC Speed Profiles
-      double imperialFactor = widget.myUserSettings.settings.useImperial ? 0.621371192 : 1.0;
-      String speedUnit = widget.myUserSettings.settings.useImperial ? "mph" : "km/h";
-
       return Center(
         child: Column(
           children: <Widget>[
@@ -421,46 +414,46 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                     children: <Widget>[
 
                       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: <Widget>[
-                          rowIcon,
+                          children: <Widget>[
+                            rowIcon,
 
-                          FutureBuilder<String>(
-                              future: ESCHelper.getESCProfileName(i),
-                              builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
-                                if(snapshot.connectionState == ConnectionState.waiting){
-                                  return Center(
-                                      child:Text("Loading...")
-                                  );
-                                }
-                                return Text("${snapshot.data}");
-                              }),
-                          SizedBox(width: 75,),
-                          RaisedButton(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: <Widget>[
-                                Text("Edit "),
-                                Icon(Icons.edit),
-                              ],),
-                            onPressed: () async {
-                              // navigate to the editor
-                              Navigator.of(context).pushNamed(ESCProfileEditor.routeName, arguments: ESCProfileEditorArguments(widget.theTXCharacteristic, await ESCHelper.getESCProfile(i), i, widget.myUserSettings.settings.useImperial));
-                            },
-                            color: Colors.transparent,
-                          ),
-                          RaisedButton(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: <Widget>[
-                                Text("Apply "),
-                                Icon(Icons.exit_to_app),
-                              ],),
-                            onPressed: () async {
-                              setMCCONFTemp(_applyESCProfilePermanently, await ESCHelper.getESCProfile(i));
-                            },
-                            color: Colors.transparent,
-                          )
-                        ]
+                            FutureBuilder<String>(
+                                future: ESCHelper.getESCProfileName(i),
+                                builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+                                  if(snapshot.connectionState == ConnectionState.waiting){
+                                    return Center(
+                                        child:Text("Loading...")
+                                    );
+                                  }
+                                  return Text("${snapshot.data}");
+                                }),
+                            SizedBox(width: 75,),
+                            RaisedButton(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: <Widget>[
+                                  Text("Edit "),
+                                  Icon(Icons.edit),
+                                ],),
+                              onPressed: () async {
+                                // navigate to the editor
+                                Navigator.of(context).pushNamed(ESCProfileEditor.routeName, arguments: ESCProfileEditorArguments(widget.theTXCharacteristic, await ESCHelper.getESCProfile(i), i, widget.myUserSettings.settings.useImperial));
+                              },
+                              color: Colors.transparent,
+                            ),
+                            RaisedButton(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: <Widget>[
+                                  Text("Apply "),
+                                  Icon(Icons.exit_to_app),
+                                ],),
+                              onPressed: () async {
+                                setMCCONFTemp(_applyESCProfilePermanently, await ESCHelper.getESCProfile(i));
+                              },
+                              color: Colors.transparent,
+                            )
+                          ]
                       ),
 
                       FutureBuilder<ESCProfile>(
@@ -536,12 +529,12 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
-                    RaisedButton(child:
+                      RaisedButton(child:
                       Row(mainAxisAlignment: MainAxisAlignment.center , children: <Widget>[Text("Finished"),Icon(Icons.check),],),
-                        onPressed: () {
-                          widget.onExitProfiles(false);
-                        })
-                  ],)
+                          onPressed: () {
+                            widget.onExitProfiles(false);
+                          })
+                    ],)
                 ],
               ),
             )
@@ -930,7 +923,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Battery Series Count"),
                               keyboardType: TextInputType.number,
                               inputFormatters: <TextInputFormatter>[
-                                WhitelistingTextInputFormatter.digitsOnly
+                                FilteringTextInputFormatter.digitsOnly
                               ]
                           ),
                           TextField(
@@ -938,7 +931,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Battery Capacity (Ah)"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
                               ]
                           ),
                           TextField(
@@ -946,7 +939,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                             decoration: new InputDecoration(labelText: "Wheel Diameter in Millimeters"),
                             keyboardType: TextInputType.number,
                             inputFormatters: <TextInputFormatter>[
-                              WhitelistingTextInputFormatter.digitsOnly
+                              FilteringTextInputFormatter.digitsOnly
                             ],
                           ),
                           TextField(
@@ -954,7 +947,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Motor Poles"),
                               keyboardType: TextInputType.number,
                               inputFormatters: <TextInputFormatter>[
-                                WhitelistingTextInputFormatter.digitsOnly
+                                FilteringTextInputFormatter.digitsOnly
                               ]
                           ),
                           TextField(
@@ -962,7 +955,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Gear Ratio"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
                               ]
                           ),
 
@@ -976,7 +969,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Max Current (Amps)"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
                               ]
                           ),
                           TextField(
@@ -992,7 +985,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Battery Max Current (Amps)"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
                               ]
                           ),
                           TextField(
@@ -1008,7 +1001,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "ABS Max Current (Amps)"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
                               ]
                           ),
 
@@ -1017,7 +1010,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Max ERPM"),
                               keyboardType: TextInputType.number,
                               inputFormatters: <TextInputFormatter>[
-                                WhitelistingTextInputFormatter.digitsOnly
+                                FilteringTextInputFormatter.digitsOnly
                               ]
                           ),
                           TextField(
@@ -1025,7 +1018,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Min ERPM"),
                               keyboardType: TextInputType.number,
                               inputFormatters: <TextInputFormatter>[
-                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
                               ]
                           ),
 
@@ -1034,7 +1027,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Minimum Voltage Input"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
                               ]
                           ),
                           TextField(
@@ -1042,7 +1035,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Maximum Voltage Input"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
                               ]
                           ),
 
@@ -1051,7 +1044,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Battery Cutoff Start (Volts)"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
                               ]
                           ),
                           TextField(
@@ -1059,7 +1052,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Battery Cutoff End (Volts)"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
                               ]
                           ),
                           TextField(
@@ -1067,7 +1060,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "ESC Temperature Cutoff Start (Celsius)"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
                               ]
                           ),
                           TextField(
@@ -1075,7 +1068,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "ESC Temperature Cutoff End (Celsius)"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
                               ]
                           ),
                           TextField(
@@ -1083,7 +1076,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Motor Temperature Cutoff Start (Celsius)"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
                               ]
                           ),
                           TextField(
@@ -1091,7 +1084,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Motor Temperature Cutoff End (Celsius)"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
                               ]
                           ),
 
@@ -1108,7 +1101,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Maximum Wattage"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
                               ]
                           ),
                           TextField(
@@ -1116,7 +1109,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Min Current Scale"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
                               ]
                           ),
                           TextField(
@@ -1124,7 +1117,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Max Current Scale"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
                               ]
                           ),
                           TextField(
@@ -1132,7 +1125,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Duty Cycle Current Limit Start"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
                               ]
                           ),
 
@@ -1242,28 +1235,28 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                 right: 0,
                 top: 0,
                 child: IconButton(
-                  icon: Icon(Icons.clear),
-                  onPressed: (){
-                    print("User Close ESC Configurator");
-                    genericConfirmationDialog(
-                      context,
-                      FlatButton(
-                        child: Text("Not yet"),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                      FlatButton(
-                        child: Text("Yes"),
-                        onPressed: () async {
-                          Navigator.of(context).pop();
-                          widget.closeESCConfigurator(true);
-                        },
-                      ),
-                      "Exit Configurator?",
-                      Text("Unsaved changes will be lost.")
-                    );
-                  }
+                    icon: Icon(Icons.clear),
+                    onPressed: (){
+                      print("User Close ESC Configurator");
+                      genericConfirmationDialog(
+                          context,
+                          FlatButton(
+                            child: Text("Not yet"),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                          FlatButton(
+                            child: Text("Yes"),
+                            onPressed: () async {
+                              Navigator.of(context).pop();
+                              widget.closeESCConfigurator(true);
+                            },
+                          ),
+                          "Exit Configurator?",
+                          Text("Unsaved changes will be lost.")
+                      );
+                    }
                 )
             ),
           ],)
@@ -1276,8 +1269,8 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
     return Container(
       //padding: EdgeInsets.all(5),
-      child: Center(
-        child: GestureDetector(
+        child: Center(
+          child: GestureDetector(
             onTap: () {
               // Hide the keyboard
               FocusScope.of(context).requestFocus(new FocusNode());
@@ -1403,10 +1396,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
                 ],),
 
-            ],
+              ],
+            ),
           ),
-        ),
-      )
+        )
     );
   }
 }
