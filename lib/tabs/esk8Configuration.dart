@@ -10,6 +10,7 @@ import 'package:freesk8_mobile/globalUtilities.dart';
 import 'package:freesk8_mobile/userSettings.dart';
 import 'package:freesk8_mobile/focWizard.dart';
 import 'package:freesk8_mobile/escHelper.dart';
+import 'package:freesk8_mobile/escHelper/appConf.dart';
 import 'package:freesk8_mobile/bleHelper.dart';
 
 import 'package:image_picker/image_picker.dart';
@@ -30,7 +31,10 @@ class ESK8Configuration extends StatefulWidget {
     this.showESCConfigurator,
     this.discoveredCANDevices,
     this.closeESCConfigurator,
-    this.updateCachedAvatar
+    this.updateCachedAvatar,
+    this.showESCAppConfig,
+    this.escAppConfiguration,
+    this.closeESCApplicationConfigurator
   });
   final UserSettings myUserSettings;
   final BluetoothDevice currentDevice;
@@ -43,6 +47,11 @@ class ESK8Configuration extends StatefulWidget {
   final List<int> discoveredCANDevices;
   final ValueChanged<bool> closeESCConfigurator;
   final ValueChanged<bool> updateCachedAvatar;
+
+  final bool showESCAppConfig;
+  final APPCONF escAppConfiguration;
+  final ValueChanged<bool> closeESCApplicationConfigurator;
+
   ESK8ConfigurationState createState() => new ESK8ConfigurationState();
 
   static const String routeName = "/settings";
@@ -539,6 +548,106 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
           ],
         ),
       );
+    }
+
+    if (widget.showESCAppConfig) {
+      // Check if we are building with an invalid motor configuration (signature mismatch)
+      if (widget.escAppConfiguration == null || widget.escAppConfiguration.imu_conf.gyro_offset_comp_clamp == null) {
+        // Invalid APPCONF received
+        _invalidCANID = _selectedCANFwdID; // Store invalid ID
+        _selectedCANFwdID = null; // Clear selected CAN device
+        widget.onAutoloadESCSettings(true); // Request primary ESC configuration
+        return Column( // This view will be replaced when ESC responds with valid configuration
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+              Icon(
+                Icons.settings_applications_outlined,
+                size: 80.0,
+                color: Colors.blue,
+              ),
+              Text("ESC\nApplication\nConfigurator", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
+            ],),
+
+            Icon(Icons.file_download),
+            Text("Missing Application Configuration from the ESC"),
+            Text("If this problem persists you may need to restart the application")
+          ],
+        );
+      }
+
+      return Container(
+          child: Stack(children: <Widget>[
+            Center(
+              child: GestureDetector(
+                onTap: () {
+                  // Hide the keyboard
+                  FocusScope.of(context).requestFocus(new FocusNode());
+                },
+                child: Column(
+                  children: [
+                    Column(
+                      children: [
+                        SizedBox(height: 5,),
+
+                        Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+                          Icon(
+                            Icons.settings_applications_outlined,
+                            size: 80.0,
+                            color: Colors.blue,
+                          ),
+                          Text("ESC\nApplication\nConfigurator", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
+                        ],),
+
+                        SizedBox(height:10),
+                      ],
+                    ),
+                    Expanded(
+                      child: ListView(
+                        padding: EdgeInsets.all(10),
+                        children: <Widget>[
+                          RaisedButton(onPressed: (){
+                            genericAlert(context, "hi", Text("foo"), "kaaay");
+                          }, child: Text("hi"),)
+                        ],
+                      ),
+                    )
+                  ],
+                ),
+              ),
+            ),
+
+            Positioned(
+                right: 0,
+                top: 0,
+                child: IconButton(
+                    icon: Icon(Icons.clear),
+                    onPressed: (){
+                      print("User Close ESC Application Configurator");
+                      genericConfirmationDialog(
+                          context,
+                          FlatButton(
+                            child: Text("Not yet"),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                          FlatButton(
+                            child: Text("Yes"),
+                            onPressed: () async {
+                              Navigator.of(context).pop();
+                              widget.closeESCApplicationConfigurator(true);
+                            },
+                          ),
+                          "Exit Configurator?",
+                          Text("Unsaved changes will be lost.")
+                      );
+                    }
+                )
+            ),
+          ],)
+      );
+
     }
 
     if (widget.showESCConfigurator) {
