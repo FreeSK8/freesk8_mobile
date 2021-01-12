@@ -460,11 +460,15 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       // Reset current ESC motor configuration
       escMotorConfiguration = new MCCONF();
 
+      // Reset current ESC application configuration
+      escApplicationConfiguration = new APPCONF();
+
       // Reset displaying ESC profiles flag
       _showESCProfiles = false;
 
       // Reset displaying ESC Configurator flag
       _showESCConfigurator = false;
+      _showESCApplicationConfigurator = false;
 
       // Reset Robogotchi version
       robogotchiVersion = null;
@@ -693,6 +697,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static int smartBMSCANID = 10;
   static bool _showDieBieMS = false;
   static bool _showESCConfigurator = false;
+  static bool _showESCApplicationConfigurator = false;
   static bool _showESCProfiles = false;
   static bool _autoloadESCSettings = false; // Controls the population of ESC Information from MCCONF response
   static Timer telemetryTimer;
@@ -1471,6 +1476,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             print("SUCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCESSSSS?");
           }
 
+          if (_showESCApplicationConfigurator) {
+            setState(() {
+              controller.index = 2;
+              _showESCApplicationConfigurator = true;
+            });
+          }
+
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_DETECT_APPLY_ALL_FOC.index) {
           print("COMM_DETECT_APPLY_ALL_FOC packet received");
@@ -2009,12 +2021,14 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       ),
 
       ListTile(
-        leading: Icon(Icons.timer),
+        leading: Icon(Icons.bug_report_outlined),
         title: Text("App Conf Debug"),
         onTap: () {
           // Don't write if not connected
           if (the_tx_characteristic != null) {
+            _showESCApplicationConfigurator = true;
             requestAPPCONF();
+            Navigator.of(context).pop();
           } else {
             showDialog(
               context: context,
@@ -2164,6 +2178,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     print("Closed ESC Configurator");
   }
 
+  void closeESCAppConfFunc(bool closeView) {
+    setState(() {
+      _showESCApplicationConfigurator = false;
+    });
+    print("Closed ESC Application Configurator");
+  }
+
   void changeSmartBMSIDFunc(int nextID) {
     setState(() {
       smartBMSCANID = nextID;
@@ -2254,7 +2275,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             showESCConfigurator: _showESCConfigurator,
             discoveredCANDevices: _validCANBusDeviceIDs,
             closeESCConfigurator: closeESCConfiguratorFunc,
-            updateCachedAvatar: _cacheAvatar
+            updateCachedAvatar: _cacheAvatar,
+            showESCAppConfig: _showESCApplicationConfigurator,
+            escAppConfiguration: escApplicationConfiguration,
+            closeESCApplicationConfigurator: closeESCAppConfFunc,
           ),
           RideLogging(
               myUserSettings: widget.myUserSettings,
