@@ -50,12 +50,6 @@ class RobogotchiCfgEditorArguments {
   RobogotchiCfgEditorArguments({this.txLoggerCharacteristic, this.currentConfiguration, this.discoveredCANDevices});
 }
 
-class ListItem {
-  int value;
-  String name;
-
-  ListItem(this.value, this.name);
-}
 
 class RobogotchiCfgEditor extends StatefulWidget {
   @override
@@ -93,18 +87,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
   TextEditingController tecAlertESCTemp = TextEditingController();
   TextEditingController tecAlertMotorTemp = TextEditingController();
 
-  List<DropdownMenuItem<ListItem>> buildDropDownMenuItems(List listItems) {
-    List<DropdownMenuItem<ListItem>> items = List();
-    for (ListItem listItem in listItems) {
-      items.add(
-        DropdownMenuItem(
-          child: Text(listItem.name),
-          value: listItem,
-        ),
-      );
-    }
-    return items;
-  }
+
 
   int timeToPlay = 0;
   ui.Image sliderImage;

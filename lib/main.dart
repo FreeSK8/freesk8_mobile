@@ -44,7 +44,7 @@ import 'package:esys_flutter_share/esys_flutter_share.dart';
 
 import 'databaseAssistant.dart';
 
-const String freeSK8ApplicationVersion = "0.9.0";
+const String freeSK8ApplicationVersion = "0.10.0";
 const String robogotchiFirmwareExpectedVersion = "0.7.0";
 
 void main() {
@@ -125,6 +125,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
   static MCCONF escMotorConfiguration;
   static APPCONF escApplicationConfiguration;
+  static int ppmLastDuration;
   static Uint8List escMotorConfigurationDefaults;
   static List<int> _validCANBusDeviceIDs = new List();
   static String robogotchiVersion;
@@ -316,16 +317,22 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   //TODO: method to assemble simple esc requests
   //TODO: method to request until success or disconnect
   //TODO: sooooo much duplicated code
-  void requestAPPCONF() async {
-    var byteData = new ByteData(6); //<start><payloadLen><packetID><crc1><crc2><end>
+  void requestAPPCONF(int optionalCANID) async {
+    bool sendCAN = optionalCANID != null;
+    var byteData = new ByteData(sendCAN ? 8:6); //<start><payloadLen><packetID><crc1><crc2><end>
     byteData.setUint8(0, 0x02);
-    byteData.setUint8(1, 0x01);
-    byteData.setUint8(2, COMM_PACKET_ID.COMM_GET_APPCONF.index);
-    int checksum = BLEHelper.crc16(byteData.buffer.asUint8List(), 2, 1);
-    byteData.setUint16(3, checksum);
-    byteData.setUint8(5, 0x03); //End of packet
+    byteData.setUint8(1, sendCAN ? 0x03 : 0x01); // Data length
+    if (sendCAN) {
+      byteData.setUint8(2, COMM_PACKET_ID.COMM_FORWARD_CAN.index);
+      byteData.setUint8(3, optionalCANID);
+    }
+    byteData.setUint8(sendCAN ? 4:2, COMM_PACKET_ID.COMM_GET_APPCONF.index);
+    int checksum = BLEHelper.crc16(byteData.buffer.asUint8List(), 2, sendCAN ? 3:1);
+    byteData.setUint16(sendCAN ? 5:3, checksum);
+    byteData.setUint8(sendCAN ? 7:5, 0x03); //End of packet
 
     // Request APPCONF from the ESC
+    print("requesting app conf $optionalCANID");
     dynamic errorCheck = 0;
     while (errorCheck != null && _connectedDevice != null) {
       errorCheck = null;
@@ -1481,6 +1488,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               controller.index = 2;
               _showESCApplicationConfigurator = true;
             });
+          } else {
+            // Update UI for configurator
+            setState(() {
+
+            });
           }
 
           bleHelper.resetPacket();
@@ -1545,6 +1557,28 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             );
           }
           bleHelper.resetPacket();
+        } else if (packetID == COMM_PACKET_ID.COMM_GET_DECODED_PPM.index) {
+
+          print("Unsupported packet Message: ${bleHelper.getMessage().sublist(
+              0, bleHelper.endMessage)}");
+          int valueNow = escHelper.buffer_get_int32(bleHelper.getPayload(), 1);
+          int msNow = escHelper.buffer_get_int32(bleHelper.getPayload(), 5);
+          print(
+              "Decoded PPM packet received: value $valueNow, milliseconds $msNow");
+          setState(() {
+            ppmLastDuration = msNow;
+          });
+          bleHelper.resetPacket();
+        } else if (packetID == COMM_PACKET_ID.COMM_PRINT.index) {
+
+          int stringLength = bleHelper.getMessage()[1];
+          String messageFromESC = bleHelper.getMessage().sublist(
+              3, 3 + stringLength).toString();
+          //TODO: test this (send invalid app or mc conf signature). i don't think toString was the proper conversion
+          print(messageFromESC);
+
+        } else if (packetID == COMM_PACKET_ID.COMM_SET_APPCONF.index) {
+          genericAlert(context, "Success", Text("Application configuration set"), "Excellent");
         } else {
           print("Unsupported packet ID: $packetID");
           print("Unsupported packet Message: ${bleHelper.getMessage().sublist(0,bleHelper.endMessage)}");
@@ -2027,7 +2061,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           // Don't write if not connected
           if (the_tx_characteristic != null) {
             _showESCApplicationConfigurator = true;
-            requestAPPCONF();
+            requestAPPCONF(null);
             Navigator.of(context).pop();
           } else {
             showDialog(
@@ -2279,6 +2313,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             showESCAppConfig: _showESCApplicationConfigurator,
             escAppConfiguration: escApplicationConfiguration,
             closeESCApplicationConfigurator: closeESCAppConfFunc,
+            requestESCApplicationConfiguration: requestAPPCONF,
+            ppmLastDuration: ppmLastDuration,
           ),
           RideLogging(
               myUserSettings: widget.myUserSettings,

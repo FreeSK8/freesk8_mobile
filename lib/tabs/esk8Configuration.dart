@@ -33,7 +33,9 @@ class ESK8Configuration extends StatefulWidget {
     this.updateCachedAvatar,
     this.showESCAppConfig,
     this.escAppConfiguration,
-    this.closeESCApplicationConfigurator
+    this.closeESCApplicationConfigurator,
+    this.ppmLastDuration,
+    this.requestESCApplicationConfiguration,
   });
   final UserSettings myUserSettings;
   final BluetoothDevice currentDevice;
@@ -50,6 +52,8 @@ class ESK8Configuration extends StatefulWidget {
   final bool showESCAppConfig;
   final APPCONF escAppConfiguration;
   final ValueChanged<bool> closeESCApplicationConfigurator;
+  final int ppmLastDuration;
+  final ValueChanged<int> requestESCApplicationConfiguration;
 
   ESK8ConfigurationState createState() => new ESK8ConfigurationState();
 
@@ -123,6 +127,19 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
   final tecCurrentMaxScale = TextEditingController();
 
   final tecDutyStart = TextEditingController();
+
+
+  /// APP Conf
+  List<ListItem> _appModeItems = [
+    ListItem(app_use.APP_ADC.index, "PPM"),
+    ListItem(app_use.APP_UART.index, "UART"),
+    ListItem(app_use.APP_PPM_UART.index, "PPM_UART"),
+  ];
+  List<DropdownMenuItem<ListItem>> _appModeDropdownItems;
+  ListItem _selectedAppMode;
+
+  int ppmMinMS;
+  int ppmMaxMS;
 
   @override
   void initState() {
@@ -198,6 +215,9 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       if(newValue<0.0) newValue = 0.0; //Ensure greater than 0.0
       widget.escMotorConfiguration.l_duty_start = doublePrecision(newValue, 2);
     });
+
+    /// ESC Application Configuration
+    _appModeDropdownItems = buildDropDownMenuItems(_appModeItems);
   }
 
 
@@ -370,6 +390,106 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     _writeESCInProgress = false;
   }
 
+  //TODO: very much duplicated from saveMCCONF() -> simplify & improve
+  void saveAPPCONF(int optionalCANID) async {
+    if (_writeESCInProgress) {
+      print("WARNING: esk8Configuration: saveAPPCONF: _writeESCInProgress is true. Save aborted.");
+      return;
+    }
+
+    // Protect from interrupting a previous write attempt
+    _writeESCInProgress = true;
+    ESCHelper escHelper = new ESCHelper();
+    ByteData serializedAppconf = escHelper.serializeAPPCONF(widget.escAppConfiguration);
+
+    // Compute sizes and track buffer position
+    int packetIndex = 0;
+    int packetLength = 7; //<start><length><length> <command id><command data*><crc><crc><end>
+    int payloadSize = serializedAppconf.lengthInBytes + 1; //<command id>
+    if (optionalCANID != null) {
+      packetLength += 2; //<canfwd><canid>
+      payloadSize += 2;
+    }
+    packetLength += serializedAppconf.lengthInBytes; // Command Data
+
+    // Prepare BLE request
+    ByteData blePacket = new ByteData(packetLength);
+    blePacket.setUint8(packetIndex++, 0x03); // Start of >255 byte packet
+    blePacket.setUint16(packetIndex, payloadSize); packetIndex += 2; // Length of data
+    if (optionalCANID != null) {
+      blePacket.setUint8(packetIndex++, COMM_PACKET_ID.COMM_FORWARD_CAN.index); // CAN FWD
+      blePacket.setUint8(packetIndex++, optionalCANID); // CAN ID
+    }
+    blePacket.setUint8(packetIndex++, COMM_PACKET_ID.COMM_SET_APPCONF.index); // Command ID
+    //Copy serialized motor configuration to blePacket
+    for (int i=0;i<serializedAppconf.lengthInBytes;++i) {
+      blePacket.setInt8(packetIndex++, serializedAppconf.getInt8(i));
+    }
+    int checksum = BLEHelper.crc16(blePacket.buffer.asUint8List(), 3, payloadSize);
+    blePacket.setUint16(packetIndex, checksum); packetIndex += 2;
+    blePacket.setUint8(packetIndex, 0x03); //End of packet
+
+    print("packet len $packetLength, payload size $payloadSize, packet index $packetIndex");
+
+    /*
+    * TODO: determine the best way to deliver this data to the ESC
+    * TODO: The ESC does not like two big chunks and sometimes small chunks fails
+    * TODO: this is the only thing that works
+    */
+    // Send in small chunks?
+    int bytesSent = 0;
+    while (bytesSent < packetLength) {
+      int endByte = bytesSent + 20;
+      if (endByte > packetLength) {
+        endByte = packetLength;
+      }
+      widget.theTXCharacteristic.write(blePacket.buffer.asUint8List().sublist(bytesSent,endByte), withoutResponse: true);
+      bytesSent += 20;
+      await Future.delayed(const Duration(milliseconds: 30), () {});
+    }
+    print("COMM_SET_APPCONF bytes were blasted to ESC =/");
+
+    /*
+    * TODO: Flutter Blue cannot send more than 244 bytes in a message
+    * TODO: This does not work
+    // Send in two big chunks?
+    widget.theTXCharacteristic.write(blePacket.buffer.asUint8List().sublist(0,240)).then((value){
+      Future.delayed(const Duration(milliseconds: 250), () {
+        widget.theTXCharacteristic.write(blePacket.buffer.asUint8List().sublist(240));
+        print("COMM_SET_MCCONF sent to ESC");
+      });
+
+    }).catchError((e){
+      print("COMM_SET_MCCONF: Exception: $e");
+    });
+*/
+
+    // Finish with this save attempt
+    _writeESCInProgress = false;
+  }
+
+
+  void requestDecodedPPM(int optionalCANID) {
+    bool sendCAN = optionalCANID != null;
+    var byteData = new ByteData(sendCAN ? 8:6);
+    byteData.setUint8(0, 0x02);
+    byteData.setUint8(1, sendCAN ? 0x03 : 0x01);
+    if (sendCAN) {
+      byteData.setUint8(2, COMM_PACKET_ID.COMM_FORWARD_CAN.index);
+      byteData.setUint8(3, optionalCANID);
+    }
+    byteData.setUint8(sendCAN ? 4:2, COMM_PACKET_ID.COMM_GET_DECODED_PPM.index);
+    int checksum = BLEHelper.crc16(byteData.buffer.asUint8List(), 2, sendCAN ? 3:1);
+    byteData.setUint16(sendCAN ? 5:3, checksum);
+    byteData.setUint8(sendCAN ? 7:5, 0x03); //End of packet
+
+    widget.theTXCharacteristic.write(byteData.buffer.asUint8List()).then((value){
+      print('COMM_GET_DECODED_PPM requested ($optionalCANID)');
+    }).catchError((e){
+      print("COMM_GET_MCCONF: Exception: $e");
+    });
+  }
+  
   @override
   Widget build(BuildContext context) {
     print("Build: ESK8Configuration");
@@ -569,6 +689,21 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
         );
       }
 
+      // Select App to use
+      if (_selectedAppMode == null) {
+        _appModeItems.forEach((item) {
+          if (item.value == widget.escAppConfiguration.app_to_use.index) {
+            _selectedAppMode = item;
+          }
+        });
+      }
+
+      // Monitor PPM min and max
+      ppmMinMS ??= widget.ppmLastDuration;
+      ppmMaxMS ??= widget.ppmLastDuration;
+      if (widget.ppmLastDuration != null && widget.ppmLastDuration > ppmMaxMS) ppmMaxMS = widget.ppmLastDuration;
+      if (widget.ppmLastDuration != null && widget.ppmLastDuration < ppmMinMS) ppmMinMS = widget.ppmLastDuration;
+
       return Container(
           child: Stack(children: <Widget>[
             Center(
@@ -579,6 +714,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                 },
                 child: Column(
                   children: [
+                    /// Header icon and text
                     Column(
                       children: [
                         SizedBox(height: 5,),
@@ -595,13 +731,130 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                         SizedBox(height:10),
                       ],
                     ),
+
+
+                    /// Discovered CAN IDs
+                    Center(child: Column( children: <Widget>[
+                      Text("Discovered CAN ID(s)"),
+                      SizedBox(
+                        height: 50,
+                        child: GridView.builder(
+                          primary: false,
+                          itemCount: widget.discoveredCANDevices.length,
+                          gridDelegate: new SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, childAspectRatio: 2, crossAxisSpacing: 1, mainAxisSpacing: 1),
+                          itemBuilder: (BuildContext context, int index) {
+                            bool isCANIDSelected = false;
+                            if (_selectedCANFwdID == widget.discoveredCANDevices[index]) {
+                              isCANIDSelected = true;
+                            }
+                            String invalidDevice = "";
+                            if (_invalidCANID == widget.discoveredCANDevices[index]) {
+                              invalidDevice = " (Invalid)";
+                            }
+                            return new Card(
+                              shadowColor: Colors.transparent,
+                              child: new GridTile(
+                                // GestureDetector to switch the currently selected CAN Forward ID
+                                  child: new GestureDetector(
+                                    onTap: (){
+                                      if (isCANIDSelected) {
+                                        setState(() {
+                                          // Clear CAN Forward
+                                          _selectedCANFwdID = null;
+                                          // Request primary ESC application configuration
+                                          widget.requestESCApplicationConfiguration(_selectedCANFwdID);
+                                          Scaffold
+                                              .of(context)
+                                              .showSnackBar(SnackBar(content: Text("Requesting ESC application configuration from primary ESC")));
+                                        });
+                                      } else {
+                                        if (_invalidCANID != widget.discoveredCANDevices[index]) {
+                                          setState(() {
+                                            _selectedCANFwdID = widget.discoveredCANDevices[index];
+                                            // Request APPCONF from CAN device
+                                            widget.requestESCApplicationConfiguration(_selectedCANFwdID);
+                                            Scaffold
+                                                .of(context)
+                                                .showSnackBar(SnackBar(content: Text("Requesting ESC application configuration from CAN ID $_selectedCANFwdID")));
+                                          });
+                                        }
+
+                                      }
+                                    },
+                                    child: Stack(
+                                      children: <Widget>[
+
+
+
+                                        new Center(child: Text("${widget.discoveredCANDevices[index]}${isCANIDSelected?" (Active)":""}$invalidDevice"),),
+                                        new ClipRRect(
+                                            borderRadius: new BorderRadius.circular(10),
+                                            child: new Container(
+                                              decoration: new BoxDecoration(
+                                                color: isCANIDSelected ? Theme.of(context).focusColor : Colors.transparent,
+                                              ),
+                                            )
+                                        )
+
+
+                                      ],
+                                    ),
+                                  )
+                              ),
+                            );
+                          },
+                        ),
+                      )
+                    ],)
+                    ),
+
+
+                    /// List view content
                     Expanded(
                       child: ListView(
                         padding: EdgeInsets.all(10),
                         children: <Widget>[
+
+                          Text("app mode ${widget.escAppConfiguration.app_to_use}"),
+                          Divider(thickness: 3),
+                          Text("Select a new app mode"),
+                          Center(child:
+                          DropdownButton<ListItem>(
+                            value: _selectedAppMode,
+                            items: _appModeDropdownItems,
+                            onChanged: (newValue) {
+                              setState(() {
+                                _selectedAppMode = newValue;
+                                widget.escAppConfiguration.app_to_use = app_use.values[newValue.value];
+                              });
+                            },
+                          )
+                          ),
+
                           RaisedButton(onPressed: (){
-                            genericAlert(context, "hi", Text("foo"), "kaaay");
-                          }, child: Text("hi"),)
+                            requestDecodedPPM(_selectedCANFwdID);
+                          }, child: Text("get ppm"),),
+
+                          Text("PPM Min: ${ppmMinMS / 1000000}"),
+                          Text("PPM Max: ${ppmMaxMS / 1000000}"),
+                          Text("PPM Center: ${(ppmMaxMS - ppmMinMS / 2) / 1000000}"),
+                          Text("PPM Current: ${widget.ppmLastDuration / 1000000}"),
+
+                          Text("app ppm start ${widget.escAppConfiguration.app_ppm_conf.pulse_start}"),
+                          Text("app ppm end ${widget.escAppConfiguration.app_ppm_conf.pulse_end}"),
+                          Text("app ppm center ${widget.escAppConfiguration.app_ppm_conf.pulse_center}"),
+
+                          Text("app can ${widget.escAppConfiguration.can_mode}"),
+
+                          RaisedButton(
+                              child: Text("Save to ESC${_selectedCANFwdID != null ? "/CAN $_selectedCANFwdID" : ""}"),
+                              onPressed: () {
+                                if (widget.currentDevice != null) {
+                                  //setState(() {
+                                  // Save application configuration; CAN FWD ID can be null
+                                  saveAPPCONF(_selectedCANFwdID);
+                                }
+                              }),
                         ],
                       ),
                     )
@@ -610,6 +863,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
               ),
             ),
 
+            /// Close button
             Positioned(
                 right: 0,
                 top: 0,

@@ -3,6 +3,26 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+class ListItem {
+  int value;
+  String name;
+
+  ListItem(this.value, this.name);
+}
+
+List<DropdownMenuItem<ListItem>> buildDropDownMenuItems(List listItems) {
+  List<DropdownMenuItem<ListItem>> items = List();
+  for (ListItem listItem in listItems) {
+    items.add(
+      DropdownMenuItem(
+        child: Text(listItem.name),
+        value: listItem,
+      ),
+    );
+  }
+  return items;
+}
+
 double kmToMile(double km) {
   double distance = 0.621371 * km;
   return doublePrecision(distance, 2);
