@@ -1289,20 +1289,59 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
 
                           Center(child: Column( children: <Widget>[
-                            Text("Discovered CAN ID(s)"),
+                            Text("Discovered Devices"),
                             SizedBox(
                               height: 50,
                               child: GridView.builder(
                                 primary: false,
-                                itemCount: widget.discoveredCANDevices.length,
+                                itemCount: widget.discoveredCANDevices.length + 1, //NOTE: +1 to add the Direct ESC
                                 gridDelegate: new SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, childAspectRatio: 2, crossAxisSpacing: 1, mainAxisSpacing: 1),
                                 itemBuilder: (BuildContext context, int index) {
+                                  if (index == 0) {
+                                    return new Card(
+                                      shadowColor: Colors.transparent,
+                                      child: new GridTile(
+                                        // GestureDetector to switch the currently selected CAN Forward ID
+                                          child: new GestureDetector(
+                                            onTap: (){
+                                              setState(() {
+                                                // Clear CAN Forward
+                                                _selectedCANFwdID = null;
+                                                // Request primary ESC settings
+                                                widget.onAutoloadESCSettings(true);
+                                                Scaffold
+                                                    .of(context)
+                                                    .showSnackBar(SnackBar(content: Text("Requesting ESC configuration from primary ESC")));
+                                              });
+                                            },
+                                            child: Stack(
+                                              children: <Widget>[
+
+
+
+                                                new Center(child: Text(_selectedCANFwdID == null ? "Direct (Active)" :"Direct")),
+                                                new ClipRRect(
+                                                    borderRadius: new BorderRadius.circular(10),
+                                                    child: new Container(
+                                                      decoration: new BoxDecoration(
+                                                        color: _selectedCANFwdID == null ? Theme.of(context).focusColor : Colors.transparent,
+                                                      ),
+                                                    )
+                                                )
+
+
+                                              ],
+                                            ),
+                                          )
+                                      ),
+                                    );
+                                  }
                                   bool isCANIDSelected = false;
-                                  if (_selectedCANFwdID == widget.discoveredCANDevices[index]) {
+                                  if (_selectedCANFwdID == widget.discoveredCANDevices[index-1]) {
                                     isCANIDSelected = true;
                                   }
                                   String invalidDevice = "";
-                                  if (_invalidCANID == widget.discoveredCANDevices[index]) {
+                                  if (_invalidCANID == widget.discoveredCANDevices[index-1]) {
                                     invalidDevice = " (Invalid)";
                                   }
                                   return new Card(
@@ -1322,10 +1361,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                                     .showSnackBar(SnackBar(content: Text("Requesting ESC configuration from primary ESC")));
                                               });
                                             } else {
-                                              if (_invalidCANID != widget.discoveredCANDevices[index]) {
+                                              if (_invalidCANID != widget.discoveredCANDevices[index-1]) {
                                                 //TODO: i don't know if we want to set state here or in the condition above either. needs testing
                                                 setState(() {
-                                                  _selectedCANFwdID = widget.discoveredCANDevices[index];
+                                                  _selectedCANFwdID = widget.discoveredCANDevices[index-1];
                                                   // Request MCCONF from CAN device
                                                   requestMCCONFCAN(_selectedCANFwdID);
                                                   Scaffold
@@ -1341,7 +1380,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
 
 
-                                              new Center(child: Text("${widget.discoveredCANDevices[index]}${isCANIDSelected?" (Active)":""}$invalidDevice"),),
+                                              new Center(child: Text("${widget.discoveredCANDevices[index-1]}${isCANIDSelected?" (Active)":""}$invalidDevice"),),
                                               new ClipRRect(
                                                   borderRadius: new BorderRadius.circular(10),
                                                   child: new Container(
