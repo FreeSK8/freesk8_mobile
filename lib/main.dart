@@ -1571,14 +1571,16 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_PRINT.index) {
 
-          int stringLength = bleHelper.getMessage()[1];
-          String messageFromESC = bleHelper.getMessage().sublist(
-              3, 3 + stringLength).toString();
-          //TODO: test this (send invalid app or mc conf signature). i don't think toString was the proper conversion
-          print(messageFromESC);
+          int stringLength = bleHelper.getMessage()[1] - 1;
+          String messageFromESC = new String.fromCharCodes(bleHelper.getMessage().sublist(3, 3 + stringLength));
+          genericAlert(context, "Excuse me", Text("The ESC responded with a custom message:\n\n$messageFromESC"), "OK");
+          bleHelper.resetPacket();
 
         } else if (packetID == COMM_PACKET_ID.COMM_SET_APPCONF.index) {
+
           genericAlert(context, "Success", Text("Application configuration set"), "Excellent");
+          bleHelper.resetPacket();
+
         } else {
           print("Unsupported packet ID: $packetID");
           print("Unsupported packet Message: ${bleHelper.getMessage().sublist(0,bleHelper.endMessage)}");
