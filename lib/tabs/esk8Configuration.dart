@@ -161,6 +161,14 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
   List<DropdownMenuItem<ListItem>> _ppmCtrlTypeDropdownItems;
   ListItem _selectedPPMCtrlType;
 
+  List<ListItem> _thrExpModeItems = [
+    ListItem(thr_exp_mode.THR_EXP_EXPO.index, "Exponential"),
+    ListItem(thr_exp_mode.THR_EXP_NATURAL.index, "Natural"),
+    ListItem(thr_exp_mode.THR_EXP_POLY.index, "Polynomial"),
+  ];
+  List<DropdownMenuItem<ListItem>> _thrExpModeDropdownItems;
+  ListItem _selectedThrExpMode;
+
   bool ppmCalibrate = false;
   int ppmMinMS;
   int ppmMaxMS;
@@ -244,6 +252,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     /// ESC Application Configuration
     _appModeDropdownItems = buildDropDownMenuItems(_appModeItems);
     _ppmCtrlTypeDropdownItems = buildDropDownMenuItems(_ppmCtrlTypeItems);
+    _thrExpModeDropdownItems = buildDropDownMenuItems(_thrExpModeItems);
   }
 
 
@@ -738,6 +747,15 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
         });
       }
 
+      // Select throttle exponent mode
+      if (_selectedThrExpMode == null) {
+        _thrExpModeItems.forEach((element) {
+          if (element.value == widget.escAppConfiguration.app_ppm_conf.throttle_exp_mode.index) {
+            _selectedThrExpMode = element;
+          }
+        });
+      }
+
       // Monitor PPM min and max
       ppmMinMS ??= widget.ppmLastDuration;
       ppmMaxMS ??= widget.ppmLastDuration;
@@ -785,20 +803,63 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
                     /// Discovered CAN IDs
                     Center(child: Column( children: <Widget>[
-                      Text("Discovered CAN ID(s)"),
-                      SizedBox(
+                      Text("Discovered Devices"),
+                      Container(
                         height: 50,
                         child: GridView.builder(
                           primary: false,
-                          itemCount: widget.discoveredCANDevices.length,
+                          itemCount: widget.discoveredCANDevices.length + 1, //NOTE: adding one for the direct ESC
                           gridDelegate: new SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, childAspectRatio: 2, crossAxisSpacing: 1, mainAxisSpacing: 1),
                           itemBuilder: (BuildContext context, int index) {
+                            // Direct ESC
+                            if (index == 0) {
+                              return new Card(
+                                shadowColor: Colors.transparent,
+                                child: new GridTile(
+                                  // GestureDetector to switch the currently selected CAN Forward ID
+                                    child: new GestureDetector(
+                                      onTap: (){
+                                        if (_selectedCANFwdID != null) {
+                                          setState(() {
+                                            // Clear CAN Forward
+                                            _selectedCANFwdID = null;
+                                            // Request primary ESC application configuration
+                                            widget.requestESCApplicationConfiguration(_selectedCANFwdID);
+                                            Scaffold
+                                                .of(context)
+                                                .showSnackBar(SnackBar(content: Text("Requesting ESC application configuration from primary ESC")));
+                                          });
+                                        }
+                                      },
+                                      child: Stack(
+                                        children: <Widget>[
+
+
+
+                                          new Center(child: Text(_selectedCANFwdID == null ? "Direct (Active)" :"Direct"),),
+                                          new ClipRRect(
+                                              borderRadius: new BorderRadius.circular(10),
+                                              child: new Container(
+                                                decoration: new BoxDecoration(
+                                                  color: _selectedCANFwdID == null ? Theme.of(context).focusColor : Colors.transparent,
+                                                ),
+                                              )
+                                          )
+
+
+                                        ],
+                                      ),
+                                    )
+                                ),
+                              );
+                            }
+                            // CAN IDs
                             bool isCANIDSelected = false;
-                            if (_selectedCANFwdID == widget.discoveredCANDevices[index]) {
+                            if (_selectedCANFwdID == widget.discoveredCANDevices[index-1]) {
                               isCANIDSelected = true;
                             }
                             String invalidDevice = "";
-                            if (_invalidCANID == widget.discoveredCANDevices[index]) {
+                            if (_invalidCANID == widget.discoveredCANDevices[index-1]) {
                               invalidDevice = " (Invalid)";
                             }
                             return new Card(
@@ -818,8 +879,8 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                               .showSnackBar(SnackBar(content: Text("Requesting ESC application configuration from primary ESC")));
                                         });
                                       } else {
-                                        if (_invalidCANID != widget.discoveredCANDevices[index]) {
-                                          _selectedCANFwdID = widget.discoveredCANDevices[index];
+                                        if (_invalidCANID != widget.discoveredCANDevices[index-1]) {
+                                          _selectedCANFwdID = widget.discoveredCANDevices[index-1];
                                           // Request APPCONF from CAN device
                                           widget.requestESCApplicationConfiguration(_selectedCANFwdID);
                                           Scaffold
@@ -834,7 +895,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
 
 
-                                        new Center(child: Text("${widget.discoveredCANDevices[index]}${isCANIDSelected?" (Active)":""}$invalidDevice"),),
+                                        new Center(child: Text("ID ${widget.discoveredCANDevices[index-1]}${isCANIDSelected?" (Active)":""}$invalidDevice"),),
                                         new ClipRRect(
                                             borderRadius: new BorderRadius.circular(10),
                                             child: new Container(
@@ -851,7 +912,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               ),
                             );
                           },
-                        ),
+                        )
                       )
                     ],)
                     ),
@@ -960,7 +1021,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                           Text(""),
                           Text("median filter ${widget.escAppConfiguration.app_ppm_conf.median_filter}"),
                           Text("safe start ${widget.escAppConfiguration.app_ppm_conf.safe_start}"),
-                          Text("Positive Ramping Time: ${widget.escAppConfiguration.app_ppm_conf.ramp_time_pos} seconds (0.2 = default)"),
+                          Text("Positive Ramping Time: ${doublePrecision(widget.escAppConfiguration.app_ppm_conf.ramp_time_pos,2)} seconds (0.4 = default)"),
                           Slider(
                             value: widget.escAppConfiguration.app_ppm_conf.ramp_time_pos,
                             min: 0.01,
@@ -974,7 +1035,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                             },
                           ),
                           //Text("ramp time pos ${widget.escAppConfiguration.app_ppm_conf.ramp_time_pos}"),
-                          Text("Negative Ramping Time: ${widget.escAppConfiguration.app_ppm_conf.ramp_time_neg} seconds (0.2 = default)"),
+                          Text("Negative Ramping Time: ${doublePrecision(widget.escAppConfiguration.app_ppm_conf.ramp_time_neg,2)} seconds (0.2 = default)"),
                           Slider(
                             value: widget.escAppConfiguration.app_ppm_conf.ramp_time_neg,
                             min: 0.01,
@@ -993,21 +1054,35 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                           Text("smart rev max duty ${widget.escAppConfiguration.app_ppm_conf.smart_rev_max_duty}"),
                           Text("smart rev ramp time ${widget.escAppConfiguration.app_ppm_conf.smart_rev_ramp_time}"),
 
-                          Text("throttle exp mode ${widget.escAppConfiguration.app_ppm_conf.throttle_exp_mode}"),
+                          //Text("throttle exp mode ${widget.escAppConfiguration.app_ppm_conf.throttle_exp_mode}"),
+                          Text("Select Throttle Exponential Mode"),
+                          Center(child:
+                          DropdownButton<ListItem>(
+                            value: _selectedThrExpMode,
+                            items: _thrExpModeDropdownItems,
+                            onChanged: (newValue) {
+                              setState(() {
+                                _selectedThrExpMode = newValue;
+                                widget.escAppConfiguration.app_ppm_conf.throttle_exp_mode = thr_exp_mode.values[newValue.value];
+                              });
+                            },
+                          )
+                          ),
                           Container(
                             height: 100,
                             child: CustomPaint(
                               painter: CurvePainter(
                                   width: 100,
                                   exp: widget.escAppConfiguration.app_ppm_conf.throttle_exp,
-                                  expNegative: widget.escAppConfiguration.app_ppm_conf.throttle_exp_brake
+                                  expNegative: widget.escAppConfiguration.app_ppm_conf.throttle_exp_brake,
+                                  expMode: widget.escAppConfiguration.app_ppm_conf.throttle_exp_mode,
                               ),
                             ),
                           ),
                           Slider(
                             value: widget.escAppConfiguration.app_ppm_conf.throttle_exp,
-                            min: -0.25,
-                            max: 0.25,
+                            min: -5,
+                            max: 5,
                             divisions: 100,
                             label: "${widget.escAppConfiguration.app_ppm_conf.throttle_exp}",
                             onChanged: (value) {
@@ -1019,8 +1094,8 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                           Text("throttle exp ${widget.escAppConfiguration.app_ppm_conf.throttle_exp}"),
                           Slider(
                             value: widget.escAppConfiguration.app_ppm_conf.throttle_exp_brake,
-                            min: -0.25,
-                            max: 0.25,
+                            min: -5,
+                            max: 5,
                             divisions: 100,
                             label: "${widget.escAppConfiguration.app_ppm_conf.throttle_exp_brake}",
                             onChanged: (value) {
