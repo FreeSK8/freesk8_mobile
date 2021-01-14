@@ -23,14 +23,14 @@ class CurvePainter extends CustomPainter {
     var paint = Paint();
     paint.color = Colors.green[800];
     paint.style = PaintingStyle.stroke;
-    paint.strokeWidth = 2.0;
+    paint.strokeWidth = 4.0;
 
     var path = Path();
 
     List<double> x = new List();
     List<double> y = new List();
     for (double i = -1.0;i < 1.0001;i += 0.002) {
-      x.add((i + 1) * _paintWidth);
+      x.add(i * _paintWidth);
       double val = throttle_curve(i, _exponent, _exponentNegative, _exponentMode);
       y.add(size.height - ((val + 1) * size.height/2));
     }
@@ -71,13 +71,13 @@ class CurvePainter extends CustomPainter {
 
     // See
     // http://math.stackexchange.com/questions/297768/how-would-i-create-a-exponential-ramp-function-from-0-0-to-1-1-with-a-single-val
-    if (mode == thr_exp_mode.THR_EXP_NATURAL) { // Power
+    if (mode == thr_exp_mode.THR_EXP_EXPO) { // Power
       if (curve >= 0.0) {
         ret = 1.0 - pow(1.0 - val_a, 1.0 + curve);
       } else {
         ret = pow(val_a, 1.0 - curve);
       }
-    } else if (mode == thr_exp_mode.THR_EXP_EXPO) { // Exponential
+    } else if (mode == thr_exp_mode.THR_EXP_NATURAL) { // Exponential
       if (curve.abs() < 1e-10) {
         ret = val_a;
       } else {

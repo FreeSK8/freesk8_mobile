@@ -1068,17 +1068,19 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                             },
                           )
                           ),
-                          Container(
+                          Center(child: Container(
                             height: 100,
                             child: CustomPaint(
                               painter: CurvePainter(
-                                  width: 100,
-                                  exp: widget.escAppConfiguration.app_ppm_conf.throttle_exp,
-                                  expNegative: widget.escAppConfiguration.app_ppm_conf.throttle_exp_brake,
-                                  expMode: widget.escAppConfiguration.app_ppm_conf.throttle_exp_mode,
+                                width: 100,
+                                exp: widget.escAppConfiguration.app_ppm_conf.throttle_exp,
+                                expNegative: widget.escAppConfiguration.app_ppm_conf.throttle_exp_brake,
+                                expMode: widget.escAppConfiguration.app_ppm_conf.throttle_exp_mode,
                               ),
                             ),
+                          )
                           ),
+                          Text("Throttle Exponent ${widget.escAppConfiguration.app_ppm_conf.throttle_exp}"),
                           Slider(
                             value: widget.escAppConfiguration.app_ppm_conf.throttle_exp,
                             min: -5,
@@ -1091,7 +1093,8 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               });
                             },
                           ),
-                          Text("throttle exp ${widget.escAppConfiguration.app_ppm_conf.throttle_exp}"),
+
+                          Text("Throttle Exponent Brake ${widget.escAppConfiguration.app_ppm_conf.throttle_exp_brake}"),
                           Slider(
                             value: widget.escAppConfiguration.app_ppm_conf.throttle_exp_brake,
                             min: -5,
@@ -1104,7 +1107,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               });
                             },
                           ),
-                          Text("throttle exp brake ${widget.escAppConfiguration.app_ppm_conf.throttle_exp_brake}"),
+
 
                           SwitchListTile(
                             title: Text("Enable Traction Control"),
@@ -1113,7 +1116,19 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                             secondary: const Icon(Icons.compare_arrows),
                           ),
                           //Text("traction control ${widget.escAppConfiguration.app_ppm_conf.tc}"),
-                          Text("traction control diff ${widget.escAppConfiguration.app_ppm_conf.tc_max_diff}"),
+                          Text("Traction Control ERPM ${widget.escAppConfiguration.app_ppm_conf.tc_max_diff} (3000 = default)"),
+                          Slider(
+                            value: widget.escAppConfiguration.app_ppm_conf.tc_max_diff,
+                            min: 1.0,
+                            max: 9999.0,
+                            divisions: 1000,
+                            label: "${widget.escAppConfiguration.app_ppm_conf.tc_max_diff}",
+                            onChanged: (value) {
+                              setState(() {
+                                widget.escAppConfiguration.app_ppm_conf.tc_max_diff = value.toInt().toDouble();
+                              });
+                            },
+                          ),
 
 
                           Divider(thickness: 3),
