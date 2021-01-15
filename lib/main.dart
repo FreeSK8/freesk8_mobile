@@ -1921,6 +1921,30 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         },
       ),
 
+      Divider(height: 5, thickness: 2),
+      ListTile(
+        leading: Icon(Icons.settings_applications_outlined),
+        title: Text("Input Configuration"),
+        onTap: () {
+          // Don't write if not connected
+          if (the_tx_characteristic != null) {
+            _showESCApplicationConfigurator = true;
+            requestAPPCONF(null);
+            Navigator.of(context).pop();
+          } else {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text("No Connection"),
+                  content: Text("Oops. Try connecting to your board first."),
+                );
+              },
+            );
+          }
+        },
+      ),
+
       ListTile(
         leading: Icon(Icons.settings_applications),
         title: Text(_showESCConfigurator ? "Hide ESC Configurator" : "Show ESC Configurator"),
@@ -2056,28 +2080,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         },
       ),
 
-      ListTile(
-        leading: Icon(Icons.bug_report_outlined),
-        title: Text("App Conf Debug"),
-        onTap: () {
-          // Don't write if not connected
-          if (the_tx_characteristic != null) {
-            _showESCApplicationConfigurator = true;
-            requestAPPCONF(null);
-            Navigator.of(context).pop();
-          } else {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text("No Connection"),
-                  content: Text("Oops. Try connecting to your board first."),
-                );
-              },
-            );
-          }
-        },
-      ),
     ];
 
     return Drawer(

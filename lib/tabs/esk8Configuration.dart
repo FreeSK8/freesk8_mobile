@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -150,12 +151,12 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     ListItem(ppm_control_type.PPM_CTRL_TYPE_NONE.index, "None"),
     ListItem(ppm_control_type.PPM_CTRL_TYPE_CURRENT.index, "Current"),
     ListItem(ppm_control_type.PPM_CTRL_TYPE_CURRENT_NOREV.index, "Current No Reverse"),
-    ListItem(ppm_control_type.PPM_CTRL_TYPE_CURRENT_NOREV_BRAKE.index, "Current No Reverse Brake"),
-    ListItem(ppm_control_type.PPM_CTRL_TYPE_DUTY.index, "Duty"),
-    ListItem(ppm_control_type.PPM_CTRL_TYPE_DUTY_NOREV.index, "Duty No Reverse"),
-    ListItem(ppm_control_type.PPM_CTRL_TYPE_PID.index, "PID"),
-    ListItem(ppm_control_type.PPM_CTRL_TYPE_PID_NOREV.index, "PID No Reverse"),
-    ListItem(ppm_control_type.PPM_CTRL_TYPE_CURRENT_BRAKE_REV_HYST.index, "Current Brake Reverse Hysteresis"),
+    ListItem(ppm_control_type.PPM_CTRL_TYPE_CURRENT_NOREV_BRAKE.index, "Current No Reverse with Brake"),
+    ListItem(ppm_control_type.PPM_CTRL_TYPE_DUTY.index, "Duty Cycle"),
+    ListItem(ppm_control_type.PPM_CTRL_TYPE_DUTY_NOREV.index, "Duty Cycle No Reverse"),
+    ListItem(ppm_control_type.PPM_CTRL_TYPE_PID.index, "PID Speed Control"),
+    ListItem(ppm_control_type.PPM_CTRL_TYPE_PID_NOREV.index, "PID Speed Control No Reverse"),
+    ListItem(ppm_control_type.PPM_CTRL_TYPE_CURRENT_BRAKE_REV_HYST.index, "Current Hysteresis Reverse with Brake"),
     ListItem(ppm_control_type.PPM_CTRL_TYPE_CURRENT_SMART_REV.index, "Current Smart Reverse"),
   ];
   List<DropdownMenuItem<ListItem>> _ppmCtrlTypeDropdownItems;
@@ -169,7 +170,9 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
   List<DropdownMenuItem<ListItem>> _thrExpModeDropdownItems;
   ListItem _selectedThrExpMode;
 
+  static Timer ppmCalibrateTimer;
   bool ppmCalibrate = false;
+  ppm_control_type ppmCalibrateControlTypeToRestore;
   int ppmMinMS;
   int ppmMaxMS;
   RangeValues _rangeSliderDiscreteValues = const RangeValues(1.5, 1.6);
@@ -288,6 +291,13 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     tecCurrentMinScale.dispose();
     tecCurrentMaxScale.dispose();
     tecDutyStart.dispose();
+
+    // Stop ppm calibration timer if it's somehow left behind
+    if (ppmCalibrateTimer != null) {
+      //TODO: should we alert a user when this happens? maaayyyybe
+      ppmCalibrateTimer?.cancel();
+      ppmCalibrateTimer = null;
+    }
   }
 
   void setMCCONFTemp(bool persistentChange, ESCProfile escProfile) {
@@ -505,6 +515,11 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
 
   void requestDecodedPPM(int optionalCANID) {
+    // Do nothing if we are busy writing to the ESC
+    if (_writeESCInProgress) {
+      return;
+    }
+
     bool sendCAN = optionalCANID != null;
     var byteData = new ByteData(sendCAN ? 8:6);
     byteData.setUint8(0, 0x02);
@@ -524,7 +539,22 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       print("COMM_GET_MCCONF: Exception: $e");
     });
   }
-  
+
+  // Start and stop PPM streaming timer
+  void startStopPPMTimer(bool disableTimer) {
+    if (!disableTimer){
+      print("Start PPM timer");
+      const duration = const Duration(milliseconds:100);
+      ppmCalibrateTimer = new Timer.periodic(duration, (Timer t) => requestDecodedPPM(_selectedCANFwdID));
+    } else {
+      print("Cancel PPM timer");
+      if (ppmCalibrateTimer != null) {
+        ppmCalibrateTimer?.cancel();
+        ppmCalibrateTimer = null;
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     print("Build: ESK8Configuration");
@@ -766,12 +796,6 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
         _rangeSliderDiscreteValues = RangeValues(ppmMinMS / 1000000, ppmMaxMS / 1000000);
       }
 
-      if (ppmCalibrate) {
-        Future.delayed(Duration(milliseconds: 100), (){
-          requestDecodedPPM(_selectedCANFwdID);
-        });
-      }
-
       return Container(
           child: Stack(children: <Widget>[
             Center(
@@ -793,10 +817,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                             size: 80.0,
                             color: Colors.blue,
                           ),
-                          Text("ESC\nApplication\nConfigurator", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
+                          Text("Input\nConfiguration", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
                         ],),
 
-                        SizedBox(height:10),
+                        SizedBox(height:5),
                       ],
                     ),
 
@@ -819,24 +843,26 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                   // GestureDetector to switch the currently selected CAN Forward ID
                                     child: new GestureDetector(
                                       onTap: (){
-                                        if (_selectedCANFwdID != null) {
-                                          setState(() {
-                                            // Clear CAN Forward
-                                            _selectedCANFwdID = null;
-                                            // Request primary ESC application configuration
-                                            widget.requestESCApplicationConfiguration(_selectedCANFwdID);
-                                            Scaffold
-                                                .of(context)
-                                                .showSnackBar(SnackBar(content: Text("Requesting ESC application configuration from primary ESC")));
-                                          });
-                                        }
+                                        setState(() {
+                                          // Clear selections
+                                          _selectedPPMCtrlType = null;
+                                          _selectedThrExpMode = null;
+                                          _selectedAppMode = null;
+                                          // Clear CAN Forward
+                                          _selectedCANFwdID = null;
+                                          // Request primary ESC application configuration
+                                          widget.requestESCApplicationConfiguration(_selectedCANFwdID);
+                                          Scaffold
+                                              .of(context)
+                                              .showSnackBar(SnackBar(content: Text("Requesting ESC application configuration from primary ESC")));
+                                        });
                                       },
                                       child: Stack(
                                         children: <Widget>[
 
 
 
-                                          new Center(child: Text(_selectedCANFwdID == null ? "Direct (Active)" :"Direct"),),
+                                          new Center(child: Text(_selectedCANFwdID == null ? "Direct (Active)" :"Direct", style: TextStyle(fontSize: 12)),),
                                           new ClipRRect(
                                               borderRadius: new BorderRadius.circular(10),
                                               child: new Container(
@@ -895,7 +921,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
 
 
-                                        new Center(child: Text("ID ${widget.discoveredCANDevices[index-1]}${isCANIDSelected?" (Active)":""}$invalidDevice"),),
+                                        new Center(child: Text("ID ${widget.discoveredCANDevices[index-1]}${isCANIDSelected?" (Active)":""}$invalidDevice", style: TextStyle(fontSize: 12)),),
                                         new ClipRRect(
                                             borderRadius: new BorderRadius.circular(10),
                                             child: new Container(
@@ -946,13 +972,48 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                           Text("Calibrate PPM"),
 
                           RaisedButton(onPressed: (){
+                            // If we are not currently calibrating...
                             if (!ppmCalibrate) {
-                              ppmMinMS = 1500000;
-                              ppmMaxMS = 1500000;
+                              // Clear the captured values when starting calibration
+                              ppmMinMS = 1400000;
+                              ppmMaxMS = 1600000;
+                              // Capture the current PPM control type to restore when finished
+                              ppmCalibrateControlTypeToRestore = widget.escAppConfiguration.app_ppm_conf.ctrl_type;
+                              // Set the control type to none or the ESC will go WILD
+                              widget.escAppConfiguration.app_ppm_conf.ctrl_type = ppm_control_type.PPM_CTRL_TYPE_NONE;
+                              _selectedPPMCtrlType = null; // Clear selection
+                              // Apply the configuration to the ESC
+                              if (widget.currentDevice != null) {
+                                // Save application configuration; CAN FWD ID can be null
+                                saveAPPCONF(_selectedCANFwdID);
+                              }
+                              // Start calibration routine
+                              setState(() {
+                                ppmCalibrate = true;
+                                startStopPPMTimer(false);
+                              });
+                            } else {
+                              // Stop calibration routine
+                              setState(() {
+                                ppmCalibrate = false;
+                                startStopPPMTimer(true);
+                              });
+                              // Allow the PPM timer to stop and then restore the user's PPM mode
+                              Future.delayed(Duration(milliseconds: 200), (){
+                                // Restore the user's PPM control type
+                                setState(() {
+                                  widget.escAppConfiguration.app_ppm_conf.ctrl_type = ppmCalibrateControlTypeToRestore;
+                                  _selectedPPMCtrlType = null; // Clear selection
+                                  // Apply the configuration to the ESC
+                                  if (widget.currentDevice != null) {
+                                    // Save application configuration; CAN FWD ID can be null
+                                    saveAPPCONF(_selectedCANFwdID);
+                                  }
+                                });
+
+                              });
                             }
-                            setState(() {
-                              ppmCalibrate = !ppmCalibrate;
-                            });
+
                           }, child: Text(ppmCalibrate ? "Stop Calibration" : "Calibrate PPM"),),
 
                           Stack(children: [
@@ -989,17 +1050,17 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                             TableRow(children: [
                               Text("Start"),
                               Text("${ppmMinMS != null ? ppmMinMS / 1000000 : ""}"),
-                              Text("${widget.escAppConfiguration.app_ppm_conf.pulse_start}")
+                              Text("${doublePrecision(widget.escAppConfiguration.app_ppm_conf.pulse_start, 3)}")
                             ]),
                             TableRow(children: [
                               Text("Center"),
                               Text("${widget.ppmLastDuration != null ? widget.ppmLastDuration / 1000000 : ""}"),
-                              Text("${widget.escAppConfiguration.app_ppm_conf.pulse_center}")
+                              Text("${doublePrecision(widget.escAppConfiguration.app_ppm_conf.pulse_center, 3)}")
                             ]),
                             TableRow(children: [
                               Text("End"),
                               Text("${ppmMaxMS != null ? ppmMaxMS / 1000000 : ""}"),
-                              Text("${widget.escAppConfiguration.app_ppm_conf.pulse_end}")
+                              Text("${doublePrecision(widget.escAppConfiguration.app_ppm_conf.pulse_end, 3)}")
                             ]),
                           ],),
                           RaisedButton(onPressed: (){
@@ -1034,6 +1095,20 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               });
                             },
                           )
+                          ),
+
+                          Text("Input deadband: ${(widget.escAppConfiguration.app_ppm_conf.hyst * 100.0).toInt()}% (15% = default)"),
+                          Slider(
+                            value: widget.escAppConfiguration.app_ppm_conf.hyst,
+                            min: 0.01,
+                            max: 0.35,
+                            divisions: 100,
+                            label: "${(widget.escAppConfiguration.app_ppm_conf.hyst * 100.0).toInt()}%",
+                            onChanged: (value) {
+                              setState(() {
+                                widget.escAppConfiguration.app_ppm_conf.hyst = doublePrecision(value, 2);
+                              });
+                            },
                           ),
 
                           SwitchListTile(
@@ -1254,6 +1329,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                   widget.escAppConfiguration.app_ppm_conf.throttle_exp_brake = 0.0;
                                   widget.escAppConfiguration.app_ppm_conf.tc = false;
                                   widget.escAppConfiguration.app_ppm_conf.tc_max_diff = 3000.0;
+                                  widget.escAppConfiguration.app_ppm_conf.hyst = 0.15;
                                 });
                               }),
                         ],
@@ -1444,7 +1520,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
 
 
-                                                new Center(child: Text(_selectedCANFwdID == null ? "Direct (Active)" :"Direct")),
+                                                new Center(child: Text(_selectedCANFwdID == null ? "Direct (Active)" :"Direct", style: TextStyle(fontSize: 12))),
                                                 new ClipRRect(
                                                     borderRadius: new BorderRadius.circular(10),
                                                     child: new Container(
@@ -1505,7 +1581,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
 
 
-                                              new Center(child: Text("${widget.discoveredCANDevices[index-1]}${isCANIDSelected?" (Active)":""}$invalidDevice"),),
+                                              new Center(child: Text("${widget.discoveredCANDevices[index-1]}${isCANIDSelected?" (Active)":""}$invalidDevice", style: TextStyle(fontSize: 12)),),
                                               new ClipRRect(
                                                   borderRadius: new BorderRadius.circular(10),
                                                   child: new Container(
@@ -1986,7 +2062,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                     size: 80.0,
                     color: Colors.blue,
                   ),
-                  Text("Application\nConfiguration", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
+                  Text("FreeSK8\nConfiguration", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
                 ],),
 
 
