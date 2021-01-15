@@ -37,6 +37,9 @@ class CurvePainter extends CustomPainter {
 
     List<Offset> points = new List();
     for (int i=0; i<x.length; ++i) {
+      if (x[i].isNaN || y[i].isNaN) {
+        continue;
+      }
       points.add(Offset(x[i], y[i]));
     }
     path.addPolygon(points, false);

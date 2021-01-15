@@ -921,7 +921,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                     /// List view content
                     Expanded(
                       child: ListView(
-                        padding: EdgeInsets.all(10),
+                        padding: EdgeInsets.fromLTRB(10, 0, 50, 0),
                         children: <Widget>[
 
                           Divider(thickness: 3),
@@ -938,21 +938,9 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                             },
                           )
                           ),
+                          //TODO: User control needed? Text("app can ${widget.escAppConfiguration.can_mode}"),
 
-                          Divider(thickness: 3),
-                          Text("Select PPM Control Type"),
-                          Center(child:
-                          DropdownButton<ListItem>(
-                            value: _selectedPPMCtrlType,
-                            items: _ppmCtrlTypeDropdownItems,
-                            onChanged: (newValue) {
-                              setState(() {
-                                _selectedPPMCtrlType = newValue;
-                                widget.escAppConfiguration.app_ppm_conf.ctrl_type = ppm_control_type.values[newValue.value];
-                              });
-                            },
-                          )
-                          ),
+
 
                           Divider(thickness: 3),
                           Text("Calibrate PPM"),
@@ -992,11 +980,38 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                           ],),
 
 
-                          Text("Calibrate PPM Min: ${ppmMinMS != null ? ppmMinMS / 1000000 : ""}"),
-                          Text("Calibrate PPM Max: ${ppmMaxMS != null ? ppmMaxMS / 1000000 : ""}"),
-                          Text("Calibrate PPM Current: ${widget.ppmLastDuration != null ? widget.ppmLastDuration / 1000000 : ""}"),
+                          Table(children: [
+                            TableRow(children: [
+                              Text(""),
+                              Text("Calibrate PPM"),
+                              Text("ESC Config")
+                            ]),
+                            TableRow(children: [
+                              Text("Start"),
+                              Text("${ppmMinMS != null ? ppmMinMS / 1000000 : ""}"),
+                              Text("${widget.escAppConfiguration.app_ppm_conf.pulse_start}")
+                            ]),
+                            TableRow(children: [
+                              Text("Center"),
+                              Text("${widget.ppmLastDuration != null ? widget.ppmLastDuration / 1000000 : ""}"),
+                              Text("${widget.escAppConfiguration.app_ppm_conf.pulse_center}")
+                            ]),
+                            TableRow(children: [
+                              Text("End"),
+                              Text("${ppmMaxMS != null ? ppmMaxMS / 1000000 : ""}"),
+                              Text("${widget.escAppConfiguration.app_ppm_conf.pulse_end}")
+                            ]),
+                          ],),
                           RaisedButton(onPressed: (){
                             setState(() {
+                              // Set control type to VESC based ESC default if currently none
+                              if (widget.escAppConfiguration.app_ppm_conf.ctrl_type == ppm_control_type.PPM_CTRL_TYPE_NONE) {
+                                widget.escAppConfiguration.app_ppm_conf.ctrl_type = ppm_control_type.PPM_CTRL_TYPE_CURRENT_NOREV_BRAKE;
+                                _selectedPPMCtrlType = null;
+                              }
+                              // Disable calibration if still running
+                              ppmCalibrate = false;
+                              // Set values from calibration
                               widget.escAppConfiguration.app_ppm_conf.pulse_start = ppmMinMS / 1000000;
                               widget.escAppConfiguration.app_ppm_conf.pulse_center = widget.ppmLastDuration / 1000000;
                               widget.escAppConfiguration.app_ppm_conf.pulse_end = ppmMaxMS / 1000000;
@@ -1004,23 +1019,35 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                           },
                           child: Text("Apply Calibration"),),
 
-                          Divider(thickness: 3),
-                          Text("Application Configuration"),
-                          Text("${widget.escAppConfiguration.app_to_use}"),
-                          Text("app can ${widget.escAppConfiguration.can_mode}"),
 
 
                           Divider(thickness: 3),
-                          Text("PPM Configuration"),
-                          Text(""),
-                          Text("${widget.escAppConfiguration.app_ppm_conf.ctrl_type}"),
-                          Text("multi esc ${widget.escAppConfiguration.app_ppm_conf.multi_esc}"),
-                          Text("pulse start ${widget.escAppConfiguration.app_ppm_conf.pulse_start}"),
-                          Text("pulse end ${widget.escAppConfiguration.app_ppm_conf.pulse_end}"),
-                          Text("pulse center ${widget.escAppConfiguration.app_ppm_conf.pulse_center}"),
-                          Text(""),
-                          Text("median filter ${widget.escAppConfiguration.app_ppm_conf.median_filter}"),
-                          Text("safe start ${widget.escAppConfiguration.app_ppm_conf.safe_start}"),
+                          Text("Select PPM Control Type"),
+                          Center(child:
+                          DropdownButton<ListItem>(
+                            value: _selectedPPMCtrlType,
+                            items: _ppmCtrlTypeDropdownItems,
+                            onChanged: (newValue) {
+                              setState(() {
+                                _selectedPPMCtrlType = newValue;
+                                widget.escAppConfiguration.app_ppm_conf.ctrl_type = ppm_control_type.values[newValue.value];
+                              });
+                            },
+                          )
+                          ),
+
+                          SwitchListTile(
+                            title: Text("Median Filter (default = on)"),
+                            value: widget.escAppConfiguration.app_ppm_conf.median_filter,
+                            onChanged: (bool newValue) { setState((){ widget.escAppConfiguration.app_ppm_conf.median_filter = newValue;}); },
+                            secondary: const Icon(Icons.filter_tilt_shift),
+                          ),
+                          SwitchListTile(
+                            title: Text("Safe Start (default = on)"),
+                            value: widget.escAppConfiguration.app_ppm_conf.safe_start,
+                            onChanged: (bool newValue) { setState((){ widget.escAppConfiguration.app_ppm_conf.safe_start = newValue;}); },
+                            secondary: const Icon(Icons.not_started),
+                          ),
                           Text("Positive Ramping Time: ${doublePrecision(widget.escAppConfiguration.app_ppm_conf.ramp_time_pos,2)} seconds (0.4 = default)"),
                           Slider(
                             value: widget.escAppConfiguration.app_ppm_conf.ramp_time_pos,
@@ -1049,10 +1076,58 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                             },
                           ),
                           //Text("ramp time neg ${widget.escAppConfiguration.app_ppm_conf.ramp_time_neg}"),
-                          Text("pid max erpm ${widget.escAppConfiguration.app_ppm_conf.pid_max_erpm}"),
-                          Text("dir max erpm ${widget.escAppConfiguration.app_ppm_conf.max_erpm_for_dir}"),
-                          Text("smart rev max duty ${widget.escAppConfiguration.app_ppm_conf.smart_rev_max_duty}"),
-                          Text("smart rev ramp time ${widget.escAppConfiguration.app_ppm_conf.smart_rev_ramp_time}"),
+                          Text("PID Max ERPM ${widget.escAppConfiguration.app_ppm_conf.pid_max_erpm} (15000 = default)"),
+                          Slider(
+                            value: widget.escAppConfiguration.app_ppm_conf.pid_max_erpm,
+                            min: 10000.0,
+                            max: 30000.0,
+                            divisions: 100,
+                            label: "${widget.escAppConfiguration.app_ppm_conf.pid_max_erpm}",
+                            onChanged: (value) {
+                              setState(() {
+                                widget.escAppConfiguration.app_ppm_conf.pid_max_erpm = value.toInt().toDouble();
+                              });
+                            },
+                          ),
+                          Text("Max ERPM for direction switch ${widget.escAppConfiguration.app_ppm_conf.max_erpm_for_dir} (4000 = default)"),
+                          Slider(
+                            value: widget.escAppConfiguration.app_ppm_conf.max_erpm_for_dir,
+                            min: 1000.0,
+                            max: 8000.0,
+                            divisions: 700,
+                            label: "${widget.escAppConfiguration.app_ppm_conf.max_erpm_for_dir}",
+                            onChanged: (value) {
+                              setState(() {
+                                widget.escAppConfiguration.app_ppm_conf.max_erpm_for_dir = value.toInt().toDouble();
+                              });
+                            },
+                          ),
+                          Text("Smart Reverse Max Duty Cycle ${doublePrecision(widget.escAppConfiguration.app_ppm_conf.smart_rev_max_duty,2)} (0.07 = default)"),
+                          Slider(
+                            value: widget.escAppConfiguration.app_ppm_conf.smart_rev_max_duty,
+                            min: 0,
+                            max: 1,
+                            divisions: 100,
+                            label: "${widget.escAppConfiguration.app_ppm_conf.smart_rev_max_duty}",
+                            onChanged: (value) {
+                              setState(() {
+                                widget.escAppConfiguration.app_ppm_conf.smart_rev_max_duty = doublePrecision(value, 2);
+                              });
+                            },
+                          ),
+                          Text("Smart Reverse Ramp Time ${widget.escAppConfiguration.app_ppm_conf.smart_rev_ramp_time} seconds (3.0 = default)"),
+                          Slider(
+                            value: widget.escAppConfiguration.app_ppm_conf.smart_rev_ramp_time,
+                            min: 1,
+                            max: 10,
+                            divisions: 1000,
+                            label: "${widget.escAppConfiguration.app_ppm_conf.smart_rev_ramp_time}",
+                            onChanged: (value) {
+                              setState(() {
+                                widget.escAppConfiguration.app_ppm_conf.smart_rev_ramp_time = doublePrecision(value, 2);
+                              });
+                            },
+                          ),
 
                           //Text("throttle exp mode ${widget.escAppConfiguration.app_ppm_conf.throttle_exp_mode}"),
                           Text("Select Throttle Exponential Mode"),
@@ -1119,8 +1194,8 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                           Text("Traction Control ERPM ${widget.escAppConfiguration.app_ppm_conf.tc_max_diff} (3000 = default)"),
                           Slider(
                             value: widget.escAppConfiguration.app_ppm_conf.tc_max_diff,
-                            min: 1.0,
-                            max: 9999.0,
+                            min: 1000.0,
+                            max: 5000.0,
                             divisions: 1000,
                             label: "${widget.escAppConfiguration.app_ppm_conf.tc_max_diff}",
                             onChanged: (value) {
@@ -1131,9 +1206,11 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                           ),
 
 
-                          Divider(thickness: 3),
-                          Text("ADC Configuration:"),
-                          Text("app adc ctrl type ${widget.escAppConfiguration.app_adc_conf.ctrl_type}"),
+                          //TODO: Allow user control? Text("multi esc ${widget.escAppConfiguration.app_ppm_conf.multi_esc} (uh this needs to be true)"),
+
+                          //Divider(thickness: 3),
+                          //Text("ADC Configuration:"),
+                          //Text("app adc ctrl type ${widget.escAppConfiguration.app_adc_conf.ctrl_type}"),
 
 
 
@@ -1145,6 +1222,39 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                   // Save application configuration; CAN FWD ID can be null
                                   saveAPPCONF(_selectedCANFwdID);
                                 }
+                              }),
+
+                          RaisedButton(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                Icon(Icons.warning_amber_outlined),
+                                Text("Set ALL to default")
+                              ],),
+                              onPressed: () {
+                                setState(() {
+                                  widget.escAppConfiguration.app_to_use = app_use.APP_PPM_UART;
+                                  _selectedAppMode = null;
+                                  widget.escAppConfiguration.app_ppm_conf.pulse_start = 1.0;
+                                  widget.escAppConfiguration.app_ppm_conf.pulse_end = 2.0;
+                                  widget.escAppConfiguration.app_ppm_conf.pulse_center = 1.5;
+                                  widget.escAppConfiguration.app_ppm_conf.ctrl_type = ppm_control_type.PPM_CTRL_TYPE_NONE;
+                                  _selectedPPMCtrlType = null;
+                                  widget.escAppConfiguration.app_ppm_conf.median_filter = true;
+                                  widget.escAppConfiguration.app_ppm_conf.safe_start = true;
+                                  widget.escAppConfiguration.app_ppm_conf.ramp_time_pos = 0.4;
+                                  widget.escAppConfiguration.app_ppm_conf.ramp_time_neg = 0.2;
+                                  widget.escAppConfiguration.app_ppm_conf.pid_max_erpm = 15000.0;
+                                  widget.escAppConfiguration.app_ppm_conf.max_erpm_for_dir = 4000.0;
+                                  widget.escAppConfiguration.app_ppm_conf.smart_rev_max_duty = 0.07;
+                                  widget.escAppConfiguration.app_ppm_conf.smart_rev_ramp_time = 3.0;
+                                  widget.escAppConfiguration.app_ppm_conf.throttle_exp_mode = thr_exp_mode.THR_EXP_POLY;
+                                  _selectedThrExpMode = null;
+                                  widget.escAppConfiguration.app_ppm_conf.throttle_exp = 0.0;
+                                  widget.escAppConfiguration.app_ppm_conf.throttle_exp_brake = 0.0;
+                                  widget.escAppConfiguration.app_ppm_conf.tc = false;
+                                  widget.escAppConfiguration.app_ppm_conf.tc_max_diff = 3000.0;
+                                });
                               }),
                         ],
                       ),
