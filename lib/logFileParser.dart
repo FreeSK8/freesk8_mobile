@@ -55,8 +55,6 @@ class LogFileParser {
     await convertedFile.writeAsString('');
 
     // Write header contents
-    convertedFile.writeAsStringSync("header,version,1\n", mode: FileMode.append);
-    //0 = dt, 1 = type, 2 = first value
     convertedFile.writeAsStringSync("header,format_esc,esc_id,voltage,motor_temp,esc_temp,duty_cycle,motor_current,battery_current,watt_hours,watt_hours_regen,e_rpm,e_distance,fault\n", mode: FileMode.append);
     convertedFile.writeAsStringSync("header,format_gps,satellites,altitude,speed,latitude,longitude\n", mode: FileMode.append);
     convertedFile.writeAsStringSync("header,format_err,fault_name,fault_code,esc_id\n", mode: FileMode.append);
@@ -88,6 +86,18 @@ class LogFileParser {
           case LOG_MSG_TYPES.DEBUG:
             break;
           case LOG_MSG_TYPES.HEADER:
+            int logFileVersion = buffer_get_uint16(bytes, i, Endian.little); i+=2;
+            int logMultiESCMode = bytes[i++];
+            int logFileHz = bytes[i++];
+
+            if (bytes[i] == PacketEnd) {
+              // Store log file header data from Robogotchi
+              parsedResults += "header,version,$logFileVersion\n";
+              parsedResults += "header,multi_esc_mode,$logMultiESCMode\n";
+              parsedResults += "header,esc_hz,$logFileHz\n";
+            } else {
+              print("logFileParser::parseFile: Unexpected byte at end of packet: bytes[$i] = ${bytes[i]}");
+            }
             break;
           case LOG_MSG_TYPES.ESC:
             //print("Parsing ESC LOG entry");
