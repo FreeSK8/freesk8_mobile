@@ -974,7 +974,8 @@ class RideLogViewerState extends State<RideLogViewer> {
                       primaryMeasureAxis: new charts.NumericAxisSpec(
                           tickProviderSpec: new charts.BasicNumericTickProviderSpec(zeroBound: false)),
 
-                      //NOTE: Customizing the domainAxis tickFormatterSpec causes PanAndZoomBehavior to stop working, WHY?
+                      //TODO: Customizing the domainAxis tickFormatterSpec causes PanAndZoomBehavior to stop working, WHY?
+                      /*
                       domainAxis: new charts.DateTimeAxisSpec(
                           tickFormatterSpec: new charts.AutoDateTimeTickFormatterSpec(
                             minute: new charts.TimeFormatterSpec(
@@ -983,12 +984,17 @@ class RideLogViewerState extends State<RideLogViewer> {
                             ),
                           )
                       ),
+                      */
 
                       behaviors: [
                         //TODO: "PanAndZoomBehavior()" causes "Exception caught by gesture" : "Bad state: No element" but works
                         //TODO: charts.PointRenderer() line 255. Add: if (!componentBounds.containsPoint(point)) continue;
                         //TODO: https://github.com/janstol/charts/commit/899476a06875422aafde82376cdf57ba0c2e65a5
-                        //NOTE: disabled due to lack of optimization: new charts.PanAndZoomBehavior(),
+                        //NOTE: disabled due to poor performance: new charts.PanAndZoomBehavior(),
+                        new charts.SlidingViewport(),
+                        new charts.PanAndZoomBehavior(),
+                        new charts.PanBehavior(),
+
                         new charts.SeriesLegend(
                             desiredMaxColumns:3,
                             position: charts.BehaviorPosition.bottom,
@@ -1009,7 +1015,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                                 eventObservable.add(currentSelection);
                                 eventObservable.publish();
                                 // Set the map center to this position in time
-                                if (gpsLatLngMap.length > 0) {
+                                if (gpsLatLngMap.length > 0 && _mapController != null) {
                                   _mapController.move(selectNearestGPSPoint(model.selectedDatum.first.datum.time, gpsLatLngMap), _mapController.zoom);
                                 }
                               }
