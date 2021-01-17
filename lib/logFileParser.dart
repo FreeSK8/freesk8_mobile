@@ -79,6 +79,10 @@ class LogFileParser {
         LOG_MSG_TYPES msgType = LOG_MSG_TYPES.values[msgTypeByte];
         int messageLength = bytes[i++]; // Increment i after we read
         //print("message length $messageLength @ byte ${i-1}");
+        if (i+messageLength > bytes.length) {
+          print("logFileParser::parseFile: reached EOF early: Index ${i+messageLength} but bytes.length is only ${bytes.length}");
+          continue;
+        }
         if (bytes[i+messageLength] != PacketEnd) {
           print("logFileParser::parseFile: Unexpected byte at end of message: bytes[${i+messageLength}] = ${bytes[i+messageLength]}");
         }
