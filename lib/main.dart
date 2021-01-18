@@ -535,7 +535,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                             //TODO: Update status of connection
                             //TODO: https://stackoverflow.com/questions/51962272/how-to-refresh-an-alertdialog-in-flutter
                             Text("Establishing connection..."),
-                            Text("(tap to cancel)", style: TextStyle(fontSize: 10))
+                            Text("(tap to abort)", style: TextStyle(fontSize: 10))
                           ]),
                         ),
                       )
@@ -555,7 +555,34 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         });
 
         await setupConnectedDeviceStreamListener();
-        //NOTE: removing once we have all our init messages //Navigator.of(context).pop(); // Remove attempting connection dialog
+        Navigator.of(context).pop(); // Remove attempting connection dialog
+
+        // Display communicating with ESC dialog
+        showDialog<void>(
+            context: context,
+            barrierDismissible: false,
+            builder: (BuildContext context) {
+              return new WillPopScope(
+                  onWillPop: () async => false,
+                  child: SimpleDialog(
+                      backgroundColor: Colors.black54,
+                      children: <Widget>[
+                        Center(
+                          child: GestureDetector(
+                            onLongPress: () async {
+                              Navigator.of(context).pop(); // Remove communicating with ESC dialog
+                            },
+                            child: Column(children: [
+                              Icon(Icons.bluetooth_searching, size: 80,color: Colors.green),
+                              SizedBox(height: 10,),
+                              Text("Connected"),
+                              Text("Communicating with ESC"),
+                              Text("(please wait)", style: TextStyle(fontSize: 10))
+                            ]),
+                          ),
+                        )
+                      ]));
+            });
       }
     } catch (e) {
       Navigator.of(context).pop(); // Remove attempting connection dialog
@@ -952,6 +979,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           String savedFilePath = await FileManager.saveLogToDocuments(filename: catCurrentFilename);
           {
             /// Analyze log to generate database statistics
+            Map<int, double> wattHoursStartByESC = new Map();
+            Map<int, double> wattHoursEndByESC = new Map();
+            Map<int, double> wattHoursRegenStartByESC = new Map();
+            Map<int, double> wattHoursRegenEndByESC = new Map();
             double maxCurrentBattery = 0.0;
             double maxCurrentMotor = 0.0;
             int faultCodeCount = 0;
@@ -999,7 +1030,14 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                     //TODO: Compute max speed!
                     //TODO: Compute average speed!
                     //TODO: Compute Distance!
-                    //TODO: Add consumption calculation
+                    //TODO: Capture consumption per ESC
+                    int escID = int.parse(entry[2]);
+                    double wattHours = double.parse(entry[9]);
+                    double wattHoursRegen = double.parse(entry[10]);
+                    wattHoursStartByESC[escID] ??= wattHours;
+                    wattHoursEndByESC[escID] = wattHours;
+                    wattHoursRegenStartByESC[escID] ??= wattHoursRegen;
+                    wattHoursRegenEndByESC[escID] = wattHoursRegen;
                   }
                   ///Fault codes
                   else if (entry[1] == "err") {
@@ -1007,6 +1045,21 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   }
                 }
               }
+
+              /// Compute consumption
+              double wattHours = 0;
+              double wattHoursRegen = 0;
+              wattHoursStartByESC.forEach((key, value) {
+                print("ESC ID $key consumed ${wattHoursEndByESC[key] - value} watt hours");
+                wattHours += wattHoursEndByESC[key] - value;
+              });
+              wattHoursRegenStartByESC.forEach((key, value) {
+                print("ESC ID $key regenerated ${wattHoursRegenEndByESC[key] - value} watt hours");
+                wattHoursRegen += wattHoursRegenEndByESC[key] - value;
+              });
+              print(wattHoursStartByESC);
+              print(wattHoursEndByESC);
+              print("Consumption calculation: Watt Hours Total $wattHours Regenerated Total $wattHoursRegen");
 
               /// Insert record into database
               if (lastEntryTime != null && firstEntryTime != null) {
@@ -1020,6 +1073,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                     elevationChange: maxElevation != null ? maxElevation - minElevation : -1.0,
                     maxAmpsBattery: maxCurrentBattery,
                     maxAmpsMotors: maxCurrentMotor,
+                    wattHoursTotal: wattHours,
+                    wattHoursRegenTotal: wattHoursRegen,
                     distance: -1.0,
                     durationSeconds: lastEntryTime.difference(firstEntryTime).inSeconds,
                     faultCount: faultCodeCount,
@@ -1559,8 +1614,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_GET_DECODED_PPM.index) {
 
-          print("Unsupported packet Message: ${bleHelper.getMessage().sublist(
-              0, bleHelper.endMessage)}");
           int valueNow = escHelper.buffer_get_int32(bleHelper.getPayload(), 1);
           int msNow = escHelper.buffer_get_int32(bleHelper.getPayload(), 5);
           print(
@@ -1658,7 +1711,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       }
     } else {
       // Init complete
-      Navigator.of(context).pop(); // Remove attempting connection dialog
+      // If user forces dialog to close and ESC actually responds don't pop the main view
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop(); // Remove communicating with ESC dialog
+      }
+
       print("##################################################################### initMsgSequencer is complete! Great success!");
 
       // Check if this is a known device when we connected/loaded it's settings
@@ -2271,7 +2328,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     return Scaffold(
         // Appbar
         appBar: AppBar(
-            title: Text("FreeSK8 ($freeSK8ApplicationVersion.$counter)"),
+            title: Text("FreeSK8 ($freeSK8ApplicationVersion.$counter.preview)"),
             // Set the background color of the App Bar
             backgroundColor: Theme.of(context).primaryColor,
             // Set the bottom property of the Appbar to include a Tab Bar
