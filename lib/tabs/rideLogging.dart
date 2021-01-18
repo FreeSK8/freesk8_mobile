@@ -411,6 +411,14 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                     _listFiles(true);
                   },
                 ),
+                IconButton(
+                  icon: Icon(Icons.battery_charging_full),
+                  tooltip: 'Sort by Power Used',
+                  onPressed: () {
+                    orderByClause = "watt_hours DESC, id DESC";
+                    _listFiles(true);
+                  },
+                ),
               ],
             ),
 
