@@ -30,7 +30,10 @@ class FileSyncViewerState extends State<FileSyncViewer> {
   static int bytesReceivedLastSecond;
   static DateTime bytesReceivedLastUpdated;
   static String bytesReceivedLastFile;
-  static double estimatedSecondsRemaining;
+  static double estimatedSecondsRemaining; //NOTE: for current file
+
+  static double totalSecondsRemaining;
+  static int totalBytesRemaining;
 
   FileSyncViewerArguments myArguments;
   double syncIconAngle = 0.0;
@@ -66,6 +69,13 @@ class FileSyncViewerState extends State<FileSyncViewer> {
       zeChildren.add(Text("Checking file list..."));
     }
 
+    // Compute total bytes remaining
+    totalBytesRemaining = 0;
+    widget.syncStatus.fileList.forEach((element) {
+      totalBytesRemaining += element.fileSize;
+    });
+    totalBytesRemaining -= widget.syncStatus.fileBytesReceived;
+
     // Estimate sync time remaining
     if (bytesReceivedLastFile != widget.syncStatus.fileName) {
       bytesReceivedLastFile = widget.syncStatus.fileName;
@@ -85,12 +95,13 @@ class FileSyncViewerState extends State<FileSyncViewer> {
         if (bytesPerSecond == 0) {
           bytesPerSecond = byesLastSecond / secondsElapsed;
         }
-        bytesPerSecond = bytesPerSecond * 0.8 + (byesLastSecond / secondsElapsed) * 0.2;
+        bytesPerSecond = bytesPerSecond * 0.7 + (byesLastSecond / secondsElapsed) * 0.3;
 
         estimatedSecondsRemaining = (widget.syncStatus.fileBytesTotal - widget.syncStatus.fileBytesReceived) / bytesPerSecond;
+        totalSecondsRemaining = totalBytesRemaining / bytesPerSecond;
       }
       if (bytesPerSecond > 0 && widget.syncStatus.fileList.length > 0) {
-        zeChildren.add(Text("Estimated time remaining: ${estimatedSecondsRemaining.toInt()} ${estimatedSecondsRemaining.toInt() == 1 ? "second" : "seconds"}"));
+        zeChildren.add(Text("Estimated time remaining: ${estimatedSecondsRemaining.toInt()} ${estimatedSecondsRemaining.toInt() == 1 ? "second" : "seconds"} / ${totalSecondsRemaining.toInt()} seconds"));
       } else {
         zeChildren.add(Text("Estimated time remaining: Calculating..."));
       }
