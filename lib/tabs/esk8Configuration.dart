@@ -791,7 +791,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       ppmMaxMS ??= widget.ppmLastDuration;
       if (widget.ppmLastDuration != null && widget.ppmLastDuration != 0.0 && widget.ppmLastDuration > ppmMaxMS) ppmMaxMS = widget.ppmLastDuration;
       if (widget.ppmLastDuration != null && widget.ppmLastDuration != 0.0 && widget.ppmLastDuration < ppmMinMS) ppmMinMS = widget.ppmLastDuration;
-
+print(ppmMinMS);
       if (ppmMinMS != null && ppmMaxMS != null) {
         _rangeSliderDiscreteValues = RangeValues(ppmMinMS / 1000000, ppmMaxMS / 1000000);
       }
@@ -975,8 +975,8 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                             // If we are not currently calibrating...
                             if (!ppmCalibrate) {
                               // Clear the captured values when starting calibration
-                              ppmMinMS = 1400000;
-                              ppmMaxMS = 1600000;
+                              ppmMinMS = null;
+                              ppmMaxMS = null;
                               // Capture the current PPM control type to restore when finished
                               ppmCalibrateControlTypeToRestore = widget.escAppConfiguration.app_ppm_conf.ctrl_type;
                               // Set the control type to none or the ESC will go WILD
@@ -1027,7 +1027,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               ),
                               onChanged: (values) {},
                             ),
-                            widget.ppmLastDuration != null ? SliderTheme(
+                            widget.ppmLastDuration != null && widget.ppmLastDuration != 0.0 ? SliderTheme(
                                 data: SliderTheme.of(context).copyWith(
                                   thumbColor: Colors.redAccent,
                                 ),
