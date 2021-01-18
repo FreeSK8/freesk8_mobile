@@ -13,6 +13,8 @@ class LogInfoItem {
   final double elevationChange;
   final double maxAmpsBattery;
   final double maxAmpsMotors;
+  final double wattHoursTotal;
+  final double wattHoursRegenTotal;
   final double distance;
   final int    durationSeconds;
   final int    faultCount;
@@ -29,6 +31,8 @@ class LogInfoItem {
     this.elevationChange,
     this.maxAmpsBattery,
     this.maxAmpsMotors,
+    this.wattHoursTotal,
+    this.wattHoursRegenTotal,
     this.distance,
     this.durationSeconds,
     this.faultCount,
@@ -49,6 +53,8 @@ class LogInfoItem {
       'elevation_change' : elevationChange,
       'max_amps_battery' : maxAmpsBattery,
       'max_amps_motors' : maxAmpsMotors,
+      'watt_hours' : wattHoursTotal,
+      'watt_hours_regen' : wattHoursRegenTotal,
       'distance_km' : distance,
       'duration_seconds' : durationSeconds,
       'fault_count' : faultCount,
@@ -67,6 +73,7 @@ class DatabaseAssistant {
       '', //Version 2 not released
       '', //Version 3 initial beta release with onCreate
       'ALTER TABLE logs ADD COLUMN date_time INTEGER;', //Version 4 adds the ride time to schema for calendar view
+      'ALTER TABLE logs ADD COLUMN watt_hours REAL;&&ALTER TABLE logs ADD COLUMN watt_hours_regen REAL;' //Version 5 adds watt_hours and watt_hours_regen
     ]; // Migration sql scripts
 
     return openDatabase(
@@ -88,6 +95,8 @@ class DatabaseAssistant {
               "elevation_change REAL, "
               "max_amps_battery REAL, "
               "max_amps_motors REAL, "
+              "watt_hours REAL, "
+              "watt_hours_regen REAL, "
               "distance_km REAL, "
               "duration_seconds REAL, "
               "fault_count INTEGER, "
@@ -112,7 +121,11 @@ class DatabaseAssistant {
       onUpgrade: (Database db, int oldVersion, int newVersion) async {
         print("DatabaseAssistant: getDatabase: openDatabase: onUpgrade(): oldVersion $oldVersion -> newVersion $newVersion");
         for (var i = oldVersion; i < newVersion; ++i) {
-          await db.execute(migrationScripts[i]);
+          // Split migration script because you cannot execute multiple commands in one line =(
+          List<String> migrationScriptCommands = migrationScripts[i].split("&&");
+          migrationScriptCommands.forEach((element) async {
+            await db.execute(element);
+          });
 
           // Post process after SQL modifications
           switch(i) {
@@ -125,11 +138,15 @@ class DatabaseAssistant {
                 await db.execute('UPDATE logs SET date_time = ${thisDt.millisecondsSinceEpoch / 1000} WHERE id = ${element['id']};');
               });
               break;
+            case 4:
+              print("onUpgrade adding watt_hours, watt_hours_regen default values to existing records");
+              await db.execute('UPDATE logs SET watt_hours = -1.0, watt_hours_regen = -1.0;');
+              break;
           }
         }
       },
       // Set the version. This executes the onCreate function and provides a path to perform database upgrades and downgrades.
-      version: 4,
+      version: 5,
     );
   }
 
