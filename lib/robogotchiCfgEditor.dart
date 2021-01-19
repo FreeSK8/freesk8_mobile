@@ -310,12 +310,14 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                       )
                   ),
 
+                  /* TODO: enable when implemented
                   SwitchListTile(
                     title: Text("Log Auto Erase When Full"),
                     value: _logAutoEraseWhenFull,
                     onChanged: (bool newValue) { setState((){ _logAutoEraseWhenFull = newValue;}); },
                     secondary: const Icon(Icons.delete_forever),
                   ),
+                   */
 
 
                   Divider(thickness: 3),
