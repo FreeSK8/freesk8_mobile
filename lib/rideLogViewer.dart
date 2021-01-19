@@ -755,7 +755,14 @@ class RideLogViewerState extends State<RideLogViewer> {
       ));
     }
 
-    print("${myArguments.logFileInfo.wattHoursTotal} ${myArguments.logFileInfo.wattHoursRegenTotal} ${distanceEndPrimary} ${distanceStartPrimary} ${myArguments.userSettings.settings.useImperial}");
+    /// Compute consumption
+    print("${myArguments.logFileInfo.wattHoursTotal} ${myArguments.logFileInfo.wattHoursRegenTotal} $distanceEndPrimary $distanceStartPrimary ${myArguments.userSettings.settings.useImperial}");
+    double consumption = (myArguments.logFileInfo.wattHoursTotal - myArguments.logFileInfo.wattHoursRegenTotal) / (distanceEndPrimary - distanceStartPrimary);
+    if (consumption.isNaN || consumption.isInfinite) {
+      consumption = 0;
+    }
+    consumption = doublePrecision(consumption, 2);
+
     ///Build Widget
     return Scaffold(
       appBar: AppBar(
@@ -811,7 +818,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                   myArguments.logFileInfo.wattHoursTotal != -1.0 && distanceEndPrimary != null ? Column(children: <Widget>[
                     Text("Wh"),
                     Icon(Icons.local_gas_station),
-                    Text("${doublePrecision((myArguments.logFileInfo.wattHoursTotal - myArguments.logFileInfo.wattHoursRegenTotal) / (distanceEndPrimary - distanceStartPrimary), 2)} Wh/${myArguments.userSettings.settings.useImperial ? "mile" : "km"}")
+                    Text("$consumption Wh/${myArguments.userSettings.settings.useImperial ? "mile" : "km"}")
                   ],) : Container(),
                   Column(children: <Widget>[
                     Text("Max Amps"),
@@ -919,7 +926,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                         fileSummary += "\nAvg Speed: $avgSpeed";
                         fileSummary += "\nDistance: $distance";
                         if (myArguments.logFileInfo.wattHoursTotal != -1.0 && distanceEndPrimary != null) {
-                          fileSummary += "\nConsumption: ${doublePrecision((myArguments.logFileInfo.wattHoursTotal - myArguments.logFileInfo.wattHoursRegenTotal) / (distanceEndPrimary - distanceStartPrimary), 2)} Wh/${myArguments.userSettings.settings.useImperial ? "mile" : "km"}";
+                          fileSummary += "\nConsumption: $consumption Wh/${myArguments.userSettings.settings.useImperial ? "mile" : "km"}";
                           fileSummary += "\nWatt Hours: ${myArguments.logFileInfo.wattHoursTotal}";
                           fileSummary += "\nWatt Hours Regen: ${myArguments.logFileInfo.wattHoursRegenTotal}";
                         }
