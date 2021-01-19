@@ -740,6 +740,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static Timer _initMsgSequencer;
   static int bleTXErrorCount = 0;
   static bool _deviceIsRobogotchi = false;
+  static bool _isPPMCalibrating;
 
   //TODO: some logger vars that need to be in their own class
   static String loggerTestBuffer = "";
@@ -1631,7 +1632,16 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
         } else if (packetID == COMM_PACKET_ID.COMM_SET_APPCONF.index) {
 
-          genericAlert(context, "Success", Text("Application configuration set"), "Excellent");
+          if (_isPPMCalibrating != null && _isPPMCalibrating) {
+            genericAlert(context, "Calibration", Text("Begin calibration\nMove input to full brake, full throttle then leave in the center\n\nPlease ensure the wheels are off the ground in case something goes wrong. This is beta after all!"), "OK");
+            _isPPMCalibrating = null;
+          } else if (_isPPMCalibrating != null && !_isPPMCalibrating) {
+            genericAlert(context, "Calibration", Text("Calibration Complete\n\nIf you are satisfied with the results tap 'Apply Calibration' followed by 'Save to ESC' to commit."), "OK");
+            _isPPMCalibrating = null;
+          } else {
+            genericAlert(context, "Success", Text("Application configuration set"), "Excellent");
+          }
+
           bleHelper.resetPacket();
 
         } else {
@@ -2287,6 +2297,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     print("Setting smart BMS CAN FWD ID to $smartBMSCANID");
   }
 
+  void notifyStopStartPPMCalibrate(bool starting) {
+    // Set flag to change dialogs displayed when performing PPM calibration
+    _isPPMCalibrating = starting;
+  }
+
   @override
   Widget build(BuildContext context) {
     if(syncInProgress && syncAdvanceProgress){
@@ -2376,6 +2391,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             closeESCApplicationConfigurator: closeESCAppConfFunc,
             requestESCApplicationConfiguration: requestAPPCONF,
             ppmLastDuration: ppmLastDuration,
+            notifyStopStartPPMCalibrate: notifyStopStartPPMCalibrate,
           ),
           RideLogging(
               myUserSettings: widget.myUserSettings,

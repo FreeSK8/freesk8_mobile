@@ -38,6 +38,7 @@ class ESK8Configuration extends StatefulWidget {
     this.closeESCApplicationConfigurator,
     this.ppmLastDuration,
     this.requestESCApplicationConfiguration,
+    this.notifyStopStartPPMCalibrate
   });
   final UserSettings myUserSettings;
   final BluetoothDevice currentDevice;
@@ -56,6 +57,7 @@ class ESK8Configuration extends StatefulWidget {
   final ValueChanged<bool> closeESCApplicationConfigurator;
   final int ppmLastDuration;
   final ValueChanged<int> requestESCApplicationConfiguration;
+  final ValueChanged<bool> notifyStopStartPPMCalibrate;
 
   ESK8ConfigurationState createState() => new ESK8ConfigurationState();
 
@@ -176,6 +178,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
   int ppmMinMS;
   int ppmMaxMS;
   RangeValues _rangeSliderDiscreteValues = const RangeValues(1.5, 1.6);
+  bool showAdvancedOptions = false;
 
   @override
   void initState() {
@@ -791,7 +794,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       ppmMaxMS ??= widget.ppmLastDuration;
       if (widget.ppmLastDuration != null && widget.ppmLastDuration != 0.0 && widget.ppmLastDuration > ppmMaxMS) ppmMaxMS = widget.ppmLastDuration;
       if (widget.ppmLastDuration != null && widget.ppmLastDuration != 0.0 && widget.ppmLastDuration < ppmMinMS) ppmMinMS = widget.ppmLastDuration;
-print(ppmMinMS);
+
       if (ppmMinMS != null && ppmMaxMS != null) {
         _rangeSliderDiscreteValues = RangeValues(ppmMinMS / 1000000, ppmMaxMS / 1000000);
       }
@@ -989,12 +992,14 @@ print(ppmMinMS);
                               }
                               // Start calibration routine
                               setState(() {
+                                widget.notifyStopStartPPMCalibrate(true);
                                 ppmCalibrate = true;
                                 startStopPPMTimer(false);
                               });
                             } else {
                               // Stop calibration routine
                               setState(() {
+                                widget.notifyStopStartPPMCalibrate(false);
                                 ppmCalibrate = false;
                                 startStopPPMTimer(true);
                               });
@@ -1064,19 +1069,21 @@ print(ppmMinMS);
                             ]),
                           ],),
                           RaisedButton(onPressed: (){
-                            setState(() {
-                              // Set control type to VESC based ESC default if currently none
-                              if (widget.escAppConfiguration.app_ppm_conf.ctrl_type == ppm_control_type.PPM_CTRL_TYPE_NONE) {
-                                widget.escAppConfiguration.app_ppm_conf.ctrl_type = ppm_control_type.PPM_CTRL_TYPE_CURRENT_NOREV_BRAKE;
-                                _selectedPPMCtrlType = null;
-                              }
-                              // Disable calibration if still running
-                              ppmCalibrate = false;
-                              // Set values from calibration
-                              widget.escAppConfiguration.app_ppm_conf.pulse_start = ppmMinMS / 1000000;
-                              widget.escAppConfiguration.app_ppm_conf.pulse_center = widget.ppmLastDuration / 1000000;
-                              widget.escAppConfiguration.app_ppm_conf.pulse_end = ppmMaxMS / 1000000;
-                            });
+                            if (!ppmCalibrate) {
+                              setState(() {
+                                // Set control type to VESC based ESC default if currently none
+                                if (widget.escAppConfiguration.app_ppm_conf.ctrl_type == ppm_control_type.PPM_CTRL_TYPE_NONE) {
+                                  widget.escAppConfiguration.app_ppm_conf.ctrl_type = ppm_control_type.PPM_CTRL_TYPE_CURRENT_NOREV_BRAKE;
+                                  _selectedPPMCtrlType = null;
+                                }
+                                // Disable calibration if still running
+                                ppmCalibrate = false;
+                                // Set values from calibration
+                                widget.escAppConfiguration.app_ppm_conf.pulse_start = ppmMinMS / 1000000;
+                                widget.escAppConfiguration.app_ppm_conf.pulse_center = widget.ppmLastDuration / 1000000;
+                                widget.escAppConfiguration.app_ppm_conf.pulse_end = ppmMaxMS / 1000000;
+                              });
+                            }
                           },
                           child: Text("Apply Calibration"),),
 
@@ -1111,177 +1118,188 @@ print(ppmMinMS);
                             },
                           ),
 
-                          SwitchListTile(
-                            title: Text("Median Filter (default = on)"),
-                            value: widget.escAppConfiguration.app_ppm_conf.median_filter,
-                            onChanged: (bool newValue) { setState((){ widget.escAppConfiguration.app_ppm_conf.median_filter = newValue;}); },
-                            secondary: const Icon(Icons.filter_tilt_shift),
-                          ),
-                          SwitchListTile(
-                            title: Text("Safe Start (default = on)"),
-                            value: widget.escAppConfiguration.app_ppm_conf.safe_start,
-                            onChanged: (bool newValue) { setState((){ widget.escAppConfiguration.app_ppm_conf.safe_start = newValue;}); },
-                            secondary: const Icon(Icons.not_started),
-                          ),
-                          Text("Positive Ramping Time: ${doublePrecision(widget.escAppConfiguration.app_ppm_conf.ramp_time_pos,2)} seconds (0.4 = default)"),
-                          Slider(
-                            value: widget.escAppConfiguration.app_ppm_conf.ramp_time_pos,
-                            min: 0.01,
-                            max: 0.5,
-                            divisions: 100,
-                            label: "${widget.escAppConfiguration.app_ppm_conf.ramp_time_pos} seconds",
-                            onChanged: (value) {
-                              setState(() {
-                                widget.escAppConfiguration.app_ppm_conf.ramp_time_pos = doublePrecision(value, 2);
-                              });
-                            },
-                          ),
-                          //Text("ramp time pos ${widget.escAppConfiguration.app_ppm_conf.ramp_time_pos}"),
-                          Text("Negative Ramping Time: ${doublePrecision(widget.escAppConfiguration.app_ppm_conf.ramp_time_neg,2)} seconds (0.2 = default)"),
-                          Slider(
-                            value: widget.escAppConfiguration.app_ppm_conf.ramp_time_neg,
-                            min: 0.01,
-                            max: 0.5,
-                            divisions: 100,
-                            label: "${widget.escAppConfiguration.app_ppm_conf.ramp_time_neg} seconds",
-                            onChanged: (value) {
-                              setState(() {
-                                widget.escAppConfiguration.app_ppm_conf.ramp_time_neg = doublePrecision(value, 2);
-                              });
-                            },
-                          ),
-                          //Text("ramp time neg ${widget.escAppConfiguration.app_ppm_conf.ramp_time_neg}"),
-                          Text("PID Max ERPM ${widget.escAppConfiguration.app_ppm_conf.pid_max_erpm} (15000 = default)"),
-                          Slider(
-                            value: widget.escAppConfiguration.app_ppm_conf.pid_max_erpm,
-                            min: 10000.0,
-                            max: 30000.0,
-                            divisions: 100,
-                            label: "${widget.escAppConfiguration.app_ppm_conf.pid_max_erpm}",
-                            onChanged: (value) {
-                              setState(() {
-                                widget.escAppConfiguration.app_ppm_conf.pid_max_erpm = value.toInt().toDouble();
-                              });
-                            },
-                          ),
-                          Text("Max ERPM for direction switch ${widget.escAppConfiguration.app_ppm_conf.max_erpm_for_dir} (4000 = default)"),
-                          Slider(
-                            value: widget.escAppConfiguration.app_ppm_conf.max_erpm_for_dir,
-                            min: 1000.0,
-                            max: 8000.0,
-                            divisions: 700,
-                            label: "${widget.escAppConfiguration.app_ppm_conf.max_erpm_for_dir}",
-                            onChanged: (value) {
-                              setState(() {
-                                widget.escAppConfiguration.app_ppm_conf.max_erpm_for_dir = value.toInt().toDouble();
-                              });
-                            },
-                          ),
-                          Text("Smart Reverse Max Duty Cycle ${doublePrecision(widget.escAppConfiguration.app_ppm_conf.smart_rev_max_duty,2)} (0.07 = default)"),
-                          Slider(
-                            value: widget.escAppConfiguration.app_ppm_conf.smart_rev_max_duty,
-                            min: 0,
-                            max: 1,
-                            divisions: 100,
-                            label: "${widget.escAppConfiguration.app_ppm_conf.smart_rev_max_duty}",
-                            onChanged: (value) {
-                              setState(() {
-                                widget.escAppConfiguration.app_ppm_conf.smart_rev_max_duty = doublePrecision(value, 2);
-                              });
-                            },
-                          ),
-                          Text("Smart Reverse Ramp Time ${widget.escAppConfiguration.app_ppm_conf.smart_rev_ramp_time} seconds (3.0 = default)"),
-                          Slider(
-                            value: widget.escAppConfiguration.app_ppm_conf.smart_rev_ramp_time,
-                            min: 1,
-                            max: 10,
-                            divisions: 1000,
-                            label: "${widget.escAppConfiguration.app_ppm_conf.smart_rev_ramp_time}",
-                            onChanged: (value) {
-                              setState(() {
-                                widget.escAppConfiguration.app_ppm_conf.smart_rev_ramp_time = doublePrecision(value, 2);
-                              });
-                            },
-                          ),
+                          RaisedButton(onPressed: (){
+                            setState(() {
+                              showAdvancedOptions = !showAdvancedOptions;
+                            });
+                          },
+                          child: Text("${showAdvancedOptions?"Hide":"Show"} Advanced Options"),),
 
-                          //Text("throttle exp mode ${widget.escAppConfiguration.app_ppm_conf.throttle_exp_mode}"),
-                          Text("Select Throttle Exponential Mode"),
-                          Center(child:
-                          DropdownButton<ListItem>(
-                            value: _selectedThrExpMode,
-                            items: _thrExpModeDropdownItems,
-                            onChanged: (newValue) {
-                              setState(() {
-                                _selectedThrExpMode = newValue;
-                                widget.escAppConfiguration.app_ppm_conf.throttle_exp_mode = thr_exp_mode.values[newValue.value];
-                              });
-                            },
-                          )
-                          ),
-                          Center(child: Container(
-                            height: 100,
-                            child: CustomPaint(
-                              painter: CurvePainter(
-                                width: 100,
-                                exp: widget.escAppConfiguration.app_ppm_conf.throttle_exp,
-                                expNegative: widget.escAppConfiguration.app_ppm_conf.throttle_exp_brake,
-                                expMode: widget.escAppConfiguration.app_ppm_conf.throttle_exp_mode,
-                              ),
+                          showAdvancedOptions ? Column(crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                            SwitchListTile(
+                              title: Text("Median Filter (default = on)"),
+                              value: widget.escAppConfiguration.app_ppm_conf.median_filter,
+                              onChanged: (bool newValue) { setState((){ widget.escAppConfiguration.app_ppm_conf.median_filter = newValue;}); },
+                              secondary: const Icon(Icons.filter_tilt_shift),
                             ),
-                          )
-                          ),
-                          Text("Throttle Exponent ${widget.escAppConfiguration.app_ppm_conf.throttle_exp}"),
-                          Slider(
-                            value: widget.escAppConfiguration.app_ppm_conf.throttle_exp,
-                            min: -5,
-                            max: 5,
-                            divisions: 100,
-                            label: "${widget.escAppConfiguration.app_ppm_conf.throttle_exp}",
-                            onChanged: (value) {
-                              setState(() {
-                                widget.escAppConfiguration.app_ppm_conf.throttle_exp = doublePrecision(value, 2);
-                              });
-                            },
-                          ),
+                            SwitchListTile(
+                              title: Text("Safe Start (default = on)"),
+                              value: widget.escAppConfiguration.app_ppm_conf.safe_start,
+                              onChanged: (bool newValue) { setState((){ widget.escAppConfiguration.app_ppm_conf.safe_start = newValue;}); },
+                              secondary: const Icon(Icons.not_started),
+                            ),
+                            Text("Positive Ramping Time: ${doublePrecision(widget.escAppConfiguration.app_ppm_conf.ramp_time_pos,2)} seconds (0.4 = default)"),
+                            Slider(
+                              value: widget.escAppConfiguration.app_ppm_conf.ramp_time_pos,
+                              min: 0.01,
+                              max: 0.5,
+                              divisions: 100,
+                              label: "${widget.escAppConfiguration.app_ppm_conf.ramp_time_pos} seconds",
+                              onChanged: (value) {
+                                setState(() {
+                                  widget.escAppConfiguration.app_ppm_conf.ramp_time_pos = doublePrecision(value, 2);
+                                });
+                              },
+                            ),
+                            //Text("ramp time pos ${widget.escAppConfiguration.app_ppm_conf.ramp_time_pos}"),
+                            Text("Negative Ramping Time: ${doublePrecision(widget.escAppConfiguration.app_ppm_conf.ramp_time_neg,2)} seconds (0.2 = default)"),
+                            Slider(
+                              value: widget.escAppConfiguration.app_ppm_conf.ramp_time_neg,
+                              min: 0.01,
+                              max: 0.5,
+                              divisions: 100,
+                              label: "${widget.escAppConfiguration.app_ppm_conf.ramp_time_neg} seconds",
+                              onChanged: (value) {
+                                setState(() {
+                                  widget.escAppConfiguration.app_ppm_conf.ramp_time_neg = doublePrecision(value, 2);
+                                });
+                              },
+                            ),
+                            //Text("ramp time neg ${widget.escAppConfiguration.app_ppm_conf.ramp_time_neg}"),
+                            Text("PID Max ERPM ${widget.escAppConfiguration.app_ppm_conf.pid_max_erpm} (15000 = default)"),
+                            Slider(
+                              value: widget.escAppConfiguration.app_ppm_conf.pid_max_erpm,
+                              min: 10000.0,
+                              max: 30000.0,
+                              divisions: 100,
+                              label: "${widget.escAppConfiguration.app_ppm_conf.pid_max_erpm}",
+                              onChanged: (value) {
+                                setState(() {
+                                  widget.escAppConfiguration.app_ppm_conf.pid_max_erpm = value.toInt().toDouble();
+                                });
+                              },
+                            ),
+                            Text("Max ERPM for direction switch ${widget.escAppConfiguration.app_ppm_conf.max_erpm_for_dir} (4000 = default)"),
+                            Slider(
+                              value: widget.escAppConfiguration.app_ppm_conf.max_erpm_for_dir,
+                              min: 1000.0,
+                              max: 8000.0,
+                              divisions: 700,
+                              label: "${widget.escAppConfiguration.app_ppm_conf.max_erpm_for_dir}",
+                              onChanged: (value) {
+                                setState(() {
+                                  widget.escAppConfiguration.app_ppm_conf.max_erpm_for_dir = value.toInt().toDouble();
+                                });
+                              },
+                            ),
+                            Text("Smart Reverse Max Duty Cycle ${doublePrecision(widget.escAppConfiguration.app_ppm_conf.smart_rev_max_duty,2)} (0.07 = default)"),
+                            Slider(
+                              value: widget.escAppConfiguration.app_ppm_conf.smart_rev_max_duty,
+                              min: 0,
+                              max: 1,
+                              divisions: 100,
+                              label: "${widget.escAppConfiguration.app_ppm_conf.smart_rev_max_duty}",
+                              onChanged: (value) {
+                                setState(() {
+                                  widget.escAppConfiguration.app_ppm_conf.smart_rev_max_duty = doublePrecision(value, 2);
+                                });
+                              },
+                            ),
+                            Text("Smart Reverse Ramp Time ${widget.escAppConfiguration.app_ppm_conf.smart_rev_ramp_time} seconds (3.0 = default)"),
+                            Slider(
+                              value: widget.escAppConfiguration.app_ppm_conf.smart_rev_ramp_time,
+                              min: 1,
+                              max: 10,
+                              divisions: 1000,
+                              label: "${widget.escAppConfiguration.app_ppm_conf.smart_rev_ramp_time}",
+                              onChanged: (value) {
+                                setState(() {
+                                  widget.escAppConfiguration.app_ppm_conf.smart_rev_ramp_time = doublePrecision(value, 2);
+                                });
+                              },
+                            ),
 
-                          Text("Throttle Exponent Brake ${widget.escAppConfiguration.app_ppm_conf.throttle_exp_brake}"),
-                          Slider(
-                            value: widget.escAppConfiguration.app_ppm_conf.throttle_exp_brake,
-                            min: -5,
-                            max: 5,
-                            divisions: 100,
-                            label: "${widget.escAppConfiguration.app_ppm_conf.throttle_exp_brake}",
-                            onChanged: (value) {
-                              setState(() {
-                                widget.escAppConfiguration.app_ppm_conf.throttle_exp_brake = doublePrecision(value, 2);
-                              });
-                            },
-                          ),
+                            //Text("throttle exp mode ${widget.escAppConfiguration.app_ppm_conf.throttle_exp_mode}"),
+                            Text("Select Throttle Exponential Mode"),
+                            Center(child:
+                            DropdownButton<ListItem>(
+                              value: _selectedThrExpMode,
+                              items: _thrExpModeDropdownItems,
+                              onChanged: (newValue) {
+                                setState(() {
+                                  _selectedThrExpMode = newValue;
+                                  widget.escAppConfiguration.app_ppm_conf.throttle_exp_mode = thr_exp_mode.values[newValue.value];
+                                });
+                              },
+                            )
+                            ),
+                            Center(child: Container(
+                              height: 100,
+                              child: CustomPaint(
+                                painter: CurvePainter(
+                                  width: 100,
+                                  exp: widget.escAppConfiguration.app_ppm_conf.throttle_exp,
+                                  expNegative: widget.escAppConfiguration.app_ppm_conf.throttle_exp_brake,
+                                  expMode: widget.escAppConfiguration.app_ppm_conf.throttle_exp_mode,
+                                ),
+                              ),
+                            )
+                            ),
+                            Text("Throttle Exponent ${widget.escAppConfiguration.app_ppm_conf.throttle_exp}"),
+                            Slider(
+                              value: widget.escAppConfiguration.app_ppm_conf.throttle_exp,
+                              min: -5,
+                              max: 5,
+                              divisions: 100,
+                              label: "${widget.escAppConfiguration.app_ppm_conf.throttle_exp}",
+                              onChanged: (value) {
+                                setState(() {
+                                  widget.escAppConfiguration.app_ppm_conf.throttle_exp = doublePrecision(value, 2);
+                                });
+                              },
+                            ),
+
+                            Text("Throttle Exponent Brake ${widget.escAppConfiguration.app_ppm_conf.throttle_exp_brake}"),
+                            Slider(
+                              value: widget.escAppConfiguration.app_ppm_conf.throttle_exp_brake,
+                              min: -5,
+                              max: 5,
+                              divisions: 100,
+                              label: "${widget.escAppConfiguration.app_ppm_conf.throttle_exp_brake}",
+                              onChanged: (value) {
+                                setState(() {
+                                  widget.escAppConfiguration.app_ppm_conf.throttle_exp_brake = doublePrecision(value, 2);
+                                });
+                              },
+                            ),
 
 
-                          SwitchListTile(
-                            title: Text("Enable Traction Control"),
-                            value: widget.escAppConfiguration.app_ppm_conf.tc,
-                            onChanged: (bool newValue) { setState((){ widget.escAppConfiguration.app_ppm_conf.tc = newValue;}); },
-                            secondary: const Icon(Icons.compare_arrows),
-                          ),
-                          //Text("traction control ${widget.escAppConfiguration.app_ppm_conf.tc}"),
-                          Text("Traction Control ERPM ${widget.escAppConfiguration.app_ppm_conf.tc_max_diff} (3000 = default)"),
-                          Slider(
-                            value: widget.escAppConfiguration.app_ppm_conf.tc_max_diff,
-                            min: 1000.0,
-                            max: 5000.0,
-                            divisions: 1000,
-                            label: "${widget.escAppConfiguration.app_ppm_conf.tc_max_diff}",
-                            onChanged: (value) {
-                              setState(() {
-                                widget.escAppConfiguration.app_ppm_conf.tc_max_diff = value.toInt().toDouble();
-                              });
-                            },
-                          ),
+                            SwitchListTile(
+                              title: Text("Enable Traction Control"),
+                              value: widget.escAppConfiguration.app_ppm_conf.tc,
+                              onChanged: (bool newValue) { setState((){ widget.escAppConfiguration.app_ppm_conf.tc = newValue;}); },
+                              secondary: const Icon(Icons.compare_arrows),
+                            ),
+                            //Text("traction control ${widget.escAppConfiguration.app_ppm_conf.tc}"),
+                            Text("Traction Control ERPM ${widget.escAppConfiguration.app_ppm_conf.tc_max_diff} (3000 = default)"),
+                            Slider(
+                              value: widget.escAppConfiguration.app_ppm_conf.tc_max_diff,
+                              min: 1000.0,
+                              max: 5000.0,
+                              divisions: 1000,
+                              label: "${widget.escAppConfiguration.app_ppm_conf.tc_max_diff}",
+                              onChanged: (value) {
+                                setState(() {
+                                  widget.escAppConfiguration.app_ppm_conf.tc_max_diff = value.toInt().toDouble();
+                                });
+                              },
+                            ),
 
 
-                          //TODO: Allow user control? Text("multi esc ${widget.escAppConfiguration.app_ppm_conf.multi_esc} (uh this needs to be true)"),
+                            //TODO: Allow user control? Text("multi esc ${widget.escAppConfiguration.app_ppm_conf.multi_esc} (uh this needs to be true)"),
+
+                          ],) : Container(),
 
                           //Divider(thickness: 3),
                           //Text("ADC Configuration:"),
