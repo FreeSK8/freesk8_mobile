@@ -1,7 +1,9 @@
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_blue/flutter_blue.dart';
 
 class ListItem {
   int value;
@@ -23,6 +25,18 @@ List<DropdownMenuItem<ListItem>> buildDropDownMenuItems(List listItems) {
   return items;
 }
 
+Future<void> sendBLEData(BluetoothCharacteristic txCharacteristic, Uint8List data, BluetoothDevice device) async
+{
+  dynamic errorCheck = 0;
+  while (errorCheck != null && device != null) {
+    errorCheck = null;
+    await txCharacteristic.write(data).catchError((error){
+      errorCheck = error;
+      print("sendBLEData: Exception: $errorCheck");
+    });
+  }
+}
+
 double kmToMile(double km) {
   double distance = 0.621371 * km;
   return doublePrecision(distance, 2);
@@ -30,6 +44,21 @@ double kmToMile(double km) {
 
 double mileToKm(double mile) {
   double distance = mile / 0.621371;
+  return doublePrecision(distance, 2);
+}
+
+double eRPMToKph(double eRpm, double gearRatio, int wheelDiameterMillimeters, int motorPoles) {
+  double ratio = 1.0 / gearRatio;
+  int minutesToHour = 60;
+  double ratioRpmSpeed = (ratio * minutesToHour * wheelDiameterMillimeters * pi) / ((motorPoles / 2) * 1000000);
+  double speed = eRpm * ratioRpmSpeed;
+  return doublePrecision(speed, 2);
+}
+
+double eDistanceToKm(double eCount, double gearRatio, int wheelDiameterMillimeters, int motorPoles) {
+  double ratio = 1.0 / gearRatio;
+  double ratioPulseDistance = (ratio * wheelDiameterMillimeters * pi) / ((motorPoles * 3) * 1000000);
+  double distance = eCount * ratioPulseDistance;
   return doublePrecision(distance, 2);
 }
 
