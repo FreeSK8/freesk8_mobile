@@ -252,7 +252,7 @@ class LogFileParser {
               lastGPSPacket.dt = lastGPSPacket.dt.add(Duration(seconds: deltaDt));
               lastGPSPacket.satellites += deltaSatellites;
               lastGPSPacket.altitude = doublePrecision(lastGPSPacket.altitude + deltaAltitude, 1);
-              lastGPSPacket.speed = doublePrecision(lastGPSPacket.speed - deltaSpeed, 1);
+              lastGPSPacket.speed = doublePrecision(lastGPSPacket.speed + deltaSpeed, 1);
               lastGPSPacket.latitude = doublePrecision(lastGPSPacket.latitude + deltaLatitude, 5);
               lastGPSPacket.longitude = doublePrecision(lastGPSPacket.longitude + deltaLongitude, 5);
 
