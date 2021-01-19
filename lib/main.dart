@@ -45,7 +45,7 @@ import 'package:esys_flutter_share/esys_flutter_share.dart';
 import 'databaseAssistant.dart';
 
 const String freeSK8ApplicationVersion = "0.10.0";
-const String robogotchiFirmwareExpectedVersion = "0.7.0";
+const String robogotchiFirmwareExpectedVersion = "0.7.1";
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -957,132 +957,139 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       ///CAT Command
       else if (catInProgress) {
         if (receiveStr == "cat,complete") {
-          print("Concatenate file operation complete on $catCurrentFilename with $catBytesReceived bytes");
+          String logFileContentsForDebugging = "";
+          try {
 
-          //TODO: validate file transmission. We need a proper packet definition and CRC
-          // Add successful transfer to list of files to delete during sync operation
-          fileListToDelete.add(catCurrentFilename);
+            print("Concatenate file operation complete on $catCurrentFilename with $catBytesReceived bytes");
 
-          await FileManager.writeBytesToLogFile(catBytesRaw);
-          catBytesRaw.clear();
+            //TODO: validate file transmission. We need a proper packet definition and CRC
+            // Add successful transfer to list of files to delete during sync operation
+            fileListToDelete.add(catCurrentFilename);
 
-          // Save temporary log data to final filename
-          // Then generate database statistics
-          // Then create database entry
-          // Then rebuild state and continue sync process
-          String savedFilePath = await FileManager.saveLogToDocuments(filename: catCurrentFilename);
-          {
-            /// Analyze log to generate database statistics
-            Map<int, double> wattHoursStartByESC = new Map();
-            Map<int, double> wattHoursEndByESC = new Map();
-            Map<int, double> wattHoursRegenStartByESC = new Map();
-            Map<int, double> wattHoursRegenEndByESC = new Map();
-            double maxCurrentBattery = 0.0;
-            double maxCurrentMotor = 0.0;
-            double maxSpeedKph = 0.0;
-            double avgSpeedKph = 0.0;
-            int firstESCID;
-            double distanceStart;
-            double distanceEnd;
-            double distanceTotal;
-            int faultCodeCount = 0;
-            double minElevation;
-            double maxElevation;
-            DateTime firstEntryTime;
-            DateTime lastEntryTime;
-            String logFileContents = await FileManager.openLogFile(savedFilePath);
+            // Write raw bytes from cat operation to the filesystem
+            await FileManager.writeBytesToLogFile(catBytesRaw);
+            catBytesRaw.clear();
+
+            // Save temporary log data to final filename
+            // Then generate database statistics
+            // Then create database entry
+            // Then rebuild state and continue sync process
+            String savedFilePath = await FileManager.saveLogToDocuments(filename: catCurrentFilename);
             {
-              List<String> thisRideLogEntries = logFileContents.split("\n");
-              for(int i=0; i<thisRideLogEntries.length; ++i) {
-                if(thisRideLogEntries[i] == null || thisRideLogEntries[i] == "") continue;
+              /// Analyze log to generate database statistics
+              Map<int, double> wattHoursStartByESC = new Map();
+              Map<int, double> wattHoursEndByESC = new Map();
+              Map<int, double> wattHoursRegenStartByESC = new Map();
+              Map<int, double> wattHoursRegenEndByESC = new Map();
+              double maxCurrentBattery = 0.0;
+              double maxCurrentMotor = 0.0;
+              double maxSpeedKph = 0.0;
+              double avgSpeedKph = 0.0;
+              int firstESCID;
+              double distanceStart;
+              double distanceEnd;
+              double distanceTotal;
+              int faultCodeCount = 0;
+              double minElevation;
+              double maxElevation;
+              DateTime firstEntryTime;
+              DateTime lastEntryTime;
+              String logFileContents = await FileManager.openLogFile(savedFilePath);
+              logFileContentsForDebugging = logFileContents;
+              {
+                List<String> thisRideLogEntries = logFileContents.split("\n");
+                for(int i=0; i<thisRideLogEntries.length; ++i) {
+                  if(thisRideLogEntries[i] == null || thisRideLogEntries[i] == "") continue;
 //print("uhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh parsing: ${thisRideLogEntries[i]}");
-                final entry = thisRideLogEntries[i].split(",");
+                  final entry = thisRideLogEntries[i].split(",");
 
-                if(entry.length > 1 && entry[0] != "header"){ // entry[0] = Time, entry[1] = Data type
-                  ///GPS position entry
-                  if(entry[1] == "gps" && entry.length >= 7) {
-                    //dt,gps,satellites,altitude,speed,latitude,longitude
-                    // Determine date times
-                    firstEntryTime ??= DateTime.tryParse(entry[0]);
-                    lastEntryTime = DateTime.tryParse(entry[0]);
+                  if(entry.length > 1 && entry[0] != "header"){ // entry[0] = Time, entry[1] = Data type
+                    ///GPS position entry
+                    if(entry[1] == "gps" && entry.length >= 7) {
+                      //dt,gps,satellites,altitude,speed,latitude,longitude
+                      // Determine date times
+                      firstEntryTime ??= DateTime.tryParse(entry[0]);
+                      lastEntryTime = DateTime.tryParse(entry[0]);
 
-                    // Track elevation change
-                    double elevation = double.tryParse(entry[3]);
-                    minElevation ??= elevation; //Set if null
-                    maxElevation ??= elevation; //Set if null
-                    if (elevation < minElevation) minElevation = elevation;
-                    if (elevation > maxElevation) maxElevation = elevation;
+                      // Track elevation change
+                      double elevation = double.tryParse(entry[3]);
+                      minElevation ??= elevation; //Set if null
+                      maxElevation ??= elevation; //Set if null
+                      if (elevation < minElevation) minElevation = elevation;
+                      if (elevation > maxElevation) maxElevation = elevation;
 
-                  }
-                  ///ESC Values
-                  else if (entry[1] == "esc" && entry.length >= 14) {
-                    //dt,esc,esc_id,voltage,motor_temp,esc_temp,duty_cycle,motor_current,battery_current,watt_hours,watt_hours_regen,e_rpm,e_distance,fault
-                    // Determine date times
-                    firstEntryTime ??= DateTime.tryParse(entry[0]);
-                    lastEntryTime = DateTime.tryParse(entry[0]);
-
-                    // ESC ID
-                    int escID = int.parse(entry[2]);
-                    firstESCID ??= escID;
-
-                    // Determine max values
-                    double motorCurrent = double.tryParse(entry[7]); //Motor Current
-                    double batteryCurrent = double.tryParse(entry[8]); //Input Current
-                    double eRPM = double.tryParse(entry[11]); //eRPM
-                    double eDistance = double.tryParse(entry[12]); //eDistance
-                    if (batteryCurrent>maxCurrentBattery) maxCurrentBattery = batteryCurrent;
-                    if (motorCurrent>maxCurrentMotor) maxCurrentMotor = motorCurrent;
-                    // Compute max speed!
-                    double speed = eRPMToKph(eRPM, widget.myUserSettings.settings.gearRatio, widget.myUserSettings.settings.wheelDiameterMillimeters, widget.myUserSettings.settings.motorPoles);
-                    if (speed > maxSpeedKph) {
-                      maxSpeedKph = speed;
                     }
-                    //TODO: Compute average speed!
-                    // Capture Distance for first ESC
-                    if (escID == firstESCID) {
-                      distanceStart ??= eDistanceToKm(eDistance, widget.myUserSettings.settings.gearRatio, widget.myUserSettings.settings.wheelDiameterMillimeters, widget.myUserSettings.settings.motorPoles);
-                      distanceEnd = eDistanceToKm(eDistance, widget.myUserSettings.settings.gearRatio, widget.myUserSettings.settings.wheelDiameterMillimeters, widget.myUserSettings.settings.motorPoles);
+                    ///ESC Values
+                    else if (entry[1] == "esc" && entry.length >= 14) {
+                      //dt,esc,esc_id,voltage,motor_temp,esc_temp,duty_cycle,motor_current,battery_current,watt_hours,watt_hours_regen,e_rpm,e_distance,fault
+                      // Determine date times
+                      firstEntryTime ??= DateTime.tryParse(entry[0]);
+                      lastEntryTime = DateTime.tryParse(entry[0]);
+
+                      // ESC ID
+                      int escID = int.parse(entry[2]);
+                      firstESCID ??= escID;
+
+                      // Determine max values
+                      double motorCurrent = double.tryParse(entry[7]); //Motor Current
+                      double batteryCurrent = double.tryParse(entry[8]); //Input Current
+                      double eRPM = double.tryParse(entry[11]); //eRPM
+                      double eDistance = double.tryParse(entry[12]); //eDistance
+                      if (batteryCurrent>maxCurrentBattery) maxCurrentBattery = batteryCurrent;
+                      if (motorCurrent>maxCurrentMotor) maxCurrentMotor = motorCurrent;
+                      // Compute max speed!
+                      double speed = eRPMToKph(eRPM, widget.myUserSettings.settings.gearRatio, widget.myUserSettings.settings.wheelDiameterMillimeters, widget.myUserSettings.settings.motorPoles);
+                      if (speed > maxSpeedKph) {
+                        maxSpeedKph = speed;
+                      }
+                      //TODO: Compute average speed!
+                      // Capture Distance for first ESC
+                      if (escID == firstESCID) {
+                        distanceStart ??= eDistanceToKm(eDistance, widget.myUserSettings.settings.gearRatio, widget.myUserSettings.settings.wheelDiameterMillimeters, widget.myUserSettings.settings.motorPoles);
+                        distanceEnd = eDistanceToKm(eDistance, widget.myUserSettings.settings.gearRatio, widget.myUserSettings.settings.wheelDiameterMillimeters, widget.myUserSettings.settings.motorPoles);
+                      }
+                      // Capture consumption per ESC
+                      double wattHours = double.parse(entry[9]);
+                      double wattHoursRegen = double.parse(entry[10]);
+                      wattHoursStartByESC[escID] ??= wattHours;
+                      wattHoursEndByESC[escID] = wattHours;
+                      wattHoursRegenStartByESC[escID] ??= wattHoursRegen;
+                      wattHoursRegenEndByESC[escID] = wattHoursRegen;
                     }
-                    // Capture consumption per ESC
-                    double wattHours = double.parse(entry[9]);
-                    double wattHoursRegen = double.parse(entry[10]);
-                    wattHoursStartByESC[escID] ??= wattHours;
-                    wattHoursEndByESC[escID] = wattHours;
-                    wattHoursRegenStartByESC[escID] ??= wattHoursRegen;
-                    wattHoursRegenEndByESC[escID] = wattHoursRegen;
-                  }
-                  ///Fault codes
-                  else if (entry[1] == "err") {
-                    ++faultCodeCount;
+                    ///Fault codes
+                    else if (entry[1] == "err") {
+                      ++faultCodeCount;
+                    }
                   }
                 }
-              }
 
-              /// Compute distance
-              if (distanceEnd != null) {
-                distanceTotal = doublePrecision(distanceEnd - distanceStart, 2);
-              } else {
-                distanceTotal = -1.0;
-              }
-              print("ESC ID $firstESCID traveled $distanceTotal km");
+                /// Compute distance
+                if (distanceEnd != null) {
+                  distanceTotal = doublePrecision(distanceEnd - distanceStart, 2);
+                } else {
+                  distanceTotal = -1.0;
+                }
+                print("ESC ID $firstESCID traveled $distanceTotal km");
 
-              /// Compute consumption
-              double wattHours = 0;
-              double wattHoursRegen = 0;
-              wattHoursStartByESC.forEach((key, value) {
-                print("ESC ID $key consumed ${wattHoursEndByESC[key] - value} watt hours");
-                wattHours += wattHoursEndByESC[key] - value;
-              });
-              wattHoursRegenStartByESC.forEach((key, value) {
-                print("ESC ID $key regenerated ${wattHoursRegenEndByESC[key] - value} watt hours");
-                wattHoursRegen += wattHoursRegenEndByESC[key] - value;
-              });
-              print(wattHoursStartByESC);
-              print(wattHoursEndByESC);
-              print("Consumption calculation: Watt Hours Total $wattHours Regenerated Total $wattHoursRegen");
+                /// Compute consumption
+                double wattHours = 0;
+                double wattHoursRegen = 0;
+                wattHoursStartByESC.forEach((key, value) {
+                  print("ESC ID $key consumed ${wattHoursEndByESC[key] - value} watt hours");
+                  wattHours += wattHoursEndByESC[key] - value;
+                });
+                wattHoursRegenStartByESC.forEach((key, value) {
+                  print("ESC ID $key regenerated ${wattHoursRegenEndByESC[key] - value} watt hours");
+                  wattHoursRegen += wattHoursRegenEndByESC[key] - value;
+                });
+                print(wattHoursStartByESC);
+                print(wattHoursEndByESC);
+                print("Consumption calculation: Watt Hours Total $wattHours Regenerated Total $wattHoursRegen");
 
-              /// Insert record into database
-              if (lastEntryTime != null && firstEntryTime != null) {
+                int test = null;
+                int fail = test + 420;
+
+                /// Insert record into database
                 await DatabaseAssistant.dbInsertLog(LogInfoItem(
                     dateTime: firstEntryTime,
                     boardID: widget.myUserSettings.currentDeviceID,
@@ -1101,35 +1108,47 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                     rideName: "",
                     notes: ""
                 ));
-              } else {
-                genericConfirmationDialog(context, FlatButton(
-                  child: Text("Copy / Share"),
-                  onPressed: () {
-                    Share.text(catCurrentFilename, "logFileContents:\n$logFileContents\n\ncatBytesRaw[$catBytesTotal]:\n${catBytesRaw.toList().toString()}", 'text/plain');
-                  },
-                ), FlatButton(
-                  child: Text("Close"),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ), "Oh crap", Text("Something unexpected happened. Please share with renee@derelictrobot.com"));
-              }
 
-              /// Advance the sync process
-              {
-                //TODO: BUG: get rideLogging widget to reList the last file after sync without erase
-                loggerTestBuffer = receiveStr;
-                if(!syncInProgress) _alertLoggerTest();
-                setState(() {
-                  syncAdvanceProgress = true;
-                  ///Cat completed
-                  ///Setting state so this widget rebuilds. On build it will
-                  ///check if syncInProgress and start the next file
-                });
+                /// Advance the sync process
+                {
+                  //TODO: BUG: get rideLogging widget to reList the last file after sync without erase
+                  loggerTestBuffer = receiveStr;
+                  if(!syncInProgress) _alertLoggerTest();
+                  setState(() {
+                    syncAdvanceProgress = true;
+                    ///Cat completed
+                    ///Setting state so this widget rebuilds. On build it will
+                    ///check if syncInProgress and start the next file
+                  });
+                }
               }
-            }
-          } //Save file operation complete
-          catInProgress = false;
+            } //Save file operation complete
+            catInProgress = false;
+            return;
+          } catch (e) {
+            // Alert user something went wrong with the parsing
+            genericConfirmationDialog(context, FlatButton(
+              child: Text("Copy / Share"),
+              onPressed: () {
+                Share.text(catCurrentFilename, "${e.toString()}\n\n$logFileContentsForDebugging}", 'text/plain');
+              },
+            ), FlatButton(
+              child: Text("Close"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ), "File parse error", Text("Something unexpected happened!\n\nPlease share with renee@derelictrobot.com"));
+          }
+
+          /// Advance the sync process after failure
+          {
+            setState(() {
+              catInProgress = false;
+              syncAdvanceProgress = true;
+            });
+          }
+
+          // Return now, we are finished here
           return;
         }
 
@@ -2362,7 +2381,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     return Scaffold(
         // Appbar
         appBar: AppBar(
-            title: Text("FreeSK8 ($freeSK8ApplicationVersion.$counter.preview)"),
+            title: Text("FreeSK8 (v$freeSK8ApplicationVersion)"),
             // Set the background color of the App Bar
             backgroundColor: Theme.of(context).primaryColor,
             // Set the bottom property of the Appbar to include a Tab Bar
