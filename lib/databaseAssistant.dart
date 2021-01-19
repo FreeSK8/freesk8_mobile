@@ -178,6 +178,8 @@ class DatabaseAssistant {
           elevationChange: rideLogEntries[i]['elevation_change'],
           maxAmpsBattery:  rideLogEntries[i]['max_amps_battery'],
           maxAmpsMotors:   rideLogEntries[i]['max_amps_motors'],
+          wattHoursTotal:  rideLogEntries[i]['watt_hours'],
+          wattHoursRegenTotal: rideLogEntries[i]['watt_hours_regen'],
           distance:        rideLogEntries[i]['distance_km'],
           durationSeconds: rideLogEntries[i]['duration_seconds'].toInt(),
           faultCount:      rideLogEntries[i]['fault_count'],
