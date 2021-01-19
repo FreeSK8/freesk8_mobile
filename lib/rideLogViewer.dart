@@ -757,7 +757,10 @@ class RideLogViewerState extends State<RideLogViewer> {
 
     /// Compute consumption
     print("${myArguments.logFileInfo.wattHoursTotal} ${myArguments.logFileInfo.wattHoursRegenTotal} $distanceEndPrimary $distanceStartPrimary ${myArguments.userSettings.settings.useImperial}");
-    double consumption = (myArguments.logFileInfo.wattHoursTotal - myArguments.logFileInfo.wattHoursRegenTotal) / (distanceEndPrimary - distanceStartPrimary);
+    double consumption = 0;
+    if (myArguments.logFileInfo.wattHoursTotal != -1 && distanceEndPrimary != null && distanceStartPrimary != null) {
+      consumption = (myArguments.logFileInfo.wattHoursTotal - myArguments.logFileInfo.wattHoursRegenTotal) / (distanceEndPrimary - distanceStartPrimary);
+    }
     if (consumption.isNaN || consumption.isInfinite) {
       consumption = 0;
     }
