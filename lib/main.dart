@@ -332,15 +332,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     byteData.setUint8(sendCAN ? 7:5, 0x03); //End of packet
 
     // Request APPCONF from the ESC
-    print("requesting app conf $optionalCANID");
-    dynamic errorCheck = 0;
-    while (errorCheck != null && _connectedDevice != null) {
-      errorCheck = null;
-      await the_tx_characteristic.write(byteData.buffer.asUint8List()).catchError((error){
-        errorCheck = error;
-        print("COMM_GET_APPCONF: Exception: $errorCheck");
-      });
-    }
+    print("requesting app conf (CAN ID? $optionalCANID)");
+    await sendBLEData(the_tx_characteristic, byteData.buffer.asUint8List(), _connectedDevice);
   }
 
   void requestMCCONF() async {
@@ -766,13 +759,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     if (startSync) {
       // Start syncing all files by setting syncInProgress to true and request
       // the file list from the receiver
-      setState(() {
+      setState(() async {
         syncInProgress = true;
         // Prevent the status timer from interrupting this request
         _gotchiStatusTimer?.cancel();
         _gotchiStatusTimer = null;
         // Request the files to begin the process
-        theTXLoggerCharacteristic.write(utf8.encode("ls~"));
+        await sendBLEData(theTXLoggerCharacteristic, utf8.encode("ls~"), _connectedDevice);
       });
     } else {
       print("Stopping Sync Process");
@@ -986,6 +979,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             Map<int, double> wattHoursRegenEndByESC = new Map();
             double maxCurrentBattery = 0.0;
             double maxCurrentMotor = 0.0;
+            double maxSpeedKph = 0.0;
+            double avgSpeedKph = 0.0;
+            int firstESCID;
+            double distanceStart;
+            double distanceEnd;
+            double distanceTotal;
             int faultCodeCount = 0;
             double minElevation;
             double maxElevation;
@@ -1022,17 +1021,29 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                     firstEntryTime ??= DateTime.tryParse(entry[0]);
                     lastEntryTime = DateTime.tryParse(entry[0]);
 
+                    // ESC ID
+                    int escID = int.parse(entry[2]);
+                    firstESCID ??= escID;
+
                     // Determine max values
                     double motorCurrent = double.tryParse(entry[7]); //Motor Current
                     double batteryCurrent = double.tryParse(entry[8]); //Input Current
                     double eRPM = double.tryParse(entry[11]); //eRPM
+                    double eDistance = double.tryParse(entry[12]); //eDistance
                     if (batteryCurrent>maxCurrentBattery) maxCurrentBattery = batteryCurrent;
                     if (motorCurrent>maxCurrentMotor) maxCurrentMotor = motorCurrent;
-                    //TODO: Compute max speed!
+                    // Compute max speed!
+                    double speed = eRPMToKph(eRPM, widget.myUserSettings.settings.gearRatio, widget.myUserSettings.settings.wheelDiameterMillimeters, widget.myUserSettings.settings.motorPoles);
+                    if (speed > maxSpeedKph) {
+                      maxSpeedKph = speed;
+                    }
                     //TODO: Compute average speed!
-                    //TODO: Compute Distance!
-                    //TODO: Capture consumption per ESC
-                    int escID = int.parse(entry[2]);
+                    // Capture Distance for first ESC
+                    if (escID == firstESCID) {
+                      distanceStart ??= eDistanceToKm(eDistance, widget.myUserSettings.settings.gearRatio, widget.myUserSettings.settings.wheelDiameterMillimeters, widget.myUserSettings.settings.motorPoles);
+                      distanceEnd = eDistanceToKm(eDistance, widget.myUserSettings.settings.gearRatio, widget.myUserSettings.settings.wheelDiameterMillimeters, widget.myUserSettings.settings.motorPoles);
+                    }
+                    // Capture consumption per ESC
                     double wattHours = double.parse(entry[9]);
                     double wattHoursRegen = double.parse(entry[10]);
                     wattHoursStartByESC[escID] ??= wattHours;
@@ -1046,6 +1057,14 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   }
                 }
               }
+
+              /// Compute distance
+              if (distanceEnd != null) {
+                distanceTotal = doublePrecision(distanceEnd - distanceStart, 2);
+              } else {
+                distanceTotal = -1.0;
+              }
+              print("ESC ID $firstESCID traveled $distanceTotal km");
 
               /// Compute consumption
               double wattHours = 0;
@@ -1070,13 +1089,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                     boardAlias: widget.myUserSettings.settings.boardAlias,
                     logFilePath: savedFilePath,
                     avgSpeed: -1.0,
-                    maxSpeed: -1.0,
+                    maxSpeed: maxSpeedKph,
                     elevationChange: maxElevation != null ? maxElevation - minElevation : -1.0,
                     maxAmpsBattery: maxCurrentBattery,
                     maxAmpsMotors: maxCurrentMotor,
                     wattHoursTotal: wattHours,
                     wattHoursRegenTotal: wattHoursRegen,
-                    distance: -1.0,
+                    distance: distanceTotal,
                     durationSeconds: lastEntryTime.difference(firstEntryTime).inSeconds,
                     faultCount: faultCodeCount,
                     rideName: "",
