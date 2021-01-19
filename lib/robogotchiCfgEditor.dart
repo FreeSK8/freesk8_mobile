@@ -292,6 +292,10 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
 
                   Divider(thickness: 3),
                   Text("Log Entries per Second (${myArguments.currentConfiguration.logIntervalHz}Hz)"),
+                  _multiESCMode && !_multiESCModeQuad && myArguments.currentConfiguration.logIntervalHz == 1 ?
+                    Text("2Hz or more is recommended with a dual ESC configuration", style: TextStyle(color: Colors.yellow)) : Container(),
+                  _multiESCMode && _multiESCModeQuad && myArguments.currentConfiguration.logIntervalHz != 4 ?
+                      Text("4Hz is recommended with a quad ESC configuration", style: TextStyle(color: Colors.yellow)) : Container(),
                   SliderTheme(
                       data: SliderTheme.of(context).copyWith(
                           thumbShape: timeToPlay == 3 ? SliderThumbImage(sliderImage) : RoundSliderThumbShape(enabledThumbRadius: 10)
