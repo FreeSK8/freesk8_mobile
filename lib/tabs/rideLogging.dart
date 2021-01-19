@@ -311,7 +311,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
     // navigate to the route by replacing the loading dialog
     Navigator.of(context).pushReplacementNamed(RideLogViewer.routeName,
       arguments: RideLogViewerArguments(
-          rideLogsFromDatabase[index].logFilePath,
+          rideLogsFromDatabase[index],
           selectedBoardSettings
       ),
     ).then((value){

@@ -24,9 +24,9 @@ import 'package:freesk8_mobile/escHelper.dart';
 
 class RideLogViewerArguments {
   final UserSettings userSettings;
-  final String logFilePath;
+  final LogInfoItem logFileInfo;
 
-  RideLogViewerArguments(this.logFilePath,this.userSettings);
+  RideLogViewerArguments(this.logFileInfo,this.userSettings);
 }
 
 class RideLogViewer extends StatefulWidget {
@@ -308,7 +308,7 @@ class RideLogViewerState extends State<RideLogViewer> {
 
     //Load log file from received arguments
     if( thisRideLog == "" ) {
-      FileManager.openLogFile(myArguments.logFilePath).then((value){
+      FileManager.openLogFile(myArguments.logFileInfo.logFilePath).then((value){
         print("opening log file");
         setState(() {
           thisRideLog = value;
@@ -636,7 +636,7 @@ class RideLogViewerState extends State<RideLogViewer> {
     Polyline routePolyLine = new Polyline(points: _positionEntries, strokeWidth: 3, color: Colors.red);
 
     // Parse title from filename passed via arguments
-    String filename = myArguments.logFilePath.substring(myArguments.logFilePath.lastIndexOf("/") + 1);
+    String filename = myArguments.logFileInfo.logFilePath.substring(myArguments.logFileInfo.logFilePath.lastIndexOf("/") + 1);
     String pageTitle = "${filename.substring(0,10)} @ ${filename.substring(11,19)}";
 
     ///Generate ride statistics
@@ -755,6 +755,7 @@ class RideLogViewerState extends State<RideLogViewer> {
       ));
     }
 
+    print("${myArguments.logFileInfo.wattHoursTotal} ${myArguments.logFileInfo.wattHoursRegenTotal} ${distanceEndPrimary} ${distanceStartPrimary} ${myArguments.userSettings.settings.useImperial}");
     ///Build Widget
     return Scaffold(
       appBar: AppBar(
@@ -807,6 +808,11 @@ class RideLogViewerState extends State<RideLogViewer> {
               SizedBox(height: 12,),
               Row(mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
+                  myArguments.logFileInfo.wattHoursTotal != -1.0 && distanceEndPrimary != null ? Column(children: <Widget>[
+                    Text("Wh"),
+                    Icon(Icons.local_gas_station),
+                    Text("${doublePrecision((myArguments.logFileInfo.wattHoursTotal - myArguments.logFileInfo.wattHoursRegenTotal) / (distanceEndPrimary - distanceStartPrimary), 2)} Wh/${myArguments.userSettings.settings.useImperial ? "mile" : "km"}")
+                  ],) : Container(),
                   Column(children: <Widget>[
                     Text("Max Amps"),
                     Icon(Icons.battery_charging_full),
@@ -891,9 +897,9 @@ class RideLogViewerState extends State<RideLogViewer> {
                               child: Text("Delete"),
                               onPressed: () async {
                                 //Remove from Database
-                                await DatabaseAssistant.dbRemoveLog(myArguments.logFilePath);
+                                await DatabaseAssistant.dbRemoveLog(myArguments.logFileInfo.logFilePath);
                                 //Remove from Filesystem
-                                await FileManager.eraseLogFile(myArguments.logFilePath);
+                                await FileManager.eraseLogFile(myArguments.logFileInfo.logFilePath);
                                 Navigator.of(context).pop();
                                 Navigator.of(context).pop();
                               },
@@ -912,6 +918,11 @@ class RideLogViewerState extends State<RideLogViewer> {
                         fileSummary += "\nTop Speed: $maxSpeed";
                         fileSummary += "\nAvg Speed: $avgSpeed";
                         fileSummary += "\nDistance: $distance";
+                        if (myArguments.logFileInfo.wattHoursTotal != -1.0 && distanceEndPrimary != null) {
+                          fileSummary += "\nConsumption: ${doublePrecision((myArguments.logFileInfo.wattHoursTotal - myArguments.logFileInfo.wattHoursRegenTotal) / (distanceEndPrimary - distanceStartPrimary), 2)} Wh/${myArguments.userSettings.settings.useImperial ? "mile" : "km"}";
+                          fileSummary += "\nWatt Hours: ${myArguments.logFileInfo.wattHoursTotal}";
+                          fileSummary += "\nWatt Hours Regen: ${myArguments.logFileInfo.wattHoursRegenTotal}";
+                        }
                         fileSummary += "\nBattery Amps: $_maxAmpsBattery";
                         fileSummary += "\nMotor Amps: $_maxAmpsMotor";
                         fileSummary += "\nDuration: ${duration.toString().substring(0,duration.toString().lastIndexOf("."))}";
