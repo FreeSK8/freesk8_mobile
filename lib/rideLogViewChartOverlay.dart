@@ -14,8 +14,9 @@ class RideLogChartData {
 }
 
 class RideLogViewChartOverlay extends StatefulWidget {
-  RideLogViewChartOverlay({this.eventObservable});
+  RideLogViewChartOverlay({this.eventObservable, this.imperialDistance});
   final PublishSubject<RideLogChartData> eventObservable;
+  final bool imperialDistance;
   RideLogViewChartOverlayState createState() => new RideLogViewChartOverlayState(this.eventObservable);
 }
 
@@ -119,6 +120,10 @@ class RideLogViewChartOverlayState extends State<RideLogViewChartOverlay> {
                   TableRow( children: [
                     Text("Speed"),
                     Text("${selectedESCData.speed != null ? selectedESCData.speed : "--"}", textAlign: TextAlign.center),
+                  ]),
+                  TableRow( children: [
+                    Text("Wh/${widget.imperialDistance ? "mile" : "km"}"),
+                    Text("${selectedESCData.consumption != null ? selectedESCData.consumption : "--"}", textAlign: TextAlign.center),
                   ]),
                 ],)
             ),

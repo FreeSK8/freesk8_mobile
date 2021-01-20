@@ -59,7 +59,7 @@ class RideLogViewerState extends State<RideLogViewer> {
   }
 
   /// Create time series data for chart using ESC values
-  static List<charts.Series<TimeSeriesESC, DateTime>> _createChartingData( List<TimeSeriesESC> values, List<int> escIDsInLog, int faultCodeCount ) {
+  static List<charts.Series<TimeSeriesESC, DateTime>> _createChartingData( List<TimeSeriesESC> values, List<int> escIDsInLog, int faultCodeCount, bool imperialDistance ) {
       List<charts.Series<TimeSeriesESC, DateTime>> chartData = new List();
 
       /* Good example but not necessary
@@ -225,6 +225,13 @@ class RideLogViewerState extends State<RideLogViewer> {
         data: values,
       ));
 
+      chartData.add(charts.Series<TimeSeriesESC, DateTime>(
+        id: 'Wh/${imperialDistance ? "mile" : "km"}',
+        colorFn: (_, __) => charts.MaterialPalette.yellow.shadeDefault.lighter,
+        domainFn: (TimeSeriesESC escData, _) => escData.time,
+        measureFn: (TimeSeriesESC escData, _) => escData.consumption,
+        data: values,
+      ));
       return chartData;
     }
 
@@ -287,6 +294,8 @@ class RideLogViewerState extends State<RideLogViewer> {
     int faultCodeCount = 0;
     double distanceStartPrimary;
     double distanceEndPrimary;
+    double wattHoursStartPrimary;
+    double wattHoursRegenStartPrimary;
 
     // Fault tracking
     DateTime lastReportedFaultDt;
@@ -377,6 +386,21 @@ class RideLogViewerState extends State<RideLogViewer> {
               } else {
                 distanceEndPrimary = escTimeSeriesMap[thisDt].distance;
               }
+
+              // Compute consumption over time
+              //TODO: this is only for a single ESC. This may get complicated for dual/quad. Multiplying for now
+              double wattHoursNow = double.tryParse(entry[9]);
+              double wattHoursRegenNow = double.tryParse(entry[10]);
+              wattHoursStartPrimary ??= wattHoursNow;
+              wattHoursRegenStartPrimary ??= wattHoursRegenNow;
+
+              double wattHours = wattHoursNow - wattHoursStartPrimary - wattHoursRegenStartPrimary - wattHoursRegenNow ;
+              double totalDistance = distanceEndPrimary - distanceStartPrimary;
+              double consumption = wattHours / totalDistance;
+              if (consumption.isNaN || consumption.isInfinite) {
+                consumption = 0;
+              }
+              escTimeSeriesMap[thisDt].consumption = doublePrecision(consumption, 2);
               break;
             case 1:
             // Second ESC in multiESC configuration
@@ -552,7 +576,14 @@ class RideLogViewerState extends State<RideLogViewer> {
       }
     }
     print("rideLogViewer rideLogEntry iteration complete");
+    // Convert ESC data map into a list
     escTimeSeriesMap.forEach((key, value) {
+      // Multiply consumption by number of ESCs for smooth chart line
+      //TODO: This is not the most accurate way to represent consumption for multiple ESCs
+      if(value.consumption != null) {
+        value.consumption *= escIDsInLog.length;
+      }
+      // Add to list
       escTimeSeriesList.add(value);
     });
     escTimeSeriesMap.clear();
@@ -620,7 +651,7 @@ class RideLogViewerState extends State<RideLogViewer> {
 
     print("rideLogViewer creating chart data");
     // Create charting data from ESC time series data
-    seriesList = _createChartingData(escTimeSeriesList, escIDsInLog, faultCodeCount);
+    seriesList = _createChartingData(escTimeSeriesList, escIDsInLog, faultCodeCount, myArguments.userSettings.settings.useImperial);
 
     print("rideLogViewer creating map polyline from ${_positionEntries.length} points");
     //TODO: Reduce number of GPS points to keep things moving on phones
@@ -1060,7 +1091,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                     Positioned(
                       bottom: 21,
                       right: 5,
-                      child: RideLogViewChartOverlay(eventObservable: eventObservable,),
+                      child: RideLogViewChartOverlay(eventObservable: eventObservable, imperialDistance: myArguments.userSettings.settings.useImperial),
                     ),
 
 
@@ -1118,6 +1149,7 @@ class TimeSeriesESC {
   double currentInput4;
   double speed;
   double distance;
+  double consumption;
   int faultCode;
 
   TimeSeriesESC({
@@ -1142,6 +1174,7 @@ class TimeSeriesESC {
       this.currentInput4,
       this.speed,
       this.distance,
+      this.consumption,
       this.faultCode,
   });
 }
