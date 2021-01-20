@@ -1086,8 +1086,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 print(wattHoursEndByESC);
                 print("Consumption calculation: Watt Hours Total $wattHours Regenerated Total $wattHoursRegen");
 
-                int test = null;
-                int fail = test + 420;
+                //NOTE: failure checking...
+                //int test = null;
+                //int fail = test + 420;
 
                 /// Insert record into database
                 await DatabaseAssistant.dbInsertLog(LogInfoItem(
