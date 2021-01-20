@@ -100,8 +100,10 @@ class FileSyncViewerState extends State<FileSyncViewer> {
         estimatedSecondsRemaining = (widget.syncStatus.fileBytesTotal - widget.syncStatus.fileBytesReceived) / bytesPerSecond;
         totalSecondsRemaining = totalBytesRemaining / bytesPerSecond;
       }
-      if (bytesPerSecond > 0 && widget.syncStatus.fileList.length > 0) {
+      if (bytesPerSecond > 0 && widget.syncStatus.fileList.length > 1) {
         zeChildren.add(Text("Estimated time remaining: ${estimatedSecondsRemaining.toInt()} ${estimatedSecondsRemaining.toInt() == 1 ? "second" : "seconds"} / ${totalSecondsRemaining.toInt()} seconds"));
+      } else if (bytesPerSecond > 0 && widget.syncStatus.fileList.length > 0) {
+        zeChildren.add(Text("Estimated time remaining: ${estimatedSecondsRemaining.toInt()} ${estimatedSecondsRemaining.toInt() == 1 ? "second" : "seconds"}"));
       } else {
         zeChildren.add(Text("Estimated time remaining: Calculating..."));
       }
