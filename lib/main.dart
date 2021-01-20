@@ -1245,19 +1245,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         List<String> values = receiveStr.split(",");
         // Update robogotchiVersion
         robogotchiVersion = values[1];
-        // Check for latest firmware
-        if (robogotchiVersion != robogotchiFirmwareExpectedVersion) {
-          genericAlert(
-              context,
-              "Update available",
-              Column(children: [
-                Text("This app works best when Robogotchi is up to date!"),
-                SizedBox(height: 15),
-                Text("Please update the Robogotchi firmware from $robogotchiVersion to $robogotchiFirmwareExpectedVersion")
-              ]),
-              "OK"
-          );
-        }
         // Flag the reception of an init message
         initMsgGotchiVersion = true;
         // Redraw UI
@@ -1760,11 +1747,24 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       }
     } else {
       // Init complete
-      // If user forces dialog to close and ESC actually responds don't pop the main view
+      // If user forces communicating dialog to close and we finish init don't pop the main view
       if (Navigator.of(context).canPop()) {
         Navigator.of(context).pop(); // Remove communicating with ESC dialog
       }
 
+      // Alert user if Robogotchi firmware update is expected
+      if (_deviceIsRobogotchi && robogotchiVersion != robogotchiFirmwareExpectedVersion) {
+        genericAlert(
+            context,
+            "Update available",
+            Column(children: [
+              Text("This app works best when Robogotchi is up to date!"),
+              SizedBox(height: 15),
+              Text("Please update the Robogotchi firmware from $robogotchiVersion to $robogotchiFirmwareExpectedVersion")
+            ]),
+            "OK"
+        );
+      }
       print("##################################################################### initMsgSequencer is complete! Great success!");
 
       // Check if this is a known device when we connected/loaded it's settings
