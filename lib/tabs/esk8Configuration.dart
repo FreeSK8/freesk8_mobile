@@ -1306,6 +1306,11 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                           //Text("app adc ctrl type ${widget.escAppConfiguration.app_adc_conf.ctrl_type}"),
 
 
+                          showAdvancedOptions ? RaisedButton(onPressed: (){
+                            setState(() {
+                              showAdvancedOptions = false;
+                            });
+                          }, child: Text("Hide Advanced Options"),) : Container(),
 
                           RaisedButton(
                               child: Text("Save to ESC${_selectedCANFwdID != null ? "/CAN $_selectedCANFwdID" : ""}"),
