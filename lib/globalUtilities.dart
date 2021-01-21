@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 
+Color changeColorHue(Color color, double newHueValue) => HSLColor.fromColor(color).withHue(newHueValue).toColor();
+
 class ListItem {
   int value;
   String name;

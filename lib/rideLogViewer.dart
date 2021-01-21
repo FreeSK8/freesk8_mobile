@@ -586,7 +586,7 @@ class RideLogViewerState extends State<RideLogViewer> {
       // Add to list
       escTimeSeriesList.add(value);
     });
-    escTimeSeriesMap.clear();
+    //TODO: not clearing because I want to color a polyline... escTimeSeriesMap.clear();
     print("rideLogViewer escTimeSeriesList length is ${escTimeSeriesList.length}");
     //TODO: Reduce number of ESC points to keep things moving on phones
     //TODO: We will need to know the logging rate in the file
@@ -652,19 +652,6 @@ class RideLogViewerState extends State<RideLogViewer> {
     print("rideLogViewer creating chart data");
     // Create charting data from ESC time series data
     seriesList = _createChartingData(escTimeSeriesList, escIDsInLog, faultCodeCount, myArguments.userSettings.settings.useImperial);
-
-    print("rideLogViewer creating map polyline from ${_positionEntries.length} points");
-    //TODO: Reduce number of GPS points to keep things moving on phones
-    while(_positionEntries.length > 1200) {
-      int pos = 0;
-      for (int i=0; i<_positionEntries.length; i+=2, ++pos) {
-        _positionEntries[pos] = _positionEntries[i];
-      }
-      _positionEntries.removeRange(pos, _positionEntries.length);
-      print("rideLogViewer reduced map polyline to ${_positionEntries.length} points");
-    }
-    // Create polyline to display GPS route on map
-    Polyline routePolyLine = new Polyline(points: _positionEntries, strokeWidth: 3, color: Colors.red);
 
     // Parse title from filename passed via arguments
     String filename = myArguments.logFileInfo.logFilePath.substring(myArguments.logFileInfo.logFilePath.lastIndexOf("/") + 1);
@@ -739,6 +726,33 @@ class RideLogViewerState extends State<RideLogViewer> {
         ),
       ));
     }
+    print("rideLogViewer creating map polyline from ${_positionEntries.length} points");
+    //TODO: color polyline based on stats
+    Color lastColor = Colors.green;
+    List<Color> polylineColors = new List();
+    const double maxHueGreen = 120.0;
+    gpsLatLngMap.forEach((key, value) {
+      if (escTimeSeriesMap[key] != null && _maxSpeed > 0.0) {
+        double newHueValue = maxHueGreen - escTimeSeriesMap[key].speed.abs() / _maxSpeed * maxHueGreen;
+        lastColor = changeColorHue(lastColor, newHueValue);
+        polylineColors.add(lastColor);
+      } else {
+        polylineColors.add(lastColor);
+      }
+    });
+    // Create polyline to display GPS route on map
+    Polyline routePolyLine = new Polyline(points: _positionEntries, strokeWidth: 4, gradientColors: polylineColors);
+    //TODO: Reduce number of GPS points to keep things moving on phones
+    /* //NOTE: I think google maps can handle however many points
+    while(_positionEntries.length > 1200) {
+      int pos = 0;
+      for (int i=0; i<_positionEntries.length; i+=2, ++pos) {
+        _positionEntries[pos] = _positionEntries[i];
+      }
+      _positionEntries.removeRange(pos, _positionEntries.length);
+      print("rideLogViewer reduced map polyline to ${_positionEntries.length} points");
+    }
+    */
 
     String distance = "N/A";
     Duration duration = Duration(seconds:0);
