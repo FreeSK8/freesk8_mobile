@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -728,16 +729,15 @@ class RideLogViewerState extends State<RideLogViewer> {
     }
     print("rideLogViewer creating map polyline from ${_positionEntries.length} points");
     //TODO: color polyline based on stats
-    Color lastColor = Colors.green;
     List<Color> polylineColors = new List();
-    const double maxHueGreen = 120.0;
+    double speedSmoothed = escTimeSeriesList.first.speed;
     gpsLatLngMap.forEach((key, value) {
       if (escTimeSeriesMap[key] != null && _maxSpeed > 0.0) {
-        double newHueValue = maxHueGreen - escTimeSeriesMap[key].speed.abs() / _maxSpeed * maxHueGreen;
-        lastColor = changeColorHue(lastColor, newHueValue);
-        polylineColors.add(lastColor);
+        print("${escTimeSeriesMap[key].speed.abs() / _maxSpeed}");
+        speedSmoothed = 0.7 * escTimeSeriesMap[key].speed.abs() + 0.3 * speedSmoothed;
+        polylineColors.add(HSVColor.lerp(HSVColor.fromColor(Colors.green), HSVColor.fromColor(Colors.red), speedSmoothed / _maxSpeed).toColor());
       } else {
-        polylineColors.add(lastColor);
+        polylineColors.add(Colors.blue);
       }
     });
     // Create polyline to display GPS route on map
