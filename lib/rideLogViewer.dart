@@ -728,60 +728,26 @@ class RideLogViewerState extends State<RideLogViewer> {
       ));
     }
     print("rideLogViewer creating map polyline from ${_positionEntries.length} points");
-    //TODO: Compute gps polyline color stops by distance
-    /*
-    double gpsLastDistance = 0;
-    List<double> colorStops = new List();
-    LatLng lastPoint = gpsLatLngMap.values.first;
-    gpsLatLngMap.forEach((key, value) {
-      gpsLastDistance += calculateDistance(lastPoint, value);
-      lastPoint = value;
-      colorStops.add(gpsLastDistance / gpsDistance);
-    });
-     */
+
     //TODO: color polyline based on stats
     List<Polyline> polylineList = new List();
     if (gpsLatLngMap.values.length > 0) {
       LatLng lastPoint = gpsLatLngMap.values.first;
       gpsLatLngMap.forEach((key, value) {
         Color thisColor = Colors.blue;
-        if (escTimeSeriesMap[key] != null && _maxSpeed > 0.0) {
-          thisColor = HSVColor.lerp(HSVColor.fromColor(Colors.green), HSVColor.fromColor(Colors.red), escTimeSeriesMap[key].speed.abs() / _maxSpeed).toColor();
+        //TODO: Reduce number of GPS points to keep things moving on phones
+        if (calculateDistance(lastPoint, value) > 0.01) {
+          // Compute color for this section of the route
+          if (escTimeSeriesMap[key] != null && _maxSpeed > 0.0) {
+            thisColor = HSVColor.lerp(HSVColor.fromColor(Colors.green), HSVColor.fromColor(Colors.red), escTimeSeriesMap[key].speed.abs() / _maxSpeed).toColor();
+          }
+          // Add colored polyline from last section to this one
+          polylineList.add(Polyline(points: [lastPoint, value], strokeWidth: 4, color: thisColor));
+          // Capture last point added
+          lastPoint = value;
         }
-        polylineList.add(Polyline(points: [lastPoint, value], strokeWidth: 4, color: thisColor));
-        lastPoint = value;
       });
     }
-
-    /*
-    List<Color> polylineColors = new List();
-    double speedSmoothed = escTimeSeriesList.first.speed;
-    gpsLatLngMap.forEach((key, value) {
-      if (escTimeSeriesMap[key] != null && _maxSpeed > 0.0) {
-        speedSmoothed = 0.7 * escTimeSeriesMap[key].speed.abs() + 0.3 * speedSmoothed;
-        polylineColors.add(HSVColor.lerp(HSVColor.fromColor(Colors.green), HSVColor.fromColor(Colors.red), speedSmoothed / _maxSpeed).toColor());
-      } else {
-        print("pooop ${escTimeSeriesMap[key]}");
-        polylineColors.add(Colors.blue);
-      }
-    });
-    print("${_positionEntries.length} ${polylineColors.length}");
-     */
-
-    //TODO: Reduce number of GPS points to keep things moving on phones
-    /*
-    while(_positionEntries.length > 1200) {
-      int pos = 0;
-      for (int i=0; i<_positionEntries.length; i+=2, ++pos) {
-        _positionEntries[pos] = _positionEntries[i];
-      }
-      _positionEntries.removeRange(pos, _positionEntries.length);
-      print("rideLogViewer reduced map polyline to ${_positionEntries.length} points");
-    }
-    */
-    // Create polyline to display GPS route on map
-    //TODO: known issue: https://github.com/fleaflet/flutter_map/issues/772
-    //TODO: gradient colors no worky on complex lines make renee very sad.. //Polyline routePolyLine = new Polyline(points: _positionEntries, strokeWidth: 4, gradientColors: polylineColors, colorsStop: colorStops);
 
     String distance = "N/A";
     Duration duration = Duration(seconds:0);
