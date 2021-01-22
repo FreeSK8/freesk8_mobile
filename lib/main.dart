@@ -1138,7 +1138,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-            ), "File parse error", Text("Something unexpected happened!\n\nPlease share with renee@derelictrobot.com"));
+            ), "File parse error", Text("Something unexpected may have happened!\n\nPlease share with renee@derelictrobot.com"));
           }
 
           /// Advance the sync process after failure
@@ -1334,9 +1334,20 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
           // Check if compatible firmware
           if(major != 5 || minor != 1) {
-            // Do something
+            // Stop the init message sequencer
+            _initMsgSequencer.cancel();
+            _initMsgSequencer = null;
+            initMsgSqeuencerCompleted = true;
+
+            // Remove communicating with ESC dialog
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            }
+
+            // Notify user we are in invalid firmware land
             _alertInvalidFirmware("Firmware: $major.$minor\nHardware: $hardName");
-            return _bleDisconnect();
+
+            return; //TODO: not going to force the user to disconnect? _bleDisconnect();
           }
 
         }
