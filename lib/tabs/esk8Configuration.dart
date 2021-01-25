@@ -737,7 +737,12 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
         // Invalid APPCONF received
         _invalidCANID = _selectedCANFwdID; // Store invalid ID
         _selectedCANFwdID = null; // Clear selected CAN device
-        widget.onAutoloadESCSettings(true); // Request primary ESC configuration
+        // Clear selections
+        _selectedPPMCtrlType = null;
+        _selectedThrExpMode = null;
+        _selectedAppMode = null;
+        // Request primary ESC application configuration
+        widget.requestESCApplicationConfiguration(_selectedCANFwdID);
         return Column( // This view will be replaced when ESC responds with valid configuration
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
