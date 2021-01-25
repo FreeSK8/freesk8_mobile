@@ -156,9 +156,9 @@ class LogFileParser {
             ++i; //NOTE: alignment
             int escID = buffer_get_uint16(bytes, i, Endian.little); i+=2;
             double deltaVin = buffer_get_int8(bytes, i++) / 10.0;
-            i+=1; //NOTE: alignment
             double deltaMotorTemp = buffer_get_int8(bytes, i++) / 10.0;
             double deltaESCTemp = buffer_get_int8(bytes, i++) / 10.0;
+            i+=1; //NOTE: alignment
             double deltaDuty = buffer_get_int16(bytes, i, Endian.little) / 1000.0; i+=2;
             double deltaMotorCurrent = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
             double deltaBatteryCurrent = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
