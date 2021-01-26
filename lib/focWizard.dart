@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 
 import 'package:freesk8_mobile/bleHelper.dart';
-import 'package:freesk8_mobile/escHelper.dart';
+import 'package:freesk8_mobile/escHelper/escHelper.dart';
 
 import 'package:freesk8_mobile/globalUtilities.dart';
 

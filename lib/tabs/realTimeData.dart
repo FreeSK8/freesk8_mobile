@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
 import 'package:freesk8_mobile/dieBieMSHelper.dart';
-import 'package:freesk8_mobile/escHelper.dart';
+import 'package:freesk8_mobile/escHelper/escHelper.dart';
 import 'package:freesk8_mobile/globalUtilities.dart';
 import 'package:freesk8_mobile/userSettings.dart';
 

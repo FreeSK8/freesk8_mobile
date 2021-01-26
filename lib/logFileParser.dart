@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:freesk8_mobile/escHelper.dart';
+import 'package:freesk8_mobile/escHelper/escHelper.dart';
 import 'package:freesk8_mobile/globalUtilities.dart';
 import 'package:path_provider/path_provider.dart';
 

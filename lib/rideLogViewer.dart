@@ -21,7 +21,7 @@ import 'package:esys_flutter_share/esys_flutter_share.dart';
 
 import 'dart:math' show cos, sqrt, asin;
 
-import 'package:freesk8_mobile/escHelper.dart';
+import 'package:freesk8_mobile/escHelper/escHelper.dart';
 
 class RideLogViewerArguments {
   final UserSettings userSettings;

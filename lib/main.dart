@@ -23,8 +23,9 @@ import 'package:freesk8_mobile/focWizard.dart';
 
 // Supporting packages
 import 'package:freesk8_mobile/bleHelper.dart';
-import 'package:freesk8_mobile/escHelper.dart';
+import 'package:freesk8_mobile/escHelper/escHelper.dart';
 import 'package:freesk8_mobile/escHelper/appConf.dart';
+import 'package:freesk8_mobile/escHelper/mcConf.dart';
 import 'package:freesk8_mobile/userSettings.dart';
 import 'package:freesk8_mobile/file_manager.dart';
 import 'package:freesk8_mobile/autoStopHandler.dart';
@@ -44,7 +45,7 @@ import 'package:esys_flutter_share/esys_flutter_share.dart';
 
 import 'databaseAssistant.dart';
 
-const String freeSK8ApplicationVersion = "0.10.0";
+const String freeSK8ApplicationVersion = "0.11.0";
 const String robogotchiFirmwareExpectedVersion = "0.7.1";
 
 void main() {

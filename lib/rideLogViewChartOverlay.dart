@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:freesk8_mobile/rideLogViewer.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:freesk8_mobile/escHelper.dart';
+import 'package:freesk8_mobile/escHelper/escHelper.dart';
 
 class RideLogChartData {
   final DateTime dateTime;
