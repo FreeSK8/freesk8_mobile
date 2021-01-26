@@ -39,7 +39,8 @@ class ESK8Configuration extends StatefulWidget {
     this.closeESCApplicationConfigurator,
     this.ppmLastDuration,
     this.requestESCApplicationConfiguration,
-    this.notifyStopStartPPMCalibrate
+    this.notifyStopStartPPMCalibrate,
+    this.escFirmwareVersion,
   });
   final UserSettings myUserSettings;
   final BluetoothDevice currentDevice;
@@ -59,6 +60,8 @@ class ESK8Configuration extends StatefulWidget {
   final int ppmLastDuration;
   final ValueChanged<int> requestESCApplicationConfiguration;
   final ValueChanged<bool> notifyStopStartPPMCalibrate;
+
+  final ESC_FIRMWARE escFirmwareVersion;
 
   ESK8ConfigurationState createState() => new ESK8ConfigurationState();
 
@@ -371,7 +374,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     // Protect from interrupting a previous write attempt
     _writeESCInProgress = true;
     ESCHelper escHelper = new ESCHelper();
-    ByteData serializedMcconf = escHelper.serializeMCCONF(widget.escMotorConfiguration);
+    ByteData serializedMcconf = escHelper.serializeMCCONF(widget.escMotorConfiguration, widget.escFirmwareVersion);
 
     // Compute sizes and track buffer position
     int packetIndex = 0;
@@ -449,7 +452,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     // Protect from interrupting a previous write attempt
     _writeESCInProgress = true;
     ESCHelper escHelper = new ESCHelper();
-    ByteData serializedAppconf = escHelper.serializeAPPCONF(widget.escAppConfiguration);
+    ByteData serializedAppconf = escHelper.serializeAPPCONF(widget.escAppConfiguration, widget.escFirmwareVersion);
 
     // Compute sizes and track buffer position
     int packetIndex = 0;

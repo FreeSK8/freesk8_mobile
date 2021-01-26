@@ -44,6 +44,7 @@ import 'package:wakelock/wakelock.dart';
 import 'package:esys_flutter_share/esys_flutter_share.dart';
 
 import 'databaseAssistant.dart';
+import 'escHelper/serialization/buffers.dart';
 
 const String freeSK8ApplicationVersion = "0.11.0";
 const String robogotchiFirmwareExpectedVersion = "0.7.1";
@@ -124,6 +125,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   ESCHelper escHelper;
   DieBieMSHelper dieBieMSHelper;
 
+  static ESC_FIRMWARE escFirmwareVersion = ESC_FIRMWARE.UNSUPPORTED;
   static MCCONF escMotorConfiguration;
   static APPCONF escApplicationConfiguration;
   static int ppmLastDuration;
@@ -493,6 +495,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       // Clear the Robogotchi status
       gotchiStatus = new RobogotchiStatus();
+
+      // Clear the ESC firmware version
+      escFirmwareVersion = ESC_FIRMWARE.UNSUPPORTED;
     }
   }
 
@@ -1317,24 +1322,34 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         //Time to process the packet
         int packetID = bleHelper.getPayload()[0];
         if (packetID == COMM_PACKET_ID.COMM_FW_VERSION.index) {
+          ///Firmware Packet
+          firmwarePacket = escHelper.processFirmware(bleHelper.getPayload());
 
           // Flag the reception of an init message
           initMsgESCVersion = true;
 
-          ///Firmware Packet
-          setState(() {
-            firmwarePacket = escHelper.processFirmware(bleHelper.getPayload());
-            isESCResponding = true;
-          });
+          // Analyze
           var major = firmwarePacket.fw_version_major;
           var minor = firmwarePacket.fw_version_minor;
           var hardName = firmwarePacket.hardware_name;
           print("Firmware packet: major $major, minor $minor, hardware $hardName");
 
+          setState(() {
+            isESCResponding = true;
+          });
+
+
           bleHelper.resetPacket(); //Be ready for another packet
 
           // Check if compatible firmware
-          if(major != 5 || minor != 1) {
+          if (major == 5 && minor == 1) {
+            escFirmwareVersion = ESC_FIRMWARE.FW5_1;
+          } else if (major == 5 && minor == 2) {
+            escFirmwareVersion = ESC_FIRMWARE.FW5_2;
+          } else {
+            escFirmwareVersion = ESC_FIRMWARE.UNSUPPORTED;
+          }
+          if(escFirmwareVersion == ESC_FIRMWARE.UNSUPPORTED) {
             // Stop the init message sequencer
             _initMsgSequencer.cancel();
             _initMsgSequencer = null;
@@ -1496,7 +1511,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_GET_MCCONF.index) {
           ///ESC Motor Configuration
-          escMotorConfiguration = escHelper.processMCCONF(bleHelper.getPayload()); //bleHelper.payload.sublist(0,bleHelper.lenPayload);
+          escMotorConfiguration = escHelper.processMCCONF(bleHelper.getPayload(), escFirmwareVersion); //bleHelper.payload.sublist(0,bleHelper.lenPayload);
 
           if (escMotorConfiguration.si_battery_ah == null) {
             // Show dialog
@@ -1571,7 +1586,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           print("WARNING: Whoa now. We received this APPCONF data. Whatchu want to do?");
           //TODO: handle APPCONF data
           ///ESC Application Configuration
-          escApplicationConfiguration = escHelper.processAPPCONF(bleHelper.getPayload());
+          escApplicationConfiguration = escHelper.processAPPCONF(bleHelper.getPayload(), escFirmwareVersion);
 
           if (escApplicationConfiguration.imu_conf.gyro_offset_comp_clamp != null) {
             print("SUCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCESSSSS?");
@@ -1653,8 +1668,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_GET_DECODED_PPM.index) {
 
-          int valueNow = escHelper.buffer_get_int32(bleHelper.getPayload(), 1);
-          int msNow = escHelper.buffer_get_int32(bleHelper.getPayload(), 5);
+          int valueNow = buffer_get_int32(bleHelper.getPayload(), 1);
+          int msNow = buffer_get_int32(bleHelper.getPayload(), 5);
           print(
               "Decoded PPM packet received: value $valueNow, milliseconds $msNow");
           setState(() {
@@ -1879,7 +1894,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
-                Text('FreeSK8 currently works with ESCs using firmware 5.1 and the connected ESC says it is incompatible:'),
+                Text('FreeSK8 currently works with ESCs using firmware 5.1 and 5.2 and the connected ESC says it is incompatible:'),
                 SizedBox(height:10),
                 Text(escDetails),
               ],
@@ -2443,6 +2458,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             requestESCApplicationConfiguration: requestAPPCONF,
             ppmLastDuration: ppmLastDuration,
             notifyStopStartPPMCalibrate: notifyStopStartPPMCalibrate,
+            escFirmwareVersion: escFirmwareVersion,
           ),
           RideLogging(
               myUserSettings: widget.myUserSettings,

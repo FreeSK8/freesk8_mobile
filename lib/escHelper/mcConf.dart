@@ -9,7 +9,8 @@ enum BATTERY_TYPE {
 enum temp_sensor_type {
   TEMP_SENSOR_NTC_10K_25C,
   TEMP_SENSOR_PTC_1K_100C,
-  TEMP_SENSOR_KTY83_122
+  TEMP_SENSOR_KTY83_122,
+  TEMP_SENSOR_NTC_100K_25C // Firmware 5.2 added
 }
 
 enum out_aux_mode {
@@ -34,7 +35,8 @@ enum sensor_port_mode {
   SENSOR_PORT_MODE_AD2S1205,
   SENSOR_PORT_MODE_SINCOS,
   SENSOR_PORT_MODE_TS5700N8501,
-  SENSOR_PORT_MODE_TS5700N8501_MULTITURN
+  SENSOR_PORT_MODE_TS5700N8501_MULTITURN,
+  SENSOR_PORT_MODE_MT6816_SPI, // Firmware 5.2 added
 }
 
 enum mc_foc_hfi_samples {
@@ -86,10 +88,24 @@ enum mc_pwm_mode {
   PWM_MODE_BIPOLAR // Some glitches occasionally, can kill MOSFETs
 }
 
+enum BMS_TYPE {
+  BMS_TYPE_NONE,
+  BMS_TYPE_VESC
+}
+
+class bms_config {
+  BMS_TYPE type;
+  double t_limit_start;
+  double t_limit_end;
+  double soc_limit_start;
+  double soc_limit_end;
+}
+
 class MCCONF {
   MCCONF() {
     hall_table = new List(8);
     foc_hall_table = new List(8);
+    bms = new bms_config();
   }
   // Switching and drive
   mc_pwm_mode pwm_mode;
@@ -156,6 +172,7 @@ class MCCONF {
   double foc_encoder_cos_gain;
   double foc_encoder_sincos_filter_constant;
   double foc_motor_l;
+  double foc_motor_ld_lq_diff; // Firmware 5.2 added
   double foc_motor_r;
   double foc_motor_flux_linkage;
   double foc_observer_gain;
@@ -165,12 +182,16 @@ class MCCONF {
   double foc_duty_dowmramp_kp;
   double foc_duty_dowmramp_ki;
   double foc_openloop_rpm;
+  double foc_openloop_rpm_low; // Firmware 5.2 added
+  double foc_d_gain_scale_start; // Fimware 5.2 added
+  double foc_d_gain_scale_max_mod; // Firmware 5.2 added
   double foc_sl_openloop_hyst;
   double foc_sl_openloop_time;
-  double foc_sl_d_current_duty;
-  double foc_sl_d_current_factor;
+  double foc_sl_openloop_time_lock; // Firmware 5.2 added; was foc_sl_d_current_duty in 5.1
+  double foc_sl_openloop_time_ramp; // Firmware 5.2 added; was foc_sl_d_current_factor in 5.1
   mc_foc_sensor_mode foc_sensor_mode;
   List<int> foc_hall_table;
+  double foc_hall_interp_erpm; // Firmware 5.2 added
   double foc_sl_erpm;
   bool foc_sample_v0_v7;
   bool foc_sample_high_current;
@@ -200,6 +221,7 @@ class MCCONF {
   double s_pid_kd_filter;
   double s_pid_min_erpm;
   bool s_pid_allow_braking;
+  double s_pid_ramp_erpms_s; // Firmware 5.2 added
   // Pos PID
   double p_pid_kp;
   double p_pid_ki;
@@ -227,6 +249,7 @@ class MCCONF {
   out_aux_mode m_out_aux_mode;
   temp_sensor_type m_motor_temp_sens_type;
   double m_ptc_motor_coeff;
+  int m_hall_extra_samples; // Firmware 5.2 added
   // Setup info
   int si_motor_poles;
   double si_gear_ratio;
@@ -234,4 +257,5 @@ class MCCONF {
   BATTERY_TYPE si_battery_type;
   int si_battery_cells;
   double si_battery_ah;
+  bms_config bms; // Firmware 5.2 added
 }

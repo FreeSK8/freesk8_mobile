@@ -9,7 +9,9 @@ enum app_use {
   APP_NUNCHUK,
   APP_NRF,
   APP_CUSTOM,
-  APP_BALANCE
+  APP_BALANCE,
+  APP_PAS, // Firmware 5.2 added
+  APP_ADC_PAS, // Firmware 5.2 added
 }
 
 // Throttle curve mode
@@ -74,6 +76,17 @@ enum adc_control_type {
   ADC_CTRL_TYPE_PID_REV_BUTTON
 }
 
+// PAS control types
+enum pas_control_type { // Firmware 5.2 added
+  PAS_CTRL_TYPE_NONE,
+  PAS_CTRL_TYPE_CADENCE,
+}
+
+// PAS sensor types
+enum pas_sensor_type { // Firmware 5.2 added
+  PAS_SENSOR_TYPE_QUADRATURE,
+}
+
 class adc_config {
   adc_control_type ctrl_type;
   double hyst;
@@ -103,7 +116,8 @@ class adc_config {
 enum chuk_control_type {
   CHUK_CTRL_TYPE_NONE,
   CHUK_CTRL_TYPE_CURRENT,
-  CHUK_CTRL_TYPE_CURRENT_NOREV
+  CHUK_CTRL_TYPE_CURRENT_NOREV,
+  CHUK_CTRL_TYPE_CURRENT_BIDIRECTIONAL, // Firmware 5.2 added
 }
 
 class chuk_config {
@@ -121,6 +135,20 @@ class chuk_config {
   bool use_smart_rev;
   double smart_rev_max_duty;
   double smart_rev_ramp_time;
+}
+
+class pas_config { // Firmware 5.2 added
+  pas_control_type ctrl_type;
+  pas_sensor_type sensor_type;
+  double current_scaling;
+  double pedal_rpm_start;
+  double pedal_rpm_end;
+  bool invert_pedal_direction;
+  int magnets;
+  bool use_filter;
+  double ramp_time_pos;
+  double ramp_time_neg;
+  int update_rate_hz;
 }
 
 // NRF Datatypes
@@ -188,16 +216,25 @@ class balance_config {
   double ki;
   double kd;
   int hertz;
-  double pitch_fault;
-  double roll_fault;
-  double adc1;
-  double adc2;
-  double overspeed_duty;
+  double fault_pitch;
+  double fault_roll;
+  double fault_duty; // Firmware 5.2 added
+  double fault_adc1;
+  double fault_adc2;
+  int fault_delay_pitch; // Firmware 5.2 added
+  int fault_delay_roll; // Firmware 5.2 added
+  int fault_delay_duty; // Firmware 5.2 added
+  int fault_delay_switch_half; // Firmware 5.2 added
+  int fault_delay_switch_full; // Firmware 5.2 added
+  int fault_adc_half_erpm;
+  double overspeed_duty; // Firmware 5.1 only
   double tiltback_duty;
   double tiltback_angle;
   double tiltback_speed;
   double tiltback_high_voltage;
   double tiltback_low_voltage;
+  double tiltback_constant;
+  int tiltback_constant_erpm; // Firmware 5.2 added
   double startup_pitch_tolerance;
   double startup_roll_tolerance;
   double startup_speed;
@@ -208,16 +245,15 @@ class balance_config {
   double yaw_ki;
   double yaw_kd;
   double roll_steer_kp;
-  double brake_current;
-  int overspeed_delay;
-  int fault_delay;
-  double tiltback_constant;
   double roll_steer_erpm_kp;
+  double brake_current;
+  int overspeed_delay; // Firmware 5.1 only
+  int fault_delay; // Firmware 5.1 only
   double yaw_current_clamp;
-  int adc_half_fault_erpm;
   double setpoint_pitch_filter;
   double setpoint_target_filter;
-  double setpoint_clamp;
+  double setpoint_filter_clamp;
+  int kd_pt1_frequency; // Firmware 5.2 added
 }
 
 // CAN status modes
@@ -248,7 +284,8 @@ enum IMU_TYPE {
   IMU_TYPE_INTERNAL,
   IMU_TYPE_EXTERNAL_MPU9X50,
   IMU_TYPE_EXTERNAL_ICM20948,
-  IMU_TYPE_EXTERNAL_BMI160
+  IMU_TYPE_EXTERNAL_BMI160,
+  IMU_TYPE_EXTERNAL_LSM6DS3, // Firmware 5.2 added
 }
 
 enum AHRS_MODE {
@@ -284,6 +321,12 @@ enum CAN_MODE {
   CAN_MODE_COMM_BRIDGE
 }
 
+enum UAVCAN_RAW_MODE { // Firmware 5.2 added
+  UAVCAN_RAW_MODE_CURRENT,
+  UAVCAN_RAW_MODE_CURRENT_NO_REV_BRAKE,
+  UAVCAN_RAW_MODE_DUTY,
+}
+
 enum CAN_BAUD {
   CAN_BAUD_125K,
   CAN_BAUD_250K,
@@ -292,7 +335,8 @@ enum CAN_BAUD {
   CAN_BAUD_10K,
   CAN_BAUD_20K,
   CAN_BAUD_50K,
-  CAN_BAUD_75K
+  CAN_BAUD_75K,
+  CAN_BAUD_100K, // Firmware 5.2 added
 }
 
 class APPCONF {
@@ -303,6 +347,7 @@ class APPCONF {
     app_nrf_conf = new nrf_config();
     app_balance_conf = new balance_config();
     imu_conf = new imu_config();
+    app_pas_conf = new pas_config();
   }
   // Settings
   int controller_id;
@@ -318,6 +363,7 @@ class APPCONF {
   // CAN modes
   CAN_MODE can_mode;
   int uavcan_esc_index;
+  UAVCAN_RAW_MODE uavcan_raw_mode; // Firmware 5.2 added
 
   // Application to use
   app_use app_to_use;
@@ -339,6 +385,9 @@ class APPCONF {
 
   // Balance application settings
   balance_config app_balance_conf;
+
+  // Pedal Assist application settings
+  pas_config app_pas_conf;  // Firmware 5.2 added
 
   // IMU Settings
   imu_config imu_conf;
