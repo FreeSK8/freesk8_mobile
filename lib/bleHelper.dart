@@ -126,7 +126,8 @@ class BLEHelper {
             break;
           default:
             //TODO: Uh. If the start of the packet isn't 2 or 3 we are out of alignment
-            counter = 0; //TODO: try dropping the current data in messageReceived by starting counter at 0 and continue to iterate bytes
+            //TODO: Advance counter a byte to see if we can fix things
+            ++counter;
             break;
         }
       }
