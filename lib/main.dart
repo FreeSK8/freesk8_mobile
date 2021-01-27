@@ -48,7 +48,7 @@ import 'databaseAssistant.dart';
 import 'escHelper/serialization/buffers.dart';
 
 const String freeSK8ApplicationVersion = "0.11.0";
-const String robogotchiFirmwareExpectedVersion = "0.7.1";
+const String robogotchiFirmwareExpectedVersion = "0.7.2";
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -391,7 +391,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     else if (startScan == true) {
       print("_handleBLEScanState: startScan was true");
       widget.devicesList.clear();
-      widget.flutterBlue.startScan(withServices: new List<Guid>.from([uartServiceUUID]) );
+      widget.flutterBlue.startScan(withServices: new List<Guid>.from([uartServiceUUID])).catchError((onError){
+        if (onError.toString().contains("Is the Adapter on?")) {
+          genericAlert(context, "Bluetooth off?", Text("Unable to start scanning. Please check that bluetooth is enabled and try again"), "OK");
+        }
+        return;
+      });
     } else {
       print("_handleBLEScanState: startScan was false");
       widget.flutterBlue.stopScan();
@@ -2152,7 +2157,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       ),
       ListTile(
         leading: Icon(Icons.devices),
-        title: Text("Robogotchi FW Update"),
+        title: Text("Robogotchi Updater"),
         onTap: () {
           // Don't write if not connected
           if (theTXLoggerCharacteristic != null) {
@@ -2160,12 +2165,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               context: context,
               builder: (BuildContext context) {
                 return AlertDialog(
-                  title: Text('Robogotchi FW Update'),
+                  title: Text('Ready to update?'),
                   content: SingleChildScrollView(
                     child: ListBody(
                       children: <Widget>[
-                        Text('Caution!'),
-                        Text('Do you want to perform a firmware update?'),
+                        Text('Selecting YES will put your Robogotchi into update mode.'),
+                        SizedBox(height:10),
+                        Text('This process typically takes 1-2 minutes')
                       ],
                     ),
                   ),
@@ -2177,7 +2183,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                       },
                     ),
                     FlatButton(
-                      child: Text('Yep!'),
+                      child: Text('YES'),
                       onPressed: () async {
                         await theTXLoggerCharacteristic.write(utf8.encode("dfumode~")).timeout(Duration(milliseconds: 500)).whenComplete((){
                           print('Your robogotchi is ready to receive firmware!\nUse the nRF Toolbox application to upload new firmware.\nPower cycle board to cancel update.');

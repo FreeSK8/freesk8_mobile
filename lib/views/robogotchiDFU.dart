@@ -5,6 +5,8 @@ import 'package:flutter_nordic_dfu/flutter_nordic_dfu.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'package:freesk8_mobile/globalUtilities.dart';
 
+const String updateFileName = "Robogotchi_0.7.2beta"; //NOTE: Must match that of /assets/firmware/<*>.zip
+
 class RobogotchiDFU extends StatefulWidget {
   @override
   RobogotchiDFUState createState() => RobogotchiDFUState();
@@ -19,11 +21,13 @@ class RobogotchiDFUState extends State<RobogotchiDFU> {
   bool dfuRunning = false;
 
   String _deviceAddress;
-  int _percent;
+  int _percent = 0;
   double _speed;
   double _avgSpeed;
   int _currentPart;
   int _partsTotal;
+
+  double updateIconAngle = 0.0;
 
   @override
   void initState() {
@@ -43,11 +47,14 @@ class RobogotchiDFUState extends State<RobogotchiDFU> {
 
   Future<void> doDfu(String deviceId) async {
     stopScan();
-    dfuRunning = true;
+    setState(() {
+      _percent = 0;
+      dfuRunning = true;
+    });
     try {
       var s = await FlutterNordicDfu.startDfu(
         deviceId,
-        'assets/firmware/Robogotchi_0.7.2beta.zip',
+        'assets/firmware/$updateFileName.zip',
         fileInAsset: true,
         progressListener:
         DefaultDfuProgressListenerAdapter(onProgressChangedHandle: (
@@ -67,13 +74,19 @@ class RobogotchiDFUState extends State<RobogotchiDFU> {
             _currentPart = currentPart;
             _partsTotal = partsTotal;
           });
+          if (_percent == 100) {
+            showCompletedDialog();
+          }
         }),
       );
       print(s);
       dfuRunning = false;
     } catch (e) {
-      dfuRunning = false;
+      setState(() {
+        dfuRunning = false;
+      });
       print(e.toString());
+      genericAlert(context, "Exception", Text("Wait, what does this mean? ${e.toString()}"), "OK");
     }
   }
 
@@ -107,10 +120,40 @@ class RobogotchiDFUState extends State<RobogotchiDFU> {
     setState(() => scanSubscription = null);
   }
 
+  void showCompletedDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Update completed'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text("Your Robogotchi is ready! It will automatically boot in a few seconds."),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close this dialog
+                Navigator.of(context).pop(); // Close robogotchi updater
+              },
+            )
+          ],
+        );
+      },
+    );
+  }
   @override
   Widget build(BuildContext context) {
     final isScanning = scanSubscription != null;
     final hasDevice = scanResults.length > 0;
+    final hasCompleted = _percent == 100;
+
+    // Update icon angle every state refresh
+    updateIconAngle -= 0.1;
 
     return Scaffold(
         appBar: AppBar(
@@ -131,6 +174,8 @@ class RobogotchiDFUState extends State<RobogotchiDFU> {
         Column(children: [
           SizedBox(height:10),
           Image(image: AssetImage("assets/robogotchi_render.png"),height: 150),
+          Text("New Version: $updateFileName"),
+          Text("Discovered devices:"),
 
           Expanded(
               child: ListView.separated(
@@ -140,13 +185,34 @@ class RobogotchiDFUState extends State<RobogotchiDFU> {
                 itemCount: scanResults.length,
               ),
           ),
-          SizedBox(height: 100,child: Column(children: [
-            Text("Connected to $_deviceAddress"),
-            Text("Part $_currentPart / $_partsTotal Speed $_avgSpeed Percent $_percent")
-          ],))
-
-        ]
-        )
+          dfuRunning ?
+          SizedBox(height: 175,
+              child: Column(children: [
+                hasCompleted ? Icon(
+                  Icons.check_circle_outline,
+                  size: 60.0,
+                  color: Colors.blue,
+                ) :
+                Transform.rotate(
+                    angle: updateIconAngle,
+                    child: Icon(
+                      Icons.sync,
+                      size: 60.0,
+                      color: Colors.blue,
+                    )
+                ),
+                _deviceAddress == null ? Text("Connecting to Robogotchi") : Text("Connected to Robogotchi"),
+                _partsTotal == null ? Container() : Text("Updating Part $_currentPart / $_partsTotal"),
+                Container(
+                  padding: EdgeInsets.all(10),
+                  child: LinearProgressIndicator(
+                    value: _percent / 100,
+                    minHeight: 20.0,
+                  ),
+                ),
+              ])
+          ) : Container()
+        ])
       );
   }
 
@@ -189,7 +255,7 @@ class DeviceItem extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text(name),
+                  Text(inDFUMode ? "Robogotchi (ready for update)" : name),
                   Text(scanResult.device.id.id),
                   Text("RSSI: ${scanResult.rssi}"),
                 ],
