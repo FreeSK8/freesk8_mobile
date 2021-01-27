@@ -583,7 +583,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                               SizedBox(height: 10,),
                               Text("Connected"),
                               Text("Communicating with ESC"),
-                              Text("(please wait)", style: TextStyle(fontSize: 10))
+                              Text("(please wait)", style: TextStyle(fontSize: 10)),
+                              Text("(long press to abort)", style: TextStyle(fontSize: 7))
                             ]),
                           ),
                         )
