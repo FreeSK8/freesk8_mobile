@@ -195,6 +195,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.10.1+1"
+  flutter_nordic_dfu:
+    dependency: "direct main"
+    description:
+      name: flutter_nordic_dfu
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.4.0"
   flutter_plugin_android_lifecycle:
     dependency: transitive
     description:
@@ -400,7 +407,7 @@ packages:
       name: plugin_platform_interface
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.0.2"
+    version: "1.0.3"
   positioned_tap_detector:
     dependency: transitive
     description:

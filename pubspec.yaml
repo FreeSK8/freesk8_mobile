@@ -51,6 +51,8 @@ dependencies:
 
   table_calendar: ^2.3.0
 
+  flutter_nordic_dfu: ^2.4.0
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^0.1.2
@@ -85,6 +87,8 @@ flutter:
   #  - images/a_dot_ham.jpeg
 
   assets:
+    - assets/firmware/Robogotchi_0.7.2beta.zip
+    - assets/robogotchi_render.png
     - assets/FreeSK8_Mobile.jpg
     - assets/FreeSK8_MobileLogo.png
     - assets/map_fault.png

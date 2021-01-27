@@ -31,6 +31,7 @@ import 'package:freesk8_mobile/file_manager.dart';
 import 'package:freesk8_mobile/autoStopHandler.dart';
 
 import 'package:flutter_blue/flutter_blue.dart';
+import 'package:freesk8_mobile/views/robogotchiDFU.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -60,7 +61,8 @@ void main() {
         RideLogViewer.routeName: (BuildContext context) => RideLogViewer(),
         ConfigureESC.routeName: (BuildContext context) => ConfigureESC(),
         ESCProfileEditor.routeName: (BuildContext context) => ESCProfileEditor(),
-        RobogotchiCfgEditor.routeName: (BuildContext context) => RobogotchiCfgEditor()
+        RobogotchiCfgEditor.routeName: (BuildContext context) => RobogotchiCfgEditor(),
+        RobogotchiDFU.routeName: (BuildContext context) => RobogotchiDFU(),
       },
       theme: ThemeData(
         //TODO: Select satisfying colors for the light theme
@@ -2176,10 +2178,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                     ),
                     FlatButton(
                       child: Text('Yep!'),
-                      onPressed: () {
-                        theTXLoggerCharacteristic.write(utf8.encode("dfumode~")).timeout(Duration(milliseconds: 500)).whenComplete((){
+                      onPressed: () async {
+                        await theTXLoggerCharacteristic.write(utf8.encode("dfumode~")).timeout(Duration(milliseconds: 500)).whenComplete((){
                           print('Your robogotchi is ready to receive firmware!\nUse the nRF Toolbox application to upload new firmware.\nPower cycle board to cancel update.');
+
+
                           Navigator.of(context).pop();
+                          /*
                           showDialog(
                             context: context,
                             builder: (BuildContext context) {
@@ -2189,7 +2194,15 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                               );
                             },
                           );
+
+                           */
+
                           _bleDisconnect();
+
+                          setState(() {
+                            // navigate to the route
+                            Navigator.of(context).pushNamed(RobogotchiDFU.routeName, arguments: null);
+                          });
                         }).catchError((e){
                           print("Firmware Update: Exception: $e");
                         });
