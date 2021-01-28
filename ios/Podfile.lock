@@ -8,6 +8,9 @@ PODS:
   - flutter_blue/Protos (0.0.1):
     - Flutter
     - Protobuf (~> 3.11.4)
+  - flutter_nordic_dfu (0.0.1):
+    - Flutter
+    - iOSDFULibrary (~> 4.5.1)
   - FMDB (2.7.5):
     - FMDB/standard (= 2.7.5)
   - FMDB/standard (2.7.5)
@@ -15,6 +18,8 @@ PODS:
     - Flutter
   - image_picker (0.0.1):
     - Flutter
+  - iOSDFULibrary (4.5.1):
+    - ZIPFoundation (= 0.9.9)
   - "location_permissions (3.0.0+1)":
     - Flutter
   - path_provider (0.0.1):
@@ -27,11 +32,13 @@ PODS:
     - FMDB (~> 2.7.2)
   - wakelock (0.0.1):
     - Flutter
+  - ZIPFoundation (0.9.9)
 
 DEPENDENCIES:
   - esys_flutter_share (from `.symlinks/plugins/esys_flutter_share/ios`)
   - Flutter (from `Flutter`)
   - flutter_blue (from `.symlinks/plugins/flutter_blue/ios`)
+  - flutter_nordic_dfu (from `.symlinks/plugins/flutter_nordic_dfu/ios`)
   - geolocator (from `.symlinks/plugins/geolocator/ios`)
   - image_picker (from `.symlinks/plugins/image_picker/ios`)
   - location_permissions (from `.symlinks/plugins/location_permissions/ios`)
@@ -43,7 +50,9 @@ DEPENDENCIES:
 SPEC REPOS:
   trunk:
     - FMDB
+    - iOSDFULibrary
     - Protobuf
+    - ZIPFoundation
 
 EXTERNAL SOURCES:
   esys_flutter_share:
@@ -52,6 +61,8 @@ EXTERNAL SOURCES:
     :path: Flutter
   flutter_blue:
     :path: ".symlinks/plugins/flutter_blue/ios"
+  flutter_nordic_dfu:
+    :path: ".symlinks/plugins/flutter_nordic_dfu/ios"
   geolocator:
     :path: ".symlinks/plugins/geolocator/ios"
   image_picker:
@@ -71,15 +82,18 @@ SPEC CHECKSUMS:
   esys_flutter_share: 403498dab005b36ce1f8d7aff377e81f0621b0b4
   Flutter: 0e3d915762c693b495b44d77113d4970485de6ec
   flutter_blue: eeb381dc4727a0954dede73515f683865494b370
+  flutter_nordic_dfu: b265b606c5b200764e8e377e83fb3f5d161f3990
   FMDB: 2ce00b547f966261cd18927a3ddb07cb6f3db82a
   geolocator: f7622e0e7e2a24718285b73916d60c4a54b9f5b6
   image_picker: 9c3312491f862b28d21ecd8fdf0ee14e601b3f09
+  iOSDFULibrary: 87c6a088cf7172e3694dfaa8305e7ded5eda2547
   location_permissions: 7e0f9aa0f60deb8ff93ddf0e2a164c7e8197bc94
   path_provider: abfe2b5c733d04e238b0d8691db0cfd63a27a93c
   Protobuf: 176220c526ad8bd09ab1fb40a978eac3fef665f7
   shared_preferences: af6bfa751691cdc24be3045c43ec037377ada40d
   sqflite: 4001a31ff81d210346b500c55b17f4d6c7589dd0
   wakelock: 0d4a70faf8950410735e3f61fb15d517c8a6efc4
+  ZIPFoundation: 89df685c971926b0323087952320bdfee9f0b6ef
 
 PODFILE CHECKSUM: aafe91acc616949ddb318b77800a7f51bffa2a4c
 
