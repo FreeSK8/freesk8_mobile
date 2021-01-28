@@ -5,7 +5,7 @@ import 'package:flutter_nordic_dfu/flutter_nordic_dfu.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'package:freesk8_mobile/globalUtilities.dart';
 
-const String updateFileName = "Robogotchi_0.7.2beta"; //NOTE: Must match that of /assets/firmware/<*>.zip
+const String updateFileName = "Robogotchi_0.7.2"; //TODO: NOTE: Must match that of /assets/firmware/<*>.zip
 
 class RobogotchiDFU extends StatefulWidget {
   @override
@@ -170,14 +170,14 @@ class RobogotchiDFUState extends State<RobogotchiDFU> {
             )
           ],
         ),
-        body: !hasDevice ? const Center( child: const Text('No device')) :
+        body:
         Column(children: [
           SizedBox(height:10),
           Image(image: AssetImage("assets/robogotchi_render.png"),height: 150),
           Text("New Version: $updateFileName"),
           Text("Discovered devices:"),
 
-          Expanded(
+          !hasDevice ? const Center( child: const Text('No devices found')) :Expanded(
               child: ListView.separated(
                 padding: const EdgeInsets.all(8),
                 itemBuilder: _deviceItemBuilder,
