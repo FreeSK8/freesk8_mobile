@@ -82,6 +82,8 @@ class RobogotchiDFUState extends State<RobogotchiDFU> {
       print(s);
       dfuRunning = false;
     } catch (e) {
+      //TODO: Sometimes we are throwing PlatformException(DFU_Failed, Device address: *****, null, null)
+      //TODO: Consider catching a time or two, checking rssi, notify user of retry event
       setState(() {
         dfuRunning = false;
       });
