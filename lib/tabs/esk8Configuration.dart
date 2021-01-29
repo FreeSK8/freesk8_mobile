@@ -1445,26 +1445,26 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       tecGearRatio.selection = TextSelection.fromPosition(TextPosition(offset: tecGearRatio.text.length));
 
       // Populate text editing controllers
-      tecCurrentMax.text = widget.escMotorConfiguration.l_current_max.toString();
-      tecCurrentMin.text = widget.escMotorConfiguration.l_current_min.toString();
-      tecInCurrentMax.text = widget.escMotorConfiguration.l_in_current_max.toString();
-      tecInCurrentMin.text = widget.escMotorConfiguration.l_in_current_min.toString();
-      tecABSCurrentMax.text = widget.escMotorConfiguration.l_abs_current_max.toString();
+      tecCurrentMax.text = doublePrecision(widget.escMotorConfiguration.l_current_max, 1).toString();
+      tecCurrentMin.text = doublePrecision(widget.escMotorConfiguration.l_current_min, 1).toString();
+      tecInCurrentMax.text = doublePrecision(widget.escMotorConfiguration.l_in_current_max, 1).toString();
+      tecInCurrentMin.text = doublePrecision(widget.escMotorConfiguration.l_in_current_min, 1).toString();
+      tecABSCurrentMax.text = doublePrecision(widget.escMotorConfiguration.l_abs_current_max, 1).toString();
       tecMaxERPM.text = widget.escMotorConfiguration.l_max_erpm.toInt().toString();
       tecMinERPM.text = widget.escMotorConfiguration.l_min_erpm.toInt().toString();
-      tecMinVIN.text = widget.escMotorConfiguration.l_min_vin.toString();
-      tecMaxVIN.text = widget.escMotorConfiguration.l_max_vin.toString();
-      tecBatteryCutStart.text = widget.escMotorConfiguration.l_battery_cut_start.toString();
-      tecBatteryCutEnd.text = widget.escMotorConfiguration.l_battery_cut_end.toString();
-      tecTempFETStart.text = widget.escMotorConfiguration.l_temp_fet_start.toString();
-      tecTempFETEnd.text = widget.escMotorConfiguration.l_temp_fet_end.toString();
-      tecTempMotorStart.text = widget.escMotorConfiguration.l_temp_motor_start.toString();
-      tecTempMotorEnd.text = widget.escMotorConfiguration.l_temp_motor_end.toString();
-      tecWattMin.text = widget.escMotorConfiguration.l_watt_min.toString();
-      tecWattMax.text = widget.escMotorConfiguration.l_watt_max.toString();
-      tecCurrentMinScale.text = widget.escMotorConfiguration.l_current_min_scale.toString();
-      tecCurrentMaxScale.text = widget.escMotorConfiguration.l_current_max_scale.toString();
-      tecDutyStart.text = widget.escMotorConfiguration.l_duty_start.toString();
+      tecMinVIN.text = doublePrecision(widget.escMotorConfiguration.l_min_vin, 1).toString();
+      tecMaxVIN.text = doublePrecision(widget.escMotorConfiguration.l_max_vin, 1).toString();
+      tecBatteryCutStart.text = doublePrecision(widget.escMotorConfiguration.l_battery_cut_start, 1).toString();
+      tecBatteryCutEnd.text = doublePrecision(widget.escMotorConfiguration.l_battery_cut_end, 1).toString();
+      tecTempFETStart.text = doublePrecision(widget.escMotorConfiguration.l_temp_fet_start, 1).toString();
+      tecTempFETEnd.text = doublePrecision(widget.escMotorConfiguration.l_temp_fet_end, 1).toString();
+      tecTempMotorStart.text = doublePrecision(widget.escMotorConfiguration.l_temp_motor_start, 1).toString();
+      tecTempMotorEnd.text = doublePrecision(widget.escMotorConfiguration.l_temp_motor_end, 1).toString();
+      tecWattMin.text = doublePrecision(widget.escMotorConfiguration.l_watt_min, 1).toString();
+      tecWattMax.text = doublePrecision(widget.escMotorConfiguration.l_watt_max, 1).toString();
+      tecCurrentMinScale.text = doublePrecision(widget.escMotorConfiguration.l_current_min_scale, 2).toString();
+      tecCurrentMaxScale.text = doublePrecision(widget.escMotorConfiguration.l_current_max_scale, 2).toString();
+      tecDutyStart.text = doublePrecision(widget.escMotorConfiguration.l_duty_start, 2).toString();
 
       // Set cursor position to end of text editing controllers
       tecCurrentMax.selection = TextSelection.fromPosition(TextPosition(offset: tecCurrentMax.text.length));
