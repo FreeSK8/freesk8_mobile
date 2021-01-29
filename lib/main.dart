@@ -508,6 +508,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     }
   }
 
+  void _hideAllSubviews() {
+    _showDieBieMS = false;
+    _showESCProfiles = false;
+    _showESCConfigurator = false;
+    _showESCApplicationConfigurator = false;
+  }
+
   Future<void> _attemptDeviceConnection(BluetoothDevice device) async {
     // If the user aborts device.connect() prevent this Future from taking action
     bool _userAborted = false;
@@ -1602,6 +1609,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
           if (_showESCApplicationConfigurator) {
             setState(() {
+              _hideAllSubviews();
               controller.index = 2;
               _showESCApplicationConfigurator = true;
             });
@@ -1952,6 +1960,14 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     );
   }
 
+  void _delayedTabControllerIndexChange(int index) {
+    Future.delayed(Duration(milliseconds: 250), (){
+      setState(() {
+        controller.index = index;
+      });
+    });
+  }
+
   /// Hamburger Menu... mmmm hamburgers
   Drawer getNavDrawer(BuildContext context) {
     var headerChild = DrawerHeader(
@@ -2026,11 +2042,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               _showDieBieMS = false;
             });
             print("DieBieMS RealTime Disabled");
+            Navigator.pop(context); // Close drawer
           } else {
             setState(() {
               _showDieBieMS = true;
-              controller.index = 1;
             });
+            _delayedTabControllerIndexChange(1);
             print("DieBieMS RealTime Enabled");
             Navigator.pop(context); // Close drawer
           }
@@ -2043,8 +2060,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         onTap: () {
           // Don't write if not connected
           if (the_tx_characteristic != null) {
-            // Set the flag to show ESC profiles. Display when MCCONF is returned
-            _showESCProfiles = true;
+            setState(() {
+              _hideAllSubviews();
+              // Set the flag to show ESC profiles. Display when MCCONF is returned
+              _showESCProfiles = true;
+            });
 
             requestMCCONF();
             Navigator.pop(context); // Close the drawer
@@ -2069,7 +2089,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         onTap: () {
           // Don't write if not connected
           if (the_tx_characteristic != null) {
-            _showESCApplicationConfigurator = true;
+            setState(() {
+              _hideAllSubviews();
+              _showESCApplicationConfigurator = true;
+            });
             requestAPPCONF(null);
             Navigator.of(context).pop();
           } else {
@@ -2088,7 +2111,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       ListTile(
         leading: Icon(Icons.settings_applications),
-        title: Text(_showESCConfigurator ? "Hide ESC Configurator" : "Show ESC Configurator"),
+        title: Text("Show ESC Configurator"),
         onTap: () async {
           if (_connectedDevice == null) {
             showDialog(
@@ -2111,20 +2134,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 );
               },
             );
-          }
-          else if(_showESCConfigurator) {
-            setState(() {
-              _showESCConfigurator = false;
-              _handleAutoloadESCSettings(true); // Reload ESC settings after user configuration
-            });
-            print("ESC Configurator Hidden");
-            // Close the menu
-            Navigator.pop(context);
           } else {
             setState(() {
+              _hideAllSubviews();
               _showESCConfigurator = true;
-              controller.index = 2;
             });
+            _delayedTabControllerIndexChange(2);
             print("ESC Configurator Displayed");
             // Close the menu
             Navigator.pop(context);
@@ -2421,7 +2436,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       }
     }
     else {
-      print("Building main.dart");
+      print("Building main.dart (smart bms? $_showDieBieMS)");
     }
 
     FileSyncViewerArguments syncStatus = FileSyncViewerArguments(syncInProgress: syncInProgress, fileName: catCurrentFilename, fileBytesReceived: catBytesReceived, fileBytesTotal: catBytesTotal, fileList: fileList);
