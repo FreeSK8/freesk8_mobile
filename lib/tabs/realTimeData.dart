@@ -42,7 +42,7 @@ class RealTimeData extends StatefulWidget {
 
   RealTimeData(
       { this.routeTakenLocations,
-        this.telemetryPacket,
+        this.telemetryMap,
         @required this.currentSettings,
         this.startStopTelemetryFunc,
         this.showDieBieMS,
@@ -54,7 +54,7 @@ class RealTimeData extends StatefulWidget {
 
   final List<LatLng> routeTakenLocations;
   final UserSettings currentSettings;
-  final ESCTelemetry telemetryPacket;
+  final Map<int, ESCTelemetry> telemetryMap;
   final ValueChanged<bool> startStopTelemetryFunc;
   final bool showDieBieMS;
   final DieBieMSTelemetry dieBieMSTelemetry;
@@ -75,6 +75,8 @@ class RealTimeDataState extends State<RealTimeData> {
 
   static double averageVoltageInput = 0;
 
+  static ESCTelemetry escTelemetry;
+
   double calculateSpeedKph(double eRpm) {
     double ratio = 1.0 / widget.currentSettings.settings.gearRatio;
     int minutesToHour = 60;
@@ -91,7 +93,7 @@ class RealTimeDataState extends State<RealTimeData> {
   }
 
   double calculateEfficiencyKm(double kmTraveled) {
-    double whKm = (widget.telemetryPacket.watt_hours - widget.telemetryPacket.watt_hours_charged) / kmTraveled;
+    double whKm = (escTelemetry.watt_hours - escTelemetry.watt_hours_charged) / kmTraveled;
     if (whKm.isNaN || whKm.isInfinite) {
       whKm = 0;
     }
@@ -341,30 +343,51 @@ class RealTimeDataState extends State<RealTimeData> {
         ],)
       );
     }
+
+    // Assemble ESC telemetry from all ESCs
+    if (widget.telemetryMap.length == 0) {
+      escTelemetry = new ESCTelemetry();
+    } else {
+      escTelemetry = widget.telemetryMap.values.first;
+      for (var mapEntry in widget.telemetryMap.entries) {
+        if (mapEntry.key != escTelemetry.vesc_id) {
+          escTelemetry.amp_hours += mapEntry.value.amp_hours;
+          escTelemetry.amp_hours_charged += mapEntry.value.amp_hours_charged;
+          escTelemetry.current_in += mapEntry.value.current_in;
+          escTelemetry.current_motor += mapEntry.value.current_motor;
+          escTelemetry.watt_hours += mapEntry.value.watt_hours;
+          escTelemetry.watt_hours_charged += mapEntry.value.watt_hours_charged;
+          if (mapEntry.value.fault_code != mc_fault_code.FAULT_CODE_NONE && escTelemetry.fault_code == mc_fault_code.FAULT_CODE_NONE) {
+            mapEntry.value.fault_code = escTelemetry.fault_code;
+          }
+        }
+      }
+    }
+
     doubleItemWidth = MediaQuery.of(context).size.width /2 - 10;
 
     //TODO: testing oscope package
-    motorCurrentGraphPoints.add( widget.telemetryPacket.current_motor );
+    motorCurrentGraphPoints.add( escTelemetry.current_motor );
     if(motorCurrentGraphPoints.length > doubleItemWidth * 0.75) motorCurrentGraphPoints.removeAt(0);
 
-    double tempMosfet = widget.currentSettings.settings.useFahrenheit ? cToF(widget.telemetryPacket.temp_mos) : widget.telemetryPacket.temp_mos;
-    double tempMotor = widget.currentSettings.settings.useFahrenheit ? cToF(widget.telemetryPacket.temp_motor) : widget.telemetryPacket.temp_motor;
+    double tempMosfet = widget.currentSettings.settings.useFahrenheit ? cToF(escTelemetry.temp_mos) : escTelemetry.temp_mos;
+    double tempMotor = widget.currentSettings.settings.useFahrenheit ? cToF(escTelemetry.temp_motor) : escTelemetry.temp_motor;
     // Around -99.9 is the value received if there is no/faulty temp sensor, Set to 0 so the gauges don't shit themselves
     if (tempMotor < -32) { tempMotor = 0; }
 
     String temperatureMosfet = widget.currentSettings.settings.useFahrenheit ? "$tempMosfet F" : "$tempMosfet C";
-    String temperatureMosfet1 = widget.currentSettings.settings.useFahrenheit ? "${cToF(widget.telemetryPacket.temp_mos_1)} F" : "${widget.telemetryPacket.temp_mos_1} C";
-    String temperatureMosfet2 = widget.currentSettings.settings.useFahrenheit ? "${cToF(widget.telemetryPacket.temp_mos_2)} F" : "${widget.telemetryPacket.temp_mos_2} C";
-    String temperatureMosfet3 = widget.currentSettings.settings.useFahrenheit ? "${cToF(widget.telemetryPacket.temp_mos_3)} F" : "${widget.telemetryPacket.temp_mos_3} C";
+    String temperatureMosfet1 = widget.currentSettings.settings.useFahrenheit ? "${cToF(escTelemetry.temp_mos_1)} F" : "${escTelemetry.temp_mos_1} C";
+    String temperatureMosfet2 = widget.currentSettings.settings.useFahrenheit ? "${cToF(escTelemetry.temp_mos_2)} F" : "${escTelemetry.temp_mos_2} C";
+    String temperatureMosfet3 = widget.currentSettings.settings.useFahrenheit ? "${cToF(escTelemetry.temp_mos_3)} F" : "${escTelemetry.temp_mos_3} C";
     String temperatureMotor = widget.currentSettings.settings.useFahrenheit ? "$tempMotor F" : "$tempMotor C";
 
     double speedMaxFromERPM = calculateSpeedKph(widget.currentSettings.settings.maxERPM);
     double speedMax = widget.currentSettings.settings.useImperial ? kphToMph(speedMaxFromERPM<80?speedMaxFromERPM:80) : speedMaxFromERPM<80?speedMaxFromERPM:80;
-    double speedNow = widget.currentSettings.settings.useImperial ? kphToMph(calculateSpeedKph(widget.telemetryPacket.rpm)) : calculateSpeedKph(widget.telemetryPacket.rpm);
+    double speedNow = widget.currentSettings.settings.useImperial ? kphToMph(calculateSpeedKph(escTelemetry.rpm)) : calculateSpeedKph(escTelemetry.rpm);
     //String speed = widget.currentSettings.settings.useImperial ? "$speedNow mph" : "$speedNow kph";
 
-    //String distance = widget.currentSettings.settings.useImperial ? "${kmToMile(widget.telemetryPacket.tachometer_abs / 1000.0)} miles" : "${widget.telemetryPacket.tachometer_abs / 1000.0} km";
-    double distanceTraveled = calculateDistanceKm(widget.telemetryPacket.tachometer_abs * 1.0);
+    //String distance = widget.currentSettings.settings.useImperial ? "${kmToMile(escTelemetry.tachometer_abs / 1000.0)} miles" : "${escTelemetry.tachometer_abs / 1000.0} km";
+    double distanceTraveled = calculateDistanceKm(escTelemetry.tachometer_abs * 1.0);
     String distance = widget.currentSettings.settings.useImperial ? "${kmToMile(distanceTraveled)} miles" : "$distanceTraveled km";
 
 
@@ -375,14 +398,14 @@ class RealTimeDataState extends State<RealTimeData> {
 
     double powerMax = widget.currentSettings.settings.batterySeriesCount * widget.currentSettings.settings.batteryCellMaxVoltage;
     double powerMinimum = widget.currentSettings.settings.batterySeriesCount * widget.currentSettings.settings.batteryCellMinVoltage;
-    averageVoltageInput = (0.2 * doublePrecision(widget.telemetryPacket.v_in, 1)) + (0.8 * averageVoltageInput);
+    averageVoltageInput = (0.2 * doublePrecision(escTelemetry.v_in, 1)) + (0.8 * averageVoltageInput);
     double powerRemaining = averageVoltageInput - powerMinimum;
     double percentRemaining = sigmoidal(averageVoltageInput, powerMinimum, powerMax) * 100;
     if(percentRemaining.isNaN) percentRemaining = 0;
     if(percentRemaining<0.0) {percentRemaining = 0.0;}
 
 
-    FlutterGauge _gaugeDutyCycle = FlutterGauge(activeColor: Colors.black, handSize: 30,index: widget.telemetryPacket.duty_now * 100,fontFamily: "Courier", start:-100, end: 100,number: Number.endAndCenterAndStart,secondsMarker: SecondsMarker.secondsAndMinute,counterStyle: TextStyle(color: Theme.of(context).textTheme.bodyText1.color,fontSize: 25,));
+    FlutterGauge _gaugeDutyCycle = FlutterGauge(activeColor: Colors.black, handSize: 30,index: escTelemetry.duty_now * 100,fontFamily: "Courier", start:-100, end: 100,number: Number.endAndCenterAndStart,secondsMarker: SecondsMarker.secondsAndMinute,counterStyle: TextStyle(color: Theme.of(context).textTheme.bodyText1.color,fontSize: 25,));
     //TODO: if speed is less than start value of gauge this will error
     FlutterGauge _gaugeSpeed = FlutterGauge(numberInAndOut: NumberInAndOut.inside, index: speedNow, start: -5, end: speedMax.ceil().toInt(),counterStyle: TextStyle(color: Theme.of(context).textTheme.bodyText1.color,fontSize: 25,),widthCircle: 10,secondsMarker: SecondsMarker.none,number: Number.all);
 
@@ -467,7 +490,7 @@ class RealTimeDataState extends State<RealTimeData> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
                     Center( child:Text("Motor Current")),
-                    Text(widget.telemetryPacket.current_motor.toString()),
+                    Text(escTelemetry.current_motor.toString()),
                     SizedBox(width: doubleItemWidth, height: doubleItemWidth - 30, child: scopeOne),
                   ]),
             ],),
@@ -523,21 +546,21 @@ class RealTimeDataState extends State<RealTimeData> {
               ]),
               TableRow(children: [
                 Text("Watt Hours: ", textAlign: TextAlign.right,),
-                Text(" ${doublePrecision(widget.telemetryPacket.watt_hours, 2)} Wh")
+                Text(" ${doublePrecision(escTelemetry.watt_hours, 2)} Wh")
               ]),
               TableRow(children: [
                 Text("Watt Hours Charged: ", textAlign: TextAlign.right,),
-                Text(" ${doublePrecision(widget.telemetryPacket.watt_hours_charged, 2)} Wh")
+                Text(" ${doublePrecision(escTelemetry.watt_hours_charged, 2)} Wh")
               ]),
 
 
               TableRow(children: [
                 Text("Amp Hours: ", textAlign: TextAlign.right,),
-                Text(" ${doublePrecision(widget.telemetryPacket.amp_hours, 2)} Ah")
+                Text(" ${doublePrecision(escTelemetry.amp_hours, 2)} Ah")
               ]),
               TableRow(children: [
                 Text("Amp Hours Charged: ", textAlign: TextAlign.right,),
-                Text(" ${doublePrecision(widget.telemetryPacket.amp_hours_charged, 2)} Ah")
+                Text(" ${doublePrecision(escTelemetry.amp_hours_charged, 2)} Ah")
               ]),
 
               /*
@@ -556,18 +579,18 @@ class RealTimeDataState extends State<RealTimeData> {
               */
               TableRow(children: [
                 Text("Battery Current Now: ", textAlign: TextAlign.right,),
-                Text(" ${widget.telemetryPacket.current_in} A")
+                Text(" ${escTelemetry.current_in} A")
               ]),
               TableRow(children: [
-                Text("Last ESC ID: ", textAlign: TextAlign.right,),
-                Text(" ${widget.telemetryPacket.vesc_id}")
+                Text("ESC ID${widget.telemetryMap.length > 1 ? "s":""}: ", textAlign: TextAlign.right,),
+                Text(" ${widget.telemetryMap.keys}")
               ]),
               TableRow(children: [
                 Text("Fault Now: ", textAlign: TextAlign.right,),
-                Text("${widget.telemetryPacket.fault_code.index == 0 ? " 0":" Code ${widget.telemetryPacket.fault_code.index}"}")
+                Text("${escTelemetry.fault_code.index == 0 ? " 0":" Code ${escTelemetry.fault_code.index}"}")
               ]),
             ],),
-            widget.telemetryPacket.fault_code.index != 0 ? Center(child: Text("${widget.telemetryPacket.fault_code.toString().split('.')[1]}")) : Container(),
+            escTelemetry.fault_code.index != 0 ? Center(child: Text("${escTelemetry.fault_code.toString().split('.')[1]}")) : Container(),
             SizedBox(height: 10),
 
             ///FlutterMapWidget

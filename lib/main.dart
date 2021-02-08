@@ -47,7 +47,7 @@ import 'package:esys_flutter_share/esys_flutter_share.dart';
 import 'databaseAssistant.dart';
 import 'escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.11.0";
+const String freeSK8ApplicationVersion = "0.11.1";
 const String robogotchiFirmwareExpectedVersion = "0.7.2";
 
 void main() {
@@ -457,6 +457,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       // Reset telemetry packet
       telemetryPacket = new ESCTelemetry();
+      telemetryMap = new Map();
 
       // Reset deviceHasDisconnected flag
       deviceHasDisconnected = false;
@@ -744,6 +745,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
   static ESCFirmware firmwarePacket = new ESCFirmware();
   static ESCTelemetry telemetryPacket = new ESCTelemetry();
+  static Map<int, ESCTelemetry> telemetryMap = new Map();
   static DieBieMSTelemetry dieBieMSTelemetry = new DieBieMSTelemetry();
   static int smartBMSCANID = 10;
   static bool _showDieBieMS = false;
@@ -1405,6 +1407,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           final dtNow = DateTime.now();
           telemetryPacket = escHelper.processTelemetry(bleHelper.getPayload());
 
+          // Update map of ESC telemetry
+          telemetryMap[telemetryPacket.vesc_id] = telemetryPacket;
 
           if(controller.index == 1) { //Only re-draw if we are on the real time data tab
             setState(() { //Re-drawing with updated telemetry data
@@ -2479,7 +2483,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           ),
           RealTimeData(
             routeTakenLocations: routeTakenLocations,
-            telemetryPacket: telemetryPacket,
+            telemetryMap: telemetryMap,
             currentSettings: widget.myUserSettings,
             startStopTelemetryFunc: startStopTelemetryTimer,
             showDieBieMS: _showDieBieMS,
