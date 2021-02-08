@@ -470,6 +470,20 @@ class ESCHelper {
     await prefs.setDouble('profile$profileIndex l_watt_min', profile.l_watt_min);
     await prefs.setDouble('profile$profileIndex l_watt_max', profile.l_watt_max);
   }
-
+  static ESCProfile getESCProfileDefaults(int profileIndex) {
+    ESCProfile profile = new ESCProfile();
+    switch (profileIndex) {
+      default:
+        profile.profileName = "Unnamed";
+        profile.speedKmh = 32.0;
+        profile.speedKmhRev = -32.0;
+        profile.l_current_max_scale = 1.0;
+        profile.l_current_min_scale = 1.0;
+        profile.l_watt_max = 0.0;
+        profile.l_watt_min = 0.0;
+        break;
+    }
+    return profile;
+  }
 }
 

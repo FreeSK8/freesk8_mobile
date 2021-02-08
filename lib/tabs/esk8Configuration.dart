@@ -621,7 +621,23 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                   }
                                   return Text("${snapshot.data}");
                                 }),
-                            SizedBox(width: 75,),
+
+                            RaisedButton(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: <Widget>[
+                                  Text("Reset "),
+                                  Icon(Icons.flip_camera_android),
+                                ],),
+                              onPressed: () async {
+                                //TODO: reset values
+                                await ESCHelper.setESCProfile(i, ESCHelper.getESCProfileDefaults(i));
+                                setState(() {
+
+                                });
+                              },
+                              color: Colors.transparent,
+                            ),
                             RaisedButton(
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
