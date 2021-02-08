@@ -574,33 +574,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         await setupConnectedDeviceStreamListener();
         Navigator.of(context).pop(); // Remove attempting connection dialog
 
-        // Display communicating with ESC dialog
-        showDialog<void>(
-            context: context,
-            barrierDismissible: false,
-            builder: (BuildContext context) {
-              return new WillPopScope(
-                  onWillPop: () async => false,
-                  child: SimpleDialog(
-                      backgroundColor: Colors.black54,
-                      children: <Widget>[
-                        Center(
-                          child: GestureDetector(
-                            onLongPress: () async {
-                              Navigator.of(context).pop(); // Remove communicating with ESC dialog
-                            },
-                            child: Column(children: [
-                              Icon(Icons.bluetooth_searching, size: 80,color: Colors.green),
-                              SizedBox(height: 10,),
-                              Text("Connected"),
-                              Text("Communicating with ESC"),
-                              Text("(please wait)", style: TextStyle(fontSize: 10)),
-                              Text("(long press to abort)", style: TextStyle(fontSize: 7))
-                            ]),
-                          ),
-                        )
-                      ]));
-            });
+        _changeConnectedDialogMessage("Communicating with ESC");
       }
     } catch (e) {
       Navigator.of(context).pop(); // Remove attempting connection dialog
@@ -1765,6 +1739,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     if (_deviceIsRobogotchi && !initMsgGotchiVersion) {
       // Request the Robogotchi version
       theTXLoggerCharacteristic.write(utf8.encode("version~"));
+      _changeConnectedDialogMessage("Requesting Robogotchi version");
     } else if (_deviceIsRobogotchi && !initMsgGotchiSettime) {
       // Set the Robogotchi time
       theTXLoggerCharacteristic.write(utf8.encode("settime ${DateTime.now().toIso8601String().substring(0,21).replaceAll("-", ":")}~"));
@@ -1773,9 +1748,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     } else if (!initMsgESCVersion) {
       // Request the ESC Firmware Packet
       the_tx_characteristic.write([0x02, 0x01, 0x00, 0x00, 0x00, 0x03]);
+      _changeConnectedDialogMessage("Requesting ESC version");
     } else if (!initMsgESCMotorConfig) {
       // Request MCCONF
       _handleAutoloadESCSettings(true);
+      _changeConnectedDialogMessage("Requesting Motor Configuration");
     } else if (!initMsgESCDevicesCAN) {
       if (initMsgESCDevicesCANRequested == 0) {
         // Request CAN Devices scan
@@ -1791,15 +1768,18 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         the_tx_characteristic.write(packetScanCAN);
         initMsgESCDevicesCANRequested = 1;
 
+        _changeConnectedDialogMessage("Requesting CAN IDs");
+
         // Start the Robogotchi Status timer before the CAN responds (so slooooooooooooow)
         Future.delayed(const Duration(milliseconds: 200), () {
           startStopGotchiTimer(false);
         });
       } else {
         print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FYI");
-        if (++initMsgESCDevicesCANRequested == 20) {
+        if (++initMsgESCDevicesCANRequested == 25) {
           print("initMsgESCDevicesCAN did not get a response. Retrying");
           initMsgESCDevicesCANRequested = 0;
+          _changeConnectedDialogMessage("Requesting CAN IDs (again)");
         }
       }
     } else {
@@ -1845,6 +1825,37 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       initMsgSqeuencerCompleted = true;
     }
+  }
+  void _changeConnectedDialogMessage(String message) {
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop(); // Remove previous dialog
+    }
+    // Display communicating with ESC dialog
+    showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return new WillPopScope(
+              onWillPop: () async => false,
+              child: SimpleDialog(
+                  backgroundColor: Colors.black54,
+                  children: <Widget>[
+                    Center(
+                      child: GestureDetector(
+                        onLongPress: () async {
+                          Navigator.of(context).pop(); // Remove communicating with ESC dialog
+                        },
+                        child: Column(children: [
+                          Icon(Icons.bluetooth_searching, size: 80,color: Colors.green),
+                          SizedBox(height: 10,),
+                          Text("Connected"),
+                          Text(message),
+                          Text("(long press to abort)", style: TextStyle(fontSize: 7))
+                        ]),
+                      ),
+                    )
+                  ]));
+        });
   }
 
   void _cacheAvatar(bool doSetState) async {
