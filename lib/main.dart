@@ -47,7 +47,7 @@ import 'package:esys_flutter_share/esys_flutter_share.dart';
 import 'databaseAssistant.dart';
 import 'escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.11.1";
+const String freeSK8ApplicationVersion = "0.12.0";
 const String robogotchiFirmwareExpectedVersion = "0.7.2";
 
 void main() {
@@ -509,7 +509,53 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       // Clear the PPM calibration is ready flag
       _isPPMCalibrationReady = false;
+
+      // Stop the TCP socket server
+      stopTCPServer();
     }
+  }
+
+  // TCP Socket Server
+  static ServerSocket serverTCPSocket;
+  static Socket clientTCPSocket;
+  final int port = 65102;
+  void disconnectTCPClient() {
+    if (clientTCPSocket != null) {
+      clientTCPSocket.close();
+      clientTCPSocket.destroy();
+      clientTCPSocket = null;
+    }
+  }
+  void stopTCPServer() {
+    disconnectTCPClient();
+    serverTCPSocket.close();
+    setState(() {
+      serverTCPSocket = null;
+    });
+  }
+  void startTCPServer() async {
+    serverTCPSocket = await ServerSocket.bind(InternetAddress.anyIPv4, port, shared: true);
+    print("TCP Socket Server Started: ${serverTCPSocket.address}");
+    serverTCPSocket.listen(handleTCPClient);
+  }
+  void handleTCPClient(Socket client) {
+    clientTCPSocket = client;
+    print("A new client has connected from ${clientTCPSocket.remoteAddress.address}:${clientTCPSocket.remotePort}");
+
+    clientTCPSocket.listen((onData) {
+        //print("TCP Client to ESC: $onData");
+        // Pass TCP data to BLE
+        sendBLEData(the_tx_characteristic, onData, _connectedDevice);
+      },
+      onError: (e) {
+        print("TCP Socket Server::handleClient: Error: ${e.toString()}");
+        disconnectTCPClient();
+      },
+      onDone: () {
+        print("Connection has terminated.");
+        disconnectTCPClient();
+      },
+    );
   }
 
   void _hideAllSubviews() {
@@ -1311,6 +1357,14 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     await the_rx_characteristic.setNotifyValue(true);
     // Setup the RX characteristic callback function
     escRXDataSubscription = the_rx_characteristic.value.listen((value) {
+
+      // If we have the TCP Socket server running and a client connected forward the data
+      if(serverTCPSocket != null && clientTCPSocket != null) {
+        //print("ESC Data $value");
+        clientTCPSocket.add(value);
+        return;
+      }
+
       // BLE data received
       if (bleHelper.processIncomingBytes(value) > 0){
 
@@ -2273,6 +2327,34 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         },
       ),
 
+      Divider(thickness: 3),
+      ListTile(
+        leading: Icon(Icons.share_outlined),
+        title: Text(serverTCPSocket == null ? "Enable TCP Bridge" : "Disable TCP Bridge"),
+        onTap: () {
+          // Don't start if not connected
+          if (the_tx_characteristic == null || !isESCResponding || !deviceIsConnected) {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text("No Connection"),
+                  content: Text("Oops. Try connecting to your board first."),
+                );
+              },
+            );
+          } else if (serverTCPSocket == null) {
+            setState(() {
+              startTCPServer();
+            });
+          } else {
+            setState(() {
+              stopTCPServer();
+            });
+          }
+        },
+      ),
+
     ];
 
     return Drawer(
@@ -2474,7 +2556,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         appBar: AppBar(
             title: Text("FreeSK8 (v$freeSK8ApplicationVersion)"),
             // Set the background color of the App Bar
-            backgroundColor: Theme.of(context).primaryColor,
+            backgroundColor: serverTCPSocket != null ? Colors.blueAccent : Theme.of(context).primaryColor,
             // Set the bottom property of the Appbar to include a Tab Bar
             //bottom: getTabBar()
         ),
