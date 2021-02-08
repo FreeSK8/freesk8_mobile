@@ -505,6 +505,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       // Clear the ESC firmware version
       escFirmwareVersion = ESC_FIRMWARE.UNSUPPORTED;
+
+      // Clear the PPM calibration is ready flag
+      _isPPMCalibrationReady = false;
     }
   }
 
@@ -755,6 +758,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static int bleTXErrorCount = 0;
   static bool _deviceIsRobogotchi = false;
   static bool _isPPMCalibrating;
+  static bool _isPPMCalibrationReady = false;
 
   //TODO: some logger vars that need to be in their own class
   static String loggerTestBuffer = "";
@@ -1704,9 +1708,15 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           if (_isPPMCalibrating != null && _isPPMCalibrating) {
             genericAlert(context, "Calibration", Text("Begin calibration\nMove input to full brake, full throttle then leave in the center\n\nPlease ensure the wheels are off the ground in case something goes wrong. This is beta after all!"), "OK");
             _isPPMCalibrating = null;
+            setState(() {
+              _isPPMCalibrationReady = true;
+            });
           } else if (_isPPMCalibrating != null && !_isPPMCalibrating) {
-            genericAlert(context, "Calibration", Text("Calibration Complete\n\nIf you are satisfied with the results tap 'Apply Calibration' followed by 'Save to ESC' to commit."), "OK");
+            genericAlert(context, "Calibration", Text("Calibration Completed Successfully"), "OK");
             _isPPMCalibrating = null;
+            setState(() {
+              _isPPMCalibrationReady = false;
+            });
           } else {
             genericAlert(context, "Success", Text("Application configuration set"), "Excellent");
           }
@@ -2401,6 +2411,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   void notifyStopStartPPMCalibrate(bool starting) {
     // Set flag to change dialogs displayed when performing PPM calibration
     _isPPMCalibrating = starting;
+    if (!starting) {
+      _isPPMCalibrationReady = false;
+    }
   }
 
   @override
@@ -2493,6 +2506,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             requestESCApplicationConfiguration: requestAPPCONF,
             ppmLastDuration: ppmLastDuration,
             notifyStopStartPPMCalibrate: notifyStopStartPPMCalibrate,
+            ppmCalibrateReady: _isPPMCalibrationReady,
             escFirmwareVersion: escFirmwareVersion,
           ),
           RideLogging(

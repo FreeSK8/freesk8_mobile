@@ -40,6 +40,7 @@ class ESK8Configuration extends StatefulWidget {
     this.ppmLastDuration,
     this.requestESCApplicationConfiguration,
     this.notifyStopStartPPMCalibrate,
+    this.ppmCalibrateReady,
     this.escFirmwareVersion,
   });
   final UserSettings myUserSettings;
@@ -60,6 +61,7 @@ class ESK8Configuration extends StatefulWidget {
   final int ppmLastDuration;
   final ValueChanged<int> requestESCApplicationConfiguration;
   final ValueChanged<bool> notifyStopStartPPMCalibrate;
+  final bool ppmCalibrateReady;
 
   final ESC_FIRMWARE escFirmwareVersion;
 
@@ -412,7 +414,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     */
     // Send in small chunks?
     int bytesSent = 0;
-    while (bytesSent < packetLength) {
+    while (bytesSent < packetLength && widget.currentDevice != null) {
       int endByte = bytesSent + 20;
       if (endByte > packetLength) {
         endByte = packetLength;
@@ -490,7 +492,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     */
     // Send in small chunks?
     int bytesSent = 0;
-    while (bytesSent < packetLength) {
+    while (bytesSent < packetLength && widget.currentDevice != null) {
       int endByte = bytesSent + 20;
       if (endByte > packetLength) {
         endByte = packetLength;
@@ -523,7 +525,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
   void requestDecodedPPM(int optionalCANID) {
     // Do nothing if we are busy writing to the ESC
-    if (_writeESCInProgress) {
+    if (_writeESCInProgress || !widget.ppmCalibrateReady) {
       return;
     }
 
@@ -1012,20 +1014,63 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                 ppmCalibrate = false;
                                 startStopPPMTimer(true);
                               });
-                              // Allow the PPM timer to stop and then restore the user's PPM mode
-                              Future.delayed(Duration(milliseconds: 200), (){
-                                // Restore the user's PPM control type
-                                setState(() {
-                                  widget.escAppConfiguration.app_ppm_conf.ctrl_type = ppmCalibrateControlTypeToRestore;
-                                  _selectedPPMCtrlType = null; // Clear selection
-                                  // Apply the configuration to the ESC
-                                  if (widget.currentDevice != null) {
-                                    // Save application configuration; CAN FWD ID can be null
-                                    saveAPPCONF(_selectedCANFwdID);
-                                  }
-                                });
 
-                              });
+                              // Ask user if they are satisfied with the calibration results
+                              showDialog(
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: Text('Accept Calibration?'),
+                                    content: SingleChildScrollView(
+                                      child: ListBody(
+                                        children: <Widget>[
+                                          Text('PPM values captured'),
+                                          Text("Start: ${doublePrecision(ppmMinMS / 1000000, 3)}"),
+                                          Text("Center: ${doublePrecision(widget.ppmLastDuration / 1000000, 3)}"),
+                                          Text("End: ${doublePrecision(ppmMaxMS / 1000000, 3)}"),
+                                          SizedBox(height:10),
+                                          Text('If you are satisfied with the results select Accept write values to the ESC')
+                                        ],
+                                      ),
+                                    ),
+                                    actions: <Widget>[
+                                      FlatButton(
+                                        child: Text('Reject'),
+                                        onPressed: () {
+                                          setState(() {
+                                            ppmMinMS = null;
+                                            ppmMaxMS = null;
+                                            // Restore the user's PPM control type
+                                            widget.escAppConfiguration.app_ppm_conf.ctrl_type = ppmCalibrateControlTypeToRestore;
+                                            _selectedPPMCtrlType = null; // Clear selection
+                                            // Apply the configuration to the ESC
+                                            saveAPPCONF(_selectedCANFwdID); // CAN FWD ID can be null
+                                          });
+                                          Navigator.of(context).pop();
+                                        },
+                                      ),
+                                      FlatButton(
+                                        child: Text('Accept'),
+                                        onPressed: () {
+                                          setState(() {
+                                            // Restore the user's PPM control type
+                                            widget.escAppConfiguration.app_ppm_conf.ctrl_type = ppmCalibrateControlTypeToRestore;
+                                            _selectedPPMCtrlType = null; // Clear selection
+                                            // Set values from calibration
+                                            widget.escAppConfiguration.app_ppm_conf.pulse_start = ppmMinMS / 1000000;
+                                            widget.escAppConfiguration.app_ppm_conf.pulse_center = widget.ppmLastDuration / 1000000;
+                                            widget.escAppConfiguration.app_ppm_conf.pulse_end = ppmMaxMS / 1000000;
+                                            // Apply the configuration to the ESC
+                                            saveAPPCONF(_selectedCANFwdID); // CAN FWD ID can be null
+                                          });
+                                          Navigator.of(context).pop();
+                                        },
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
                             }
 
                           }, child: Text(ppmCalibrate ? "Stop Calibration" : "Calibrate PPM"),),
@@ -1077,26 +1122,6 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               Text("${doublePrecision(widget.escAppConfiguration.app_ppm_conf.pulse_end, 3)}")
                             ]),
                           ],),
-                          RaisedButton(onPressed: (){
-                            if (!ppmCalibrate) {
-                              setState(() {
-                                // Set control type to VESC based ESC default if currently none
-                                if (widget.escAppConfiguration.app_ppm_conf.ctrl_type == ppm_control_type.PPM_CTRL_TYPE_NONE) {
-                                  widget.escAppConfiguration.app_ppm_conf.ctrl_type = ppm_control_type.PPM_CTRL_TYPE_CURRENT_NOREV_BRAKE;
-                                  _selectedPPMCtrlType = null;
-                                }
-                                // Disable calibration if still running
-                                ppmCalibrate = false;
-                                // Set values from calibration
-                                widget.escAppConfiguration.app_ppm_conf.pulse_start = ppmMinMS / 1000000;
-                                widget.escAppConfiguration.app_ppm_conf.pulse_center = widget.ppmLastDuration / 1000000;
-                                widget.escAppConfiguration.app_ppm_conf.pulse_end = ppmMaxMS / 1000000;
-                              });
-                            }
-                          },
-                          child: Text("Apply Calibration"),),
-
-
 
                           Divider(thickness: 3),
                           Text("Select PPM Control Type"),
