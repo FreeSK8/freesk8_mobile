@@ -7,7 +7,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:freesk8_mobile/dieBieMSHelper.dart';
-import 'package:freesk8_mobile/escProfileEditor.dart';
+import 'package:freesk8_mobile/views/escProfileEditor.dart';
 import 'package:freesk8_mobile/globalUtilities.dart';
 import 'package:freesk8_mobile/robogotchiCfgEditor.dart';
 

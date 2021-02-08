@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'package:freesk8_mobile/components/throttleCurvePainter.dart';
-import 'package:freesk8_mobile/escProfileEditor.dart';
+import 'package:freesk8_mobile/views/escProfileEditor.dart';
 import 'package:freesk8_mobile/globalUtilities.dart';
 
 import 'package:freesk8_mobile/userSettings.dart';
