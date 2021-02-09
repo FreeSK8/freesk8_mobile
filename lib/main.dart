@@ -1905,7 +1905,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                           SizedBox(height: 10,),
                           Text("Connected"),
                           Text(message),
-                          Text("(long press to abort)", style: TextStyle(fontSize: 7))
+                          Text("(long press to dismiss)", style: TextStyle(fontSize: 7))
                         ]),
                       ),
                     )
