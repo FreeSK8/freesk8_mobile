@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:freesk8_mobile/dieBieMSHelper.dart';
 import 'package:freesk8_mobile/views/escProfileEditor.dart';
 import 'package:freesk8_mobile/globalUtilities.dart';
-import 'package:freesk8_mobile/robogotchiCfgEditor.dart';
+import 'package:freesk8_mobile/views/robogotchiCfgEditor.dart';
 
 // UI Pages
 import 'package:freesk8_mobile/tabs/connectionStatus.dart';
