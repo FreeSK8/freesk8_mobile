@@ -528,7 +528,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   }
   void stopTCPServer() {
     disconnectTCPClient();
-    serverTCPSocket.close();
+    serverTCPSocket?.close();
     setState(() {
       serverTCPSocket = null;
     });
@@ -1801,6 +1801,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       initMsgGotchiSettime = true;
     } else if (!initMsgESCVersion) {
       // Request the ESC Firmware Packet
+      print("Requesting ESC Firmware Packet");
       the_tx_characteristic.write([0x02, 0x01, 0x00, 0x00, 0x00, 0x03]);
       _changeConnectedDialogMessage("Requesting ESC version");
     } else if (!initMsgESCMotorConfig) {
