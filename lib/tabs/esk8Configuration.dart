@@ -977,7 +977,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                     /// List view content
                     Expanded(
                       child: ListView(
-                        padding: EdgeInsets.fromLTRB(10, 0, 50, 0),
+                        padding: EdgeInsets.fromLTRB(20, 0, 20, 0),
                         children: <Widget>[
 
                           Divider(thickness: 3),
