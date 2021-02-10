@@ -2089,12 +2089,14 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       child: Text("About"),
       applicationName: "FreeSK8 Mobile",
       applicationVersion: "v$freeSK8ApplicationVersion",
-      applicationIcon: Icon(Icons.info, size: 40,),
+      applicationIcon: Icon(Icons.info, size: 40),
       icon: Icon(Icons.info),
       aboutBoxChildren: <Widget>[
-        Text("This project was brought to you by the fine people of", textAlign: TextAlign.center,),
-        Image(image: AssetImage('assets/dri_about.png'),width: 300,),
-        Text("Thank you for your support!",textAlign: TextAlign.center,)
+        Text("This project was brought to you by the fine people of", textAlign: TextAlign.center),
+        Image(image: AssetImage('assets/dri_about.png'), width: 300),
+        Text("Thank you for your support!", textAlign: TextAlign.center),
+        SizedBox(height: 10),
+        Text("A special thank you to our beta testers and patreons 🙏🙏🏼🙏🏾🙏🏻🙏🏿🙏🏽 You are what makes this awesome!", textAlign: TextAlign.center)
       ],
     );
 
