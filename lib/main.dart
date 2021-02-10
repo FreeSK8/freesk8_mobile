@@ -160,12 +160,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
     FileManager.createLogDirectory();
 
-    //TODO: remove database debug shit
-    //TODO: figure out db versioning to perform updates on table(s) for future needs
-    //print("CLEARING DATABASE CLEARING DATABASE CLEARING DATABASE CLEARING DATABASE CLEARING DATABASE CLEARING DATABASE CLEARING DATABASE CLEARING DATABASE ");
-    //DatabaseAssistant.dbDEBUGDropTable();
-    //DatabaseAssistant.dbDEBUGCreateTable();
-
     if (_connectedDevice != null){
       widget.myUserSettings.loadSettings(_connectedDevice.id.toString());
     } else {
