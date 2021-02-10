@@ -48,7 +48,7 @@ import 'databaseAssistant.dart';
 import 'escHelper/serialization/buffers.dart';
 
 const String freeSK8ApplicationVersion = "0.12.0";
-const String robogotchiFirmwareExpectedVersion = "0.7.2";
+const String robogotchiFirmwareExpectedVersion = "0.7.3";
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -1846,21 +1846,40 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       // Alert user if Robogotchi firmware update is expected
       if (_deviceIsRobogotchi && robogotchiVersion != robogotchiFirmwareExpectedVersion) {
-        genericAlert(
-            context,
-            "Update available",
-            Column(children: [
+        genericConfirmationDialog(context, FlatButton(
+          child: Text("NO"),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ), FlatButton(
+          child: Text("YES"),
+          onPressed: () async {
+            // Navigate to Firmware Update view
+            await theTXLoggerCharacteristic.write(utf8.encode("dfumode~")).timeout(Duration(milliseconds: 500)).whenComplete((){
+              print('Robogotchi DFU Mode Command Executed');
+              Navigator.of(context).pop();
+              _bleDisconnect();
+              setState(() {
+                Navigator.of(context).pushNamed(RobogotchiDFU.routeName, arguments: null);
+              });
+            }).catchError((e){
+              print("Firmware Update: Exception: $e");
+            });
+          },
+        ), "Update available", Column(crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
               Text("This app works best when Robogotchi is up to date!"),
               SizedBox(height: 15),
-              Text("Please update the Robogotchi firmware from $robogotchiVersion to $robogotchiFirmwareExpectedVersion")
-            ]),
-            "OK"
+              Text("Installed firmware: $robogotchiVersion"),
+              Text("Ready to install: $robogotchiFirmwareExpectedVersion"),
+              SizedBox(height: 15),
+              Text("Would you like the being the update process now?")
+            ])
         );
       }
-      print("##################################################################### initMsgSequencer is complete! Great success!");
-
-      // Check if this is a known device when we connected/loaded it's settings
-      if (!isConnectedDeviceKnown) {
+      // Alert user if this is a new device when we connected/loaded it's settings
+      else if (!isConnectedDeviceKnown) {
         print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% THIS IS A NEW DEVICE<>WONT YOU LOAD THE SETUP WIDGET? %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
         //TODO: navigate to setup widget if we create one..
         showDialog(
@@ -1868,12 +1887,14 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           builder: (BuildContext context) {
             return AlertDialog(
               title: Text("Ooo! new device, who dis?"),
-              content: Text("You have connected to a new device. Take a picture, give it a name and specify your settings now for the best experience."),
+              content: Text("You have connected to a new device. Take a picture, give it a name and save your settings now for the best experience."),
             );
           },
         );
         controller.index = 2; // switch to configuration tab for now
       }
+
+      print("##################################################################### initMsgSequencer is complete! Great success!");
 
       _initMsgSequencer.cancel();
       _initMsgSequencer = null;
@@ -2254,6 +2275,16 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       ListTile(
         leading: Icon(Icons.devices),
         title: Text("Robogotchi Updater"),
+        onLongPress: (){
+          if (_connectedDevice == null) {
+            Navigator.of(context).pop();
+            setState(() {
+              // navigate to the route
+              Navigator.of(context).pushNamed(RobogotchiDFU.routeName, arguments: null);
+            });
+            genericAlert(context, "Hey there 👋", Text("We are not connected to a Robogotchi which means I can't prepare it for update mode.\n\nI'll search for devices anyway but you'll probably want to turn back now."), "Ok 👍");
+          }
+        },
         onTap: () {
           // Don't write if not connected
           if (theTXLoggerCharacteristic != null) {
@@ -2282,22 +2313,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                       child: Text('YES'),
                       onPressed: () async {
                         await theTXLoggerCharacteristic.write(utf8.encode("dfumode~")).timeout(Duration(milliseconds: 500)).whenComplete((){
-                          print('Your robogotchi is ready to receive firmware!\nUse the nRF Toolbox application to upload new firmware.\nPower cycle board to cancel update.');
-
+                          print('Robogotchi DFU Mode Command Executed');
 
                           Navigator.of(context).pop();
-                          /*
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: Text("Firmware Update Ready"),
-                                content: Text('Use the nRF Toolbox application to upload new firmware.\nWait 2 minutes or power cycle board to cancel update.'),
-                              );
-                            },
-                          );
-
-                           */
 
                           _bleDisconnect();
 
@@ -2320,7 +2338,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               builder: (BuildContext context) {
                 return AlertDialog(
                   title: Text("Firmware Update"),
-                  content: Text("Oops. Try connecting to your robogotchi first."),
+                  content: Text("Oops. Try connecting to your Robogotchi first."),
                 );
               },
             );

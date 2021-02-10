@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_nordic_dfu/flutter_nordic_dfu.dart';
@@ -14,7 +15,7 @@ class RobogotchiDFU extends StatefulWidget {
   static const String routeName = "/dfumode";
 }
 
-class RobogotchiDFUState extends State<RobogotchiDFU> {
+class RobogotchiDFUState extends State<RobogotchiDFU> with SingleTickerProviderStateMixin {
   final FlutterBlue flutterBlue = FlutterBlue.instance;
   StreamSubscription<ScanResult> scanSubscription;
   List<ScanResult> scanResults = <ScanResult>[];
@@ -27,16 +28,21 @@ class RobogotchiDFUState extends State<RobogotchiDFU> {
   int _currentPart;
   int _partsTotal;
 
-  double updateIconAngle = 0.0;
+  AnimationController _animationController;
 
   @override
   void initState() {
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 5000),
+      vsync: this,
+    );
     super.initState();
     startScan();
   }
 
   @override
   void dispose() {
+    _animationController?.dispose();
     scanSubscription?.cancel();
     scanSubscription = null;
 
@@ -51,44 +57,52 @@ class RobogotchiDFUState extends State<RobogotchiDFU> {
       _percent = 0;
       dfuRunning = true;
     });
-    try {
-      var s = await FlutterNordicDfu.startDfu(
-        deviceId,
-        'assets/firmware/$updateFileName.zip',
-        fileInAsset: true,
-        progressListener:
-        DefaultDfuProgressListenerAdapter(onProgressChangedHandle: (
-            deviceAddress,
-            percent,
-            speed,
-            avgSpeed,
-            currentPart,
-            partsTotal,
-            ) {
-          print('deviceAddress: $deviceAddress, percent: $percent');
-          setState(() {
-            _deviceAddress = deviceAddress;
-            _percent = percent;
-            _speed = doublePrecision(speed, 1);
-            _avgSpeed = doublePrecision(avgSpeed, 1);
-            _currentPart = currentPart;
-            _partsTotal = partsTotal;
-          });
-          if (_percent == 100) {
-            showCompletedDialog();
-          }
-        }),
-      );
-      print(s);
-      dfuRunning = false;
-    } catch (e) {
-      //TODO: Sometimes we are throwing PlatformException(DFU_Failed, Device address: *****, null, null)
-      //TODO: Consider catching a time or two, checking rssi, notify user of retry event
-      setState(() {
+
+    // Attempt DFU process 3 times before giving up
+    int failCount = 0;
+    while(dfuRunning) {
+      try {
+        var result = await FlutterNordicDfu.startDfu(
+          deviceId,
+          'assets/firmware/$updateFileName.zip',
+          fileInAsset: true,
+          progressListener:
+          DefaultDfuProgressListenerAdapter(onProgressChangedHandle: (
+              deviceAddress,
+              percent,
+              speed,
+              avgSpeed,
+              currentPart,
+              partsTotal,
+              ) {
+            print('deviceAddress: $deviceAddress, percent: $percent');
+            setState(() {
+              _deviceAddress = deviceAddress;
+              _percent = percent;
+              _speed = doublePrecision(speed, 1);
+              _avgSpeed = doublePrecision(avgSpeed, 1);
+              _currentPart = currentPart;
+              _partsTotal = partsTotal;
+            });
+            if (_percent == 100) {
+              showCompletedDialog();
+            }
+          }),
+        );
+        print("DFU Operation Completed. ($result)");
         dfuRunning = false;
-      });
-      print(e.toString());
-      genericAlert(context, "Exception", Text("Wait, what does this mean? ${e.toString()}"), "OK");
+      } catch (e) {
+        //TODO: Sometimes we are throwing PlatformException(DFU_Failed, Device address: *****, null, null)
+        //TODO: Consider catching a time or two, checking rssi, notify user of retry event
+        print("DFU Operation Exception: ${e.toString()}");
+
+        if (++failCount > 2) {
+          setState(() {
+            dfuRunning = false;
+          });
+          genericAlert(context, "Exception", Text("Wait, what does this mean? ${e.toString()}"), "OK");
+        }
+      }
     }
   }
 
@@ -155,11 +169,13 @@ class RobogotchiDFUState extends State<RobogotchiDFU> {
     final hasCompleted = _percent == 100;
 
     // Update icon angle every state refresh
-    updateIconAngle -= 0.1;
+    if (dfuRunning) {
+      _animationController.forward(from: _animationController.isCompleted ? 0.0 : _animationController.value);
+    }
 
     return Scaffold(
         appBar: AppBar(
-          title: const Text('Robogotchi Update'),
+          title: const Text('Robogotchi Updater'),
           actions: <Widget>[
             isScanning
                 ? IconButton(
@@ -195,13 +211,13 @@ class RobogotchiDFUState extends State<RobogotchiDFU> {
                   size: 60.0,
                   color: Colors.blue,
                 ) :
-                Transform.rotate(
-                    angle: updateIconAngle,
-                    child: Icon(
-                      Icons.sync,
-                      size: 60.0,
-                      color: Colors.blue,
-                    )
+                RotationTransition(
+                  turns: Tween(begin: 0.0, end: -1.0).animate(_animationController),
+                  child: Icon(
+                    Icons.sync,
+                    size: 60.0,
+                    color: Colors.blue,
+                  ),
                 ),
                 _deviceAddress == null ? Text("Connecting to Robogotchi") : Text("Connected to Robogotchi"),
                 _partsTotal == null ? Container() : Text("Updating Part $_currentPart / $_partsTotal"),
