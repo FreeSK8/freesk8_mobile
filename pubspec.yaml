@@ -89,7 +89,7 @@ flutter:
   #  - images/a_dot_ham.jpeg
 
   assets:
-    - assets/firmware/Robogotchi_0.7.2.zip
+    - assets/firmware/Robogotchi_0.7.3.zip
     - assets/robogotchi_render.png
     - assets/FreeSK8_Mobile.jpg
     - assets/FreeSK8_MobileLogo.png
