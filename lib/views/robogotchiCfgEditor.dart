@@ -454,6 +454,8 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                             } else if (_multiESCMode) {
                               multiESCMode = 2;
                             }
+                            //TODO: Add GPS TimeZoneOffset //${DateTime.now().timeZoneOffset.inHours}
+                            //TODO: Add Device Name to configuration
                             String newConfigCMD = "setcfg,${myArguments.currentConfiguration.logAutoStopIdleTime}"
                                 ",${myArguments.currentConfiguration.logAutoStopLowVoltage}"
                                 ",${myArguments.currentConfiguration.logAutoStartERPM}"

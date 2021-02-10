@@ -44,6 +44,8 @@ import 'package:wakelock/wakelock.dart';
 
 import 'package:esys_flutter_share/esys_flutter_share.dart';
 
+import 'package:get_ip/get_ip.dart';
+
 import 'databaseAssistant.dart';
 import 'escHelper/serialization/buffers.dart';
 
@@ -518,7 +520,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   // TCP Socket Server
   static ServerSocket serverTCPSocket;
   static Socket clientTCPSocket;
-  final int port = 65102;
+  final int tcpBridgePort = 65102;
   void disconnectTCPClient() {
     if (clientTCPSocket != null) {
       clientTCPSocket.close();
@@ -534,9 +536,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     });
   }
   void startTCPServer() async {
-    serverTCPSocket = await ServerSocket.bind(InternetAddress.anyIPv4, port, shared: true);
+    serverTCPSocket = await ServerSocket.bind(InternetAddress.anyIPv4, tcpBridgePort, shared: true);
     print("TCP Socket Server Started: ${serverTCPSocket.address}");
     serverTCPSocket.listen(handleTCPClient);
+    if (serverTCPSocket != null) {
+      genericAlert(context, "TCP Bridge Active", Text("Connect to ${await GetIp.ipAddress} on port $tcpBridgePort"), "OK");
+    }
+    
   }
   void handleTCPClient(Socket client) {
     clientTCPSocket = client;
@@ -2373,6 +2379,20 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           }
         },
       ),
+
+      /*
+      Divider(thickness: 3),
+      ListTile(
+        leading: Icon(Icons.bug_report_outlined),
+        title: Text("Debug"),
+        onTap: () async {
+          //TODO:
+          String ipAddress = await GetIp.ipAddress;
+          print("help");
+        },
+      ),
+
+       */
 
     ];
 
