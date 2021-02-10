@@ -16,6 +16,8 @@ PODS:
   - FMDB/standard (2.7.5)
   - "geolocator (5.3.2+2)":
     - Flutter
+  - get_ip (0.0.1):
+    - Flutter
   - image_picker (0.0.1):
     - Flutter
   - iOSDFULibrary (4.5.1):
@@ -40,6 +42,7 @@ DEPENDENCIES:
   - flutter_blue (from `.symlinks/plugins/flutter_blue/ios`)
   - flutter_nordic_dfu (from `.symlinks/plugins/flutter_nordic_dfu/ios`)
   - geolocator (from `.symlinks/plugins/geolocator/ios`)
+  - get_ip (from `.symlinks/plugins/get_ip/ios`)
   - image_picker (from `.symlinks/plugins/image_picker/ios`)
   - location_permissions (from `.symlinks/plugins/location_permissions/ios`)
   - path_provider (from `.symlinks/plugins/path_provider/ios`)
@@ -65,6 +68,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/flutter_nordic_dfu/ios"
   geolocator:
     :path: ".symlinks/plugins/geolocator/ios"
+  get_ip:
+    :path: ".symlinks/plugins/get_ip/ios"
   image_picker:
     :path: ".symlinks/plugins/image_picker/ios"
   location_permissions:
@@ -85,6 +90,7 @@ SPEC CHECKSUMS:
   flutter_nordic_dfu: b265b606c5b200764e8e377e83fb3f5d161f3990
   FMDB: 2ce00b547f966261cd18927a3ddb07cb6f3db82a
   geolocator: f7622e0e7e2a24718285b73916d60c4a54b9f5b6
+  get_ip: c063133e0a399ae4089048c90d6a232cb2344846
   image_picker: 9c3312491f862b28d21ecd8fdf0ee14e601b3f09
   iOSDFULibrary: 87c6a088cf7172e3694dfaa8305e7ded5eda2547
   location_permissions: 7e0f9aa0f60deb8ff93ddf0e2a164c7e8197bc94
