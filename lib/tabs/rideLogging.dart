@@ -342,7 +342,16 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
 
             Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
               GestureDetector(
-                child: Image(image: AssetImage("assets/dri_icon.png"),height: 60),
+                child: Row(children: [
+                  Image(image: AssetImage("assets/dri_icon.png"),height: 60),
+                  Column(children: [
+                    Text("Ride Logging", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+                    Row(children: [
+                      showListView ? Icon(Icons.calendar_today) : Icon(Icons.view_list_sharp),
+                      Text(showListView ? "Show Calendar" : "Show List", style: TextStyle(fontSize: 20)),
+                    ],)
+                  ],)
+                ],),
                 onTap: (){
                   setState(() {
                     showListView = !showListView;
@@ -354,7 +363,9 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                   });
                 },
               ),
-              Text("Ride\r\nLogging", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
+
+
+
             ],),
 
 
