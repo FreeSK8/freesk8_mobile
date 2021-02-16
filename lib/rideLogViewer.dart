@@ -335,7 +335,7 @@ class RideLogViewerState extends State<RideLogViewer> {
 
       if(entry.length > 1 && entry[0] != "header"){ // entry[0] = Time, entry[1] = Data type
         ///GPS position entry
-        if(entry[1] == "gps") {
+        if(entry[1] == "gps" && entry.length >= 6) {
           //dt,gps,satellites,altitude,speed,latitude,longitude
           LatLng thisPosition = new LatLng(double.parse(entry[5]),double.parse(entry[6]));
           if ( _positionEntries.length > 0){
@@ -432,7 +432,7 @@ class RideLogViewerState extends State<RideLogViewer> {
 
         }
         ///Fault codes
-        else if (entry[1] == "err" || entry[1] == "fault") {
+        else if (entry[1] == "err" || entry[1] == "fault" && entry.length >= 5) {
           //dt,err,fault_name,fault_code,esc_id
           // Count total fault messages
           ++faultCodeCount;
@@ -494,7 +494,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           }
         }
         // TODO: NOTE Early tester file format follows:
-        else if(entry[1] == "position") {
+        else if(entry[1] == "position" && entry.length >= 6) {
           //DateTime, 'position', lat, lon, accuracy, altitude, speed, speedAccuracy
           LatLng thisPosition = new LatLng(double.parse(entry[2]),double.parse(entry[3]));
           if ( _positionEntries.length > 0){
@@ -512,7 +512,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           // Map DateTime to LatLng
           gpsLatLngMap[thisGPSTime] = thisPosition;
         }
-        else if (entry[1] == "values" && entry.length > 9) {
+        else if (entry[1] == "values" && entry.length >= 10) {
           //[2020-05-19T13:46:28.8, values, 12.9, -99.9, 29.0, 0.0, 0.0, 0.0, 0.0, 11884, 102]
           DateTime thisDt = DateTime.parse(entry[0]);
           int thisESCID = int.parse(entry[10]);
@@ -738,7 +738,7 @@ class RideLogViewerState extends State<RideLogViewer> {
         //TODO: Reduce number of GPS points to keep things moving on phones
         if (calculateDistance(lastPoint, value) > 0.01) {
           // Compute color for this section of the route
-          if (escTimeSeriesMap[key] != null && _maxSpeed > 0.0) {
+          if (escTimeSeriesMap[key] != null && escTimeSeriesMap[key].speed != null && _maxSpeed > 0.0) {
             thisColor = HSVColor.lerp(HSVColor.fromColor(Colors.green), HSVColor.fromColor(Colors.red), escTimeSeriesMap[key].speed.abs() / _maxSpeed).toColor();
           }
           // Add colored polyline from last section to this one
