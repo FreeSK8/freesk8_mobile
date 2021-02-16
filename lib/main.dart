@@ -496,6 +496,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       initMsgSqeuencerCompleted = false;
       _initMsgSequencer?.cancel();
       _initMsgSequencer = null;
+      initShowESCVersion = false;
+      initShowMotorConfiguration = false;
 
       // Clear the Robogotchi status
       gotchiStatus = new RobogotchiStatus();
@@ -1137,25 +1139,28 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 //int test = null;
                 //int fail = test + 420;
 
-                /// Insert record into database
-                await DatabaseAssistant.dbInsertLog(LogInfoItem(
-                    dateTime: firstEntryTime,
-                    boardID: widget.myUserSettings.currentDeviceID,
-                    boardAlias: widget.myUserSettings.settings.boardAlias,
-                    logFilePath: savedFilePath,
-                    avgSpeed: -1.0,
-                    maxSpeed: maxSpeedKph,
-                    elevationChange: maxElevation != null ? maxElevation - minElevation : -1.0,
-                    maxAmpsBattery: maxCurrentBattery,
-                    maxAmpsMotors: maxCurrentMotor,
-                    wattHoursTotal: wattHours,
-                    wattHoursRegenTotal: wattHoursRegen,
-                    distance: distanceTotal,
-                    durationSeconds: lastEntryTime.difference(firstEntryTime).inSeconds,
-                    faultCount: faultCodeCount,
-                    rideName: "",
-                    notes: ""
-                ));
+                //NOTE: Only insert record if we've received a file containing a valid timestamp
+                if (lastEntryTime != null && firstEntryTime != null) {
+                  /// Insert record into database
+                  await DatabaseAssistant.dbInsertLog(LogInfoItem(
+                      dateTime: firstEntryTime,
+                      boardID: widget.myUserSettings.currentDeviceID,
+                      boardAlias: widget.myUserSettings.settings.boardAlias,
+                      logFilePath: savedFilePath,
+                      avgSpeed: -1.0,
+                      maxSpeed: maxSpeedKph,
+                      elevationChange: maxElevation != null ? maxElevation - minElevation : -1.0,
+                      maxAmpsBattery: maxCurrentBattery,
+                      maxAmpsMotors: maxCurrentMotor,
+                      wattHoursTotal: wattHours,
+                      wattHoursRegenTotal: wattHoursRegen,
+                      distance: distanceTotal,
+                      durationSeconds: lastEntryTime.difference(firstEntryTime).inSeconds,
+                      faultCount: faultCodeCount,
+                      rideName: "",
+                      notes: ""
+                  ));
+                }
 
                 /// Advance the sync process
                 {
@@ -1185,7 +1190,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-            ), "File parse error", Text("Something unexpected may have happened!\n\nPlease share with renee@derelictrobot.com"));
+            ), "File processing error", Text("Something unexpected may have happened!\n\nPlease share with renee@derelictrobot.com"));
           }
 
           /// Advance the sync process after failure
@@ -1789,6 +1794,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   bool initMsgESCDevicesCAN = false;
   int initMsgESCDevicesCANRequested = 0;
   bool initMsgSqeuencerCompleted = false;
+
+  bool initShowESCVersion = false;
+  bool initShowMotorConfiguration = false;
   void _requestInitMessages() {
     if (_deviceIsRobogotchi && !initMsgGotchiVersion) {
       // Request the Robogotchi version
@@ -1803,11 +1811,17 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       // Request the ESC Firmware Packet
       print("Requesting ESC Firmware Packet");
       the_tx_characteristic.write([0x02, 0x01, 0x00, 0x00, 0x00, 0x03]);
-      _changeConnectedDialogMessage("Requesting ESC version");
+      if (!initShowESCVersion) {
+        _changeConnectedDialogMessage("Requesting ESC version");
+        initShowESCVersion = true;
+      }
     } else if (!initMsgESCMotorConfig) {
       // Request MCCONF
       _handleAutoloadESCSettings(true);
-      _changeConnectedDialogMessage("Requesting Motor Configuration");
+      if (!initShowMotorConfiguration) {
+        _changeConnectedDialogMessage("Requesting Motor Configuration");
+        initShowMotorConfiguration = true;
+      }
     } else if (!initMsgESCDevicesCAN) {
       if (initMsgESCDevicesCANRequested == 0) {
         // Request CAN Devices scan
