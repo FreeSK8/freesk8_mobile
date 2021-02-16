@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:freesk8_mobile/logFileParser.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
 class FileManager {
 
@@ -63,8 +64,14 @@ class FileManager {
     });
   }
 
+  static Future<String> debugAsset() async {
+    return await rootBundle.loadString('assets/debug_logs/debug_user.csv');
+  }
+
   static Future<String> openLogFile(String filepath) async {
+    //NOTE: For Debugging: return debugAsset();
     final documentsDirectory = await getApplicationDocumentsDirectory();
+
     //TODO: no safety checking here. Opening file must be on device
     final file = File("${documentsDirectory.path}$filepath");
     return file.readAsString();
