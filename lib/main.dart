@@ -49,7 +49,7 @@ import 'package:get_ip/get_ip.dart';
 import 'databaseAssistant.dart';
 import 'escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.12.0";
+const String freeSK8ApplicationVersion = "0.12.1";
 const String robogotchiFirmwareExpectedVersion = "0.7.3";
 
 void main() {
