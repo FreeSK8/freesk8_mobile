@@ -1888,7 +1888,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               Text("Installed firmware: $robogotchiVersion"),
               Text("Ready to install: $robogotchiFirmwareExpectedVersion"),
               SizedBox(height: 15),
-              Text("Would you like the being the update process now?")
+              Text("Would you like the begin the update process now?")
             ])
         );
       }
