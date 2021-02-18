@@ -64,7 +64,7 @@ class LogFileParser {
     //for (int i=0; i<bytes.length; ++i) {
     //  print("bytes[$i] = ${bytes[i]}");
     //}
-    print("logFileParser::parseFile: Unpacking binary data received from Robogotchi");
+    globalLogger.d("logFileParser::parseFile: Unpacking binary data received from Robogotchi");
 
     String parsedResults = "";
     for (int i=0; i<bytes.length; ++i) {
@@ -72,19 +72,19 @@ class LogFileParser {
         ++i; // Skip to next byte (1)
         int msgTypeByte = bytes[i++]; // Increment i after we read
         if (msgTypeByte >= LOG_MSG_TYPES.values.length) {
-          print("logFileParser::parseFile: Unexpected LOG_MSG_TYPE: $msgTypeByte");
+          globalLogger.e("logFileParser::parseFile: Unexpected LOG_MSG_TYPE: $msgTypeByte");
           // Go to next byte
           continue;
         }
         LOG_MSG_TYPES msgType = LOG_MSG_TYPES.values[msgTypeByte];
         int messageLength = bytes[i++]; // Increment i after we read
-        //print("message length $messageLength @ byte ${i-1}");
+        //logger.wtf("message length $messageLength @ byte ${i-1}");
         if (i+messageLength > bytes.length) {
-          print("logFileParser::parseFile: reached EOF early: Index ${i+messageLength} but bytes.length is only ${bytes.length}");
+          globalLogger.w("logFileParser::parseFile: reached EOF early: Index ${i+messageLength} but bytes.length is only ${bytes.length}");
           continue;
         }
         if (bytes[i+messageLength] != PacketEnd) {
-          print("logFileParser::parseFile: Unexpected byte at end of message: bytes[${i+messageLength}] = ${bytes[i+messageLength]}");
+          globalLogger.w("logFileParser::parseFile: Unexpected byte at end of message: bytes[${i+messageLength}] = ${bytes[i+messageLength]}");
         }
         switch(msgType) {
           case LOG_MSG_TYPES.DEBUG:
@@ -100,7 +100,7 @@ class LogFileParser {
               parsedResults += "header,multi_esc_mode,$logMultiESCMode\n";
               parsedResults += "header,esc_hz,$logFileHz\n";
             } else {
-              print("logFileParser::parseFile: Unexpected byte at end of packet: bytes[$i] = ${bytes[i]}");
+              globalLogger.e("logFileParser::parseFile: Unexpected byte at end of packet: bytes[$i] = ${bytes[i]}");
             }
             break;
           case LOG_MSG_TYPES.ESC:
@@ -147,7 +147,7 @@ class LogFileParser {
                     "${lastESCPacket.escID}\n";
               }
             } else {
-              print("logFileParser::parseFile: Unexpected byte at end of packet: bytes[$i] = ${bytes[i]}");
+              globalLogger.e("logFileParser::parseFile: Unexpected byte at end of packet: bytes[$i] = ${bytes[i]}");
             }
             break;
           case LOG_MSG_TYPES.ESC_DELTA:
@@ -169,7 +169,7 @@ class LogFileParser {
             int deltaEDistance = buffer_get_int16(bytes, i, Endian.little); i+=2;
             int faultCode = bytes[i++];
             i+=1; //NOTE: alignment
-            //print("ESC DELTA dt $deltaDT id $escID vin $deltaVin mt $deltaMotorTemp et $deltaESCTemp duty $deltaDuty mc $deltaMotorCurrent bc $deltaBatteryCurrent wh $deltaWattHours whr $deltaWattHoursRegen erpm $deltaERPM edist $deltaEDistance f $faultCode");
+            //logger.wtf("ESC DELTA dt $deltaDT id $escID vin $deltaVin mt $deltaMotorTemp et $deltaESCTemp duty $deltaDuty mc $deltaMotorCurrent bc $deltaBatteryCurrent wh $deltaWattHours whr $deltaWattHoursRegen erpm $deltaERPM edist $deltaEDistance f $faultCode");
 
             if (bytes[i] == PacketEnd) {
               // Update ESC packet with delta values
@@ -213,7 +213,7 @@ class LogFileParser {
                     "${lastESCPacket.escID}\n";
               }
             } else {
-              print("logFileParser::parseFile: Unexpected byte at end of packet: bytes[$i] = ${bytes[i]}");
+              globalLogger.e("logFileParser::parseFile: Unexpected byte at end of packet: bytes[$i] = ${bytes[i]}");
             }
             break;
           case LOG_MSG_TYPES.GPS:
@@ -236,7 +236,7 @@ class LogFileParser {
                   "${lastGPSPacket.latitude},"
                   "${lastGPSPacket.longitude}\n";
             } else {
-              print("logFileParser::parseFile: Unexpected byte at end of packet: bytes[$i] = ${bytes[i]}");
+              globalLogger.e("logFileParser::parseFile: Unexpected byte at end of packet: bytes[$i] = ${bytes[i]}");
             }
             break;
           case LOG_MSG_TYPES.GPS_DELTA:
@@ -247,7 +247,7 @@ class LogFileParser {
             double deltaSpeed = buffer_get_int8(bytes, i++) / 10.0;
             double deltaLatitude = buffer_get_int16(bytes, i, Endian.little) / 100000.0; i+=2;
             double deltaLongitude = buffer_get_int16(bytes, i, Endian.little) / 100000.0; i+=2;
-            //print("GPS DELTA Time $deltaDt Satellites $deltaSatellites Altitude $deltaAltitude Speed $deltaSpeed Latitude $deltaLatitude Longitude $deltaLongitude");
+            //logger.wtf("GPS DELTA Time $deltaDt Satellites $deltaSatellites Altitude $deltaAltitude Speed $deltaSpeed Latitude $deltaLatitude Longitude $deltaLongitude");
             if (bytes[i] == PacketEnd) {
               lastGPSPacket.dt = lastGPSPacket.dt.add(Duration(seconds: deltaDt));
               lastGPSPacket.satellites += deltaSatellites;
@@ -265,7 +265,7 @@ class LogFileParser {
                   "${lastGPSPacket.latitude},"
                   "${lastGPSPacket.longitude}\n";
             } else {
-              print("logFileParser::parseFile: Unexpected byte at end of packet: bytes[$i] = ${bytes[i]}");
+              globalLogger.e("logFileParser::parseFile: Unexpected byte at end of packet: bytes[$i] = ${bytes[i]}");
             }
             break;
           case LOG_MSG_TYPES.IMU:
@@ -276,11 +276,11 @@ class LogFileParser {
 
 
       } else {
-        print("logFileParser::parseFile: Unexpected start of packet at byte $i of ${bytes.length}: ${bytes[i]}");
+        globalLogger.e("logFileParser::parseFile: Unexpected start of packet at byte $i of ${bytes.length}: ${bytes[i]}");
       }
     }
 
-    print("logFileParser::parseFile: Unpacking complete. Saving to filesystem");
+    globalLogger.d("logFileParser::parseFile: Unpacking complete. Saving to filesystem");
 
     // Write parsed CSV to filesystem
     convertedFile.writeAsStringSync(parsedResults,mode: FileMode.append);

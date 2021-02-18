@@ -1,4 +1,4 @@
-
+import './globalUtilities.dart';
 import 'dart:typed_data';
 
 class BLEHelper {
@@ -133,7 +133,7 @@ class BLEHelper {
       }
 
       if (counter >= messageReceived.length) {
-        print("ERROR: Counter has reached the end of messageReceived buffer");
+        globalLogger.e("processIncomingBytes::ERROR: Counter has reached the end of messageReceived buffer");
         resetPacket(); //TODO: testing reset here
         break;
       }
@@ -155,8 +155,7 @@ class BLEHelper {
       //DEBUG:print("Message CRC passed. Counter is $counter. MessageReceived[$endMessage -1] is ${messageReceived[endMessage - 1]}");
       return lenPayload;
     } else {
-      //DEBUG:
-      print("Message CRC did not pass. Counter is $counter. MessageReceived[$endMessage -1] is ${messageReceived[endMessage - 1]}");
+      //DEBUG:print("Message CRC did not pass. Counter is $counter. MessageReceived[$endMessage -1] is ${messageReceived[endMessage - 1]}");
       return 0;
     }
   }

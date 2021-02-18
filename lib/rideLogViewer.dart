@@ -264,12 +264,12 @@ class RideLogViewerState extends State<RideLogViewer> {
 
     for (int i=0; i<gpsLatLngMap.length; ++i) {
       if (gpsLatLngMap.entries.elementAt(i).key.isAfter(desiredTime)) {
-        print("nearest $desiredTime is ${gpsLatLngMap.entries.elementAt(i).key}");
+        globalLogger.d("nearest $desiredTime is ${gpsLatLngMap.entries.elementAt(i).key}");
         return gpsLatLngMap.entries.elementAt(i).value;
       }
     }
 
-    print("selectNearestGPSPoint: Returning last point =(");
+    globalLogger.d("selectNearestGPSPoint: Returning last point =(");
     return gpsLatLngMap.entries.last.value;
   }
 

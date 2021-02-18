@@ -1,3 +1,4 @@
+import './globalUtilities.dart';
 
 import 'dart:ui';
 
@@ -8,16 +9,16 @@ class AutoStopHandler extends WidgetsBindingObserver {
   Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
     switch (state) {
       case AppLifecycleState.inactive:
-        print("AppLifecycleState: Inactive");
+        globalLogger.d("AppLifecycleState: Inactive");
         break;
       case AppLifecycleState.paused:
-        print("AppLifecycleState: Paused");
+        globalLogger.d("AppLifecycleState: Paused");
         break;
       case AppLifecycleState.detached:
-        print("AppLifecycleState: Detached");
+        globalLogger.d("AppLifecycleState: Detached");
         break;
       case AppLifecycleState.resumed:
-        print("AppLifecycleState: Resumed");
+        globalLogger.d("AppLifecycleState: Resumed");
         break;
     }
   }

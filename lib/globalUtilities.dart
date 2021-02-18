@@ -5,6 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 
+import 'package:logger/logger.dart';
+
+Logger globalLogger = Logger(printer: PrettyPrinter(methodCount: 0));
+
 class ListItem {
   int value;
   String name;
@@ -32,7 +36,7 @@ Future<void> sendBLEData(BluetoothCharacteristic txCharacteristic, Uint8List dat
     errorCheck = null;
     await txCharacteristic.write(data).catchError((error){
       errorCheck = error;
-      print("sendBLEData: Exception: $errorCheck");
+      globalLogger.w("sendBLEData: Exception: $errorCheck");
     });
   }
 }
