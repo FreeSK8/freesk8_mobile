@@ -311,7 +311,6 @@ class RideLogViewerState extends State<RideLogViewer> {
 
     //Receive arguments building this widget
     myArguments = ModalRoute.of(context).settings.arguments;
-    globalLogger.d("arguments passed to creation: $myArguments");
     if(myArguments == null){
       return Container();
     }
@@ -319,11 +318,12 @@ class RideLogViewerState extends State<RideLogViewer> {
     //Load log file from received arguments
     if( thisRideLog == "" ) {
       FileManager.openLogFile(myArguments.logFileInfo.logFilePath).then((value){
-        //globalLogger.d("opening log file");
+        //globalLogger.wtf("opening log file");
         setState(() {
           thisRideLog = value;
         });
       });
+      return Container(); //NOTE: after setState with file contents we'll show the widget tree
     }
 
     // Parse lines of log file as CSV
