@@ -17,7 +17,7 @@ import 'package:freesk8_mobile/tabs/realTimeData.dart';
 import 'package:freesk8_mobile/tabs/esk8Configuration.dart';
 import 'package:freesk8_mobile/tabs/test.dart';
 import 'package:freesk8_mobile/tabs/rideLogging.dart';
-import 'package:freesk8_mobile/rideLogViewer.dart';
+import 'package:freesk8_mobile/views/rideLogViewer.dart';
 import 'package:freesk8_mobile/fileSyncViewer.dart';
 import 'package:freesk8_mobile/focWizard.dart';
 
