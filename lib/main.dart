@@ -18,8 +18,8 @@ import 'package:freesk8_mobile/tabs/esk8Configuration.dart';
 import 'package:freesk8_mobile/tabs/test.dart';
 import 'package:freesk8_mobile/tabs/rideLogging.dart';
 import 'package:freesk8_mobile/views/rideLogViewer.dart';
-import 'package:freesk8_mobile/fileSyncViewer.dart';
-import 'package:freesk8_mobile/focWizard.dart';
+import 'package:freesk8_mobile/components/fileSyncViewer.dart';
+import 'package:freesk8_mobile/views/focWizard.dart';
 
 // Supporting packages
 import 'package:freesk8_mobile/bleHelper.dart';

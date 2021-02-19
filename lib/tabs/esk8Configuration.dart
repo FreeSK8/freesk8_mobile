@@ -9,7 +9,7 @@ import 'package:freesk8_mobile/views/escProfileEditor.dart';
 import 'package:freesk8_mobile/globalUtilities.dart';
 
 import 'package:freesk8_mobile/userSettings.dart';
-import 'package:freesk8_mobile/focWizard.dart';
+import 'package:freesk8_mobile/views/focWizard.dart';
 import 'package:freesk8_mobile/escHelper/escHelper.dart';
 import 'package:freesk8_mobile/escHelper/appConf.dart';
 import 'package:freesk8_mobile/escHelper/mcConf.dart';

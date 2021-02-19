@@ -6,7 +6,7 @@ import 'package:flutter_blue/flutter_blue.dart';
 
 import 'package:freesk8_mobile/databaseAssistant.dart';
 import 'package:freesk8_mobile/file_manager.dart';
-import 'package:freesk8_mobile/fileSyncViewer.dart';
+import 'package:freesk8_mobile/components/fileSyncViewer.dart';
 import 'package:freesk8_mobile/globalUtilities.dart';
 import 'package:freesk8_mobile/views/rideLogViewer.dart';
 import 'package:freesk8_mobile/userSettings.dart';
