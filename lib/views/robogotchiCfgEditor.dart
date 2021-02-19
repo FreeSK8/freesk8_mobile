@@ -124,7 +124,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
 
   @override
   Widget build(BuildContext context) {
-    print("Building RobogotchiCfgEditor");
+    globalLogger.d("Building RobogotchiCfgEditor");
 
     // Check for valid arguments while building this widget
     RobogotchiCfgEditorArguments myArguments = ModalRoute.of(context).settings.arguments;
@@ -156,7 +156,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
       _escCANIDsSelected = new List();
       myArguments.currentConfiguration.multiESCIDs.forEach((element) {
         if (element != 0 && myArguments.discoveredCANDevices.contains(element.toInt())) {
-          print("Adding user selected CAN ID: $element");
+          globalLogger.d("Adding user selected CAN ID: $element");
           _escCANIDsSelected.add(element.toInt());
         }
       });
@@ -293,9 +293,9 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                   Divider(thickness: 3),
                   Text("Log Entries per Second (${myArguments.currentConfiguration.logIntervalHz}Hz)"),
                   _multiESCMode && !_multiESCModeQuad && myArguments.currentConfiguration.logIntervalHz == 1 ?
-                    Text("2Hz or more is recommended with a dual ESC configuration", style: TextStyle(color: Colors.yellow)) : Container(),
+                    Text("⚠️ 2Hz or more is recommended with a dual ESC configuration", style: TextStyle(color: Colors.yellow)) : Container(),
                   _multiESCMode && _multiESCModeQuad && myArguments.currentConfiguration.logIntervalHz != 4 ?
-                      Text("4Hz is recommended with a quad ESC configuration", style: TextStyle(color: Colors.yellow)) : Container(),
+                      Text("⚠️ 4Hz is recommended with a quad ESC configuration", style: TextStyle(color: Colors.yellow)) : Container(),
                   SliderTheme(
                       data: SliderTheme.of(context).copyWith(
                           thumbShape: timeToPlay == 3 ? SliderThumbImage(sliderImage) : RoundSliderThumbShape(enabledThumbRadius: 10)
@@ -474,8 +474,9 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                                 ",${myArguments.currentConfiguration.cfgVersion}~";
 
                             // Save
-                            print("Sending $newConfigCMD");
+                            globalLogger.d("Save parameters: $newConfigCMD");
                             await myArguments.txLoggerCharacteristic.write(utf8.encode(newConfigCMD)).catchError((error){
+                              globalLogger.e("Save exception: ${error.toString()}");
                               // Do nothing
                               return;
                             });

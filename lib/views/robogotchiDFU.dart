@@ -57,6 +57,8 @@ class RobogotchiDFUState extends State<RobogotchiDFU> with SingleTickerProviderS
       dfuRunning = true;
     });
 
+    globalLogger.i("DFU Operation starting for $deviceId");
+
     // Attempt DFU process 3 times before giving up
     int failCount = 0;
     while(dfuRunning) {
@@ -74,7 +76,7 @@ class RobogotchiDFUState extends State<RobogotchiDFU> with SingleTickerProviderS
               currentPart,
               partsTotal,
               ) {
-            print('deviceAddress: $deviceAddress, percent: $percent');
+            //globalLogger.wtf('deviceAddress: $deviceAddress, percent: $percent');
             setState(() {
               _deviceAddress = deviceAddress;
               _percent = percent;
@@ -88,12 +90,12 @@ class RobogotchiDFUState extends State<RobogotchiDFU> with SingleTickerProviderS
             }
           }),
         );
-        print("DFU Operation Completed. ($result)");
+        globalLogger.i("DFU Operation Completed. ($result)");
         dfuRunning = false;
       } catch (e) {
         //NOTE: Sometimes we are throwing PlatformException(DFU_Failed, Device address: *****, null, null)
         //TODO: Consider checking rssi, notify user of retry event
-        print("DFU Operation Exception: ${e.toString()}");
+        globalLogger.e("DFU Operation Exception: ${e.toString()}");
 
         if (++failCount > 2) {
           setState(() {

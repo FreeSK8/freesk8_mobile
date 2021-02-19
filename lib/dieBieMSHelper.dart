@@ -70,7 +70,7 @@ class DieBieMSHelper {
     return latestTelemetry;
   }
   
-  DieBieMSTelemetry processTelemetry(Uint8List payload) {
+  DieBieMSTelemetry processTelemetry(Uint8List payload, int expectedCANID) {
     int index = 1;
     DieBieMSTelemetry parsedTelemetry = new DieBieMSTelemetry();
     parsedTelemetry.packVoltage = buffer_get_float32(payload, index, 1e3); index += 4;
@@ -95,8 +95,7 @@ class DieBieMSHelper {
     parsedTelemetry.faultState = payload[index++];
     parsedTelemetry.canID = payload[index];
 
-    //TODO: ask user for canID of DieBieMS
-    if( parsedTelemetry.canID == 10 ) {
+    if( parsedTelemetry.canID == expectedCANID ) {
       latestTelemetry = parsedTelemetry;
     } else {
       print("TODO: this is an ESC packet");

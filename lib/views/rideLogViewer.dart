@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:freesk8_mobile/globalUtilities.dart';
-import 'package:freesk8_mobile/rideLogViewChartOverlay.dart';
+import 'package:freesk8_mobile/components/rideLogViewChartOverlay.dart';
 import 'package:latlong/latlong.dart';
 import 'package:freesk8_mobile/databaseAssistant.dart';
 import 'package:freesk8_mobile/file_manager.dart';
@@ -250,7 +250,7 @@ class RideLogViewerState extends State<RideLogViewer> {
   void updateFault(List<ESCFault> faults, int faultCode, int escID, DateTime dateTime) {
     faults.forEach((element) {
       if (element.faultCode == faultCode && element.escID == escID) {
-        print("updated fault");
+        //globalLogger.d("updated fault");
         ++element.faultCount;
         element.lastSeen = dateTime;
       }
@@ -264,18 +264,18 @@ class RideLogViewerState extends State<RideLogViewer> {
 
     for (int i=0; i<gpsLatLngMap.length; ++i) {
       if (gpsLatLngMap.entries.elementAt(i).key.isAfter(desiredTime)) {
-        print("nearest $desiredTime is ${gpsLatLngMap.entries.elementAt(i).key}");
+        globalLogger.d("nearest $desiredTime is ${gpsLatLngMap.entries.elementAt(i).key}");
         return gpsLatLngMap.entries.elementAt(i).value;
       }
     }
 
-    print("selectNearestGPSPoint: Returning last point =(");
+    globalLogger.d("selectNearestGPSPoint: Returning last point =(");
     return gpsLatLngMap.entries.last.value;
   }
 
   @override
   Widget build(BuildContext context) {
-    print("Build: rideLogViewer");
+    globalLogger.d("Build: rideLogViewer");
 
     eventObservable.add(currentSelection);
 
@@ -311,7 +311,6 @@ class RideLogViewerState extends State<RideLogViewer> {
 
     //Receive arguments building this widget
     myArguments = ModalRoute.of(context).settings.arguments;
-    print("arguments passed to creation: $myArguments");
     if(myArguments == null){
       return Container();
     }
@@ -319,17 +318,18 @@ class RideLogViewerState extends State<RideLogViewer> {
     //Load log file from received arguments
     if( thisRideLog == "" ) {
       FileManager.openLogFile(myArguments.logFileInfo.logFilePath).then((value){
-        print("opening log file");
+        //globalLogger.wtf("opening log file");
         setState(() {
           thisRideLog = value;
         });
       });
+      return Container(); //NOTE: after setState with file contents we'll show the widget tree
     }
 
     // Parse lines of log file as CSV
     List<int> escIDsInLog = new List();
     thisRideLogEntries = thisRideLog.split("\n");
-    print("rideLogViewer rideLogEntry count: ${thisRideLog.length}");
+    globalLogger.d("rideLogViewer rideLogEntry count: ${thisRideLog.length}");
     for(int i=0; i<thisRideLogEntries.length; ++i) {
       final entry = thisRideLogEntries[i].split(",");
 
@@ -360,7 +360,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           int thisESCID = int.parse(entry[2]);
 
           if (!escIDsInLog.contains(thisESCID)) {
-            print("Adding ESC ID $thisESCID to list of known ESC IDs in this data set");
+            globalLogger.d("Adding ESC ID $thisESCID to list of known ESC IDs in this data set");
             escIDsInLog.add(thisESCID);
           }
 
@@ -426,7 +426,7 @@ class RideLogViewerState extends State<RideLogViewer> {
               break;
             default:
             // Shit this was not supposed to happen
-              print("Shit this was not supposed to happen. There appears to be a 5th ESC ID in the log file: $escIDsInLog");
+              globalLogger.wtf("Shit this was not supposed to happen. There appears to be a 5th ESC ID in the log file: $escIDsInLog");
               break;
           }
 
@@ -446,12 +446,12 @@ class RideLogViewerState extends State<RideLogViewer> {
           bool isNew = true;
           faultsObserved.forEach((element) {
             if (element.faultCode == thisFaultCode && element.escID == escID) {
-              print("this fault is old");
+              //globalLogger.d("this fault is old");
               isNew = false;
             }
           });
           if (isNew) {
-            print("adding $thisFaultCode $escID");
+            //globalLogger.d("adding $thisFaultCode $escID");
             faultsObserved.add(new ESCFault(
               faultCode: thisFaultCode,
               escID: escID,
@@ -518,7 +518,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           int thisESCID = int.parse(entry[10]);
 
           if (!escIDsInLog.contains(thisESCID)) {
-            print("Adding ESC ID $thisESCID to list of known ESC IDs in this data set");
+            globalLogger.d("Adding ESC ID $thisESCID to list of known ESC IDs in this data set");
             escIDsInLog.add(thisESCID);
           }
 
@@ -569,14 +569,14 @@ class RideLogViewerState extends State<RideLogViewer> {
               break;
             default:
             // Shit this was not supposed to happen
-              print("Shit this was not supposed to happen. There appears to be a 5th ESC ID in the log file: $escIDsInLog");
+              globalLogger.e("Shit this was not supposed to happen. There appears to be a 5th ESC ID in the log file: $escIDsInLog");
               break;
           }
 
         }
       }
     }
-    print("rideLogViewer rideLogEntry iteration complete");
+    globalLogger.d("rideLogViewer rideLogEntry iteration complete");
     // Convert ESC data map into a list
     escTimeSeriesMap.forEach((key, value) {
       // Multiply consumption by number of ESCs for smooth chart line
@@ -588,7 +588,7 @@ class RideLogViewerState extends State<RideLogViewer> {
       escTimeSeriesList.add(value);
     });
     //TODO: not clearing because I want to color a polyline... escTimeSeriesMap.clear();
-    print("rideLogViewer escTimeSeriesList length is ${escTimeSeriesList.length}");
+    globalLogger.d("rideLogViewer escTimeSeriesList length is ${escTimeSeriesList.length}");
     //TODO: Reduce number of ESC points to keep things moving on phones
     //TODO: We will need to know the logging rate in the file
     while(escTimeSeriesList.length > 1200) {
@@ -597,7 +597,7 @@ class RideLogViewerState extends State<RideLogViewer> {
         escTimeSeriesList[pos] = escTimeSeriesList[i++]; // Increment i
         // Check next record that we intend to remove for a fault
         if (i<escTimeSeriesList.length && escTimeSeriesList[i].faultCode != null) {
-          print("Saving fault record");
+          globalLogger.d("Saving fault record");
           // Keep the next record because it contains a fault
           escTimeSeriesList[++pos] = escTimeSeriesList[i++];
         }
@@ -614,7 +614,7 @@ class RideLogViewerState extends State<RideLogViewer> {
         }
       }
       escTimeSeriesList.removeRange(pos, escTimeSeriesList.length);
-      print("rideLogViewer reduced escTimeSeriesList length to ${escTimeSeriesList.length}");
+      globalLogger.d("rideLogViewer reduced escTimeSeriesList length to ${escTimeSeriesList.length}");
     }
 
     // Create fault range annotations for chart
@@ -650,7 +650,7 @@ class RideLogViewerState extends State<RideLogViewer> {
     }
 
 
-    print("rideLogViewer creating chart data");
+    globalLogger.d("rideLogViewer creating chart data");
     // Create charting data from ESC time series data
     seriesList = _createChartingData(escTimeSeriesList, escIDsInLog, faultCodeCount, myArguments.userSettings.settings.useImperial);
 
@@ -727,7 +727,7 @@ class RideLogViewerState extends State<RideLogViewer> {
         ),
       ));
     }
-    print("rideLogViewer creating map polyline from ${_positionEntries.length} points");
+    globalLogger.d("rideLogViewer creating map polyline from ${_positionEntries.length} points");
 
     //TODO: color polyline based on stats
     List<Polyline> polylineList = new List();
@@ -766,7 +766,7 @@ class RideLogViewerState extends State<RideLogViewer> {
     if(_keyLoader.currentContext != null)
       Navigator.of(_keyLoader.currentContext,rootNavigator: true).pop();
 
-    print("rideLogViewer statistics generated");
+    globalLogger.d("rideLogViewer statistics generated");
 
     // Add starting and ending map markers to the beginning of the mapMarkers list
     if (_positionEntries.length > 0) {
@@ -796,7 +796,7 @@ class RideLogViewerState extends State<RideLogViewer> {
     }
 
     /// Compute consumption
-    print("${myArguments.logFileInfo.wattHoursTotal} ${myArguments.logFileInfo.wattHoursRegenTotal} $distanceEndPrimary $distanceStartPrimary ${myArguments.userSettings.settings.useImperial}");
+    globalLogger.d("Consumption: ${myArguments.logFileInfo.wattHoursTotal} ${myArguments.logFileInfo.wattHoursRegenTotal} $distanceEndPrimary $distanceStartPrimary ${myArguments.userSettings.settings.useImperial}");
     double consumption = 0;
     if (myArguments.logFileInfo.wattHoursTotal != -1 && distanceEndPrimary != null && distanceStartPrimary != null) {
       consumption = (myArguments.logFileInfo.wattHoursTotal - myArguments.logFileInfo.wattHoursRegenTotal) / (distanceEndPrimary - distanceStartPrimary);
