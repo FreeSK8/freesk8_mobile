@@ -543,16 +543,16 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     byteData.setUint8(sendCAN ? 7:5, 0x03); //End of packet
 
     widget.theTXCharacteristic.write(byteData.buffer.asUint8List()).then((value){
-      globalLogger.d('COMM_GET_DECODED_PPM requested ($optionalCANID)');
+      //globalLogger.d('COMM_GET_DECODED_PPM requested ($optionalCANID)');
     }).catchError((e){
-      globalLogger.w("COMM_GET_DECODED_PPM: Exception: $e");
+      //globalLogger.w("COMM_GET_DECODED_PPM: Exception: $e");
     });
   }
 
   // Start and stop PPM streaming timer
   void startStopPPMTimer(bool disableTimer) {
     if (!disableTimer){
-      globalLogger.d("Start PPM timer");
+      globalLogger.d("Starting PPM calibration timer");
       const duration = const Duration(milliseconds:100);
       ppmCalibrateTimer = new Timer.periodic(duration, (Timer t) => requestDecodedPPM(_selectedCANFwdID));
     } else {
@@ -1015,7 +1015,9 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               // Apply the configuration to the ESC
                               if (widget.currentDevice != null) {
                                 // Save application configuration; CAN FWD ID can be null
-                                saveAPPCONF(_selectedCANFwdID);
+                                Future.delayed(Duration(milliseconds: 250), (){
+                                  saveAPPCONF(_selectedCANFwdID);
+                                });
                               }
                               // Start calibration routine
                               setState(() {
@@ -1030,6 +1032,19 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                 ppmCalibrate = false;
                                 startStopPPMTimer(true);
                               });
+
+                              // If we did not receive any PPM information we cannot save the changes
+                              if (widget.ppmLastDuration == null) {
+                                setState(() {
+                                  // Restore the user's PPM control type
+                                  widget.escAppConfiguration.app_ppm_conf.ctrl_type = ppmCalibrateControlTypeToRestore;
+                                  _selectedPPMCtrlType = null; // Clear selection
+                                  Future.delayed(Duration(milliseconds: 250), (){
+                                    saveAPPCONF(_selectedCANFwdID); // CAN FWD ID can be null
+                                  });
+                                });
+                                return;
+                              }
 
                               // Ask user if they are satisfied with the calibration results
                               showDialog(
@@ -1060,8 +1075,9 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                             // Restore the user's PPM control type
                                             widget.escAppConfiguration.app_ppm_conf.ctrl_type = ppmCalibrateControlTypeToRestore;
                                             _selectedPPMCtrlType = null; // Clear selection
-                                            // Apply the configuration to the ESC
-                                            saveAPPCONF(_selectedCANFwdID); // CAN FWD ID can be null
+                                            Future.delayed(Duration(milliseconds: 250), (){
+                                              saveAPPCONF(_selectedCANFwdID); // CAN FWD ID can be null
+                                            });
                                           });
                                           Navigator.of(context).pop();
                                         },
@@ -1078,7 +1094,9 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                             widget.escAppConfiguration.app_ppm_conf.pulse_center = widget.ppmLastDuration / 1000000;
                                             widget.escAppConfiguration.app_ppm_conf.pulse_end = ppmMaxMS / 1000000;
                                             // Apply the configuration to the ESC
-                                            saveAPPCONF(_selectedCANFwdID); // CAN FWD ID can be null
+                                            Future.delayed(Duration(milliseconds: 250), (){
+                                              saveAPPCONF(_selectedCANFwdID); // CAN FWD ID can be null
+                                            });
                                           });
                                           Navigator.of(context).pop();
                                         },
@@ -1089,7 +1107,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               );
                             }
 
-                          }, child: Text(ppmCalibrate ? "Stop Calibration" : "Calibrate PPM"),),
+                          }, child: Text(ppmCalibrate ? widget.ppmCalibrateReady ? "Stop Calibration": "Starting Calibration..." : "Calibrate PPM"),),
 
                           Stack(children: [
                             RangeSlider(
