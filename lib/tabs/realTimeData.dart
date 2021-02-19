@@ -32,7 +32,7 @@ double sigmoidal(double voltage, double minVoltage, double maxVoltage) {
 
   double normalized = result >= 100 ? 1.0 : result / 100;
   if (normalized.isNaN) {
-    print("realTimeData::sigmoidal: Returning Zero: $voltage V, $minVoltage min, $maxVoltage max");
+    globalLogger.d("realTimeData::sigmoidal: Returning Zero: $voltage V, $minVoltage min, $maxVoltage max");
     normalized = 0;
   }
   return normalized;
@@ -124,7 +124,7 @@ class RealTimeDataState extends State<RealTimeData> {
   @override
   void initState() {
     super.initState();
-    print("initState: realTimeData");
+    globalLogger.d("initState: realTimeData");
     widget.startStopTelemetryFunc(false); //Start the telemetry timer
   }
 
@@ -318,7 +318,7 @@ class RealTimeDataState extends State<RealTimeData> {
           Positioned(
               right: 0,
               top: 0,
-              child: IconButton(onPressed: (){print("User Close"); widget.closeDieBieMSFunc(true);},icon: Icon(Icons.clear),)
+              child: IconButton(onPressed: (){widget.closeDieBieMSFunc(true);},icon: Icon(Icons.clear),)
           ),
           Positioned(
               left: 0,
@@ -442,8 +442,8 @@ class RealTimeDataState extends State<RealTimeData> {
     //FlutterGauge _gauge12 = FlutterGauge(numberInAndOut: NumberInAndOut.outside, index: doodie,counterStyle: TextStyle(color: Theme.of(context).textTheme.title.color,fontSize: 25,),widthCircle: 25,secondsMarker: SecondsMarker.none,number: Number.all);
 
 
-    //print(MediaQuery.of(context).size.height);
-    //print(MediaQuery.of(context).size.width);
+    //globalLogger.wtf(MediaQuery.of(context).size.height);
+    //globalLogger.wtf(MediaQuery.of(context).size.width);
 
     // Build widget
     return Container(

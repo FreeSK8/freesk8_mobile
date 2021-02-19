@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:freesk8_mobile/escHelper/appConf.dart';
 import 'package:freesk8_mobile/escHelper/mcConf.dart';
 
+import '../globalUtilities.dart';
 import './serialization/buffers.dart';
 import './serialization/firmware5_1.dart';
 import './serialization/firmware5_2.dart';
@@ -332,7 +333,7 @@ class ESCHelper {
   static SerializeFirmware52 fw52serializer = new SerializeFirmware52();
 
   List<ESCFault> processFaults(int faultCount, Uint8List payload) {
-    print(payload);
+    //globalLogger.wtf(payload);
     List<ESCFault> response = new List();
     int index = 0;
     for (int i=0; i<faultCount; ++i) {
@@ -343,7 +344,7 @@ class ESCHelper {
       index += 3; //NOTE: Alignment
       fault.firstSeen = new DateTime.fromMillisecondsSinceEpoch(buffer_get_uint64(payload, index, Endian.little) * 1000, isUtc: true); index += 8;
       fault.lastSeen = new DateTime.fromMillisecondsSinceEpoch(buffer_get_uint64(payload, index, Endian.little) * 1000, isUtc: true); index += 8;
-      print(fault.toString());
+      globalLogger.d("processFaults: Adding ${fault.toString()}");
       response.add(fault);
     }
     return response;
@@ -442,7 +443,7 @@ class ESCHelper {
 
   ///ESC Profiles
   static Future<ESCProfile> getESCProfile(int profileIndex) async {
-    print("getESCProfile is loading index $profileIndex");
+    //globalLogger.d("getESCProfile is loading index $profileIndex");
     final prefs = await SharedPreferences.getInstance();
     ESCProfile response = new ESCProfile();
     response.profileName = prefs.getString('profile$profileIndex name') ?? "Unnamed";
@@ -460,7 +461,7 @@ class ESCHelper {
     return prefs.getString('profile$profileIndex name') ?? "Unnamed";
   }
   static Future<void> setESCProfile(int profileIndex, ESCProfile profile) async {
-    print("setESCProfile is saving index $profileIndex");
+    globalLogger.d("setESCProfile is saving index $profileIndex");
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('profile$profileIndex name', profile.profileName);
     await prefs.setDouble('profile$profileIndex speedKmh', profile.speedKmh);

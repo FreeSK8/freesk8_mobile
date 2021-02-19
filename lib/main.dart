@@ -894,7 +894,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     bool foundRX = false;
     bool foundTXLogger = false;
     bool foundRXLogger = false;
-    _services = await _connectedDevice.discoverServices();
+    _services = await _connectedDevice?.discoverServices();
 
     for (BluetoothService service in _services) {
       globalLogger.d("prepareConnectedDevice: Discovered service: ${service.uuid}");
@@ -1201,9 +1201,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
         // store chunk of log data
         catBytesRaw.addAll(value.sublist(0,receiveStr.length));
-        //await FileManager.writeBytesToLogFile(value.sublist(0,receiveStr.length));
+        //NOTE: File operations on iOS can slow things down, using memory buffer ^ await FileManager.writeBytesToLogFile(value.sublist(0,receiveStr.length));
 
-        globalLogger.d("cat received ${receiveStr.length} bytes");
+        //globalLogger.d("cat received ${receiveStr.length} bytes");
         setState(() {
           catBytesReceived += receiveStr.length;
         });
@@ -1715,8 +1715,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
           int valueNow = buffer_get_int32(bleHelper.getPayload(), 1);
           int msNow = buffer_get_int32(bleHelper.getPayload(), 5);
-          globalLogger.d(
-              "Decoded PPM packet received: value $valueNow, milliseconds $msNow");
+          //globalLogger.d("Decoded PPM packet received: value $valueNow, milliseconds $msNow");
           setState(() {
             ppmLastDuration = msNow;
           });
@@ -1725,24 +1724,28 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
           int stringLength = bleHelper.getMessage()[1] - 1;
           String messageFromESC = new String.fromCharCodes(bleHelper.getMessage().sublist(3, 3 + stringLength));
+          globalLogger.wtf("ESC Custom Message: $messageFromESC");
           genericAlert(context, "Excuse me", Text("The ESC responded with a custom message:\n\n$messageFromESC"), "OK");
           bleHelper.resetPacket();
 
         } else if (packetID == COMM_PACKET_ID.COMM_SET_APPCONF.index) {
 
           if (_isPPMCalibrating != null && _isPPMCalibrating) {
-            genericAlert(context, "Calibration", Text("Begin calibration\nMove input to full brake, full throttle then leave in the center\n\nPlease ensure the wheels are off the ground in case something goes wrong. This is beta after all!"), "OK");
+            globalLogger.d("PPM Calibration is Ready");
+            genericAlert(context, "Calibration", Text("Calibration Instructions:\nMove input to full brake, full throttle then leave in the center\n\nPlease ensure the wheels are off the ground in case something goes wrong. Press OK when ready."), "OK");
             _isPPMCalibrating = null;
             setState(() {
               _isPPMCalibrationReady = true;
             });
           } else if (_isPPMCalibrating != null && !_isPPMCalibrating) {
-            genericAlert(context, "Calibration", Text("Calibration Completed Successfully"), "OK");
+            globalLogger.d("PPM Calibration has completed");
+            genericAlert(context, "Calibration", Text("Calibration Completed"), "OK");
             _isPPMCalibrating = null;
             setState(() {
               _isPPMCalibrationReady = false;
             });
           } else {
+            globalLogger.d("Application Configuration Saved Successfully");
             genericAlert(context, "Success", Text("Application configuration set"), "Excellent");
           }
 
@@ -1800,7 +1803,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     } else if (!initMsgESCVersion) {
       // Request the ESC Firmware Packet
       globalLogger.d("_requestInitMessages: Requesting ESC Firmware Packet");
-      the_tx_characteristic.write([0x02, 0x01, 0x00, 0x00, 0x00, 0x03]);
+      the_tx_characteristic.write([0x02, 0x01, 0x00, 0x00, 0x00, 0x03]); //TODO catch error if busy
       if (!initShowESCVersion) {
         _changeConnectedDialogMessage("Requesting ESC version");
         initShowESCVersion = true;
@@ -2571,7 +2574,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       }
     }
     else {
-      globalLogger.d("Building main.dart (smart bms? $_showDieBieMS)");
+      //globalLogger.d("Building main.dart (smart bms? $_showDieBieMS)");
     }
 
     FileSyncViewerArguments syncStatus = FileSyncViewerArguments(syncInProgress: syncInProgress, fileName: catCurrentFilename, fileBytesReceived: catBytesReceived, fileBytesTotal: catBytesTotal, fileList: fileList);

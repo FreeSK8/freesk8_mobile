@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
+import 'globalUtilities.dart';
+
 class LogInfoItem {
   final DateTime dateTime;
   final String boardID;
@@ -67,7 +69,7 @@ class LogInfoItem {
 class DatabaseAssistant {
 
   static Future<Database> getDatabase() async {
-    //print("DatabaseAssistant: getDatabase: called");
+    //globalLogger.d("DatabaseAssistant: getDatabase: called");
     const migrationScripts = [
       '', //Version 1 not released
       '', //Version 2 not released
@@ -80,7 +82,7 @@ class DatabaseAssistant {
       join(await getDatabasesPath(), 'logDatabase.db'), // Set the path to the database.
       onCreate: (db, version) async {
         final int dbCurrentVersion = await db.getVersion();
-        print("DatabaseAssistant: getDatabase: openDatabase: onCreate() called. Version $version DBVersion $dbCurrentVersion");
+        globalLogger.d("DatabaseAssistant: getDatabase: openDatabase: onCreate() called. Version $version DBVersion $dbCurrentVersion");
         // Create a table to store ride log details
         return db.execute(
           "CREATE TABLE IF NOT EXISTS logs("
@@ -106,20 +108,20 @@ class DatabaseAssistant {
       },
       onOpen: (db) async {
         int version = await db.getVersion();
-        print("DatabaseAssistant: getDatabase: openDatabase: onOpen(). Version $version");
+        globalLogger.d("DatabaseAssistant: getDatabase: openDatabase: onOpen(). Version $version");
 
         //TODO: remove this patch after everyone moves on from my mistake (0.7.0/0.7.1 did not set the date_time for new files in LogInfoItem.toMap())
         final List<Map<String, dynamic>> databaseEntries = await db.query('logs', columns: ['id','log_file_path','date_time'], where: 'date_time IS NULL');
-        print(databaseEntries.toString());
+        //globalLogger.wtf(databaseEntries.toString());
         databaseEntries.forEach((element) async {
-          print("renee was too excited and didn't bug test enough so now we are updating ${element['log_file_path']}");
+          //globalLogger.wtf("renee was too excited and didn't bug test enough so now we are updating ${element['log_file_path']}");
           String dtString = element['log_file_path'].substring(element['log_file_path'].lastIndexOf("/") + 1, element['log_file_path'].lastIndexOf("/") + 20);
           DateTime thisDt = DateTime.parse(dtString);
           await db.execute('UPDATE logs SET date_time = ${thisDt.millisecondsSinceEpoch / 1000} WHERE id = ${element['id']};');
         });
       },
       onUpgrade: (Database db, int oldVersion, int newVersion) async {
-        print("DatabaseAssistant: getDatabase: openDatabase: onUpgrade(): oldVersion $oldVersion -> newVersion $newVersion");
+        globalLogger.d("DatabaseAssistant: getDatabase: openDatabase: onUpgrade(): oldVersion $oldVersion -> newVersion $newVersion");
         for (var i = oldVersion; i < newVersion; ++i) {
           // Split migration script because you cannot execute multiple commands in one line =(
           List<String> migrationScriptCommands = migrationScripts[i].split("&&");
@@ -130,7 +132,7 @@ class DatabaseAssistant {
           // Post process after SQL modifications
           switch(i) {
             case 3:
-              print("onUpgrade adding missing date_time field to existing records");
+              globalLogger.d("onUpgrade adding missing date_time field to existing records");
               final List<Map<String, dynamic>> databaseEntries = await db.query('logs', columns: ['id','log_file_path']);
               databaseEntries.forEach((element) async {
                 String dtString = element['log_file_path'].substring(element['log_file_path'].lastIndexOf("/") + 1, element['log_file_path'].lastIndexOf("/") + 20);
@@ -139,7 +141,7 @@ class DatabaseAssistant {
               });
               break;
             case 4:
-              print("onUpgrade adding watt_hours, watt_hours_regen default values to existing records");
+              globalLogger.d("onUpgrade adding watt_hours, watt_hours_regen default values to existing records");
               await db.execute('UPDATE logs SET watt_hours = -1.0, watt_hours_regen = -1.0;');
               break;
           }

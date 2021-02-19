@@ -1,6 +1,8 @@
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'globalUtilities.dart';
+
 class UserSettingsStructure {
   bool useImperial;
   bool useFahrenheit;
@@ -26,7 +28,6 @@ class UserSettings {
   List<String> knownDevices;
 
   UserSettings({this.settings, this.currentDeviceID, this.knownDevices}) {
-    print("UserSettings() object created");
     settings = new UserSettingsStructure();
     knownDevices = new List();
     currentDeviceID = "defaults";
@@ -42,15 +43,15 @@ class UserSettings {
 
   Future<bool> loadSettings(String deviceID) async {
     currentDeviceID = deviceID;
-    print("Loading settings for $currentDeviceID");
+    globalLogger.d("Loading settings for $currentDeviceID");
 
     await _getSettings();
 
     if (!isKnownDevice()) {
-      print("Device $currentDeviceID has been initialized with default values");
+      globalLogger.d("Device $currentDeviceID has been initialized with default values");
       return Future.value(false);
     } else {
-      print("Device $currentDeviceID was a known device. Congratulations.");
+      globalLogger.d("Device $currentDeviceID was a known device. Congratulations.");
       return Future.value(true);
     }
   }
@@ -84,7 +85,7 @@ class UserSettings {
   }
 
   Future<void> saveSettings() async {
-    print("Saving settings for $currentDeviceID");
+    globalLogger.d("Saving settings for $currentDeviceID");
     final prefs = await SharedPreferences.getInstance();
 
     await prefs.setBool('useImperial', settings.useImperial);
@@ -108,7 +109,7 @@ class UserSettings {
 
     if ( !isKnownDevice() ) {
       knownDevices.add(currentDeviceID);
-      print("Adding $currentDeviceID to known devices $knownDevices");
+      globalLogger.d("Adding $currentDeviceID to known devices $knownDevices");
       await prefs.setStringList('knownDevices', knownDevices);
     }
   }

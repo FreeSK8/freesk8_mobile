@@ -96,7 +96,6 @@ class ConfigureESCState extends State<ConfigureESC> {
 
     //Receive arguments building this widget
     FOCWizardArguments myArguments = ModalRoute.of(context).settings.arguments;
-    //print("arguments passed to creation: $myArguments");
     if(myArguments == null){
       return Container(child:Text("No arguments. BUG BUG."));
     }
@@ -179,7 +178,7 @@ class ConfigureESCState extends State<ConfigureESC> {
             currentStepIndex = step;
           });
           // Log function call
-          print("onStepTapped : " + step.toString());
+          globalLogger.d("onStepTapped : " + step.toString());
         },
         onStepCancel: () {
           // On hitting cancel button, change the state
@@ -193,7 +192,7 @@ class ConfigureESCState extends State<ConfigureESC> {
 
 
           // Log function call
-          print("onStepCancel : " + currentStepIndex.toString());
+          globalLogger.d("onStepCancel : " + currentStepIndex.toString());
         },
         // On hitting continue button, change the state
         onStepContinue: () {
@@ -206,7 +205,7 @@ class ConfigureESCState extends State<ConfigureESC> {
               if(loadESCDefaults) {
                 //TODO: request MCCONF DEFAULT and wait for response
                 //myArguments.txCharacteristic.write([0x02,0x01,0x0f,0xf1,0xef,0x03]).then((value){
-                //  print("Requested MCCONF DEFAULT");
+                //  globalLogger.d("Requested MCCONF DEFAULT");
                 //});
                 //TODO: set MCCONF from response data. Passing via arguments will most likely not work
                 if(myArguments.escMotorConfigurationDefaults != null){
@@ -246,10 +245,10 @@ class ConfigureESCState extends State<ConfigureESC> {
               byteData.setUint16(24, checksum);
               byteData.setUint8(26, 0x03); //End of packet
 
-              print("FOC Detection packet: ${byteData.buffer.asUint8List()}");
+              //globalLogger.wtf("FOC Detection packet: ${byteData.buffer.asUint8List()}");
 
               myArguments.txCharacteristic.write(byteData.buffer.asUint8List()).then((value){
-                print("FOC Detection packet is off off and away...");
+                globalLogger.i("FOC Detection packet is off off and away...");
               });
             } else {
               // Increment the step counter
@@ -258,7 +257,7 @@ class ConfigureESCState extends State<ConfigureESC> {
 
           });
           // Log function call
-          print("onStepContinue : " + currentStepIndex.toString());
+          globalLogger.d("onStepContinue : " + currentStepIndex.toString());
         },
       ),
     );

@@ -98,7 +98,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
     super.initState();
     if (widget.theTXLoggerCharacteristic != null) {
       widget.theTXLoggerCharacteristic.write(utf8.encode("status~")).catchError((error){
-        print("Status request failed. Are we connected?");
+        globalLogger.e("rideLogging::initState: Robogotchi status request failed. Are we connected?");
       });
     }
 
@@ -131,10 +131,10 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
     rideLogsFromDatabase.forEach((element) {
       DateTime thisDate = DateTime.parse(new DateFormat("yyyy-MM-dd").format(element.dateTime));
       if (_events.containsKey(thisDate)) {
-        //print("updating $thisDate");
+        //globalLogger.wtf("updating $thisDate");
         _events[thisDate].add('${rideLogsFromDatabase.indexOf(element)}');
       } else {
-        //print("adding $thisDate");
+        //globalLogger.wtf("adding $thisDate");
         _events[thisDate] = ['${rideLogsFromDatabase.indexOf(element)}'];
       }
     });
@@ -280,7 +280,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
   }
 
   void _onDaySelected(DateTime day, List events, List holidays) {
-    print('CALLBACK: _onDaySelected');
+    //globalLogger.wtf('CALLBACK: _onDaySelected');
     setState(() {
       _selectedDay = DateTime.parse(new DateFormat("yyyy-MM-dd").format(day));
       _selectedEvents = events;
@@ -289,12 +289,12 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
 
   void _onVisibleDaysChanged(
       DateTime first, DateTime last, CalendarFormat format) {
-    print('CALLBACK: _onVisibleDaysChanged');
+    //globalLogger.wtf('CALLBACK: _onVisibleDaysChanged');
   }
 
   void _onCalendarCreated(
       DateTime first, DateTime last, CalendarFormat format) {
-    print('CALLBACK: _onCalendarCreated');
+    //globalLogger.wtf('CALLBACK: _onCalendarCreated');
   }
 
   Future<void> _loadLogFile(int index) async {
@@ -304,7 +304,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
     // Fetch user settings for selected board, fallback to current settings if not found
     UserSettings selectedBoardSettings = new UserSettings();
     if (await selectedBoardSettings.loadSettings(rideLogsFromDatabase[index].boardID) == false) {
-      print("WARNING: Board ID ${rideLogsFromDatabase[index].boardID} has no settings on this device!");
+      globalLogger.wtf("WARNING: Board ID ${rideLogsFromDatabase[index].boardID} has no settings on this device!");
       selectedBoardSettings = widget.myUserSettings;
     }
 
@@ -482,7 +482,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                       });
                     },
                     confirmDismiss: (DismissDirection direction) async {
-                      print("rideLogging::Dismissible: ${direction.toString()}");
+                      globalLogger.d("rideLogging::Dismissible: ${direction.toString()}");
                       // Swipe Right to Share
                       if (direction == DismissDirection.startToEnd) {
                         //TODO: share file dialog
@@ -662,7 +662,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                   Switch(
                     value: widget.eraseOnSync,
                     onChanged: (bool newValue){
-                      print("erase on sync $newValue");
+                      globalLogger.d("User Switched Erase on Sync to $newValue");
                       widget.onSyncEraseSwitch(newValue);
                     },
                   )
