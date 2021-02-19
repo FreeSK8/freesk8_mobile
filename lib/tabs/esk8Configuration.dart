@@ -89,7 +89,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       String newPath = "${documentsDirectory.path}/avatars/${widget.currentDevice.id}";
       File finalImage = await File(newPath).create(recursive: true);
       finalImage.writeAsBytesSync(await temporaryImage.readAsBytes());
-      print("Board avatar file destination: ${finalImage.path}");
+      globalLogger.d("Board avatar file destination: ${finalImage.path}");
 
       setState(() {
         //NOTE: A FileImage is the fastest way to load these images but because
@@ -341,9 +341,9 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     byteData.setUint8(41, 0x03); //End of packet
 
     widget.theTXCharacteristic.write(byteData.buffer.asUint8List()).then((value){
-      print('COMM_SET_MCCONF_TEMP_SETUP published');
+      globalLogger.d('COMM_SET_MCCONF_TEMP_SETUP published');
     }).catchError((e){
-      print("COMM_SET_MCCONF_TEMP_SETUP: Exception: $e");
+      globalLogger.e("COMM_SET_MCCONF_TEMP_SETUP: Exception: $e");
     });
 
   }
@@ -360,16 +360,16 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     byteData.setUint8(7, 0x03); //End of packet
 
     widget.theTXCharacteristic.write(byteData.buffer.asUint8List()).then((value){
-      print('COMM_GET_MCCONF requested from CAN ID $canID');
+      globalLogger.d('COMM_GET_MCCONF requested from CAN ID $canID');
       //TODO: indicate we are waiting for ESC response?
     }).catchError((e){
-      print("COMM_GET_MCCONF: Exception: $e");
+      globalLogger.e("COMM_GET_MCCONF: Exception: $e");
     });
   }
 
   void saveMCCONF(int optionalCANID) async {
     if (_writeESCInProgress) {
-      print("WARNING: esk8Configuration: saveMCCONF: _writeESCInProgress is true. Save aborted.");
+      globalLogger.w("WARNING: esk8Configuration: saveMCCONF: _writeESCInProgress is true. Save aborted.");
       return;
     }
 
@@ -405,7 +405,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     blePacket.setUint16(packetIndex, checksum); packetIndex += 2;
     blePacket.setUint8(packetIndex, 0x03); //End of packet
 
-    print("packet len $packetLength, payload size $payloadSize, packet index $packetIndex");
+    //globalLogger.wtf("packet len $packetLength, payload size $payloadSize, packet index $packetIndex");
 
     /*
     * TODO: determine the best way to deliver this data to the ESC
@@ -423,7 +423,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       bytesSent += 20;
       await Future.delayed(const Duration(milliseconds: 30), () {});
     }
-    print("COMM_SET_MCCONF bytes were blasted to ESC =/");
+    globalLogger.d("COMM_SET_MCCONF bytes were blasted to ESC =/");
 
     /*
     * TODO: Flutter Blue cannot send more than 244 bytes in a message
@@ -432,11 +432,11 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     widget.theTXCharacteristic.write(blePacket.buffer.asUint8List().sublist(0,240)).then((value){
       Future.delayed(const Duration(milliseconds: 250), () {
         widget.theTXCharacteristic.write(blePacket.buffer.asUint8List().sublist(240));
-        print("COMM_SET_MCCONF sent to ESC");
+        globalLogger.d("COMM_SET_MCCONF sent to ESC");
       });
 
     }).catchError((e){
-      print("COMM_SET_MCCONF: Exception: $e");
+      globalLogger.e("COMM_SET_MCCONF: Exception: $e");
     });
 */
 
@@ -447,7 +447,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
   //TODO: very much duplicated from saveMCCONF() -> simplify & improve
   void saveAPPCONF(int optionalCANID) async {
     if (_writeESCInProgress) {
-      print("WARNING: esk8Configuration: saveAPPCONF: _writeESCInProgress is true. Save aborted.");
+      globalLogger.w("WARNING: esk8Configuration: saveAPPCONF: _writeESCInProgress is true. Save aborted.");
       return;
     }
 
@@ -483,7 +483,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     blePacket.setUint16(packetIndex, checksum); packetIndex += 2;
     blePacket.setUint8(packetIndex, 0x03); //End of packet
 
-    print("packet len $packetLength, payload size $payloadSize, packet index $packetIndex");
+    //globalLogger.wtf("packet len $packetLength, payload size $payloadSize, packet index $packetIndex");
 
     /*
     * TODO: determine the best way to deliver this data to the ESC
@@ -501,7 +501,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       bytesSent += 20;
       await Future.delayed(const Duration(milliseconds: 30), () {});
     }
-    print("COMM_SET_APPCONF bytes were blasted to ESC =/");
+    globalLogger.d("COMM_SET_APPCONF bytes were blasted to ESC =/");
 
     /*
     * TODO: Flutter Blue cannot send more than 244 bytes in a message
@@ -510,11 +510,11 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     widget.theTXCharacteristic.write(blePacket.buffer.asUint8List().sublist(0,240)).then((value){
       Future.delayed(const Duration(milliseconds: 250), () {
         widget.theTXCharacteristic.write(blePacket.buffer.asUint8List().sublist(240));
-        print("COMM_SET_MCCONF sent to ESC");
+        globalLogger.d("COMM_SET_MCCONF sent to ESC");
       });
 
     }).catchError((e){
-      print("COMM_SET_MCCONF: Exception: $e");
+      globalLogger.e("COMM_SET_MCCONF: Exception: $e");
     });
 */
 
@@ -543,20 +543,20 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     byteData.setUint8(sendCAN ? 7:5, 0x03); //End of packet
 
     widget.theTXCharacteristic.write(byteData.buffer.asUint8List()).then((value){
-      print('COMM_GET_DECODED_PPM requested ($optionalCANID)');
+      globalLogger.d('COMM_GET_DECODED_PPM requested ($optionalCANID)');
     }).catchError((e){
-      print("COMM_GET_MCCONF: Exception: $e");
+      globalLogger.w("COMM_GET_DECODED_PPM: Exception: $e");
     });
   }
 
   // Start and stop PPM streaming timer
   void startStopPPMTimer(bool disableTimer) {
     if (!disableTimer){
-      print("Start PPM timer");
+      globalLogger.d("Start PPM timer");
       const duration = const Duration(milliseconds:100);
       ppmCalibrateTimer = new Timer.periodic(duration, (Timer t) => requestDecodedPPM(_selectedCANFwdID));
     } else {
-      print("Cancel PPM timer");
+      globalLogger.d("Cancel PPM timer");
       if (ppmCalibrateTimer != null) {
         ppmCalibrateTimer?.cancel();
         ppmCalibrateTimer = null;
@@ -1420,7 +1420,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                 child: IconButton(
                     icon: Icon(Icons.clear),
                     onPressed: (){
-                      print("User Close ESC Application Configurator");
+                      globalLogger.d("User Close ESC Application Configurator");
                       genericConfirmationDialog(
                           context,
                           FlatButton(
@@ -2023,9 +2023,9 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
                                       //<start><payloadLen><packetID><int32_milliseconds><crc1><crc2><end>
                                       widget.theTXCharacteristic.write(byteData.buffer.asUint8List()).then((value){
-                                        print('You have 10 seconds to power on your remote!');
+                                        globalLogger.d('You have 10 seconds to power on your remote!');
                                       }).catchError((e){
-                                        print("nRF Quick Pair: Exception: $e");
+                                        globalLogger.e("nRF Quick Pair: Exception: $e");
                                       });
                                     } else {
                                       showDialog(
@@ -2081,7 +2081,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                 child: IconButton(
                     icon: Icon(Icons.clear),
                     onPressed: (){
-                      print("User Close ESC Configurator");
+                      globalLogger.d("User Close ESC Configurator");
                       genericConfirmationDialog(
                           context,
                           FlatButton(
@@ -2227,7 +2227,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                           widget.updateCachedAvatar(true);
 
                         } catch (e) {
-                          print("Save Settings Exception $e");
+                          globalLogger.e("Save Settings Exception $e");
                           Scaffold
                               .of(context)
                               .showSnackBar(SnackBar(content: Text('Sorry friend. Save settings failed =(')));

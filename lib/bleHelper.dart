@@ -53,16 +53,14 @@ class BLEHelper {
 
   static int crc16(Uint8List buffer, int index, int length) {
     Uint16List checksum = new Uint16List(1);
-    //int checksum = 0;
     for (int i=0; i<length; ++i) {
-      //print("checksum ${checksum[0]}");
       checksum[0] = crc16Table[(((checksum[0] >> 8) ^ buffer[index++]) & 0xFF)] ^ (checksum[0] << 8);
     }
     return checksum[0];
   }
 
   void resetPacket() {
-    print("Resetting packet");
+    //globalLogger.wtf("Resetting packet");
     messageRead = false;
     counter = 0;
     endMessage = 512;
@@ -96,7 +94,7 @@ class BLEHelper {
     if (crcPayload == crcMessage) {
       return true;
     } else {
-      print("WARNING: CRC Mismatch: message $crcMessage payload $crcPayload");
+      //globalLogger.w("WARNING: CRC Mismatch: message $crcMessage payload $crcPayload");
       return false;
     }
   }
@@ -104,7 +102,7 @@ class BLEHelper {
   int processIncomingBytes(List<int> incomingData) {
 
     Uint8List bytes = new Uint8List.fromList(incomingData);
-    //DEBUG:print("Processing incoming bytes $bytes");
+    //globalLogger.d("Processing incoming bytes $bytes");
 
     for (int i = 0; i < bytes.length; ++i) {
       messageReceived[counter++] = bytes[i];
@@ -115,14 +113,14 @@ class BLEHelper {
             lenPayload = messageReceived[1];
             endMessage = lenPayload + 5; //+5 = <start><lenPayload><payload><crc><crc><end>
             payloadStart = 2;
-            //DEBUG:print("message(short) lenPayload is $lenPayload, endMessage is $endMessage");
+            //globalLogger.d("message(short) lenPayload is $lenPayload, endMessage is $endMessage");
             break;
           case 3: ///3 is the start of a packet that is >255 bytes in length
             var byteData = new ByteData.view(bytes.buffer);
             lenPayload = byteData.getInt16(1);
             endMessage = lenPayload + 6; //+5 = <start><lenPayload><lenPayload2><payload><crc><crc><end>
             payloadStart = 3;
-            //DEBUG:print("message(longg) lenPayload is $lenPayload, endMessage is $endMessage");
+            //globalLogger.d("message(long) lenPayload is $lenPayload, endMessage is $endMessage");
             break;
           default:
             //TODO: Uh. If the start of the packet isn't 2 or 3 we are out of alignment
@@ -141,7 +139,7 @@ class BLEHelper {
       if (counter == endMessage && messageReceived[endMessage - 1] == 3) {
         messageReceived[endMessage] = 0;
         messageRead = true;
-        //DEBUG: print("messageRead is now true and counter is $counter");
+        //globalLogger.d("messageRead is now true and counter is $counter");
         break;
       }
     } //--for each incomingData
@@ -152,10 +150,10 @@ class BLEHelper {
     }
 
     if (crcPassed) {
-      //DEBUG:print("Message CRC passed. Counter is $counter. MessageReceived[$endMessage -1] is ${messageReceived[endMessage - 1]}");
+      //globalLogger.d("Message CRC passed. Counter is $counter. MessageReceived[$endMessage -1] is ${messageReceived[endMessage - 1]}");
       return lenPayload;
     } else {
-      //DEBUG:print("Message CRC did not pass. Counter is $counter. MessageReceived[$endMessage -1] is ${messageReceived[endMessage - 1]}");
+      //globalLogger.d("Message CRC did not pass. Counter is $counter. MessageReceived[$endMessage -1] is ${messageReceived[endMessage - 1]}");
       return 0;
     }
   }

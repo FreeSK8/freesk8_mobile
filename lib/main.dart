@@ -262,10 +262,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           }
         }
       } else {
-        ///print("Longitude too close to add point (${(lastLocation.longitude - routeTakenLocations.last.longitude).abs()})");
+        ///globalLogger.d("Longitude too close to add point (${(lastLocation.longitude - routeTakenLocations.last.longitude).abs()})");
       }
     } else {
-      ///print("Latitude too close to add point (${(lastLocation.latitude - routeTakenLocations.last.latitude).abs()})");
+      ///globalLogger.d("Latitude too close to add point (${(lastLocation.latitude - routeTakenLocations.last.latitude).abs()})");
     }
   }
 
@@ -548,7 +548,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     globalLogger.i("handleTCPClient: A new client has connected from ${clientTCPSocket.remoteAddress.address}:${clientTCPSocket.remotePort}");
 
     clientTCPSocket.listen((onData) {
-        //print("TCP Client to ESC: $onData");
+        //globalLogger.wtf("TCP Client to ESC: $onData");
         // Pass TCP data to BLE
         sendBLEData(the_tx_characteristic, onData, _connectedDevice);
       },
@@ -1044,7 +1044,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 List<String> thisRideLogEntries = logFileContents.split("\n");
                 for(int i=0; i<thisRideLogEntries.length; ++i) {
                   if(thisRideLogEntries[i] == null || thisRideLogEntries[i] == "") continue;
-//print("uhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh parsing: ${thisRideLogEntries[i]}");
+                  //globalLogger.wtf("uhhhh parsing: ${thisRideLogEntries[i]}");
                   final entry = thisRideLogEntries[i].split(",");
 
                   if(entry.length > 1 && entry[0] != "header"){ // entry[0] = Time, entry[1] = Data type
@@ -1358,7 +1358,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       // If we have the TCP Socket server running and a client connected forward the data
       if(serverTCPSocket != null && clientTCPSocket != null) {
-        //print("ESC Data $value");
+        //globalLogger.wtf("ESC Data $value");
         clientTCPSocket.add(value);
         return;
       }
@@ -1576,7 +1576,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           //NOTE: for debug & testing
           //ByteData serializedMcconf = escHelper.serializeMCCONF(escMotorConfiguration);
           //MCCONF refriedMcconf = escHelper.processMCCONF(serializedMcconf.buffer.asUint8List());
-          //print("Break for MCCONF: $escMotorConfiguration");
+          //globalLogger.wtf("Break for MCCONF: $escMotorConfiguration");
 
           // Flag the reception of an init message
           initMsgESCMotorConfig = true;
@@ -2541,7 +2541,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     if(syncInProgress && syncAdvanceProgress){
-      print("Building main.dart while syncInProgress and sync wants to advance a step");
+      globalLogger.d("Building main.dart while syncInProgress and sync wants to advance a step");
       syncAdvanceProgress = false;
 
       if(fileList.length>0) //TODO: logically I didn't think this needed to be conditional but helps during debugging
@@ -2561,7 +2561,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         } else {
           // We are finished with the sync process because the user does not
           // want to erase files on the receiver
-          print("stopping sync without remove");
+          globalLogger.d("stopping sync without remove");
           syncInProgress = false;
           //TODO: NOTE: setState here does not reload file list after sync is finished
         }

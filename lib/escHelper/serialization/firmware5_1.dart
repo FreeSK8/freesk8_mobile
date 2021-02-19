@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import '../../globalUtilities.dart';
 import 'buffers.dart';
 import '../appConf.dart';
 import '../mcConf.dart';
@@ -14,10 +15,10 @@ class SerializeFirmware51 {
     APPCONF appconfData = new APPCONF();
     int signature = buffer_get_uint32(buffer, index); index += 4;
     if (signature != APPCONF_SIGNATURE_FW5_1) {
-      print("Invalid APPCONF signature; received $signature expecting $APPCONF_SIGNATURE_FW5_1");
+      globalLogger.e("Invalid APPCONF signature; received $signature expecting $APPCONF_SIGNATURE_FW5_1");
       return appconfData;
     }
-    print("VALID APPCONF SIGNATURE winky face emoji, winky face emoji, winky face emoji");
+    globalLogger.d("VALID APPCONF SIGNATURE winky face emoji, winky face emoji, winky face emoji");
 
     appconfData.controller_id = buffer[index++];
     appconfData.timeout_msec = buffer_get_uint32(buffer, index); index += 4;
@@ -152,7 +153,7 @@ class SerializeFirmware51 {
     appconfData.imu_conf.gyro_offset_comp_fact[2] = buffer_get_float32_auto(buffer, index); index += 4;
     appconfData.imu_conf.gyro_offset_comp_clamp = buffer_get_float32_auto(buffer, index); index += 4;
 
-    print("escHelper::processAPPCONF: final index = $index");
+    //globalLogger.wtf("escHelper::processAPPCONF: final index = $index");
     return appconfData;
   }
 
@@ -302,7 +303,7 @@ class SerializeFirmware51 {
     MCCONF mcconfData = new MCCONF();
     int signature  = buffer_get_uint32(buffer, index); index += 4;
     if (signature != MCCONF_SIGNATURE_FW5_1) {
-      print("Invalid MCCONF Signature. Received $signature but expected $MCCONF_SIGNATURE_FW5_1");
+      globalLogger.e("Invalid MCCONF Signature. Received $signature but expected $MCCONF_SIGNATURE_FW5_1");
       //Return empty mcconf
       return mcconfData;
     }
@@ -595,7 +596,7 @@ class SerializeFirmware51 {
     response.setUint8(index++, conf.si_battery_cells);
     response.setFloat32(index, conf.si_battery_ah); index += 4;
 
-    print("serializeMCCONF final index is $index");
+    //globalLogger.wtf("serializeMCCONF final index is $index");
     return response;
   }
 }

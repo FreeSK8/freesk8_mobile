@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+import 'package:freesk8_mobile/globalUtilities.dart';
+
 import 'buffers.dart';
 import '../appConf.dart';
 import '../mcConf.dart';
@@ -14,10 +16,10 @@ class SerializeFirmware52 {
     APPCONF appconfData = new APPCONF();
     int signature = buffer_get_uint32(buffer, index); index += 4;
     if (signature != APPCONF_SIGNATURE_FW5_2) {
-      print("Invalid APPCONF signature; received $signature expecting $APPCONF_SIGNATURE_FW5_2");
+      globalLogger.e("Invalid APPCONF signature; received $signature expecting $APPCONF_SIGNATURE_FW5_2");
       return appconfData;
     }
-    print("VALID APPCONF SIGNATURE winky face emoji, winky face emoji, winky face emoji");
+    globalLogger.d("VALID APPCONF SIGNATURE winky face emoji, winky face emoji, winky face emoji");
 
     appconfData.controller_id = buffer[index++];
     appconfData.timeout_msec = buffer_get_uint32(buffer, index); index += 4;
@@ -169,7 +171,7 @@ class SerializeFirmware52 {
     appconfData.imu_conf.gyro_offset_comp_fact[2] = buffer_get_float32_auto(buffer, index); index += 4;
     appconfData.imu_conf.gyro_offset_comp_clamp = buffer_get_float32_auto(buffer, index); index += 4;
 
-    print("SerializeFirmware52::processAPPCONF: final index = $index");
+    //globalLogger.wtf("SerializeFirmware52::processAPPCONF: final index = $index");
     return appconfData;
   }
 
@@ -328,7 +330,7 @@ class SerializeFirmware52 {
     response.setFloat32(index, conf.imu_conf.gyro_offset_comp_fact[2]); index += 4;
     response.setFloat32(index, conf.imu_conf.gyro_offset_comp_clamp); index += 4;
 
-    print("SerializeFirmware52::serializeAPPCONF: final index is $index");
+    //globalLogger.wtf("SerializeFirmware52::serializeAPPCONF: final index is $index");
     return response;
   }
 
@@ -337,7 +339,7 @@ class SerializeFirmware52 {
     MCCONF mcconfData = new MCCONF();
     int signature  = buffer_get_uint32(buffer, index); index += 4;
     if (signature != MCCONF_SIGNATURE_FW5_2) {
-      print("Invalid MCCONF Signature. Received $signature but expected $MCCONF_SIGNATURE_FW5_2");
+      globalLogger.e("Invalid MCCONF Signature. Received $signature but expected $MCCONF_SIGNATURE_FW5_2");
       //Return empty mcconf
       return mcconfData;
     }
@@ -494,7 +496,7 @@ class SerializeFirmware52 {
     mcconfData.bms.soc_limit_start = buffer_get_float16(buffer, index, 100); index += 2;
     mcconfData.bms.soc_limit_end = buffer_get_float16(buffer, index, 100); index += 2;
 
-    print("SerializeFirmware52::processMCCONF: final index = $index");
+    //globalLogger.wtf("SerializeFirmware52::processMCCONF: final index = $index");
     return mcconfData;
   }
 
@@ -655,7 +657,7 @@ class SerializeFirmware52 {
     response.setInt16(index, (conf.bms.soc_limit_start * 100).toInt()); index += 2;
     response.setInt16(index, (conf.bms.soc_limit_end * 100).toInt()); index += 2;
 
-    print("SerializeFirmware52::serializeMCCONF: final index is $index");
+    //globalLogger.wtf("SerializeFirmware52::serializeMCCONF: final index is $index");
     return response;
   }
 }
