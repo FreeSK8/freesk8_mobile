@@ -751,12 +751,12 @@ class RideLogViewerState extends State<RideLogViewer> {
     if (gpsLatLngMap.values.length > 0) {
       LatLng lastPoint = gpsLatLngMap.values.first;
       gpsLatLngMap.forEach((key, value) {
-        Color thisColor = Colors.blue;
+        Color thisColor = Colors.green;
         //TODO: Reduce number of GPS points to keep things moving on phones
         if (calculateDistance(lastPoint, value) > 0.01) {
           // Compute color for this section of the route
           if (escTimeSeriesMap[key] != null && escTimeSeriesMap[key].speed != null && _maxSpeed > 0.0) {
-            thisColor = HSVColor.lerp(HSVColor.fromColor(Colors.green), HSVColor.fromColor(Colors.red), escTimeSeriesMap[key].speed.abs() / _maxSpeed).toColor();
+            thisColor = HSVColor.lerp(HSVColor.fromColor(Colors.blue), HSVColor.fromColor(Colors.red[900]), escTimeSeriesMap[key].speed.abs() / _maxSpeed).toColor();
           }
           // Add colored polyline from last section to this one
           polylineList.add(Polyline(points: [lastPoint, value], strokeWidth: 4, color: thisColor));
