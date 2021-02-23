@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:freesk8_mobile/escHelper/escHelper.dart';
-import 'package:freesk8_mobile/globalUtilities.dart';
+import '../hardwareSupport/escHelper/escHelper.dart';
+import '../globalUtilities.dart';
 import 'package:path_provider/path_provider.dart';
 
 const int PacketStart = 0x0d;

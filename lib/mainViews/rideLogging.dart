@@ -4,12 +4,12 @@ import 'package:esys_flutter_share/esys_flutter_share.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 
-import 'package:freesk8_mobile/databaseAssistant.dart';
-import 'package:freesk8_mobile/fileManager.dart';
+import '../components/databaseAssistant.dart';
+import '../components/fileManager.dart';
 import '../widgets/fileSyncViewer.dart';
-import 'package:freesk8_mobile/globalUtilities.dart';
+import '../globalUtilities.dart';
 import '../subViews/rideLogViewer.dart';
-import 'package:freesk8_mobile/userSettings.dart';
+import '../components/userSettings.dart';
 import 'package:intl/intl.dart';
 
 import 'package:path_provider/path_provider.dart';

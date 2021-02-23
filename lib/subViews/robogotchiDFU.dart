@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_nordic_dfu/flutter_nordic_dfu.dart';
 import 'package:flutter_blue/flutter_blue.dart';
-import 'package:freesk8_mobile/globalUtilities.dart';
+import '../globalUtilities.dart';
 
 const String updateFileName = "Robogotchi_0.7.3"; //TODO: NOTE: Must match that of /assets/firmware/<*>.zip
 

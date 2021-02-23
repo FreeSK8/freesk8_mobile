@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 
-import 'package:freesk8_mobile/escHelper/escHelper.dart';
-import 'package:freesk8_mobile/userSettings.dart';
+import '../hardwareSupport/escHelper/escHelper.dart';
+import '../components/userSettings.dart';
 
 class RobogotchiStatus {
   bool isLogging;

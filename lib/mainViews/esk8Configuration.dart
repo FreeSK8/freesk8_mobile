@@ -8,12 +8,12 @@ import '../widgets/throttleCurvePainter.dart';
 import '../subViews/escProfileEditor.dart';
 import '../globalUtilities.dart';
 
-import 'package:freesk8_mobile/userSettings.dart';
+import '../components/userSettings.dart';
 import '../subViews/focWizard.dart';
-import 'package:freesk8_mobile/escHelper/escHelper.dart';
-import 'package:freesk8_mobile/escHelper/appConf.dart';
-import 'package:freesk8_mobile/escHelper/mcConf.dart';
-import 'package:freesk8_mobile/bleHelper.dart';
+import '../hardwareSupport/escHelper/escHelper.dart';
+import '../hardwareSupport/escHelper/appConf.dart';
+import '../hardwareSupport/escHelper/mcConf.dart';
+import '../hardwareSupport/bleHelper.dart';
 
 import 'package:image_picker/image_picker.dart';
 

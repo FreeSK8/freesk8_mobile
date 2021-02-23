@@ -5,15 +5,15 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:freesk8_mobile/globalUtilities.dart';
+import '../globalUtilities.dart';
 import '../widgets/rideLogViewChartOverlay.dart';
 import 'package:latlong/latlong.dart';
-import 'package:freesk8_mobile/databaseAssistant.dart';
-import 'package:freesk8_mobile/fileManager.dart';
+import '../components/databaseAssistant.dart';
+import '../components/fileManager.dart';
 
 import 'package:charts_flutter/flutter.dart' as charts;
 
-import 'package:freesk8_mobile/userSettings.dart';
+import '../components/userSettings.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 
@@ -21,7 +21,7 @@ import 'package:esys_flutter_share/esys_flutter_share.dart';
 
 import 'dart:math' show cos, sqrt, asin;
 
-import 'package:freesk8_mobile/escHelper/escHelper.dart';
+import '../hardwareSupport/escHelper/escHelper.dart';
 
 class RideLogViewerArguments {
   final UserSettings userSettings;

@@ -6,8 +6,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:freesk8_mobile/dieBieMSHelper.dart';
-import 'package:freesk8_mobile/globalUtilities.dart';
+import 'hardwareSupport/dieBieMSHelper.dart';
+import 'globalUtilities.dart';
 
 // UI Pages
 import 'mainViews/connectionStatus.dart';
@@ -24,16 +24,16 @@ import 'subViews/robogotchiCfgEditor.dart';
 import 'widgets/fileSyncViewer.dart';
 
 // Supporting packages
-import 'package:freesk8_mobile/bleHelper.dart';
-import 'package:freesk8_mobile/escHelper/escHelper.dart';
-import 'package:freesk8_mobile/escHelper/appConf.dart';
-import 'package:freesk8_mobile/escHelper/mcConf.dart';
-import 'package:freesk8_mobile/userSettings.dart';
-import 'package:freesk8_mobile/fileManager.dart';
-import 'package:freesk8_mobile/components/autoStopHandler.dart';
+import 'hardwareSupport/bleHelper.dart';
+import 'hardwareSupport/escHelper/escHelper.dart';
+import 'hardwareSupport/escHelper/appConf.dart';
+import 'hardwareSupport/escHelper/mcConf.dart';
+import 'components/userSettings.dart';
+import 'components/fileManager.dart';
+import 'components/autoStopHandler.dart';
 
 import 'package:flutter_blue/flutter_blue.dart';
-import 'package:freesk8_mobile/subViews/robogotchiDFU.dart';
+import 'subViews/robogotchiDFU.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -50,8 +50,8 @@ import 'package:get_ip/get_ip.dart';
 
 import 'package:logger_flutter/logger_flutter.dart';
 
-import 'databaseAssistant.dart';
-import 'escHelper/serialization/buffers.dart';
+import 'components/databaseAssistant.dart';
+import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
 const String freeSK8ApplicationVersion = "0.12.1";
 const String robogotchiFirmwareExpectedVersion = "0.7.3";

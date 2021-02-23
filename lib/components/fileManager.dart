@@ -1,7 +1,7 @@
 
 import 'dart:io';
 
-import 'package:freesk8_mobile/logFileParser.dart';
+import '../components/logFileParser.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/services.dart' show rootBundle;
 

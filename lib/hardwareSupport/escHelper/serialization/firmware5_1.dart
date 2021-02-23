@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import '../../globalUtilities.dart';
+import '../../../globalUtilities.dart';
 import 'buffers.dart';
 import '../appConf.dart';
 import '../mcConf.dart';

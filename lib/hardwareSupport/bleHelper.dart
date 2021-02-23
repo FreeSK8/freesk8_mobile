@@ -1,4 +1,4 @@
-import './globalUtilities.dart';
+import '../globalUtilities.dart';
 import 'dart:typed_data';
 
 class BLEHelper {
