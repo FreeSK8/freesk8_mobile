@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
-import 'globalUtilities.dart';
+import '../globalUtilities.dart';
 
 class LogInfoItem {
   final DateTime dateTime;

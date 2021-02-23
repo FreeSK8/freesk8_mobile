@@ -3,10 +3,10 @@ import 'dart:typed_data';
 import 'package:flutter/cupertino.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:freesk8_mobile/escHelper/appConf.dart';
-import 'package:freesk8_mobile/escHelper/mcConf.dart';
+import './appConf.dart';
+import './mcConf.dart';
 
-import '../globalUtilities.dart';
+import '../../globalUtilities.dart';
 import './serialization/buffers.dart';
 import './serialization/firmware5_1.dart';
 import './serialization/firmware5_2.dart';

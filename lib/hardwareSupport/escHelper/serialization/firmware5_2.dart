@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:freesk8_mobile/globalUtilities.dart';
+import '../../../globalUtilities.dart';
 
 import 'buffers.dart';
 import '../appConf.dart';

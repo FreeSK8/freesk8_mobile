@@ -2,10 +2,10 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
-import 'package:freesk8_mobile/dieBieMSHelper.dart';
-import 'package:freesk8_mobile/escHelper/escHelper.dart';
-import 'package:freesk8_mobile/globalUtilities.dart';
-import 'package:freesk8_mobile/userSettings.dart';
+import '../hardwareSupport/dieBieMSHelper.dart';
+import '../hardwareSupport/escHelper/escHelper.dart';
+import '../globalUtilities.dart';
+import '../components/userSettings.dart';
 
 import 'package:flutter_thermometer/label.dart';
 import 'package:flutter_thermometer/scale.dart';
@@ -13,7 +13,7 @@ import 'package:intl/intl.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 
 
-import '../components/flutterMap.dart'; import 'package:latlong/latlong.dart';
+import '../widgets/flutterMap.dart'; import 'package:latlong/latlong.dart';
 
 import 'package:flutter_gauge/flutter_gauge.dart';
 import 'package:flutter_thermometer/thermometer_widget.dart';

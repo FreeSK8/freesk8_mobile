@@ -5,11 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 
-import 'package:freesk8_mobile/globalUtilities.dart';
+import '../globalUtilities.dart';
 
 import 'package:multiselect_formfield/multiselect_formfield.dart';
 
-import '../components/sliderThumbImage.dart';
+import '../widgets/sliderThumbImage.dart';
 import 'dart:ui' as ui;
 
 class RobogotchiConfiguration {
