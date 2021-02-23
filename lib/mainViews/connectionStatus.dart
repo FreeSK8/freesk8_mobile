@@ -41,6 +41,7 @@ class ConnectionStatus extends StatelessWidget {
         this.imageBoardAvatar,
         this.gotchiStatus,
         this.theTXLoggerCharacteristic,
+        this.unexpectedDisconnect
       } ) : super(key: key);
 
   final ESCFirmware currentFirmware;
@@ -53,6 +54,7 @@ class ConnectionStatus extends StatelessWidget {
   final MemoryImage imageBoardAvatar;
   final RobogotchiStatus gotchiStatus;
   final BluetoothCharacteristic theTXLoggerCharacteristic;
+  final bool unexpectedDisconnect;
 
   void _handleTap() {
     onChanged(!active);
@@ -148,11 +150,11 @@ class ConnectionStatus extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               Icon(
-                Icons.bluetooth,
+                unexpectedDisconnect ? Icons.bluetooth_disabled : Icons.bluetooth,
                 size: 160.0,
-                color: Colors.red,
+                color: unexpectedDisconnect ? Colors.yellow : Colors.red,
               ),
-              Text("No connection"),
+              unexpectedDisconnect ? Text("Disconnected") : Text("No connection"),
               RaisedButton(
                   child: Text(active ? "Stop Scan" : "Scan Bluetooth"),
                   // On press of the button

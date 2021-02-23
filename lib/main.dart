@@ -142,6 +142,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static String robogotchiVersion;
 
   static bool deviceIsConnected = false;
+  static bool unexpectedDisconnect = false;
   static bool deviceHasDisconnected = false;
   static BluetoothDevice _connectedDevice;
   static bool isConnectedDeviceKnown = false;
@@ -414,8 +415,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   void _bleDisconnect() {
     if (_connectedDevice != null) {
       globalLogger.i("_bleDisconnect: disconnecting");
-      // Navigate back to the connection tab
-      controller.index = 0;
 
       setState(() {
         widget.devicesList.clear(); //TODO: clearing list on disconnect so build() does not attempt to pass images of knownDevices that have not yet been loaded
@@ -517,6 +516,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       // Stop the TCP socket server
       stopTCPServer();
+
+      // Navigate back to the connection tab
+      _delayedTabControllerIndexChange(0);
     }
   }
 
@@ -872,6 +874,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               setState(() {
                 prepareConnectedDevice();
                 deviceIsConnected = true;
+                unexpectedDisconnect = false;
               });
             });
           }
@@ -880,10 +883,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         case BluetoothDeviceState.disconnected:
           if ( deviceIsConnected  ) {
             globalLogger.w("_connectedDeviceStreamSubscription: WARNING: We have disconnected but FreeSK8 was expecting a connection");
-            deviceHasDisconnected = true;
+            setState(() {
+              deviceHasDisconnected = true;
+              unexpectedDisconnect = true;
+            });
             startStopTelemetryTimer(true);
             // Alert user that the connection was lost
-            genericAlert(context, "Disconnected", Text("The Bluetooth device has disconnected"), "OK");
+            //TODO: Do we need an alert? genericAlert(context, "Disconnected", Text("The Bluetooth device has disconnected"), "OK");
             //NOTE: On an Android this connection can automatically be resumed
             //NOTE: On iOS this connection will never re-connection
             // Disconnect
@@ -1900,16 +1906,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       else if (!isConnectedDeviceKnown) {
         globalLogger.d("_requestInitMessages: Connected device is not known. Notifying user");
         //TODO: navigate to setup widget if we create one..
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text("Ooo! new device, who dis?"),
-              content: Text("You have connected to a new device. Take a picture, give it a name and save your settings now for the best experience."),
-            );
-          },
-        );
-        controller.index = 2; // switch to configuration tab for now
+        genericAlert(context, "New device!", Text("You have connected to a new device. Take a picture, give it a name and save your settings now for the best experience."), "OK");
+        _delayedTabControllerIndexChange(2); // Switch to the configuration tab
       }
 
       globalLogger.d("_requestInitMessages: initMsgSequencer is complete! Great success!");
@@ -2614,6 +2612,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 imageBoardAvatar: cachedBoardAvatar,
                 gotchiStatus: gotchiStatus,
                 theTXLoggerCharacteristic: theTXLoggerCharacteristic,
+                unexpectedDisconnect: unexpectedDisconnect,
               ),
               RealTimeData(
                 routeTakenLocations: routeTakenLocations,
