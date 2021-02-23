@@ -1020,8 +1020,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                     child: FlutterMap(
                       mapController: _mapController,
                       options: new MapOptions(
-                        center: _positionEntries.first,
-                        zoom: 13.0,
+                        bounds: LatLngBounds.fromPoints(_positionEntries)
                       ),
                       layers: [
                         new TileLayerOptions(
