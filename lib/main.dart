@@ -27,7 +27,7 @@ import 'package:freesk8_mobile/escHelper/escHelper.dart';
 import 'package:freesk8_mobile/escHelper/appConf.dart';
 import 'package:freesk8_mobile/escHelper/mcConf.dart';
 import 'package:freesk8_mobile/userSettings.dart';
-import 'package:freesk8_mobile/file_manager.dart';
+import 'package:freesk8_mobile/fileManager.dart';
 import 'package:freesk8_mobile/autoStopHandler.dart';
 
 import 'package:flutter_blue/flutter_blue.dart';
@@ -336,8 +336,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     byteData.setUint8(sendCAN ? 7:5, 0x03); //End of packet
 
     // Request APPCONF from the ESC
-    globalLogger.i("requesting app conf (CAN ID? $optionalCANID)");
-    await sendBLEData(the_tx_characteristic, byteData.buffer.asUint8List(), _connectedDevice);
+    globalLogger.i("requestAPPCONF: requesting application configuration (CAN ID? $optionalCANID)");
+    if (!await sendBLEData(the_tx_characteristic, byteData.buffer.asUint8List(), false)) {
+      globalLogger.e("requestAPPCONF: failed to request application configuration");
+    }
   }
 
   void requestMCCONF() async {
@@ -550,7 +552,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     clientTCPSocket.listen((onData) {
         //globalLogger.wtf("TCP Client to ESC: $onData");
         // Pass TCP data to BLE
-        sendBLEData(the_tx_characteristic, onData, _connectedDevice);
+        sendBLEData(the_tx_characteristic, onData, true);
       },
       onError: (e) {
         globalLogger.e("TCP Socket Server::handleTCPClient: Error: ${e.toString()}");
@@ -817,7 +819,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         _gotchiStatusTimer?.cancel();
         _gotchiStatusTimer = null;
         // Request the files to begin the process
-        await sendBLEData(theTXLoggerCharacteristic, utf8.encode("ls~"), _connectedDevice);
+        if (!await sendBLEData(theTXLoggerCharacteristic, utf8.encode("ls~"), false)) {
+          globalLogger.e("_handleBLESyncState: failed to request file list");
+        }
       });
     } else {
       globalLogger.i("_handleBLESyncState: Stopping Sync Process");
@@ -829,8 +833,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         catCurrentFilename = "";
       });
       // After stopping the sync on this end, request stop on the Robogotchi
-      sendBLEData(theTXLoggerCharacteristic, utf8.encode("syncstop~"), _connectedDevice);
-      globalLogger.i("_handleBLESyncState: syncstop command sent");
+      if (await sendBLEData(theTXLoggerCharacteristic, utf8.encode("syncstop~"), false)) {
+        globalLogger.i("_handleBLESyncState: syncstop command sent");
+      } else {
+        globalLogger.e("_handleBLESyncState: syncstop failed to send");
+      }
+
     }
   }
   void _handleEraseOnSyncButton(bool eraseOnSync) {
@@ -2393,7 +2401,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   // Called by timer on interval to request Robogotchi Status packet
   void _requestGotchiStatus() {
     if ((controller.index != 0 && controller.index != 3 ) || syncInProgress || theTXLoggerCharacteristic == null) {
-      globalLogger.i("_requestGotchiStatus: Auto stopping gotchi timer");
+      globalLogger.d("_requestGotchiStatus: Auto stopping gotchi timer");
       startStopGotchiTimer(true);
     } else {
       theTXLoggerCharacteristic.write(utf8.encode("status~")).catchError((error){

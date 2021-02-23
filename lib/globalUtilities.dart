@@ -29,16 +29,28 @@ List<DropdownMenuItem<ListItem>> buildDropDownMenuItems(List listItems) {
   return items;
 }
 
-Future<void> sendBLEData(BluetoothCharacteristic txCharacteristic, Uint8List data, BluetoothDevice device) async
+/// Best method I've derived to ensure data is sent via BLE
+/// @param txCharacteristic; The discovered BLE characteristic to write to
+/// @param data; Byte data to transmit
+/// @param withoutResponse; Write is not guaranteed and will return immediately with success
+/// Returns false if write attempt fails
+/// Returns true on success
+Future<bool> sendBLEData(BluetoothCharacteristic txCharacteristic, Uint8List data, bool withoutResponse) async
 {
   dynamic errorCheck = 0;
-  while (errorCheck != null && device != null) {
+  int errorLimiter = 10;
+  while (errorCheck != null && --errorLimiter > 0) {
     errorCheck = null;
-    await txCharacteristic.write(data).catchError((error){
+    await txCharacteristic.write(data, withoutResponse: withoutResponse).catchError((error){
       errorCheck = error;
       globalLogger.w("sendBLEData: Exception: $errorCheck");
     });
   }
+  if(errorLimiter<0) {
+    globalLogger.e("sendBLEData: Write to characteristic exhausted all attempts. Data not sent. ${txCharacteristic.toString()}");
+    return Future.value(false);
+  }
+  return Future.value(true);
 }
 
 double kmToMile(double km) {

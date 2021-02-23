@@ -9,7 +9,7 @@ import 'package:freesk8_mobile/globalUtilities.dart';
 import 'package:freesk8_mobile/components/rideLogViewChartOverlay.dart';
 import 'package:latlong/latlong.dart';
 import 'package:freesk8_mobile/databaseAssistant.dart';
-import 'package:freesk8_mobile/file_manager.dart';
+import 'package:freesk8_mobile/fileManager.dart';
 
 import 'package:charts_flutter/flutter.dart' as charts;
 
