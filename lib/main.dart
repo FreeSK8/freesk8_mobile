@@ -1851,9 +1851,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         _changeConnectedDialogMessage("Requesting CAN IDs");
 
         // Start the Robogotchi Status timer before the CAN responds (so slooooooooooooow)
-        Future.delayed(const Duration(milliseconds: 200), () {
-          startStopGotchiTimer(false);
-        });
+        if (_deviceIsRobogotchi) {
+          Future.delayed(const Duration(milliseconds: 200), () {
+            startStopGotchiTimer(false);
+          });
+        }
       } else {
         if (++initMsgESCDevicesCANRequested == 25) {
           globalLogger.e("_requestInitMessages: initMsgESCDevicesCAN did not get a response. Retrying");
