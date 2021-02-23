@@ -9,7 +9,7 @@ import 'package:freesk8_mobile/globalUtilities.dart';
 
 import 'package:multiselect_formfield/multiselect_formfield.dart';
 
-import '../components/sliderThumbImage.dart';
+import '../widgets/sliderThumbImage.dart';
 import 'dart:ui' as ui;
 
 class RobogotchiConfiguration {

@@ -13,7 +13,7 @@ import 'package:intl/intl.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 
 
-import '../components/flutterMap.dart'; import 'package:latlong/latlong.dart';
+import '../widgets/flutterMap.dart'; import 'package:latlong/latlong.dart';
 
 import 'package:flutter_gauge/flutter_gauge.dart';
 import 'package:flutter_thermometer/thermometer_widget.dart';

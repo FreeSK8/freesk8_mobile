@@ -7,19 +7,21 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:freesk8_mobile/dieBieMSHelper.dart';
-import 'package:freesk8_mobile/views/escProfileEditor.dart';
 import 'package:freesk8_mobile/globalUtilities.dart';
-import 'package:freesk8_mobile/views/robogotchiCfgEditor.dart';
 
 // UI Pages
-import 'package:freesk8_mobile/tabs/connectionStatus.dart';
-import 'package:freesk8_mobile/tabs/realTimeData.dart';
-import 'package:freesk8_mobile/tabs/esk8Configuration.dart';
-import 'package:freesk8_mobile/tabs/test.dart';
-import 'package:freesk8_mobile/tabs/rideLogging.dart';
-import 'package:freesk8_mobile/views/rideLogViewer.dart';
-import 'package:freesk8_mobile/components/fileSyncViewer.dart';
-import 'package:freesk8_mobile/views/focWizard.dart';
+import 'mainViews/connectionStatus.dart';
+import 'mainViews/realTimeData.dart';
+import 'mainViews/esk8Configuration.dart';
+import 'mainViews/test.dart';
+import 'mainViews/rideLogging.dart';
+
+import 'subViews/rideLogViewer.dart';
+import 'subViews/focWizard.dart';
+import 'subViews/escProfileEditor.dart';
+import 'subViews/robogotchiCfgEditor.dart';
+
+import 'widgets/fileSyncViewer.dart';
 
 // Supporting packages
 import 'package:freesk8_mobile/bleHelper.dart';
@@ -28,10 +30,10 @@ import 'package:freesk8_mobile/escHelper/appConf.dart';
 import 'package:freesk8_mobile/escHelper/mcConf.dart';
 import 'package:freesk8_mobile/userSettings.dart';
 import 'package:freesk8_mobile/fileManager.dart';
-import 'package:freesk8_mobile/autoStopHandler.dart';
+import 'package:freesk8_mobile/components/autoStopHandler.dart';
 
 import 'package:flutter_blue/flutter_blue.dart';
-import 'package:freesk8_mobile/views/robogotchiDFU.dart';
+import 'package:freesk8_mobile/subViews/robogotchiDFU.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';

@@ -4,12 +4,12 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_blue/flutter_blue.dart';
-import 'package:freesk8_mobile/components/throttleCurvePainter.dart';
-import 'package:freesk8_mobile/views/escProfileEditor.dart';
-import 'package:freesk8_mobile/globalUtilities.dart';
+import '../widgets/throttleCurvePainter.dart';
+import '../subViews/escProfileEditor.dart';
+import '../globalUtilities.dart';
 
 import 'package:freesk8_mobile/userSettings.dart';
-import 'package:freesk8_mobile/views/focWizard.dart';
+import '../subViews/focWizard.dart';
 import 'package:freesk8_mobile/escHelper/escHelper.dart';
 import 'package:freesk8_mobile/escHelper/appConf.dart';
 import 'package:freesk8_mobile/escHelper/mcConf.dart';

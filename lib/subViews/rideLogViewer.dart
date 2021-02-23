@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:freesk8_mobile/globalUtilities.dart';
-import 'package:freesk8_mobile/components/rideLogViewChartOverlay.dart';
+import '../widgets/rideLogViewChartOverlay.dart';
 import 'package:latlong/latlong.dart';
 import 'package:freesk8_mobile/databaseAssistant.dart';
 import 'package:freesk8_mobile/fileManager.dart';

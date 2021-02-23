@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:freesk8_mobile/views/rideLogViewer.dart';
+import '../subViews/rideLogViewer.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:freesk8_mobile/escHelper/escHelper.dart';
 
