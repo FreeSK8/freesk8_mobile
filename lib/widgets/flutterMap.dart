@@ -40,7 +40,12 @@ class FlutterMapWidgetState extends State<FlutterMapWidget> {
     eventObservable.add(widget.routeTakenLocations);
 
     //Create polyline
-    Polyline routePolyLine = new Polyline(points: widget.routeTakenLocations, strokeWidth: 3, color: Colors.red);
+    Polyline routePolyLine = new Polyline(
+        points: widget.routeTakenLocations,
+        strokeWidth: 3,
+        color: Colors.red,
+        isDotted: true,
+    );
 
     Marker startPosition = Marker(
       width: 160.0,

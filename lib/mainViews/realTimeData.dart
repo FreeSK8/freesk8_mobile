@@ -594,6 +594,7 @@ class RealTimeDataState extends State<RealTimeData> {
             SizedBox(height: 10),
 
             ///FlutterMapWidget
+            Text("Mobile device position:"),
             Container(
               height: MediaQuery.of(context).size.height / 2,
               child: Center(

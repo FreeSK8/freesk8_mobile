@@ -249,7 +249,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     // Filter out points that are too close to the last one
     if (routeTakenLocations.length == 0 ){
       routeTakenLocations.add(lastLocation);
+    } else {
+      //NOTE: Only storing the first and current position of the mobile device
+      routeTakenLocations.last = lastLocation;
     }
+    /* NOT TRACKING VIA PHONE GPS
     else if ( (lastLocation.latitude - routeTakenLocations.last.latitude).abs() > 0.00005 ) {
       if ((lastLocation.longitude - routeTakenLocations.last.longitude).abs() > 0.00005) {
 
@@ -270,6 +274,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     } else {
       ///globalLogger.d("Latitude too close to add point (${(lastLocation.latitude - routeTakenLocations.last.latitude).abs()})");
     }
+     */
   }
 
   @override
