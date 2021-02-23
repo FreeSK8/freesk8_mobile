@@ -83,7 +83,8 @@ class RideLogViewerState extends State<RideLogViewer> {
         data: values,
       ));
       chartData.add(charts.Series<TimeSeriesESC, DateTime>(
-        id: 'Motor Temp',
+        id: 'MotorTemp',
+        displayName: 'Motor Temp',
         colorFn: (_, __) => charts.MaterialPalette.red.shadeDefault,
         domainFn: (TimeSeriesESC escData, _) => escData.time,
         measureFn: (TimeSeriesESC escData, _) => escData.tempMotor,
@@ -92,7 +93,8 @@ class RideLogViewerState extends State<RideLogViewer> {
 
       if (escIDsInLog.length > 1) {
         chartData.add(charts.Series<TimeSeriesESC, DateTime>(
-          id: 'Motor2 Temp',
+          id: 'Motor2Temp',
+          displayName: 'Motor2 Temp',
           colorFn: (_, __) => charts.MaterialPalette.gray.shadeDefault,
           domainFn: (TimeSeriesESC escData, _) => escData.time,
           measureFn: (TimeSeriesESC escData, _) => escData.tempMotor2,
@@ -101,14 +103,16 @@ class RideLogViewerState extends State<RideLogViewer> {
       }
       if (escIDsInLog.length > 3) {
         chartData.add(charts.Series<TimeSeriesESC, DateTime>(
-          id: 'Motor3 Temp',
+          id: 'Motor3Temp',
+          displayName: 'Motor3 Temp',
           colorFn: (_, __) => charts.MaterialPalette.red.shadeDefault,
           domainFn: (TimeSeriesESC escData, _) => escData.time,
           measureFn: (TimeSeriesESC escData, _) => escData.tempMotor3,
           data: values,
         ));
         chartData.add(charts.Series<TimeSeriesESC, DateTime>(
-          id: 'Motor4 Temp',
+          id: 'Motor4Temp',
+          displayName: 'Motor4 Temp',
           colorFn: (_, __) => charts.MaterialPalette.gray.shadeDefault,
           domainFn: (TimeSeriesESC escData, _) => escData.time,
           measureFn: (TimeSeriesESC escData, _) => escData.tempMotor4,
@@ -116,7 +120,8 @@ class RideLogViewerState extends State<RideLogViewer> {
         ));
       }
       chartData.add(charts.Series<TimeSeriesESC, DateTime>(
-        id: 'Mosfet Temp',
+        id: 'MosfetTemp',
+        displayName: 'Mosfet Temp',
         colorFn: (_, __) => charts.MaterialPalette.deepOrange.shadeDefault,
         domainFn: (TimeSeriesESC escData, _) => escData.time,
         measureFn: (TimeSeriesESC escData, _) => escData.tempMosfet,
@@ -124,7 +129,7 @@ class RideLogViewerState extends State<RideLogViewer> {
       ));
       if (escIDsInLog.length > 1) {
         chartData.add(charts.Series<TimeSeriesESC, DateTime>(
-          id: 'Mosfet2 Temp',
+          id: 'Mosfet2Temp',
           colorFn: (_, __) => charts.MaterialPalette.yellow.shadeDefault,
           domainFn: (TimeSeriesESC escData, _) => escData.time,
           measureFn: (TimeSeriesESC escData, _) => escData.tempMosfet2,
@@ -133,14 +138,16 @@ class RideLogViewerState extends State<RideLogViewer> {
       }
       if (escIDsInLog.length > 3) {
         chartData.add(charts.Series<TimeSeriesESC, DateTime>(
-          id: 'Mosfet3 Temp',
+          id: 'Mosfet3Temp',
+          displayName: 'Mosfet3 Temp',
           colorFn: (_, __) => charts.MaterialPalette.deepOrange.shadeDefault,
           domainFn: (TimeSeriesESC escData, _) => escData.time,
           measureFn: (TimeSeriesESC escData, _) => escData.tempMosfet3,
           data: values,
         ));
         chartData.add(charts.Series<TimeSeriesESC, DateTime>(
-          id: 'Mosfet4 Temp',
+          id: 'Mosfet4Temp',
+          displayName: 'Mosfet4 Temp',
           colorFn: (_, __) => charts.MaterialPalette.yellow.shadeDefault,
           domainFn: (TimeSeriesESC escData, _) => escData.time,
           measureFn: (TimeSeriesESC escData, _) => escData.tempMosfet4,
@@ -148,14 +155,16 @@ class RideLogViewerState extends State<RideLogViewer> {
         ));
       }
       chartData.add(charts.Series<TimeSeriesESC, DateTime>(
-        id: 'Duty Cycle',
+        id: 'DutyCycle',
+        displayName: 'Duty Cycle',
         colorFn: (_, __) => charts.MaterialPalette.green.shadeDefault,
         domainFn: (TimeSeriesESC escData, _) => escData.time,
         measureFn: (TimeSeriesESC escData, _) => escData.dutyCycle * 100.0,
         data: values,
       ));
       chartData.add(charts.Series<TimeSeriesESC, DateTime>(
-        id: 'Motor Current',
+        id: 'MotorCurrent',
+        displayName: 'Motor Current',
         colorFn: (_, __) => charts.MaterialPalette.purple.shadeDefault,
         domainFn: (TimeSeriesESC escData, _) => escData.time,
         measureFn: (TimeSeriesESC escData, _) => escData.currentMotor,
@@ -163,7 +172,8 @@ class RideLogViewerState extends State<RideLogViewer> {
       ));
       if (escIDsInLog.length > 1) {
         chartData.add(charts.Series<TimeSeriesESC, DateTime>(
-          id: 'Motor2 Current',
+          id: 'Motor2Current',
+          displayName: 'Motor2 Current',
           colorFn: (_, __) => charts.MaterialPalette.teal.shadeDefault,
           domainFn: (TimeSeriesESC escData, _) => escData.time,
           measureFn: (TimeSeriesESC escData, _) => escData.currentMotor2,
@@ -172,14 +182,16 @@ class RideLogViewerState extends State<RideLogViewer> {
       }
       if (escIDsInLog.length > 3) {
         chartData.add(charts.Series<TimeSeriesESC, DateTime>(
-          id: 'Motor3 Current',
+          id: 'Motor3Current',
+          displayName: 'Motor3 Current',
           colorFn: (_, __) => charts.MaterialPalette.purple.shadeDefault,
           domainFn: (TimeSeriesESC escData, _) => escData.time,
           measureFn: (TimeSeriesESC escData, _) => escData.currentMotor3,
           data: values,
         ));
         chartData.add(charts.Series<TimeSeriesESC, DateTime>(
-          id: 'Motor4 Current',
+          id: 'Motor4Current',
+          displayName: 'Motor4 Current',
           colorFn: (_, __) => charts.MaterialPalette.teal.shadeDefault,
           domainFn: (TimeSeriesESC escData, _) => escData.time,
           measureFn: (TimeSeriesESC escData, _) => escData.currentMotor4,
@@ -187,7 +199,8 @@ class RideLogViewerState extends State<RideLogViewer> {
         ));
       }
       chartData.add(charts.Series<TimeSeriesESC, DateTime>(
-        id: 'Input Current',
+        id: 'InputCurrent',
+        displayName: 'Input Current',
         colorFn: (_, __) => charts.MaterialPalette.pink.shadeDefault,
         domainFn: (TimeSeriesESC escData, _) => escData.time,
         measureFn: (TimeSeriesESC escData, _) => escData.currentInput,
@@ -195,7 +208,8 @@ class RideLogViewerState extends State<RideLogViewer> {
       ));
       if (escIDsInLog.length > 1) {
         chartData.add(charts.Series<TimeSeriesESC, DateTime>(
-          id: 'Input2 Current',
+          id: 'Input2Current',
+          displayName: 'Input2 Current',
           colorFn: (_, __) => charts.MaterialPalette.cyan.shadeDefault,
           domainFn: (TimeSeriesESC escData, _) => escData.time,
           measureFn: (TimeSeriesESC escData, _) => escData.currentInput2,
@@ -204,14 +218,16 @@ class RideLogViewerState extends State<RideLogViewer> {
       }
       if (escIDsInLog.length > 3) {
         chartData.add(charts.Series<TimeSeriesESC, DateTime>(
-          id: 'Input3 Current',
+          id: 'Input3Current',
+          displayName: 'Input3 Current',
           colorFn: (_, __) => charts.MaterialPalette.pink.shadeDefault,
           domainFn: (TimeSeriesESC escData, _) => escData.time,
           measureFn: (TimeSeriesESC escData, _) => escData.currentInput3,
           data: values,
         ));
         chartData.add(charts.Series<TimeSeriesESC, DateTime>(
-          id: 'Input4 Current',
+          id: 'Input4Current',
+          displayName: 'Input4 Current',
           colorFn: (_, __) => charts.MaterialPalette.cyan.shadeDefault,
           domainFn: (TimeSeriesESC escData, _) => escData.time,
           measureFn: (TimeSeriesESC escData, _) => escData.currentInput4,
@@ -227,7 +243,8 @@ class RideLogViewerState extends State<RideLogViewer> {
       ));
 
       chartData.add(charts.Series<TimeSeriesESC, DateTime>(
-        id: 'Wh/${imperialDistance ? "mile" : "km"}',
+        id: 'Consumption',
+        displayName: 'Wh/${imperialDistance ? "mile" : "km"}',
         colorFn: (_, __) => charts.MaterialPalette.yellow.shadeDefault.lighter,
         domainFn: (TimeSeriesESC escData, _) => escData.time,
         measureFn: (TimeSeriesESC escData, _) => escData.consumption,
@@ -1046,7 +1063,6 @@ class RideLogViewerState extends State<RideLogViewer> {
                           )
                       ),
                       */
-
                       behaviors: [
                         //TODO: "PanAndZoomBehavior()" causes "Exception caught by gesture" : "Bad state: No element" but works
                         //TODO: charts.PointRenderer() line 255. Add: if (!componentBounds.containsPoint(point)) continue;
@@ -1057,10 +1073,10 @@ class RideLogViewerState extends State<RideLogViewer> {
                         new charts.PanBehavior(),
 
                         new charts.SeriesLegend(
-                            desiredMaxColumns:3,
+                            desiredMaxColumns: MediaQuery.of(context).size.width ~/ 125,
                             position: charts.BehaviorPosition.bottom,
                             cellPadding: EdgeInsets.all(4.0),
-                            defaultHiddenSeries: ['Duty Cycle', 'Motor2 Temp', 'Motor2 Current', 'Motor Current', 'Motor Temp']
+                            defaultHiddenSeries: ['DutyCycle', 'Motor2Temp', 'Motor2Current', 'MotorCurrent', 'MotorTemp']
                         ),
 
                         // Define one domain and two measure annotations configured to render
@@ -1091,7 +1107,12 @@ class RideLogViewerState extends State<RideLogViewer> {
                             customRendererId: 'faultArea',
                             includeArea: faultCodeCount > 0,
                             stacked: true),
-                      ]
+                      ],
+
+                      defaultRenderer: charts.LineRendererConfig(
+                        includePoints: false,
+                        strokeWidthPx: 3,
+                      ),
 
                     ),
 
