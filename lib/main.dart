@@ -53,8 +53,8 @@ import 'package:logger_flutter/logger_flutter.dart';
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.12.1";
-const String robogotchiFirmwareExpectedVersion = "0.7.3";
+const String freeSK8ApplicationVersion = "0.12.2";
+const String robogotchiFirmwareExpectedVersion = "0.8.0";
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -822,16 +822,16 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     if (startSync) {
       // Start syncing all files by setting syncInProgress to true and request
       // the file list from the receiver
-      setState(() async {
+      setState(() {
         syncInProgress = true;
         // Prevent the status timer from interrupting this request
         _gotchiStatusTimer?.cancel();
         _gotchiStatusTimer = null;
-        // Request the files to begin the process
-        if (!await sendBLEData(theTXLoggerCharacteristic, utf8.encode("ls~"), false)) {
-          globalLogger.e("_handleBLESyncState: failed to request file list");
-        }
       });
+      // Request the files to begin the process
+      if (!await sendBLEData(theTXLoggerCharacteristic, utf8.encode("ls~"), false)) {
+        globalLogger.e("_handleBLESyncState: failed to request file list");
+      }
     } else {
       globalLogger.i("_handleBLESyncState: Stopping Sync Process");
       setState(() {
@@ -1322,6 +1322,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         List<String> values = receiveStr.split(",");
         int parseIndex = 1;
         RobogotchiConfiguration gotchConfig = new RobogotchiConfiguration(
+            cfgVersion: int.tryParse(values[parseIndex++]),
             logAutoStopIdleTime: int.tryParse(values[parseIndex++]),
             logAutoStopLowVoltage: double.tryParse(values[parseIndex++]),
             logAutoStartERPM: int.tryParse(values[parseIndex++]),
@@ -1334,12 +1335,20 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             alertESCTemp: double.tryParse(values[parseIndex++]),
             alertMotorTemp: double.tryParse(values[parseIndex++]),
             alertStorageAtCapacity: int.tryParse(values[parseIndex++]),
-            cfgVersion: int.tryParse(values[parseIndex])
+            timeZoneOffsetHours: int.tryParse(values[parseIndex++]),
+            timeZoneOffsetMinutes: int.tryParse(values[parseIndex++]),
         );
 
         // Validate we received the expected cfgVersion from the module or else there could be trouble
-        if (gotchConfig.cfgVersion != 3) {
-          genericAlert(context, "Version mismatch", Text("Robogotchi provided an incorrect configuration version"), "OK");
+        if (gotchConfig.cfgVersion != 4) {
+          genericAlert(
+              context,
+              "Version mismatch",
+              robogotchiVersion != robogotchiFirmwareExpectedVersion ?
+              Text("Robogotchi provided an incorrect configuration version.") :
+              Text(""),
+              "OK"
+          );
         } else {
           // Load the user configuration window
           Navigator.of(context).pushNamed(
@@ -1824,7 +1833,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     } else if (!initMsgESCVersion) {
       // Request the ESC Firmware Packet
       globalLogger.d("_requestInitMessages: Requesting ESC Firmware Packet");
-      the_tx_characteristic.write([0x02, 0x01, 0x00, 0x00, 0x00, 0x03]); //TODO catch error if busy
+      the_tx_characteristic.write([0x02, 0x01, 0x00, 0x00, 0x00, 0x03]).catchError((onError){
+        // No Action
+      });
       if (!initShowESCVersion) {
         _changeConnectedDialogMessage("Requesting ESC version");
         initShowESCVersion = true;

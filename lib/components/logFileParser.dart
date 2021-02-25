@@ -17,6 +17,7 @@ enum LOG_MSG_TYPES {
   GPS_DELTA,
   IMU,
   BMS,
+  FREESK8,
 }
 
 class LogESC {
@@ -33,6 +34,23 @@ class LogESC {
   int eRPM;
   int eDistance;
   int faultCode;
+
+  LogESC fromValues(LogESC values) {
+    this.dt = values.dt;
+    this.escID = values.escID;
+    this.vIn = values.vIn;
+    this.motorTemp = values.motorTemp;
+    this.mosfetTemp = values.mosfetTemp;
+    this.dutyCycle = values.dutyCycle;
+    this.motorCurrent = values.motorCurrent;
+    this.batteryCurrent = values.batteryCurrent;
+    this.wattHours = values.wattHours;
+    this.wattHoursRegen = values.wattHoursRegen;
+    this.eRPM = values.eRPM;
+    this.eDistance = values.eDistance;
+    this.faultCode = values.faultCode;
+    return this;
+  }
 }
 
 class LogGPS {
@@ -42,6 +60,16 @@ class LogGPS {
   double speed;
   double latitude;
   double longitude;
+
+  LogGPS fromValues(LogGPS values) {
+    this.dt = values.dt;
+    this.satellites = values.satellites;
+    this.altitude = values.altitude;
+    this.speed = values.speed;
+    this.latitude = values.latitude;
+    this.longitude = values.longitude;
+    return this;
+  }
 }
 
 class LogFileParser {
@@ -66,6 +94,9 @@ class LogFileParser {
     //}
     globalLogger.d("logFileParser::parseFile: Unpacking binary data received from Robogotchi");
 
+    Map<int, LogESC> parsedESC = new Map();
+    Map<int, LogGPS> parsedGPS = new Map();
+    int parsedIndex = 0;
     String parsedResults = "";
     for (int i=0; i<bytes.length; ++i) {
       if (bytes[i] == PacketStart) {
@@ -88,6 +119,7 @@ class LogFileParser {
         }
         switch(msgType) {
           case LOG_MSG_TYPES.DEBUG:
+            globalLogger.wtf("logFileParser::parseFile: LOG_MSG_TYPE = DEBUG is not implemented");
             break;
           case LOG_MSG_TYPES.HEADER:
             int logFileVersion = buffer_get_uint16(bytes, i, Endian.little); i+=2;
@@ -122,30 +154,7 @@ class LogFileParser {
             lastESCPacket.eDistance = buffer_get_uint32(bytes, i, Endian.little); i+=4;
 
             if (bytes[i] == PacketEnd) {
-              // Store ESC CSV data
-              parsedResults += "${lastESCPacket.dt.toIso8601String().substring(0,19)},"
-                  "esc,"
-                  "${lastESCPacket.escID},"
-                  "${lastESCPacket.vIn},"
-                  "${lastESCPacket.motorTemp},"
-                  "${lastESCPacket.mosfetTemp},"
-                  "${lastESCPacket.dutyCycle},"
-                  "${lastESCPacket.motorCurrent},"
-                  "${lastESCPacket.batteryCurrent},"
-                  "${lastESCPacket.wattHours},"
-                  "${lastESCPacket.wattHoursRegen},"
-                  "${lastESCPacket.eRPM},"
-                  "${lastESCPacket.eDistance},"
-                  "${lastESCPacket.faultCode}\n";
-
-              // Store faults on their own line
-              if (lastESCPacket.faultCode != 0) {
-                parsedResults += "${lastESCPacket.dt.toIso8601String().substring(0,19)},"
-                    "err,"
-                    "${mc_fault_code.values[lastESCPacket.faultCode].toString().substring(14)},"
-                    "${lastESCPacket.faultCode},"
-                    "${lastESCPacket.escID}\n";
-              }
+              parsedESC[parsedIndex++] = new LogESC().fromValues(lastESCPacket);
             } else {
               globalLogger.e("logFileParser::parseFile: Unexpected byte at end of packet: bytes[$i] = ${bytes[i]}");
             }
@@ -187,31 +196,7 @@ class LogFileParser {
               lastESCPacket.eDistance += deltaEDistance;
               lastESCPacket.faultCode = faultCode;
 
-              //TODO: duplicated code
-              // Store ESC CSV data
-              parsedResults += "${lastESCPacket.dt.toIso8601String().substring(0,19)},"
-                  "esc,"
-                  "${lastESCPacket.escID},"
-                  "${lastESCPacket.vIn},"
-                  "${lastESCPacket.motorTemp},"
-                  "${lastESCPacket.mosfetTemp},"
-                  "${lastESCPacket.dutyCycle},"
-                  "${lastESCPacket.motorCurrent},"
-                  "${lastESCPacket.batteryCurrent},"
-                  "${lastESCPacket.wattHours},"
-                  "${lastESCPacket.wattHoursRegen},"
-                  "${lastESCPacket.eRPM},"
-                  "${lastESCPacket.eDistance},"
-                  "${lastESCPacket.faultCode}\n";
-
-              // Store faults on their own line
-              if (lastESCPacket.faultCode != 0) {
-                parsedResults += "${lastESCPacket.dt.toIso8601String().substring(0,19)},"
-                    "err,"
-                    "${mc_fault_code.values[lastESCPacket.faultCode].toString().substring(14)},"
-                    "${lastESCPacket.faultCode},"
-                    "${lastESCPacket.escID}\n";
-              }
+              parsedESC[parsedIndex++] = new LogESC().fromValues(lastESCPacket);
             } else {
               globalLogger.e("logFileParser::parseFile: Unexpected byte at end of packet: bytes[$i] = ${bytes[i]}");
             }
@@ -227,14 +212,7 @@ class LogFileParser {
             lastGPSPacket.latitude = buffer_get_int32(bytes, i, Endian.little) / 100000.0; i+=4;
             lastGPSPacket.longitude = buffer_get_int32(bytes, i, Endian.little) / 100000.0; i+=4;
             if (bytes[i] == PacketEnd) {
-              // Store GPS CSV data
-              parsedResults += "${lastGPSPacket.dt.toIso8601String().substring(0,19)},"
-                  "gps,"
-                  "${lastGPSPacket.satellites},"
-                  "${lastGPSPacket.altitude},"
-                  "${lastGPSPacket.speed},"
-                  "${lastGPSPacket.latitude},"
-                  "${lastGPSPacket.longitude}\n";
+              parsedGPS[parsedIndex++] = new LogGPS().fromValues(lastGPSPacket);
             } else {
               globalLogger.e("logFileParser::parseFile: Unexpected byte at end of packet: bytes[$i] = ${bytes[i]}");
             }
@@ -256,22 +234,44 @@ class LogFileParser {
               lastGPSPacket.latitude = doublePrecision(lastGPSPacket.latitude + deltaLatitude, 5);
               lastGPSPacket.longitude = doublePrecision(lastGPSPacket.longitude + deltaLongitude, 5);
 
-              // Store GPS CSV data
-              parsedResults += "${lastGPSPacket.dt.toIso8601String().substring(0,19)},"
-                  "gps,"
-                  "${lastGPSPacket.satellites},"
-                  "${lastGPSPacket.altitude},"
-                  "${lastGPSPacket.speed},"
-                  "${lastGPSPacket.latitude},"
-                  "${lastGPSPacket.longitude}\n";
+              parsedGPS[parsedIndex++] = new LogGPS().fromValues(lastGPSPacket);
             } else {
               globalLogger.e("logFileParser::parseFile: Unexpected byte at end of packet: bytes[$i] = ${bytes[i]}");
             }
             break;
           case LOG_MSG_TYPES.IMU:
+            globalLogger.wtf("logFileParser::parseFile: LOG_MSG_TYPE = IMU is not implemented");
             break;
           case LOG_MSG_TYPES.BMS:
+            globalLogger.wtf("logFileParser::parseFile: LOG_MSG_TYPE = BMS is not implemented");
             break;
+          case LOG_MSG_TYPES.FREESK8:
+            int eventType = bytes[i++];
+            i+=7; //NOTE: Alignment
+            int eventData = buffer_get_int64(bytes, i, Endian.little); i+=8;
+            if (bytes[i] == PacketEnd) {
+              switch(eventType) {
+                case 0: //TIME_SYNC
+                  globalLogger.d("logFileParser::parseFile: TIME_SYNC received ($eventData seconds)");
+                  if (eventData != 0) {
+                    for (int j=0; j<parsedIndex; ++j) {
+                      if (parsedESC[j] != null) {
+                        parsedESC[j].dt = parsedESC[j].dt.add(Duration(seconds: eventData));
+                      }
+                      if (parsedGPS[j] != null) {
+                        parsedGPS[j].dt = parsedGPS[j].dt.add(Duration(seconds: eventData));
+                      }
+                    }
+                  }
+                  break;
+                case 1:
+                  globalLogger.wtf("logFileParser::parseFile: FreeSK8 message USER_FLAG is not implemented");
+                  break;
+                default:
+                  globalLogger.wtf("logFileParser::parseFile: FreeSK8 message $eventType is unknown");
+                  break;
+              }
+            }
         }
 
 
@@ -282,10 +282,54 @@ class LogFileParser {
 
     globalLogger.d("logFileParser::parseFile: Unpacking complete. Saving to filesystem");
 
+    // Convert data to CSV
+    for (int i=0; i<parsedIndex; ++i) {
+      if (parsedESC[i] != null) {
+        // Store ESC CSV data
+        parsedResults += "${parsedESC[i].dt.toIso8601String().substring(0,19)},"
+            "esc,"
+            "${parsedESC[i].escID},"
+            "${parsedESC[i].vIn},"
+            "${parsedESC[i].motorTemp},"
+            "${parsedESC[i].mosfetTemp},"
+            "${parsedESC[i].dutyCycle},"
+            "${parsedESC[i].motorCurrent},"
+            "${parsedESC[i].batteryCurrent},"
+            "${parsedESC[i].wattHours},"
+            "${parsedESC[i].wattHoursRegen},"
+            "${parsedESC[i].eRPM},"
+            "${parsedESC[i].eDistance},"
+            "${parsedESC[i].faultCode}\n";
+
+        // Store faults on their own line
+        if (parsedESC[i].faultCode != 0) {
+          parsedResults += "${parsedESC[i].dt.toIso8601String().substring(0,19)},"
+              "err,"
+              "${mc_fault_code.values[parsedESC[i].faultCode].toString().substring(14)},"
+              "${parsedESC[i].faultCode},"
+              "${parsedESC[i].escID}\n";
+        }
+      }
+      if (parsedGPS[i] != null) {
+        // Store GPS CSV data
+        parsedResults += "${parsedGPS[i].dt.toIso8601String().substring(0,19)},"
+            "gps,"
+            "${parsedGPS[i].satellites},"
+            "${parsedGPS[i].altitude},"
+            "${parsedGPS[i].speed},"
+            "${parsedGPS[i].latitude},"
+            "${parsedGPS[i].longitude}\n";
+      }
+    }
     // Write parsed CSV to filesystem
     convertedFile.writeAsStringSync(parsedResults,mode: FileMode.append);
 
     return convertedFile;
+  }
+
+  static int buffer_get_int64(Uint8List buffer, int index, [Endian endian = Endian.big]) {
+    var byteData = new ByteData.view(buffer.buffer);
+    return byteData.getInt64(index, endian);
   }
 
   static int buffer_get_uint64(Uint8List buffer, int index, [Endian endian = Endian.big]) {
