@@ -626,9 +626,9 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                       return _alertLimitedFunctionality(context);
                     }
                     if (widget.isLoggerLogging) {
-                      widget.theTXLoggerCharacteristic.write(utf8.encode("logstop~"));
+                      sendBLEData(widget.theTXLoggerCharacteristic, utf8.encode("logstop~"), false);
                     } else {
-                      widget.theTXLoggerCharacteristic.write(utf8.encode("logstart~"));
+                      sendBLEData(widget.theTXLoggerCharacteristic, utf8.encode("logstart~"), false);
                     }
                   }),
 
