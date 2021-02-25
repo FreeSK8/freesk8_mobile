@@ -9,6 +9,13 @@ import 'package:logger/logger.dart';
 
 Logger globalLogger = Logger(printer: PrettyPrinter(methodCount: 0));
 
+class Pair<T1, T2> {
+  final T1 first;
+  final T2 second;
+
+  Pair(this.first, this.second);
+}
+
 class ListItem {
   int value;
   String name;

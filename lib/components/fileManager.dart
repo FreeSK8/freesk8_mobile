@@ -5,6 +5,8 @@ import '../components/logFileParser.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
+import '../globalUtilities.dart';
+
 class FileManager {
 
   static DateTime logFileStartTime;
@@ -42,17 +44,19 @@ class FileManager {
   static Future<String> saveLogToDocuments({String filename}) async {
     // Get temporary log file
     final file = await _getTempLogFile();
-    // Convert binary data to CSV
-    final fileParsed = await LogFileParser.parseFile(file);
+    // Convert binary data to CSV file; Update filename if TIME_SYNC event occurs
+    final Pair<String, File> parserResult = await LogFileParser.parseFile(file, filename);
+    if (filename != parserResult.first) {
+      globalLogger.d("fileManager::saveLogToDocuments: Filename changed from $filename to ${parserResult.first}");
+    }
     // Create file at final destination
     final documentsDirectory = await getApplicationDocumentsDirectory();
-    final now = DateTime.now();
-    final newPath = "${documentsDirectory.path}/logs/${filename != null? filename: now.toIso8601String()}.csv";
+    final newPath = "${documentsDirectory.path}/logs/${parserResult.first}.csv";
     new File(newPath).create(recursive: true);
     // Copy CSV data to final destination
-    await fileParsed.copy(newPath);
+    await parserResult.second.copy(newPath);
     //NOTE: return relative path as iOS updates will create new container UUIDs
-    return "/logs/${filename != null ? filename : now.toIso8601String()}.csv";
+    return "/logs/${parserResult.first}.csv";
   }
 
   static Future<void> createLogDirectory() async {

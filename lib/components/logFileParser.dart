@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:flutter/cupertino.dart';
+
 import '../hardwareSupport/escHelper/escHelper.dart';
 import '../globalUtilities.dart';
 import 'package:path_provider/path_provider.dart';
@@ -73,7 +75,8 @@ class LogGPS {
 }
 
 class LogFileParser {
-  static Future<File> parseFile(File file) async {
+  static Future<Pair<String, File>> parseFile(File file, String fileName) async {
+    String fileNameOut = fileName;
     LogESC lastESCPacket = new LogESC();
     LogGPS lastGPSPacket = new LogGPS();
 
@@ -253,13 +256,30 @@ class LogFileParser {
               switch(eventType) {
                 case 0: //TIME_SYNC
                   globalLogger.d("logFileParser::parseFile: TIME_SYNC received ($eventData seconds)");
+                  // Update parsed records and filename IF we time travel
                   if (eventData != 0) {
                     for (int j=0; j<parsedIndex; ++j) {
+                      // Adjust time for ESC records
                       if (parsedESC[j] != null) {
                         parsedESC[j].dt = parsedESC[j].dt.add(Duration(seconds: eventData));
                       }
+                      // Adjust time for GPS records
                       if (parsedGPS[j] != null) {
                         parsedGPS[j].dt = parsedGPS[j].dt.add(Duration(seconds: eventData));
+                      }
+                      // Adjust fileName with new starting time
+                      DateTime dtFromString = DateTime.tryParse(fileName);
+                      if (dtFromString == null) {
+                        globalLogger.wtf("logFileParser::parseFile:TIME_SYNC: unable to parse time from filename ($fileName) checking records");
+                        if (parsedESC.values.length > 0) {
+                          dtFromString = parsedESC.values.first.dt.add(Duration(seconds: eventData));
+                          fileNameOut = dtFromString.toIso8601String();
+                        } else {
+                          globalLogger.wtf("logFileParser::parseFile:TIME_SYNC: No ESC records found to parse valid time. Using original filename");
+                        }
+                      } else {
+                        dtFromString = dtFromString.add(Duration(seconds: eventData));
+                        fileNameOut = dtFromString.toIso8601String().substring(0,19);
                       }
                     }
                   }
@@ -324,7 +344,7 @@ class LogFileParser {
     // Write parsed CSV to filesystem
     convertedFile.writeAsStringSync(parsedResults,mode: FileMode.append);
 
-    return convertedFile;
+    return Pair<String, File>(fileNameOut, convertedFile);
   }
 
   static int buffer_get_int64(Uint8List buffer, int index, [Endian endian = Endian.big]) {
