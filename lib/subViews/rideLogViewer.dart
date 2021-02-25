@@ -130,6 +130,7 @@ class RideLogViewerState extends State<RideLogViewer> {
       if (escIDsInLog.length > 1) {
         chartData.add(charts.Series<TimeSeriesESC, DateTime>(
           id: 'Mosfet2Temp',
+          displayName: 'Mosfet2 Temp',
           colorFn: (_, __) => charts.MaterialPalette.yellow.shadeDefault,
           domainFn: (TimeSeriesESC escData, _) => escData.time,
           measureFn: (TimeSeriesESC escData, _) => escData.tempMosfet2,
