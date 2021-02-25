@@ -26,6 +26,8 @@ class RobogotchiConfiguration {
   double alertMotorTemp;
   int alertStorageAtCapacity;
   int cfgVersion;
+  int timeZoneOffsetHours;
+  int timeZoneOffsetMinutes;
   RobogotchiConfiguration({
     this.logAutoStopIdleTime,
     this.logAutoStopLowVoltage,
@@ -39,7 +41,9 @@ class RobogotchiConfiguration {
     this.alertESCTemp,
     this.alertMotorTemp,
     this.alertStorageAtCapacity,
-    this.cfgVersion
+    this.cfgVersion,
+    this.timeZoneOffsetHours,
+    this.timeZoneOffsetMinutes,
   });
 }
 
@@ -454,9 +458,15 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                             } else if (_multiESCMode) {
                               multiESCMode = 2;
                             }
-                            //TODO: Add GPS TimeZoneOffset //${DateTime.now().timeZoneOffset.inHours}
+
+                            // Add GPS TimeZoneOffset
+                            myArguments.currentConfiguration.timeZoneOffsetHours = DateTime.now().timeZoneOffset.inHours;
+                            myArguments.currentConfiguration.timeZoneOffsetMinutes = DateTime.now().timeZoneOffset.inMinutes % 60;
+                            globalLogger.d("TimeZone Computation: ${myArguments.currentConfiguration.timeZoneOffsetHours} hours ${myArguments.currentConfiguration.timeZoneOffsetMinutes} minutes");
+
                             //TODO: Add Device Name to configuration
-                            String newConfigCMD = "setcfg,${myArguments.currentConfiguration.logAutoStopIdleTime}"
+                            String newConfigCMD = "setcfg,${myArguments.currentConfiguration.cfgVersion}"
+                                ",${myArguments.currentConfiguration.logAutoStopIdleTime}"
                                 ",${myArguments.currentConfiguration.logAutoStopLowVoltage}"
                                 ",${myArguments.currentConfiguration.logAutoStartERPM}"
                                 ",${myArguments.currentConfiguration.logIntervalHz}"
@@ -471,7 +481,8 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                                 ",${myArguments.currentConfiguration.alertESCTemp != null ? myArguments.currentConfiguration.alertESCTemp : 0.0}"
                                 ",${myArguments.currentConfiguration.alertMotorTemp != null ? myArguments.currentConfiguration.alertMotorTemp : 0.0}"
                                 ",${myArguments.currentConfiguration.alertStorageAtCapacity}"
-                                ",${myArguments.currentConfiguration.cfgVersion}~";
+                                ",${myArguments.currentConfiguration.timeZoneOffsetHours}"
+                                ",${myArguments.currentConfiguration.timeZoneOffsetMinutes}~";
 
                             // Save
                             globalLogger.d("Save parameters: $newConfigCMD");
