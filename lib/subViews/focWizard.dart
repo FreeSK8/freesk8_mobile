@@ -126,7 +126,7 @@ class ConfigureESCState extends State<ConfigureESC> {
                 decoration: new InputDecoration(labelText: "Battery Output Current Limit (0.0 = Defaults)"),
                 keyboardType: TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: <TextInputFormatter>[
-                  WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                  FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
                 ]
             ),
           ],),

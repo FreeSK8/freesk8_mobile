@@ -265,7 +265,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                       decoration: new InputDecoration(labelText: "Log Auto Stop/Idle Board Timeout (Seconds)"),
                       keyboardType: TextInputType.number,
                       inputFormatters: <TextInputFormatter>[
-                        WhitelistingTextInputFormatter.digitsOnly
+                        FilteringTextInputFormatter.digitsOnly
                       ]
                   ),
                   TextField(
@@ -273,7 +273,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                       decoration: new InputDecoration(labelText: "Log Auto Stop Low Voltage Threshold (Volts)"),
                       keyboardType: TextInputType.numberWithOptions(decimal: true),
                       inputFormatters: <TextInputFormatter>[
-                        WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                        FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
                       ]
                   ),
 
@@ -391,7 +391,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                       decoration: new InputDecoration(labelText: "Alert Low Voltage (0 = no alert)"),
                       keyboardType: TextInputType.numberWithOptions(decimal: true),
                       inputFormatters: <TextInputFormatter>[
-                        WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                        FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
                       ]
                   ),
                   TextField(
@@ -399,7 +399,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                       decoration: new InputDecoration(labelText: "Alert ESC Temperature °C (0 = no alert)"),
                       keyboardType: TextInputType.numberWithOptions(decimal: true),
                       inputFormatters: <TextInputFormatter>[
-                        WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                        FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
                       ]
                   ),
                   TextField(
@@ -407,7 +407,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                       decoration: new InputDecoration(labelText: "Alert Motor Temperature °C (0 = no alert)"),
                       keyboardType: TextInputType.numberWithOptions(decimal: true),
                       inputFormatters: <TextInputFormatter>[
-                        WhitelistingTextInputFormatter(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                        FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
                       ]
                   ),
 
