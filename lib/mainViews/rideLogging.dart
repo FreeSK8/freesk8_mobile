@@ -90,7 +90,6 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
   Map<DateTime, List> _events = {};
   List _selectedEvents = [];
   CalendarController _calendarController;
-  AnimationController _animationController;
   DateTime _selectedDay = DateTime.now();
 
   @override
@@ -106,14 +105,6 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
     _listFiles(true);
 
     _calendarController = CalendarController();
-
-
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 400),
-    );
-
-    _animationController.forward();
   }
 
   @override
