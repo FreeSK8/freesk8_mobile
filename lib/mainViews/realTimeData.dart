@@ -50,6 +50,7 @@ class RealTimeData extends StatefulWidget {
         this.closeDieBieMSFunc,
         this.changeSmartBMSID,
         this.smartBMSID,
+        this.deviceIsConnected,
       });
 
   final List<LatLng> routeTakenLocations;
@@ -61,6 +62,7 @@ class RealTimeData extends StatefulWidget {
   final ValueChanged<bool> closeDieBieMSFunc;
   final ValueChanged<int> changeSmartBMSID;
   final int smartBMSID;
+  final bool deviceIsConnected;
 
   RealTimeDataState createState() => new RealTimeDataState();
 
@@ -398,7 +400,11 @@ class RealTimeDataState extends State<RealTimeData> {
 
     double powerMax = widget.currentSettings.settings.batterySeriesCount * widget.currentSettings.settings.batteryCellMaxVoltage;
     double powerMinimum = widget.currentSettings.settings.batterySeriesCount * widget.currentSettings.settings.batteryCellMinVoltage;
-    averageVoltageInput = (0.2 * doublePrecision(escTelemetry.v_in, 1)) + (0.8 * averageVoltageInput);
+    if (widget.deviceIsConnected) {
+      averageVoltageInput = (0.2 * doublePrecision(escTelemetry.v_in, 1)) + (0.8 * averageVoltageInput);
+    } else {
+      averageVoltageInput = powerMinimum;
+    }
     double powerRemaining = averageVoltageInput - powerMinimum;
     double percentRemaining = sigmoidal(averageVoltageInput, powerMinimum, powerMax) * 100;
     if(percentRemaining.isNaN) percentRemaining = 0;

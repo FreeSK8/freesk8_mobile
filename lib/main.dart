@@ -2642,6 +2642,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 closeDieBieMSFunc: closeDieBieMSFunc,
                 changeSmartBMSID: changeSmartBMSIDFunc,
                 smartBMSID: smartBMSCANID,
+                deviceIsConnected: deviceIsConnected,
               ),
               ESK8Configuration(
                 myUserSettings: widget.myUserSettings,
