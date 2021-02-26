@@ -307,9 +307,11 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
       ),
     ).then((value){
       // Once finished re-list files and remove a potential snackBar item before re-draw of setState
-      _listFiles(true);
-      Scaffold.of(context).removeCurrentSnackBar();
-    } );
+      if (context != null) {
+        _listFiles(true);
+        Scaffold.of(context).removeCurrentSnackBar();
+      }
+    });
   }
 
   @override
