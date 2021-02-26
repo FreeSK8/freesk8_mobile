@@ -13,7 +13,6 @@ import 'globalUtilities.dart';
 import 'mainViews/connectionStatus.dart';
 import 'mainViews/realTimeData.dart';
 import 'mainViews/esk8Configuration.dart';
-import 'mainViews/test.dart';
 import 'mainViews/rideLogging.dart';
 
 import 'subViews/rideLogViewer.dart';
@@ -234,8 +233,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   }
 
   Future<void> checkLocationPermission() async {
-    GeolocationStatus geolocationStatus  = await Geolocator().checkGeolocationPermissionStatus();
-
+    await Geolocator().checkGeolocationPermissionStatus();
     if (await Geolocator().isLocationServiceEnabled() != true) {
       genericAlert(context, "Location service unavailable", Text('Please enable location services on your mobile device'), "OK");
     }
@@ -345,7 +343,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
     // Request APPCONF from the ESC
     globalLogger.i("requestAPPCONF: requesting application configuration (CAN ID? $optionalCANID)");
-    if (!await sendBLEData(the_tx_characteristic, byteData.buffer.asUint8List(), false)) {
+    if (!await sendBLEData(theTXCharacteristic, byteData.buffer.asUint8List(), false)) {
       globalLogger.e("requestAPPCONF: failed to request application configuration");
     }
   }
@@ -363,7 +361,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     dynamic errorCheck = 0;
     while (errorCheck != null && _connectedDevice != null) {
       errorCheck = null;
-      await the_tx_characteristic.write(byteData.buffer.asUint8List()).catchError((error){
+      await theTXCharacteristic.write(byteData.buffer.asUint8List()).catchError((error){
         errorCheck = error;
         globalLogger.e("COMM_GET_MCCONF: Exception: $errorCheck");
       });
@@ -422,8 +420,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       globalLogger.i("_bleDisconnect: disconnecting");
 
       setState(() {
-        widget.devicesList.clear(); //TODO: clearing list on disconnect so build() does not attempt to pass images of knownDevices that have not yet been loaded
+        // Clear BLE Scan state
+        widget.devicesList.clear(); //NOTE: clearing list on disconnect so build() does not attempt to pass images of knownDevices that have not yet been loaded
         _scanActive = false;
+
+        // Reset device is connected flag
         deviceIsConnected = false;
       });
 
@@ -456,7 +457,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       _connectedDevice = null;
 
       // Reset the TX characteristic
-      the_tx_characteristic = null;
+      theTXCharacteristic = null;
       theTXLoggerCharacteristic = null;
 
       // Reset firmware packet
@@ -561,7 +562,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     clientTCPSocket.listen((onData) {
         //globalLogger.wtf("TCP Client to ESC: $onData");
         // Pass TCP data to BLE
-        sendBLEData(the_tx_characteristic, onData, true);
+        sendBLEData(theTXCharacteristic, onData, true);
       },
       onError: (e) {
         globalLogger.e("TCP Socket Server::handleTCPClient: Error: ${e.toString()}");
@@ -770,9 +771,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   final Guid txLoggerCharacteristicUUID = new Guid("6e400004-b5a3-f393-e0a9-e50e24dcca9e");
   final Guid rxLoggerCharacteristicUUID = new Guid("6e400005-b5a3-f393-e0a9-e50e24dcca9e");
 
-  static BluetoothService the_service_we_want;
-  static BluetoothCharacteristic the_tx_characteristic;
-  static BluetoothCharacteristic the_rx_characteristic;
+  static BluetoothService theServiceWeWant;
+  static BluetoothCharacteristic theTXCharacteristic;
+  static BluetoothCharacteristic theRXCharacteristic;
   static BluetoothCharacteristic theTXLoggerCharacteristic;
   static BluetoothCharacteristic theRXLoggerCharacteristic;
   static StreamSubscription<List<int>> escRXDataSubscription;
@@ -921,15 +922,15 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       globalLogger.d("prepareConnectedDevice: Discovered service: ${service.uuid}");
       if (service.uuid == uartServiceUUID) {
         foundService = true;
-        the_service_we_want = service;
+        theServiceWeWant = service;
         for (BluetoothCharacteristic characteristic in service.characteristics) {
           globalLogger.d("prepareConnectedDevice: Discovered characteristic: ${characteristic.uuid}");
           if (characteristic.uuid == txCharacteristicUUID){
-            the_tx_characteristic = characteristic;
+            theTXCharacteristic = characteristic;
             foundTX = true;
           }
           else if (characteristic.uuid == rxCharacteristicUUID){
-            the_rx_characteristic = characteristic;
+            theRXCharacteristic = characteristic;
             foundRX = true;
           }
           else if (characteristic.uuid == txLoggerCharacteristicUUID){
@@ -1049,7 +1050,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               double maxCurrentBattery = 0.0;
               double maxCurrentMotor = 0.0;
               double maxSpeedKph = 0.0;
-              double avgSpeedKph = 0.0;
+              //double avgSpeedKph = 0.0;
               int firstESCID;
               double distanceStart;
               double distanceEnd;
@@ -1382,9 +1383,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     });
 
     // Setup the RX characteristic to notify on value change
-    await the_rx_characteristic.setNotifyValue(true);
+    await theRXCharacteristic.setNotifyValue(true);
     // Setup the RX characteristic callback function
-    escRXDataSubscription = the_rx_characteristic.value.listen((value) {
+    escRXDataSubscription = theRXCharacteristic.value.listen((value) {
 
       // If we have the TCP Socket server running and a client connected forward the data
       if(serverTCPSocket != null && clientTCPSocket != null) {
@@ -1460,7 +1461,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
 
           ///Telemetry packet
-          final dtNow = DateTime.now();
           telemetryPacket = escHelper.processTelemetry(bleHelper.getPayload());
 
           // Update map of ESC telemetry
@@ -1743,7 +1743,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_GET_DECODED_PPM.index) {
 
-          int valueNow = buffer_get_int32(bleHelper.getPayload(), 1);
+          //int valueNow = buffer_get_int32(bleHelper.getPayload(), 1);
           int msNow = buffer_get_int32(bleHelper.getPayload(), 5);
           //globalLogger.d("Decoded PPM packet received: value $valueNow, milliseconds $msNow");
           setState(() {
@@ -1833,7 +1833,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     } else if (!initMsgESCVersion) {
       // Request the ESC Firmware Packet
       globalLogger.d("_requestInitMessages: Requesting ESC Firmware Packet");
-      the_tx_characteristic.write([0x02, 0x01, 0x00, 0x00, 0x00, 0x03]).catchError((onError){
+      theTXCharacteristic.write([0x02, 0x01, 0x00, 0x00, 0x00, 0x03]).catchError((onError){
         // No Action
       });
       if (!initShowESCVersion) {
@@ -1861,7 +1861,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         int checksum = BLEHelper.crc16(packetScanCAN, 2, 1);
         packetScanCAN[3] = (checksum >> 8) & 0xff;
         packetScanCAN[4] = checksum & 0xff;
-        the_tx_characteristic.write(packetScanCAN);
+        theTXCharacteristic.write(packetScanCAN);
         initMsgESCDevicesCANRequested = 1;
 
         _changeConnectedDialogMessage("Requesting CAN IDs");
@@ -2134,34 +2134,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       ],
     );
 
-    ListTile getNavItem(var icon, String s, String routeName, var args, bool requireConnection) {
-      return ListTile(
-        leading: Icon(icon),
-        title: Text(s),
-        onTap: () {
-          if(requireConnection && the_tx_characteristic == null) {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text("Connection Required =("),
-                  content: Text("This feature requires an active connection."),
-                );
-              },
-            );
-            return;
-          }
-          startStopTelemetryTimer(true); //Stop the telemetry timer
-          setState(() {
-            // pop closes the drawer
-            Navigator.of(context).pop();
-            // navigate to the route
-            Navigator.of(context).pushNamed(routeName, arguments: args);
-          });
-        },
-      );
-    }
-
     var myNavChildren = [
       headerChild,
       //getNavItem(Icons.settings, "Testies", Test.routeName),
@@ -2196,7 +2168,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         title: Text("Speed Profiles"),
         onTap: () {
           // Don't write if not connected
-          if (the_tx_characteristic != null) {
+          if (theTXCharacteristic != null) {
             setState(() {
               _hideAllSubviews();
               // Set the flag to show ESC profiles. Display when MCCONF is returned
@@ -2225,7 +2197,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         title: Text("Input Configuration"),
         onTap: () {
           // Don't write if not connected
-          if (the_tx_characteristic != null) {
+          if (theTXCharacteristic != null) {
             setState(() {
               _hideAllSubviews();
               _showESCApplicationConfigurator = true;
@@ -2388,7 +2360,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         title: Text(serverTCPSocket == null ? "Enable TCP Bridge" : "Disable TCP Bridge"),
         onTap: () {
           // Don't start if not connected
-          if (the_tx_characteristic == null || !isESCResponding || !deviceIsConnected) {
+          if (theTXCharacteristic == null || !isESCResponding || !deviceIsConnected) {
             showDialog(
               context: context,
               builder: (BuildContext context) {
@@ -2451,7 +2423,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         int checksum = BLEHelper.crc16(byteData.buffer.asUint8List(), 2, packetLength);
         byteData.setUint16(5, checksum);
         byteData.setUint8(7, 0x03); //End of packet
-        await the_tx_characteristic.write(byteData.buffer.asUint8List(), withoutResponse: true).then((value) {
+        await theTXCharacteristic.write(byteData.buffer.asUint8List(), withoutResponse: true).then((value) {
         }).
         catchError((e) {
           ++bleTXErrorCount;
@@ -2469,13 +2441,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         byteData.setUint16(5, checksum);
         byteData.setUint8(7, 0x03); //End of packet
 
-        await the_tx_characteristic.write(byteData.buffer.asUint8List(), withoutResponse: true).
+        await theTXCharacteristic.write(byteData.buffer.asUint8List(), withoutResponse: true).
         catchError((e) {
           globalLogger.w("TODO: You should request the next packet type upon reception of the prior");
         });
       } else {
         /// Request ESC Telemetry
-        await the_tx_characteristic.write(
+        await theTXCharacteristic.write(
             [0x02, 0x01, 0x04, 0x40, 0x84, 0x03], withoutResponse: true).then((value) {
         }).
         catchError((e) {
@@ -2648,7 +2620,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 myUserSettings: widget.myUserSettings,
                 currentDevice: _connectedDevice,
                 showESCProfiles: _showESCProfiles,
-                theTXCharacteristic: the_tx_characteristic,
+                theTXCharacteristic: theTXCharacteristic,
                 escMotorConfiguration: escMotorConfiguration,
                 onExitProfiles: _handleESCProfileFinished,
                 onAutoloadESCSettings: _handleAutoloadESCSettings,

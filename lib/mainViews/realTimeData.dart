@@ -368,7 +368,7 @@ class RealTimeDataState extends State<RealTimeData> {
 
     doubleItemWidth = MediaQuery.of(context).size.width /2 - 10;
 
-    //TODO: testing oscope package
+    //TODO: testing oscilloscope package
     motorCurrentGraphPoints.add( escTelemetry.current_motor );
     if(motorCurrentGraphPoints.length > doubleItemWidth * 0.75) motorCurrentGraphPoints.removeAt(0);
 
@@ -378,9 +378,9 @@ class RealTimeDataState extends State<RealTimeData> {
     if (tempMotor < -32) { tempMotor = 0; }
 
     String temperatureMosfet = widget.currentSettings.settings.useFahrenheit ? "$tempMosfet F" : "$tempMosfet C";
-    String temperatureMosfet1 = widget.currentSettings.settings.useFahrenheit ? "${cToF(escTelemetry.temp_mos_1)} F" : "${escTelemetry.temp_mos_1} C";
-    String temperatureMosfet2 = widget.currentSettings.settings.useFahrenheit ? "${cToF(escTelemetry.temp_mos_2)} F" : "${escTelemetry.temp_mos_2} C";
-    String temperatureMosfet3 = widget.currentSettings.settings.useFahrenheit ? "${cToF(escTelemetry.temp_mos_3)} F" : "${escTelemetry.temp_mos_3} C";
+    //String temperatureMosfet1 = widget.currentSettings.settings.useFahrenheit ? "${cToF(escTelemetry.temp_mos_1)} F" : "${escTelemetry.temp_mos_1} C";
+    //String temperatureMosfet2 = widget.currentSettings.settings.useFahrenheit ? "${cToF(escTelemetry.temp_mos_2)} F" : "${escTelemetry.temp_mos_2} C";
+    //String temperatureMosfet3 = widget.currentSettings.settings.useFahrenheit ? "${cToF(escTelemetry.temp_mos_3)} F" : "${escTelemetry.temp_mos_3} C";
     String temperatureMotor = widget.currentSettings.settings.useFahrenheit ? "$tempMotor F" : "$tempMotor C";
 
     double speedMaxFromERPM = calculateSpeedKph(widget.currentSettings.settings.maxERPM);
@@ -405,7 +405,7 @@ class RealTimeDataState extends State<RealTimeData> {
     } else {
       averageVoltageInput = powerMinimum;
     }
-    double powerRemaining = averageVoltageInput - powerMinimum;
+    //double powerRemaining = averageVoltageInput - powerMinimum;
     double percentRemaining = sigmoidal(averageVoltageInput, powerMinimum, powerMax) * 100;
     if(percentRemaining.isNaN) percentRemaining = 0;
     if(percentRemaining<0.0) {percentRemaining = 0.0;}
@@ -428,25 +428,6 @@ class RealTimeDataState extends State<RealTimeData> {
       yAxisMin: -5.0,
       dataSet: motorCurrentGraphPoints,
     );
-
-    //FlutterGauge _gauge3 = FlutterGauge(handSize: 30,index: doodie,fontFamily: "Iran",end: 100,number: Number.endAndCenterAndStart,secondsMarker: SecondsMarker.secondsAndMinute,counterStyle: TextStyle(color: Theme.of(context).textTheme.title.color,fontSize: 25,));
-    //FlutterGauge _gauge6 = FlutterGauge(numberInAndOut: NumberInAndOut.inside, index: doodie,counterStyle: TextStyle(color: Theme.of(context).textTheme.title.color,fontSize: 25,),widthCircle: 10,secondsMarker: SecondsMarker.none,number: Number.all);
-    //FlutterGauge _gauge8 = FlutterGauge(inactiveColor: Theme.of(context).accentColor,activeColor: Theme.of(context).primaryColor,handSize: 30,index: doodie,fontFamily: "Iran",end: 100,number: Number.none,secondsMarker: SecondsMarker.minutes,isCircle: false,hand: Hand.none,counterAlign: CounterAlign.center,counterStyle: TextStyle(color: Theme.of(context).textTheme.title.color,fontSize: 25,),isDecimal: false,);
-
-    //double doodie = 50;
-    //FlutterGauge _gauge1 = FlutterGauge(index: doodie,hand: Hand.short,number: Number.endAndCenterAndStart,secondsMarker: SecondsMarker.secondsAndMinute,counterStyle: TextStyle(color: Theme.of(context).textTheme.title.color,fontSize: 25,),);
-    //FlutterGauge _gauge2 = FlutterGauge(index: doodie,hand: Hand.short,number: Number.none,secondsMarker: SecondsMarker.secondsAndMinute,counterStyle: TextStyle(color: Theme.of(context).textTheme.title.color,fontSize: 25,),);
-      //FlutterGauge _gauge3 = FlutterGauge(handSize: 30,index: doodie,fontFamily: "Iran",end: 100,number: Number.endAndCenterAndStart,secondsMarker: SecondsMarker.secondsAndMinute,counterStyle: TextStyle(color: Theme.of(context).textTheme.title.color,fontSize: 25,));
-    //FlutterGauge _gauge4 = FlutterGauge(handSize: 30,index: doodie,fontFamily: "Iran",end: 100,number: Number.endAndCenterAndStart,secondsMarker: SecondsMarker.secondsAndMinute,hand: Hand.short,counterStyle: TextStyle(color: Theme.of(context).textTheme.title.color,fontSize: 22,));
-    //FlutterGauge _gauge5 = FlutterGauge(inactiveColor: Theme.of(context).disabledColor,activeColor: Theme.of(context).indicatorColor,handSize: 30,index: doodie,fontFamily: "Iran",end: 100,number: Number.none,secondsMarker: SecondsMarker.minutes,isCircle: true,hand: Hand.none,counterAlign: CounterAlign.center,counterStyle: TextStyle(color: Theme.of(context).textTheme.title.color,fontSize: 30,),isDecimal: false,);
-      //FlutterGauge _gauge6 = FlutterGauge(numberInAndOut: NumberInAndOut.inside, index: doodie,counterStyle: TextStyle(color: Theme.of(context).textTheme.title.color,fontSize: 25,),widthCircle: 10,secondsMarker: SecondsMarker.none,number: Number.all);
-    //FlutterGauge _gauge7 = FlutterGauge(handSize: 30,index: doodie,fontFamily: "Iran",end: 100,number: Number.endAndCenterAndStart,secondsMarker: SecondsMarker.secondsAndMinute,hand: Hand.short,counterStyle: TextStyle(color: Theme.of(context).textTheme.title.color,fontSize: 22,));
-      //FlutterGauge _gauge8 = FlutterGauge(inactiveColor: Theme.of(context).accentColor,activeColor: Theme.of(context).primaryColor,handSize: 30,index: doodie,fontFamily: "Iran",end: 100,number: Number.none,secondsMarker: SecondsMarker.minutes,isCircle: false,hand: Hand.none,counterAlign: CounterAlign.center,counterStyle: TextStyle(color: Theme.of(context).textTheme.title.color,fontSize: 25,),isDecimal: false,);
-    //FlutterGauge _gauge9 = FlutterGauge(numberInAndOut: NumberInAndOut.inside, index: doodie,counterStyle: TextStyle(color: Theme.of(context).textTheme.title.color,fontSize: 25,),widthCircle: 10,secondsMarker: SecondsMarker.none,number: Number.all);
-    //FlutterGauge _gauge10 = FlutterGauge(numberInAndOut: NumberInAndOut.outside, index: doodie,counterStyle: TextStyle(color: Theme.of(context).textTheme.title.color,fontSize: 25,),widthCircle: 25,secondsMarker: SecondsMarker.none,number: Number.all,hand: Hand.short);
-    //FlutterGauge _gauge11 = FlutterGauge(handSize: 30,index: doodie,fontFamily: "Iran",end: 100,number: Number.endAndCenterAndStart,secondsMarker: SecondsMarker.secondsAndMinute, counterStyle:TextStyle(color: Theme.of(context).textTheme.title.color,fontSize: 25,));
-    //FlutterGauge _gauge12 = FlutterGauge(numberInAndOut: NumberInAndOut.outside, index: doodie,counterStyle: TextStyle(color: Theme.of(context).textTheme.title.color,fontSize: 25,),widthCircle: 25,secondsMarker: SecondsMarker.none,number: Number.all);
-
 
     //globalLogger.wtf(MediaQuery.of(context).size.height);
     //globalLogger.wtf(MediaQuery.of(context).size.width);
