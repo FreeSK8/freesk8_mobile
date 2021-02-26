@@ -1,8 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:flutter/cupertino.dart';
-
 import '../hardwareSupport/escHelper/escHelper.dart';
 import '../globalUtilities.dart';
 import 'package:path_provider/path_provider.dart';
