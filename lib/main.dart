@@ -222,7 +222,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       if (DateTime.now().millisecondsSinceEpoch - syncLastACK.millisecondsSinceEpoch > 5 * 1000) {
         // It's been 5 seconds since you looked at me.
         // Cocked your head to the side and said I'm angry
-        globalLogger.w("_monitorGotchiTimer: syncInProgress = true && syncLastACK > 5 seconds");
+        globalLogger.w("_monitorGotchiTimer: syncInProgress = true && syncLastACK > 5 seconds; lsInProgress=$lsInProgress catInProgress=$catInProgress");
         if (lsInProgress) {
           theTXLoggerCharacteristic.write(utf8.encode("ls,${fileList.length},nack~"));
         } else if (catInProgress) {
@@ -977,7 +977,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       ///LS Command
       if (lsInProgress) {
         if (receiveStr == "ls,complete") {
-          globalLogger.d("List File Operation Complete");
+          globalLogger.d("List File Operation Complete. ${fileList.length} files reported");
           fileList.sort((a, b) => a.fileName.compareTo(b.fileName)); // Sort ascending to grab the oldest file first
           fileList.forEach((element) {
             globalLogger.d("File: ${element.fileName} is ${element.fileSize} bytes");
@@ -1031,13 +1031,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         if (receiveStr == "cat,complete") {
           String logFileContentsForDebugging = "";
           try {
-
             globalLogger.d("Concatenate file operation complete on $catCurrentFilename with $catBytesReceived bytes");
 
             //TODO: validate file transmission. We need a proper packet definition and CRC
-            // Add successful transfer to list of files to delete during sync operation
-            fileListToDelete.add(catCurrentFilename);
-
             // Write raw bytes from cat operation to the filesystem
             await FileManager.writeBytesToLogFile(catBytesRaw);
             catBytesRaw.clear();
@@ -1047,160 +1043,167 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             // Then create database entry
             // Then rebuild state and continue sync process
             String savedFilePath = await FileManager.saveLogToDocuments(filename: catCurrentFilename);
-            {
-              /// Analyze log to generate database statistics
-              Map<int, double> wattHoursStartByESC = new Map();
-              Map<int, double> wattHoursEndByESC = new Map();
-              Map<int, double> wattHoursRegenStartByESC = new Map();
-              Map<int, double> wattHoursRegenEndByESC = new Map();
-              double maxCurrentBattery = 0.0;
-              double maxCurrentMotor = 0.0;
-              double maxSpeedKph = 0.0;
-              //double avgSpeedKph = 0.0;
-              int firstESCID;
-              double distanceStart;
-              double distanceEnd;
-              double distanceTotal;
-              int faultCodeCount = 0;
-              double minElevation;
-              double maxElevation;
-              DateTime firstEntryTime;
-              DateTime lastEntryTime;
-              String logFileContents = await FileManager.openLogFile(savedFilePath);
-              logFileContentsForDebugging = logFileContents;
-              {
-                List<String> thisRideLogEntries = logFileContents.split("\n");
-                for(int i=0; i<thisRideLogEntries.length; ++i) {
-                  if(thisRideLogEntries[i] == null || thisRideLogEntries[i] == "") continue;
-                  //globalLogger.wtf("uhhhh parsing: ${thisRideLogEntries[i]}");
-                  final entry = thisRideLogEntries[i].split(",");
 
-                  if(entry.length > 1 && entry[0] != "header"){ // entry[0] = Time, entry[1] = Data type
-                    ///GPS position entry
-                    if(entry[1] == "gps" && entry.length >= 7) {
-                      //dt,gps,satellites,altitude,speed,latitude,longitude
-                      // Determine date times
-                      firstEntryTime ??= DateTime.tryParse(entry[0]);
-                      lastEntryTime = DateTime.tryParse(entry[0]);
+            /// Analyze log to generate database statistics
+            Map<int, double> wattHoursStartByESC = new Map();
+            Map<int, double> wattHoursEndByESC = new Map();
+            Map<int, double> wattHoursRegenStartByESC = new Map();
+            Map<int, double> wattHoursRegenEndByESC = new Map();
+            double maxCurrentBattery = 0.0;
+            double maxCurrentMotor = 0.0;
+            double maxSpeedKph = 0.0;
+            //double avgSpeedKph = 0.0;
+            int firstESCID;
+            double distanceStart;
+            double distanceEnd;
+            double distanceTotal;
+            int faultCodeCount = 0;
+            double minElevation;
+            double maxElevation;
+            DateTime firstEntryTime;
+            DateTime lastEntryTime;
+            String logFileContents = await FileManager.openLogFile(savedFilePath);
+            logFileContentsForDebugging = logFileContents;
 
-                      // Track elevation change
-                      double elevation = double.tryParse(entry[3]);
-                      minElevation ??= elevation; //Set if null
-                      maxElevation ??= elevation; //Set if null
-                      if (elevation < minElevation) minElevation = elevation;
-                      if (elevation > maxElevation) maxElevation = elevation;
+            /// Iterate each line of logFileContents
+            List<String> thisRideLogEntries = logFileContents.split("\n");
+            for(int i=0; i<thisRideLogEntries.length; ++i) {
+              if(thisRideLogEntries[i] == null || thisRideLogEntries[i] == "") continue;
+              //globalLogger.wtf("uhhhh parsing: ${thisRideLogEntries[i]}");
+              final entry = thisRideLogEntries[i].split(",");
 
-                    }
-                    ///ESC Values
-                    else if (entry[1] == "esc" && entry.length >= 14) {
-                      //dt,esc,esc_id,voltage,motor_temp,esc_temp,duty_cycle,motor_current,battery_current,watt_hours,watt_hours_regen,e_rpm,e_distance,fault
-                      // Determine date times
-                      firstEntryTime ??= DateTime.tryParse(entry[0]);
-                      lastEntryTime = DateTime.tryParse(entry[0]);
+              if(entry.length > 1 && entry[0] != "header"){ // entry[0] = Time, entry[1] = Data type
+                ///GPS position entry
+                if(entry[1] == "gps" && entry.length >= 7) {
+                  //dt,gps,satellites,altitude,speed,latitude,longitude
+                  // Determine date times
+                  firstEntryTime ??= DateTime.tryParse(entry[0]);
+                  lastEntryTime = DateTime.tryParse(entry[0]);
 
-                      // ESC ID
-                      int escID = int.parse(entry[2]);
-                      firstESCID ??= escID;
+                  // Track elevation change
+                  double elevation = double.tryParse(entry[3]);
+                  minElevation ??= elevation; //Set if null
+                  maxElevation ??= elevation; //Set if null
+                  if (elevation < minElevation) minElevation = elevation;
+                  if (elevation > maxElevation) maxElevation = elevation;
 
-                      // Determine max values
-                      double motorCurrent = double.tryParse(entry[7]); //Motor Current
-                      double batteryCurrent = double.tryParse(entry[8]); //Input Current
-                      double eRPM = double.tryParse(entry[11]); //eRPM
-                      double eDistance = double.tryParse(entry[12]); //eDistance
-                      if (batteryCurrent>maxCurrentBattery) maxCurrentBattery = batteryCurrent;
-                      if (motorCurrent>maxCurrentMotor) maxCurrentMotor = motorCurrent;
-                      // Compute max speed!
-                      double speed = eRPMToKph(eRPM, widget.myUserSettings.settings.gearRatio, widget.myUserSettings.settings.wheelDiameterMillimeters, widget.myUserSettings.settings.motorPoles);
-                      if (speed > maxSpeedKph) {
-                        maxSpeedKph = speed;
-                      }
-                      //TODO: Compute average speed!
-                      // Capture Distance for first ESC
-                      if (escID == firstESCID) {
-                        distanceStart ??= eDistanceToKm(eDistance, widget.myUserSettings.settings.gearRatio, widget.myUserSettings.settings.wheelDiameterMillimeters, widget.myUserSettings.settings.motorPoles);
-                        distanceEnd = eDistanceToKm(eDistance, widget.myUserSettings.settings.gearRatio, widget.myUserSettings.settings.wheelDiameterMillimeters, widget.myUserSettings.settings.motorPoles);
-                      }
-                      // Capture consumption per ESC
-                      double wattHours = double.parse(entry[9]);
-                      double wattHoursRegen = double.parse(entry[10]);
-                      wattHoursStartByESC[escID] ??= wattHours;
-                      wattHoursEndByESC[escID] = wattHours;
-                      wattHoursRegenStartByESC[escID] ??= wattHoursRegen;
-                      wattHoursRegenEndByESC[escID] = wattHoursRegen;
-                    }
-                    ///Fault codes
-                    else if (entry[1] == "err") {
-                      ++faultCodeCount;
-                    }
+                }
+                ///ESC Values
+                else if (entry[1] == "esc" && entry.length >= 14) {
+                  //dt,esc,esc_id,voltage,motor_temp,esc_temp,duty_cycle,motor_current,battery_current,watt_hours,watt_hours_regen,e_rpm,e_distance,fault
+                  // Determine date times
+                  firstEntryTime ??= DateTime.tryParse(entry[0]);
+                  lastEntryTime = DateTime.tryParse(entry[0]);
+
+                  // ESC ID
+                  int escID = int.parse(entry[2]);
+                  firstESCID ??= escID;
+
+                  // Determine max values
+                  double motorCurrent = double.tryParse(entry[7]); //Motor Current
+                  double batteryCurrent = double.tryParse(entry[8]); //Input Current
+                  double eRPM = double.tryParse(entry[11]); //eRPM
+                  double eDistance = double.tryParse(entry[12]); //eDistance
+                  if (batteryCurrent>maxCurrentBattery) maxCurrentBattery = batteryCurrent;
+                  if (motorCurrent>maxCurrentMotor) maxCurrentMotor = motorCurrent;
+                  // Compute max speed!
+                  double speed = eRPMToKph(eRPM, widget.myUserSettings.settings.gearRatio, widget.myUserSettings.settings.wheelDiameterMillimeters, widget.myUserSettings.settings.motorPoles);
+                  if (speed > maxSpeedKph) {
+                    maxSpeedKph = speed;
                   }
+                  //TODO: Compute average speed!
+                  // Capture Distance for first ESC
+                  if (escID == firstESCID) {
+                    distanceStart ??= eDistanceToKm(eDistance, widget.myUserSettings.settings.gearRatio, widget.myUserSettings.settings.wheelDiameterMillimeters, widget.myUserSettings.settings.motorPoles);
+                    distanceEnd = eDistanceToKm(eDistance, widget.myUserSettings.settings.gearRatio, widget.myUserSettings.settings.wheelDiameterMillimeters, widget.myUserSettings.settings.motorPoles);
+                  }
+                  // Capture consumption per ESC
+                  double wattHours = double.parse(entry[9]);
+                  double wattHoursRegen = double.parse(entry[10]);
+                  wattHoursStartByESC[escID] ??= wattHours;
+                  wattHoursEndByESC[escID] = wattHours;
+                  wattHoursRegenStartByESC[escID] ??= wattHoursRegen;
+                  wattHoursRegenEndByESC[escID] = wattHoursRegen;
                 }
-
-                /// Compute distance
-                if (distanceEnd != null) {
-                  distanceTotal = doublePrecision(distanceEnd - distanceStart, 2);
-                } else {
-                  distanceTotal = -1.0;
-                }
-                globalLogger.d("ESC ID $firstESCID traveled $distanceTotal km");
-
-                /// Compute consumption
-                double wattHours = 0;
-                double wattHoursRegen = 0;
-                wattHoursStartByESC.forEach((key, value) {
-                  globalLogger.d("ESC ID $key consumed ${wattHoursEndByESC[key] - value} watt hours");
-                  wattHours += wattHoursEndByESC[key] - value;
-                });
-                wattHoursRegenStartByESC.forEach((key, value) {
-                  globalLogger.d("ESC ID $key regenerated ${wattHoursRegenEndByESC[key] - value} watt hours");
-                  wattHoursRegen += wattHoursRegenEndByESC[key] - value;
-                });
-
-                globalLogger.d("Consumption calculation: Watt Hours Total $wattHours Regenerated Total $wattHoursRegen");
-
-                //NOTE: failure checking...
-                //int test = null;
-                //int fail = test + 420;
-
-                //NOTE: Only insert record if we've received a file containing a valid timestamp
-                if (lastEntryTime != null && firstEntryTime != null) {
-                  /// Insert record into database
-                  await DatabaseAssistant.dbInsertLog(LogInfoItem(
-                      dateTime: firstEntryTime,
-                      boardID: widget.myUserSettings.currentDeviceID,
-                      boardAlias: widget.myUserSettings.settings.boardAlias,
-                      logFilePath: savedFilePath,
-                      avgSpeed: -1.0,
-                      maxSpeed: maxSpeedKph,
-                      elevationChange: maxElevation != null ? maxElevation - minElevation : -1.0,
-                      maxAmpsBattery: maxCurrentBattery,
-                      maxAmpsMotors: maxCurrentMotor,
-                      wattHoursTotal: wattHours,
-                      wattHoursRegenTotal: wattHoursRegen,
-                      distance: distanceTotal,
-                      durationSeconds: lastEntryTime.difference(firstEntryTime).inSeconds,
-                      faultCount: faultCodeCount,
-                      rideName: "",
-                      notes: ""
-                  ));
-                }
-
-                /// Advance the sync process
-                {
-                  //TODO: BUG: get rideLogging widget to reList the last file after sync without erase
-                  loggerTestBuffer = receiveStr;
-                  if(!syncInProgress) _alertLoggerTest();
-                  setState(() {
-                    syncAdvanceProgress = true;
-                    ///Cat completed
-                    ///Setting state so this widget rebuilds. On build it will
-                    ///check if syncInProgress and start the next file
-                  });
+                ///Fault codes
+                else if (entry[1] == "err") {
+                  ++faultCodeCount;
                 }
               }
-            } //Save file operation complete
-            catInProgress = false;
+            }
+
+            /// Compute distance
+            if (distanceEnd != null) {
+              distanceTotal = doublePrecision(distanceEnd - distanceStart, 2);
+            } else {
+              distanceTotal = -1.0;
+            }
+            globalLogger.d("ESC ID $firstESCID traveled $distanceTotal km");
+
+            /// Compute consumption
+            double wattHours = 0;
+            double wattHoursRegen = 0;
+            wattHoursStartByESC.forEach((key, value) {
+              globalLogger.d("ESC ID $key consumed ${wattHoursEndByESC[key] - value} watt hours");
+              wattHours += wattHoursEndByESC[key] - value;
+            });
+            wattHoursRegenStartByESC.forEach((key, value) {
+              globalLogger.d("ESC ID $key regenerated ${wattHoursRegenEndByESC[key] - value} watt hours");
+              wattHoursRegen += wattHoursRegenEndByESC[key] - value;
+            });
+
+            globalLogger.d("Consumption calculation: Watt Hours Total $wattHours Regenerated Total $wattHoursRegen");
+
+            //NOTE: failure checking...
+            //int test = null;
+            //int fail = test + 420;
+
+            /// Compute duration from timestamps
+            int durationSeconds = 0;
+            if (lastEntryTime != null && firstEntryTime != null) {
+              durationSeconds = lastEntryTime.difference(firstEntryTime).inSeconds;
+            } else {
+              globalLogger.wtf("cat,complete: lastEntryTime && firstEntryTime == null; duration=$durationSeconds");
+            }
+
+            /// Insert record into database
+            await DatabaseAssistant.dbInsertLog(LogInfoItem(
+                dateTime: firstEntryTime,
+                boardID: widget.myUserSettings.currentDeviceID,
+                boardAlias: widget.myUserSettings.settings.boardAlias,
+                logFilePath: savedFilePath,
+                avgSpeed: -1.0,
+                maxSpeed: maxSpeedKph,
+                elevationChange: maxElevation != null ? maxElevation - minElevation : -1.0,
+                maxAmpsBattery: maxCurrentBattery,
+                maxAmpsMotors: maxCurrentMotor,
+                wattHoursTotal: wattHours,
+                wattHoursRegenTotal: wattHoursRegen,
+                distance: distanceTotal,
+                durationSeconds: durationSeconds,
+                faultCount: faultCodeCount,
+                rideName: "",
+                notes: ""
+            ));
+
+            /// Advance the sync process after success
+            fileListToDelete.add(catCurrentFilename); // Add this file to fileListToDelete
+            loggerTestBuffer = receiveStr;
+            if(!syncInProgress) _alertLoggerTest();
+            setState(() {
+              catInProgress = false;
+              syncAdvanceProgress = true;
+              ///Cat completed
+              ///Setting state so this widget rebuilds. On build it will
+              ///check if syncInProgress and start the next file
+            });
+
+            ///Save file operation complete
             return;
+
           } catch (e) {
+            globalLogger.e("cat,complete threw an exception: ${e.toString()}");
+
             // Alert user something went wrong with the parsing
             genericConfirmationDialog(context, FlatButton(
               child: Text("Copy / Share"),
@@ -1213,31 +1216,35 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 Navigator.of(context).pop();
               },
             ), "File processing error", Text("Something unexpected may have happened!\n\nPlease share with renee@derelictrobot.com"));
-          }
 
-          /// Advance the sync process after failure
-          {
-            setState(() {
-              catInProgress = false;
-              syncAdvanceProgress = true;
-            });
-          }
+            /// Advance the sync process after failure
+            {
+              setState(() {
+                catInProgress = false;
+                syncAdvanceProgress = true;
+              });
+            }
+          } // catch (exception)
 
           // Return now, we are finished here
           return;
+        } //receiveStr == "cat,complete"
+        else {
+          /// Cat isn't complete so we are going to store data and ask for the next packet
+          // store chunk of log data
+          catBytesRaw.addAll(value.sublist(0,receiveStr.length));
+          //NOTE: File operations on iOS can slow things down, using memory buffer ^ await FileManager.writeBytesToLogFile(value.sublist(0,receiveStr.length));
+
+          //globalLogger.d("cat received ${receiveStr.length} bytes");
+          setState(() {
+            catBytesReceived += receiveStr.length;
+          });
+
+          syncLastACK = DateTime.now();
+          if (!await sendBLEData(theTXLoggerCharacteristic, utf8.encode("cat,$catBytesReceived,ack~"), true)) {
+            globalLogger.e("catInProgress failed to send ACK");
+          }
         }
-
-        // store chunk of log data
-        catBytesRaw.addAll(value.sublist(0,receiveStr.length));
-        //NOTE: File operations on iOS can slow things down, using memory buffer ^ await FileManager.writeBytesToLogFile(value.sublist(0,receiveStr.length));
-
-        //globalLogger.d("cat received ${receiveStr.length} bytes");
-        setState(() {
-          catBytesReceived += receiveStr.length;
-        });
-
-        syncLastACK = DateTime.now();
-        await theTXLoggerCharacteristic.write(utf8.encode("cat,$catBytesReceived,ack~"));
       }
       else if(receiveStr.startsWith("cat,/FreeSK8Logs")){
         globalLogger.d("Starting cat Command: $receiveStr");
@@ -2549,7 +2556,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     if(syncInProgress && syncAdvanceProgress){
-      globalLogger.d("Building main.dart while syncInProgress and sync wants to advance a step");
+      globalLogger.d("Building main.dart with syncAdvanceProgress: fileList.length=${fileList.length} fileListToDelete.length=${fileListToDelete.length} syncEraseOnComplete=$syncEraseOnComplete");
       syncAdvanceProgress = false;
 
       if(fileList.length>0) //TODO: logically I didn't think this needed to be conditional but helps during debugging
@@ -2558,23 +2565,26 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       if(fileList.length>0){
         catCurrentFilename = fileList.first.fileName;
         catBytesTotal = fileList.first.fileSize; //Set the total expected bytes for the current file
-        theTXLoggerCharacteristic.write(utf8.encode("cat ${fileList.first.fileName}~")); //Request next file
+        globalLogger.d("Sync requesting cat of ${fileList.first.fileName}");
+        sendBLEData(theTXLoggerCharacteristic, utf8.encode("cat ${fileList.first.fileName}~"), false); //Request next file
       }
       else if(fileListToDelete.length>0){
         // We have sync'd all the files and we have files to erase
         // Evaluate user's option to remove files on sync
         if (syncEraseOnComplete) {
+          globalLogger.d("Sync requesting rm of ${fileListToDelete.first}");
           // Remove the first file in the list of files to delete
-          theTXLoggerCharacteristic.write(utf8.encode("rm ${fileListToDelete.first}~"));
+          sendBLEData(theTXLoggerCharacteristic, utf8.encode("rm ${fileListToDelete.first}~"), false);
         } else {
           // We are finished with the sync process because the user does not
           // want to erase files on the receiver
-          globalLogger.d("stopping sync without remove");
+          globalLogger.d("Sync complete without performing erase");
           syncInProgress = false;
           //TODO: NOTE: setState here does not reload file list after sync is finished
         }
       }
       else {
+        globalLogger.d("Sync complete!");
         syncInProgress = false;
       }
     }
