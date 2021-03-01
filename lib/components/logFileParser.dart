@@ -254,6 +254,9 @@ class LogFileParser {
               switch(eventType) {
                 case 0: //TIME_SYNC
                   globalLogger.d("logFileParser::parseFile: TIME_SYNC received ($eventData seconds)");
+                  // Write file header entry before parsed data is appended
+                  convertedFile.writeAsStringSync("header,gps_time_sync,$eventData\n", mode: FileMode.append);
+
                   // Update parsed records and filename IF we time travel
                   if (eventData != 0) {
                     for (int j=0; j<parsedIndex; ++j) {
