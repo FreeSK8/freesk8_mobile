@@ -6,6 +6,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'components/deviceInformation.dart';
 import 'hardwareSupport/dieBieMSHelper.dart';
 import 'globalUtilities.dart';
 
@@ -52,7 +53,7 @@ import 'package:logger_flutter/logger_flutter.dart';
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.12.2";
+const String freeSK8ApplicationVersion = "0.13.0";
 const String robogotchiFirmwareExpectedVersion = "0.8.0";
 
 void main() {
@@ -208,6 +209,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     WidgetsBinding.instance.addObserver(AutoStopHandler());
 
     _timerMonitor = new Timer.periodic(Duration(seconds: 1), (Timer t) => _monitorGotchiTimer());
+
+    DeviceInfo.init();
   }
 
   void _monitorGotchiTimer() {
@@ -966,6 +969,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     }
 
     if(foundRXLogger) loggerRXDataSubscription = theRXLoggerCharacteristic.value.listen((value) async {
+      if (value.length == 0) {
+        return; // Nothing to process. This happens on initial connection
+      }
       /// Process data received from FreeSK8 logger characteristic
       String receiveStr = new String.fromCharCodes(value);
       ///LS Command
@@ -1928,7 +1934,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         _delayedTabControllerIndexChange(2); // Switch to the configuration tab
       }
 
-      globalLogger.d("_requestInitMessages: initMsgSequencer is complete! Great success!");
+      globalLogger.i("_requestInitMessages: initMsgSequencer is complete! Great success!");
 
       _initMsgSequencer.cancel();
       _initMsgSequencer = null;
@@ -1953,6 +1959,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                     Center(
                       child: GestureDetector(
                         onLongPress: () async {
+                          globalLogger.d("_changeConnectedDialogMessage: Long press received. Closing dialog.");
                           Navigator.of(context).pop(); // Remove communicating with ESC dialog
                         },
                         child: Column(children: [
