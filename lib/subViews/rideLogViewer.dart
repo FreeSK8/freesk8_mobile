@@ -44,6 +44,7 @@ class RideLogViewerState extends State<RideLogViewer> {
   String thisRideLog = "";
   List<String> thisRideLogEntries;
   List<LatLng> _positionEntries;
+  MapController _mapController = new MapController();
   List<Marker> mapMakers = new List();
 
   RideLogChartData currentSelection;
@@ -325,7 +326,6 @@ class RideLogViewerState extends State<RideLogViewer> {
     thisRideLogEntries = new List<String>();
     _positionEntries = new List<LatLng>();
     Map<DateTime, LatLng> gpsLatLngMap = new Map();
-    MapController _mapController = new MapController();
 
     //Receive arguments building this widget
     myArguments = ModalRoute.of(context).settings.arguments;
@@ -747,17 +747,17 @@ class RideLogViewerState extends State<RideLogViewer> {
     }
     globalLogger.d("rideLogViewer creating map polyline from ${_positionEntries.length} points");
 
-    //TODO: color polyline based on stats
+    //TODO: color polyline based on stats other than speed
     List<Polyline> polylineList = new List();
     if (gpsLatLngMap.values.length > 0) {
       LatLng lastPoint = gpsLatLngMap.values.first;
       gpsLatLngMap.forEach((key, value) {
-        Color thisColor = Colors.green;
+        Color thisColor = Colors.blue;
         //TODO: Reduce number of GPS points to keep things moving on phones
         if (calculateDistance(lastPoint, value) > 0.01) {
           // Compute color for this section of the route
           if (escTimeSeriesMap[key] != null && escTimeSeriesMap[key].speed != null && _maxSpeed > 0.0) {
-            thisColor = HSVColor.lerp(HSVColor.fromColor(Colors.blue), HSVColor.fromColor(Colors.red[900]), escTimeSeriesMap[key].speed.abs() / _maxSpeed).toColor();
+            thisColor = Color.lerp(Colors.yellow, Colors.redAccent[700], escTimeSeriesMap[key].speed.abs() / _maxSpeed);
           }
           // Add colored polyline from last section to this one
           polylineList.add(Polyline(points: [lastPoint, value], strokeWidth: 4, color: thisColor));
