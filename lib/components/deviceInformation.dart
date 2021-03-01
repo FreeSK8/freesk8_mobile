@@ -18,7 +18,7 @@ class DeviceInfo {
         globalLogger.d("DeviceInfo::init: model=${deviceData['model']} sdk=${deviceData['version.sdkInt']}");
       } else if (Platform.isIOS) {
         deviceData = _readIosDeviceInfo(await deviceInfoPlugin.iosInfo);
-        globalLogger.d("DeviceInfo::init: model=${deviceData['model']} systemVersion=${deviceData['systemVersion']}");
+        globalLogger.d("DeviceInfo::init: model=${deviceData['utsname.machine']} systemVersion=${deviceData['systemVersion']}");
       }
     } on PlatformException {
       globalLogger.e("DeviceInfo::init: PlatformException: Failed to get platform version.");
