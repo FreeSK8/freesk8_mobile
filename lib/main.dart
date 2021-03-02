@@ -2605,6 +2605,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         ),
         // Set the TabBar view as the body of the Scaffold
         body: LogConsoleOnShake(
+          debugOnly: false,
           dark: true,
           child: Center(
             child: getTabBarView( <Widget>[
