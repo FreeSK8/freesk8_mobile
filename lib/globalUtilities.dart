@@ -7,7 +7,15 @@ import 'package:flutter_blue/flutter_blue.dart';
 
 import 'package:logger/logger.dart';
 
-Logger globalLogger = Logger(printer: PrettyPrinter(methodCount: 0));
+//TODO: This allows logging in release mode and that's supposedly not cool
+//see https://pub.dev/packages/logger#logfilter
+class MyFilter extends LogFilter {
+  @override
+  bool shouldLog(LogEvent event) {
+    return true;
+  }
+}
+Logger globalLogger = Logger(printer: PrettyPrinter(methodCount: 0), filter: MyFilter());
 
 class Pair<T1, T2> {
   final T1 first;
