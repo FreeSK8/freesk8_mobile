@@ -68,11 +68,11 @@ class DeviceInfo {
       'localizedModel': data.localizedModel,
       'identifierForVendor': data.identifierForVendor,
       'isPhysicalDevice': data.isPhysicalDevice,
-      'utsname.sysname:': data.utsname.sysname,
-      'utsname.nodename:': data.utsname.nodename,
-      'utsname.release:': data.utsname.release,
-      'utsname.version:': data.utsname.version,
-      'utsname.machine:': data.utsname.machine,
+      'utsname.sysname': data.utsname.sysname,
+      'utsname.nodename': data.utsname.nodename,
+      'utsname.release': data.utsname.release,
+      'utsname.version': data.utsname.version,
+      'utsname.machine': data.utsname.machine,
     };
   }
 }
