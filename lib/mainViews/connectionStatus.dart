@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_blue/flutter_blue.dart';
+import '../components/databaseAssistant.dart';
+import '../globalUtilities.dart';
 
 import '../hardwareSupport/escHelper/escHelper.dart';
 import '../components/userSettings.dart';
@@ -124,6 +126,28 @@ class ConnectionStatus extends StatelessWidget {
               ),
 
               Text(currentDevice.name == '' ? '(unknown device)' : currentDevice.name),
+
+              gotchiStatus.isLogging != null ?
+              FutureBuilder<double>(
+                  future: DatabaseAssistant.dbGetOdometer(userSettings.currentDeviceID),
+                  builder: (BuildContext context, AsyncSnapshot<double> snapshot) {
+                    if (snapshot.data == null) {
+                      return Text("Distance Logged");
+                    }
+                    return Text("Distance Logged ${doublePrecision(userSettings.settings.useImperial ? kmToMile(snapshot.data) : snapshot.data, 2)} ${userSettings.settings.useImperial ? "miles" : "km"}");
+                  }
+              ) : Container(),
+
+              gotchiStatus.isLogging != null ?
+              FutureBuilder<double>(
+                  future: DatabaseAssistant.dbGetWhKm(userSettings.currentDeviceID),
+                  builder: (BuildContext context, AsyncSnapshot<double> snapshot) {
+                    if (snapshot.data == null) {
+                      return Text("Average Consumption");
+                    }
+                    return Text("Average Consumption ${doublePrecision(userSettings.settings.useImperial ? kmToMile(snapshot.data) : snapshot.data, 2)} wh/${userSettings.settings.useImperial ? "mile" : "km"}");
+                  }
+              ) : Container(),
 
               //Text(currentDevice.id.toString()),
 

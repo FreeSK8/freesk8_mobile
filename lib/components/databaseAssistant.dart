@@ -107,8 +107,8 @@ class DatabaseAssistant {
         );
       },
       onOpen: (db) async {
-        int version = await db.getVersion();
-        globalLogger.d("DatabaseAssistant: getDatabase: openDatabase: onOpen(). Version $version");
+        //int version = await db.getVersion();
+        //globalLogger.wtf("DatabaseAssistant: getDatabase: openDatabase: onOpen(). Version $version");
 
         //TODO: remove this patch after everyone moves on from my mistake (0.7.0/0.7.1 did not set the date_time for new files in LogInfoItem.toMap())
         final List<Map<String, dynamic>> databaseEntries = await db.query('logs', columns: ['id','log_file_path','date_time'], where: 'date_time IS NULL');
@@ -199,5 +199,35 @@ class DatabaseAssistant {
   static Future<void> close() async {
     final Database db = await getDatabase();
     await db.close();
+  }
+
+  static Future<double> dbGetOdometer(String boardID) async {
+    final Database db = await getDatabase();
+    final List<Map<String, dynamic>> rideLogEntries = await db.query('logs', columns: ["distance_km"], where: "board_id = ?", whereArgs: [boardID]);
+    double distance = 0;
+    rideLogEntries.forEach((element) {
+      if (element['distance_km'] != -1.0) {
+        distance += element['distance_km'];
+      }
+    });
+    await db.close();
+    return distance;
+  }
+
+  static Future<double> dbGetWhKm(String boardID) async {
+    final Database db = await getDatabase();
+    final List<Map<String, dynamic>> rideLogEntries = await db.query('logs', columns: ["distance_km", "watt_hours", "watt_hours_regen"], where: "board_id = ?", whereArgs: [boardID]);
+    double distance = 0;
+    double wattHours = 0;
+
+    rideLogEntries.forEach((element) {
+      if (element['distance_km'] != -1.0 && element['watt_hours'] != -1.0) {
+        distance += element['distance_km'];
+
+        wattHours += element['watt_hours'] - element['watt_hours_regen'];
+      }
+    });
+    await db.close();
+    return wattHours/distance;
   }
 }
