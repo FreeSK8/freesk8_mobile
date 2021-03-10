@@ -153,6 +153,7 @@ class LogFileParser {
             i+=4; //NOTE: alignment
             lastESCPacket.eRPM = buffer_get_int32(bytes, i, Endian.little); i+=4;
             lastESCPacket.eDistance = buffer_get_uint32(bytes, i, Endian.little); i+=4;
+            //globalLogger.wtf("ESC Duty ${lastESCPacket.dutyCycle}");
 
             if (bytes[i] == PacketEnd) {
               parsedESC[parsedIndex++] = new LogESC().fromValues(lastESCPacket);
@@ -179,7 +180,8 @@ class LogFileParser {
             int deltaEDistance = buffer_get_int16(bytes, i, Endian.little); i+=2;
             int faultCode = bytes[i++];
             i+=1; //NOTE: alignment
-            //logger.wtf("ESC DELTA dt $deltaDT id $escID vin $deltaVin mt $deltaMotorTemp et $deltaESCTemp duty $deltaDuty mc $deltaMotorCurrent bc $deltaBatteryCurrent wh $deltaWattHours whr $deltaWattHoursRegen erpm $deltaERPM edist $deltaEDistance f $faultCode");
+            //globalLogger.wtf("ESC DELTA dt $deltaDT id $escID vin $deltaVin mt $deltaMotorTemp et $deltaESCTemp duty $deltaDuty mc $deltaMotorCurrent bc $deltaBatteryCurrent wh $deltaWattHours whr $deltaWattHoursRegen erpm $deltaERPM edist $deltaEDistance f $faultCode");
+            //globalLogger.wtf("ESC Duty ${lastESCPacket.dutyCycle} Delta $deltaDuty");
 
             if (bytes[i] == PacketEnd) {
               // Update ESC packet with delta values
@@ -188,7 +190,7 @@ class LogFileParser {
               lastESCPacket.vIn = doublePrecision(lastESCPacket.vIn + deltaVin, 1);
               lastESCPacket.motorTemp = doublePrecision(lastESCPacket.motorTemp + deltaMotorTemp, 1);
               lastESCPacket.mosfetTemp = doublePrecision(lastESCPacket.mosfetTemp + deltaESCTemp, 1);
-              lastESCPacket.dutyCycle = doublePrecision(lastESCPacket.dutyCycle + deltaDuty, 1);
+              lastESCPacket.dutyCycle = doublePrecision(lastESCPacket.dutyCycle + deltaDuty, 4);
               lastESCPacket.motorCurrent = doublePrecision(lastESCPacket.motorCurrent + deltaMotorCurrent, 1);
               lastESCPacket.batteryCurrent = doublePrecision(lastESCPacket.batteryCurrent + deltaBatteryCurrent, 1);
               lastESCPacket.wattHours = doublePrecision(lastESCPacket.wattHours + deltaWattHours, 2);

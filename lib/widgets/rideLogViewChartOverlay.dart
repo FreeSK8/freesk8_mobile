@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:freesk8_mobile/globalUtilities.dart';
 import '../subViews/rideLogViewer.dart';
 import 'package:rxdart/rxdart.dart';
 import '../hardwareSupport/escHelper/escHelper.dart';
@@ -107,7 +108,7 @@ class RideLogViewChartOverlayState extends State<RideLogViewChartOverlay> {
                   ]),
                   TableRow( children: [
                     Text("Duty"),
-                    Text("${(selectedESCData.dutyCycle * 100).toInt()} %", textAlign: TextAlign.center),
+                    Text("${doublePrecision(selectedESCData.dutyCycle * 100, 2)} %", textAlign: TextAlign.center),
                   ]),
                   TableRow( children: [
                     Text("Motor"),
