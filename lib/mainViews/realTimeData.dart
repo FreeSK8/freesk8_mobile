@@ -477,7 +477,7 @@ class RealTimeDataState extends State<RealTimeData> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
                     Center( child:Text("Motor Current")),
-                    Text(escTelemetry.current_motor.toString()),
+                    Text("${doublePrecision(escTelemetry.current_motor, 2)}"),
                     SizedBox(width: doubleItemWidth, height: doubleItemWidth - 30, child: scopeOne),
                   ]),
             ],),
@@ -566,7 +566,7 @@ class RealTimeDataState extends State<RealTimeData> {
               */
               TableRow(children: [
                 Text("Battery Current Now: ", textAlign: TextAlign.right,),
-                Text(" ${escTelemetry.current_in} A")
+                Text(" ${doublePrecision(escTelemetry.current_in, 2)} A")
               ]),
               TableRow(children: [
                 Text("ESC ID${widget.telemetryMap.length > 1 ? "s":""}: ", textAlign: TextAlign.right,),
