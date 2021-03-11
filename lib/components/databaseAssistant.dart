@@ -214,7 +214,7 @@ class DatabaseAssistant {
     return distance;
   }
 
-  static Future<double> dbGetWhKm(String boardID) async {
+  static Future<double> dbGetConsumption(String boardID, bool useImperial) async {
     final Database db = await getDatabase();
     final List<Map<String, dynamic>> rideLogEntries = await db.query('logs', columns: ["distance_km", "watt_hours", "watt_hours_regen"], where: "board_id = ?", whereArgs: [boardID]);
     double distance = 0;
@@ -228,6 +228,16 @@ class DatabaseAssistant {
       }
     });
     await db.close();
-    return wattHours/distance;
+
+    if (useImperial) {
+      distance = kmToMile(distance);
+    }
+    double consumption = wattHours/ distance;
+
+    if (consumption.isNaN || consumption.isInfinite) {
+      consumption = 0;
+    }
+    //globalLogger.wtf("distance $distance wh $wattHours imperial $useImperial consumption $consumption");
+    return consumption;
   }
 }

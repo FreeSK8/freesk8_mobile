@@ -119,11 +119,11 @@ class ConnectionStatus extends StatelessWidget {
               Text("Connected to"),
               Text(userSettings.settings.boardAlias != null ? userSettings.settings.boardAlias : "unnamed",style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold), textAlign: TextAlign.center,),
 
-              CircleAvatar(
+              Flexible(child: CircleAvatar(
                 backgroundImage: imageBoardAvatar != null ? imageBoardAvatar : AssetImage('assets/FreeSK8_Mobile.jpg'),
-                radius: 125,
+                maxRadius: 125,
                 backgroundColor: Colors.white,
-              ),
+              )),
 
               Text(currentDevice.name == '' ? '(unknown device)' : currentDevice.name),
 
@@ -140,12 +140,12 @@ class ConnectionStatus extends StatelessWidget {
 
               gotchiStatus.isLogging != null ?
               FutureBuilder<double>(
-                  future: DatabaseAssistant.dbGetWhKm(userSettings.currentDeviceID),
+                  future: DatabaseAssistant.dbGetConsumption(userSettings.currentDeviceID, userSettings.settings.useImperial),
                   builder: (BuildContext context, AsyncSnapshot<double> snapshot) {
                     if (snapshot.data == null) {
                       return Text("Average Consumption");
                     }
-                    return Text("Average Consumption ${doublePrecision(userSettings.settings.useImperial ? kmToMile(snapshot.data) : snapshot.data, 2)} wh/${userSettings.settings.useImperial ? "mile" : "km"}");
+                    return Text("Average Consumption ${doublePrecision(snapshot.data, 2)} wh/${userSettings.settings.useImperial ? "mile" : "km"}");
                   }
               ) : Container(),
 
@@ -162,6 +162,9 @@ class ConnectionStatus extends StatelessWidget {
                     // Scan for BLE devices
                     _handleTap();
                   }),
+
+              SizedBox(height:5),
+
             ],
           ),
         ),

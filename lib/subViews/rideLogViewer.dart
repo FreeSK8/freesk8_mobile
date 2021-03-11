@@ -415,7 +415,7 @@ class RideLogViewerState extends State<RideLogViewer> {
 
               double wattHours = wattHoursNow - wattHoursStartPrimary - wattHoursRegenStartPrimary - wattHoursRegenNow ;
               double totalDistance = distanceEndPrimary - distanceStartPrimary;
-              double consumption = wattHours / totalDistance;
+              double consumption = wattHours / (myArguments.userSettings.settings.useImperial ? kmToMile(totalDistance) : totalDistance);
               if (consumption.isNaN || consumption.isInfinite) {
                 consumption = 0;
               }
@@ -814,15 +814,16 @@ class RideLogViewerState extends State<RideLogViewer> {
     }
 
     /// Compute consumption
-    globalLogger.d("Consumption: ${myArguments.logFileInfo.wattHoursTotal} ${myArguments.logFileInfo.wattHoursRegenTotal} $distanceEndPrimary $distanceStartPrimary ${myArguments.userSettings.settings.useImperial}");
     double consumption = 0;
     if (myArguments.logFileInfo.wattHoursTotal != -1 && distanceEndPrimary != null && distanceStartPrimary != null) {
-      consumption = (myArguments.logFileInfo.wattHoursTotal - myArguments.logFileInfo.wattHoursRegenTotal) / (distanceEndPrimary - distanceStartPrimary);
+      double consumptionDistance = distanceEndPrimary - distanceStartPrimary; //NOTE: these values are already scaled to user's units
+      consumption = (myArguments.logFileInfo.wattHoursTotal - myArguments.logFileInfo.wattHoursRegenTotal) / consumptionDistance;
     }
     if (consumption.isNaN || consumption.isInfinite) {
       consumption = 0;
     }
     consumption = doublePrecision(consumption, 2);
+    globalLogger.d("Consumption: wh${myArguments.logFileInfo.wattHoursTotal} whRegen${myArguments.logFileInfo.wattHoursRegenTotal} dEnd $distanceEndPrimary dStart $distanceStartPrimary imperial ${myArguments.userSettings.settings.useImperial} consumption $consumption");
 
     ///Build Widget
     return Scaffold(
