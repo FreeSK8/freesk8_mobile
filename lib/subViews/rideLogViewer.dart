@@ -825,6 +825,16 @@ class RideLogViewerState extends State<RideLogViewer> {
     consumption = doublePrecision(consumption, 2);
     globalLogger.d("Consumption: wh${myArguments.logFileInfo.wattHoursTotal} whRegen${myArguments.logFileInfo.wattHoursRegenTotal} dEnd $distanceEndPrimary dStart $distanceStartPrimary imperial ${myArguments.userSettings.settings.useImperial} consumption $consumption");
 
+    /// Add empty current position marker to the mapMarkers list
+    //NOTE: Being the final entry this will be removed with user selection
+    mapMakers.add(new Marker(
+      width: 50.0,
+      height: 50.0,
+      point: new LatLng(0,0),
+      builder: (ctx) =>
+      new Container(),
+    ));
+
     ///Build Widget
     return Scaffold(
       appBar: AppBar(
@@ -1037,7 +1047,6 @@ class RideLogViewerState extends State<RideLogViewer> {
 
                         new MarkerLayerOptions(
                             markers: mapMakers
-
                         ),
                       ],
                     ),
@@ -1095,7 +1104,20 @@ class RideLogViewerState extends State<RideLogViewer> {
                                 eventObservable.publish();
                                 // Set the map center to this position in time
                                 if (gpsLatLngMap.length > 0 && _mapController != null) {
-                                  _mapController.move(selectNearestGPSPoint(model.selectedDatum.first.datum.time, gpsLatLngMap), _mapController.zoom);
+                                  LatLng closestMapPoint = selectNearestGPSPoint(model.selectedDatum.first.datum.time, gpsLatLngMap);
+                                  // Before redrawing the map lets move the last (user selection) marker
+                                  mapMakers.removeLast();
+                                  mapMakers.add(new Marker(
+                                    width: 50.0,
+                                    height: 50.0,
+                                    point: closestMapPoint,
+                                    builder: (ctx) =>
+                                    new Container(
+                                      margin: EdgeInsets.fromLTRB(0, 0, 0, 10),
+                                      child: new Image(height: 50, image: AssetImage("assets/map_selection.png")),
+                                    ),
+                                  ));
+                                  _mapController.move(closestMapPoint, _mapController.zoom);
                                 }
                               }
                             }
