@@ -53,7 +53,7 @@ import 'package:logger_flutter/logger_flutter.dart';
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.13.0";
+const String freeSK8ApplicationVersion = "0.13.1";
 const String robogotchiFirmwareExpectedVersion = "0.8.1";
 
 void main() {
@@ -2144,7 +2144,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         Image(image: AssetImage('assets/dri_about.png'), width: 300),
         Text("Thank you for your support!", textAlign: TextAlign.center),
         SizedBox(height: 10),
-        Text("A special thank you to our beta testers and patreons 🙏🙏🏼🙏🏾🙏🏻🙏🏿🙏🏽 You are what makes this awesome!", textAlign: TextAlign.center)
+        Text("A special thank you to our beta testers and patreons\n🙏🙏🏼🙏🏾🙏🏻🙏🏿🙏🏽\nYou are what makes this awesome!", textAlign: TextAlign.center)
       ],
     );
 
