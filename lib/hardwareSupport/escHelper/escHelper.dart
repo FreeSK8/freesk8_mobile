@@ -47,7 +47,7 @@ class ESCTelemetry {
 
     //NOTE: Extras for COMM_GET_VALUES_SETUP
     speed = 0;
-    battery_level = 0;
+    battery_level = null;
     num_vescs = 0;
     battery_wh = 0;
   }

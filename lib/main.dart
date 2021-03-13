@@ -1837,7 +1837,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     } else if (_deviceIsRobogotchi && !initMsgGotchiSettime) {
       globalLogger.d("_requestInitMessages: Sending current time to Robogotchi");
       // Set the Robogotchi time from DateTime.now() converted to UTC
-      theTXLoggerCharacteristic.write(utf8.encode("settime ${DateTime.now().toUtc().toIso8601String().substring(0,21).replaceAll("-", ":")}~"));
+      theTXLoggerCharacteristic.write(utf8.encode("settime ${DateTime.now().toUtc().toIso8601String().substring(0,19).replaceAll("-", ":")}~"));
       //TODO: without a response we will assume this went as planned
       initMsgGotchiSettime = true;
     } else if (!initMsgESCVersion) {
@@ -2461,7 +2461,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         Uint8List packet = simpleVESCRequest(COMM_PACKET_ID.COMM_GET_VALUES_SETUP.index);
 
         // Request COMM_GET_VALUES_SETUP from the ESC instead of COMM_GET_VALUES
-        if (!await sendBLEData(theTXCharacteristic, packet, false)) {
+        if (!await sendBLEData(theTXCharacteristic, packet, true)) {
           ++bleTXErrorCount;
           globalLogger.e("_requestTelemetry() failed ($bleTXErrorCount) times!");
         }
