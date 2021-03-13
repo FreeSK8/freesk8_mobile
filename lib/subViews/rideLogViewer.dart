@@ -22,6 +22,7 @@ import 'package:esys_flutter_share/esys_flutter_share.dart';
 import 'dart:math' show cos, sqrt, asin;
 
 import '../hardwareSupport/escHelper/escHelper.dart';
+import '../hardwareSupport/escHelper/dataTypes.dart';
 
 class RideLogViewerArguments {
   final UserSettings userSettings;
@@ -360,7 +361,7 @@ class RideLogViewerState extends State<RideLogViewer> {
             gpsDistance += calculateDistance(_positionEntries.last, thisPosition);
           }
           _positionEntries.add(thisPosition);
-          DateTime thisGPSTime = DateTime.tryParse(entry[0]);
+          DateTime thisGPSTime = DateTime.tryParse(entry[0]).toLocal();
           // Set the GPS start time if null
           gpsStartTime ??= thisGPSTime;
           // Set the GPS end time to the last message parsed
@@ -374,7 +375,7 @@ class RideLogViewerState extends State<RideLogViewer> {
         ///ESC Values
         else if (entry[1] == "esc" && entry.length >= 14) {
           //dt,esc,esc_id,voltage,motor_temp,esc_temp,duty_cycle,motor_current,battery_current,watt_hours,watt_hours_regen,e_rpm,e_distance,fault
-          DateTime thisDt = DateTime.parse(entry[0]);
+          DateTime thisDt = DateTime.parse(entry[0]).toLocal();
           int thisESCID = int.parse(entry[2]);
 
           if (!escIDsInLog.contains(thisESCID)) {
@@ -456,7 +457,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           ++faultCodeCount;
 
           // Parse time of event for tracking
-          DateTime thisDt = DateTime.tryParse(entry[0]);
+          DateTime thisDt = DateTime.tryParse(entry[0]).toLocal();
           int thisFaultCode = int.parse(entry[3]);
           int escID = int.parse(entry[4]);
 
@@ -519,7 +520,7 @@ class RideLogViewerState extends State<RideLogViewer> {
             gpsDistance += calculateDistance(_positionEntries.last, thisPosition);
           }
           _positionEntries.add(thisPosition);
-          DateTime thisGPSTime = DateTime.tryParse(entry[0]);
+          DateTime thisGPSTime = DateTime.tryParse(entry[0]).toLocal();
           // Set the GPS start time if null
           gpsStartTime ??= thisGPSTime;
           // Set the GPS end time to the last message parsed
@@ -532,7 +533,7 @@ class RideLogViewerState extends State<RideLogViewer> {
         }
         else if (entry[1] == "values" && entry.length >= 10) {
           //[2020-05-19T13:46:28.8, values, 12.9, -99.9, 29.0, 0.0, 0.0, 0.0, 0.0, 11884, 102]
-          DateTime thisDt = DateTime.parse(entry[0]);
+          DateTime thisDt = DateTime.parse(entry[0]).toLocal();
           int thisESCID = int.parse(entry[10]);
 
           if (!escIDsInLog.contains(thisESCID)) {

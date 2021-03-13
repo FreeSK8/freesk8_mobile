@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 
 import '../hardwareSupport/dieBieMSHelper.dart';
 import '../hardwareSupport/escHelper/escHelper.dart';
+import '../hardwareSupport/escHelper/dataTypes.dart';
 import '../globalUtilities.dart';
 import '../components/userSettings.dart';
 

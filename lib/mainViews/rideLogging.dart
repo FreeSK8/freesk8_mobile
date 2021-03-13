@@ -120,7 +120,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
     // Prepare data for Calendar View
     _events = {}; // Clear events before populating from database
     rideLogsFromDatabase.forEach((element) {
-      DateTime thisDate = DateTime.parse(new DateFormat("yyyy-MM-dd").format(element.dateTime));
+      DateTime thisDate = DateTime.parse(new DateFormat("yyyy-MM-dd").format(element.dateTime.toLocal()));
       if (_events.containsKey(thisDate)) {
         //globalLogger.wtf("updating $thisDate");
         _events[thisDate].add('${rideLogsFromDatabase.indexOf(element)}');
@@ -198,7 +198,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                         SizedBox(width: 10,),
 
                         Expanded(
-                          child: Text(rideLogsFromDatabase[int.parse(event)].logFilePath.substring(rideLogsFromDatabase[int.parse(event)].logFilePath.lastIndexOf("/") + 1, rideLogsFromDatabase[int.parse(event)].logFilePath.lastIndexOf("/") + 20).split("T").join("\r\n")),
+                          child: Text(rideLogsFromDatabase[int.parse(event)].dateTime.toLocal().toIso8601String()),
                         ),
 
                         SizedBox(
@@ -534,7 +534,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                     SizedBox(width: 10,),
 
                                     Expanded(
-                                      child: Text(rideLogsFromDatabase[index].logFilePath.substring(rideLogsFromDatabase[index].logFilePath.lastIndexOf("/") + 1, rideLogsFromDatabase[index].logFilePath.lastIndexOf("/") + 20).split("T").join("\r\n")),
+                                      child: Text(rideLogsFromDatabase[index].dateTime.toLocal().toIso8601String()),
                                     ),
 
                                     SizedBox(

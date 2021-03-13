@@ -6,6 +6,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'components/crc16.dart';
 import 'components/deviceInformation.dart';
 import 'hardwareSupport/dieBieMSHelper.dart';
 import 'globalUtilities.dart';
@@ -28,6 +29,7 @@ import 'hardwareSupport/bleHelper.dart';
 import 'hardwareSupport/escHelper/escHelper.dart';
 import 'hardwareSupport/escHelper/appConf.dart';
 import 'hardwareSupport/escHelper/mcConf.dart';
+import 'hardwareSupport/escHelper/dataTypes.dart';
 import 'components/userSettings.dart';
 import 'components/fileManager.dart';
 import 'components/autoStopHandler.dart';
@@ -53,8 +55,8 @@ import 'package:logger_flutter/logger_flutter.dart';
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.13.1";
-const String robogotchiFirmwareExpectedVersion = "0.8.1";
+const String freeSK8ApplicationVersion = "0.13.2";
+const String robogotchiFirmwareExpectedVersion = "0.8.2";
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -327,47 +329,23 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     );
   }
 
-  //TODO: method to assemble simple esc requests
-  //TODO: method to request until success or disconnect
-  //TODO: sooooo much duplicated code
   void requestAPPCONF(int optionalCANID) async {
-    bool sendCAN = optionalCANID != null;
-    var byteData = new ByteData(sendCAN ? 8:6); //<start><payloadLen><packetID><crc1><crc2><end>
-    byteData.setUint8(0, 0x02);
-    byteData.setUint8(1, sendCAN ? 0x03 : 0x01); // Data length
-    if (sendCAN) {
-      byteData.setUint8(2, COMM_PACKET_ID.COMM_FORWARD_CAN.index);
-      byteData.setUint8(3, optionalCANID);
-    }
-    byteData.setUint8(sendCAN ? 4:2, COMM_PACKET_ID.COMM_GET_APPCONF.index);
-    int checksum = BLEHelper.crc16(byteData.buffer.asUint8List(), 2, sendCAN ? 3:1);
-    byteData.setUint16(sendCAN ? 5:3, checksum);
-    byteData.setUint8(sendCAN ? 7:5, 0x03); //End of packet
+    Uint8List packet = simpleVESCRequest(COMM_PACKET_ID.COMM_GET_APPCONF.index, optionalCANID: optionalCANID);
 
     // Request APPCONF from the ESC
     globalLogger.i("requestAPPCONF: requesting application configuration (CAN ID? $optionalCANID)");
-    if (!await sendBLEData(theTXCharacteristic, byteData.buffer.asUint8List(), false)) {
+    if (!await sendBLEData(theTXCharacteristic, packet, false)) {
       globalLogger.e("requestAPPCONF: failed to request application configuration");
     }
   }
 
   void requestMCCONF() async {
-    var byteData = new ByteData(6); //<start><payloadLen><packetID><crc1><crc2><end>
-    byteData.setUint8(0, 0x02);
-    byteData.setUint8(1, 0x01);
-    byteData.setUint8(2, COMM_PACKET_ID.COMM_GET_MCCONF.index);
-    int checksum = BLEHelper.crc16(byteData.buffer.asUint8List(), 2, 1);
-    byteData.setUint16(3, checksum);
-    byteData.setUint8(5, 0x03); //End of packet
+    Uint8List packet = simpleVESCRequest(COMM_PACKET_ID.COMM_GET_MCCONF.index);
 
     // Request MCCONF from the ESC
-    dynamic errorCheck = 0;
-    while (errorCheck != null && _connectedDevice != null) {
-      errorCheck = null;
-      await theTXCharacteristic.write(byteData.buffer.asUint8List()).catchError((error){
-        errorCheck = error;
-        globalLogger.e("COMM_GET_MCCONF: Exception: $errorCheck");
-      });
+    globalLogger.i("requestMCCONF: requesting motor configuration");
+    if (!await sendBLEData(theTXCharacteristic, packet, false)) {
+      globalLogger.e("requestMCCONF: failed to request motor configuration");
     }
   }
 
@@ -1464,6 +1442,26 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           });
           bleHelper.resetPacket(); //Prepare for next packet
         }
+        else if (packetID == COMM_PACKET_ID.COMM_GET_VALUES_SETUP.index) {
+          ///Telemetry packet
+          telemetryPacket = escHelper.processSetupValues(bleHelper.getPayload());
+
+          // Update map of ESC telemetry
+          telemetryMap[telemetryPacket.vesc_id] = telemetryPacket;
+
+          if(controller.index == 1) { //Only re-draw if we are on the real time data tab
+            setState(() { //Re-drawing with updated telemetry data
+            });
+          }
+
+          // Watch here for all fault codes received. Populate an array with time and fault for display to user
+          if ( telemetryPacket.fault_code != mc_fault_code.FAULT_CODE_NONE ) {
+            globalLogger.w("WARNING! Fault code received! ${telemetryPacket.fault_code}");
+          }
+
+          // Prepare for the next packet
+          bleHelper.resetPacket();
+        }
         else if ( packetID == COMM_PACKET_ID.COMM_GET_VALUES.index ) {
           if(_showDieBieMS) {
             //TODO: Parse DieBieMS GET_VALUES packet - A shame they share the same ID as ESC values
@@ -1487,7 +1485,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           // Watch here for all fault codes received. Populate an array with time and fault for display to user
           if ( telemetryPacket.fault_code != mc_fault_code.FAULT_CODE_NONE ) {
             globalLogger.w("WARNING! Fault code received! ${telemetryPacket.fault_code}");
-            //TODO: FileManager.writeToLogFile("${dtNow.toIso8601String().substring(0,21)},fault,${telemetryPacket.fault_code}\n");
           }
 
           // Prepare for the next packet
@@ -1839,8 +1836,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       _changeConnectedDialogMessage("Requesting Robogotchi version");
     } else if (_deviceIsRobogotchi && !initMsgGotchiSettime) {
       globalLogger.d("_requestInitMessages: Sending current time to Robogotchi");
-      // Set the Robogotchi time
-      theTXLoggerCharacteristic.write(utf8.encode("settime ${DateTime.now().toIso8601String().substring(0,21).replaceAll("-", ":")}~"));
+      // Set the Robogotchi time from DateTime.now() converted to UTC
+      theTXLoggerCharacteristic.write(utf8.encode("settime ${DateTime.now().toUtc().toIso8601String().substring(0,21).replaceAll("-", ":")}~"));
       //TODO: without a response we will assume this went as planned
       initMsgGotchiSettime = true;
     } else if (!initMsgESCVersion) {
@@ -1871,7 +1868,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         packetScanCAN[2] = COMM_PACKET_ID.COMM_PING_CAN.index; //Payload data
         //3,4 are CRC computed below
         packetScanCAN[5] = 0x03; //End packet
-        int checksum = BLEHelper.crc16(packetScanCAN, 2, 1);
+        int checksum = CRC16.crc16(packetScanCAN, 2, 1);
         packetScanCAN[3] = (checksum >> 8) & 0xff;
         packetScanCAN[4] = checksum & 0xff;
         theTXCharacteristic.write(packetScanCAN);
@@ -2434,7 +2431,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         byteData.setUint8(2, COMM_PACKET_ID.COMM_FORWARD_CAN.index);
         byteData.setUint8(3, smartBMSCANID); //CAN ID
         byteData.setUint8(4, COMM_PACKET_ID.COMM_GET_VALUES.index);
-        int checksum = BLEHelper.crc16(byteData.buffer.asUint8List(), 2, packetLength);
+        int checksum = CRC16.crc16(byteData.buffer.asUint8List(), 2, packetLength);
         byteData.setUint16(5, checksum);
         byteData.setUint8(7, 0x03); //End of packet
         await theTXCharacteristic.write(byteData.buffer.asUint8List(), withoutResponse: true).then((value) {
@@ -2451,7 +2448,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         byteData.setUint8(2, COMM_PACKET_ID.COMM_FORWARD_CAN.index);
         byteData.setUint8(3, smartBMSCANID); //CAN ID
         byteData.setUint8(4, DieBieMSHelper.COMM_GET_BMS_CELLS);
-        checksum = BLEHelper.crc16(byteData.buffer.asUint8List(), 2, packetLength);
+        checksum = CRC16.crc16(byteData.buffer.asUint8List(), 2, packetLength);
         byteData.setUint16(5, checksum);
         byteData.setUint8(7, 0x03); //End of packet
 
@@ -2461,13 +2458,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         });
       } else {
         /// Request ESC Telemetry
-        await theTXCharacteristic.write(
-            [0x02, 0x01, 0x04, 0x40, 0x84, 0x03], withoutResponse: true).then((value) {
-        }).
-        catchError((e) {
+        Uint8List packet = simpleVESCRequest(COMM_PACKET_ID.COMM_GET_VALUES_SETUP.index);
+
+        // Request COMM_GET_VALUES_SETUP from the ESC instead of COMM_GET_VALUES
+        if (!await sendBLEData(theTXCharacteristic, packet, false)) {
           ++bleTXErrorCount;
-          globalLogger.e("_requestTelemetry() failed ($bleTXErrorCount) times. Exception: $e");
-        });
+          globalLogger.e("_requestTelemetry() failed ($bleTXErrorCount) times!");
+        }
       }
     } else {
       // We are requesting telemetry but are not connected =/
