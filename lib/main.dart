@@ -2618,6 +2618,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 gotchiStatus: gotchiStatus,
                 theTXLoggerCharacteristic: theTXLoggerCharacteristic,
                 unexpectedDisconnect: unexpectedDisconnect,
+                delayedTabControllerIndexChange: _delayedTabControllerIndexChange,
               ),
               RealTimeData(
                 routeTakenLocations: routeTakenLocations,
