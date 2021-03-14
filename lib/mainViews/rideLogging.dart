@@ -139,7 +139,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
   // Simple TableCalendar configuration (using Styles)
   Widget _buildTableCalendar() {
     return TableCalendar(
-      initialCalendarFormat: CalendarFormat.month,
+      initialCalendarFormat: CalendarFormat.twoWeeks,
       calendarController: _calendarController,
       events: _events,
       //holidays: _holidays,
