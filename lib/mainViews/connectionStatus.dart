@@ -43,7 +43,8 @@ class ConnectionStatus extends StatelessWidget {
         this.imageBoardAvatar,
         this.gotchiStatus,
         this.theTXLoggerCharacteristic,
-        this.unexpectedDisconnect
+        this.unexpectedDisconnect,
+        this.delayedTabControllerIndexChange,
       } ) : super(key: key);
 
   final ESCFirmware currentFirmware;
@@ -57,6 +58,7 @@ class ConnectionStatus extends StatelessWidget {
   final RobogotchiStatus gotchiStatus;
   final BluetoothCharacteristic theTXLoggerCharacteristic;
   final bool unexpectedDisconnect;
+  final ValueChanged<int> delayedTabControllerIndexChange;
 
   void _handleTap() {
     onChanged(!active);
@@ -78,14 +80,19 @@ class ConnectionStatus extends StatelessWidget {
               gotchiStatus.isLogging != null ? Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  Column(
-                    children: [
-                      Icon(gotchiStatus.isLogging ? Icons.save_outlined : Icons.save, color: gotchiStatus.isLogging ? Colors.orange: Colors.green),
-                      Text("${gotchiStatus.isLogging ? "Logging":"Log Idle"}"), //TODO: show if sync in progress
-                      Text("${gotchiStatus.fileCount} ${gotchiStatus.fileCount == 1 ? "file":"files"}"),
-                      Text("${gotchiStatus.percentFree}% Free"),
-
-                    ],
+                  //
+                  GestureDetector(
+                    onTap: () {
+                      delayedTabControllerIndexChange(3);
+                    },
+                    child: Column(
+                      children: [
+                        Icon(gotchiStatus.isLogging ? Icons.save_outlined : Icons.save, color: gotchiStatus.isLogging ? Colors.orange: Colors.green),
+                        Text("${gotchiStatus.isLogging ? "Logging":"Log Idle"}"), //TODO: show if sync in progress
+                        Text("${gotchiStatus.fileCount} ${gotchiStatus.fileCount == 1 ? "file":"files"}"),
+                        Text("${gotchiStatus.percentFree}% Free"),
+                      ],
+                    )
                   ),
 
                   GestureDetector(

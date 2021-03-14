@@ -7,6 +7,26 @@ import 'package:flutter_blue/flutter_blue.dart';
 
 import 'package:logger/logger.dart';
 
+import 'components/crc16.dart';
+import 'hardwareSupport/escHelper/dataTypes.dart';
+
+Uint8List simpleVESCRequest(int messageIndex, {int optionalCANID}) {
+  bool sendCAN = optionalCANID != null;
+  var byteData = new ByteData(sendCAN ? 8:6); //<start><payloadLen><packetID><crc1><crc2><end>
+  byteData.setUint8(0, 0x02);
+  byteData.setUint8(1, sendCAN ? 0x03 : 0x01); // Data length
+  if (sendCAN) {
+    byteData.setUint8(2, COMM_PACKET_ID.COMM_FORWARD_CAN.index);
+    byteData.setUint8(3, optionalCANID);
+  }
+  byteData.setUint8(sendCAN ? 4:2, messageIndex);
+  int checksum = CRC16.crc16(byteData.buffer.asUint8List(), 2, sendCAN ? 3:1);
+  byteData.setUint16(sendCAN ? 5:3, checksum);
+  byteData.setUint8(sendCAN ? 7:5, 0x03); //End of packet
+
+  return byteData.buffer.asUint8List();
+}
+
 //TODO: This allows logging in release mode and that's supposedly not cool
 //see https://pub.dev/packages/logger#logfilter
 class MyFilter extends LogFilter {

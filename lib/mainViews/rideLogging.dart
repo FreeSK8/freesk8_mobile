@@ -120,7 +120,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
     // Prepare data for Calendar View
     _events = {}; // Clear events before populating from database
     rideLogsFromDatabase.forEach((element) {
-      DateTime thisDate = DateTime.parse(new DateFormat("yyyy-MM-dd").format(element.dateTime));
+      DateTime thisDate = DateTime.parse(new DateFormat("yyyy-MM-dd").format(element.dateTime.add(DateTime.now().timeZoneOffset)));
       if (_events.containsKey(thisDate)) {
         //globalLogger.wtf("updating $thisDate");
         _events[thisDate].add('${rideLogsFromDatabase.indexOf(element)}');
@@ -147,12 +147,13 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
       calendarStyle: CalendarStyle(
         selectedColor: Colors.deepOrange[400],
         todayColor: Colors.deepOrange[200],
-        markersColor: Colors.brown[700],
+        markersColor: Colors.white,
         outsideDaysVisible: false,
       ),
       headerStyle: HeaderStyle(
-        formatButtonTextStyle:
-        TextStyle().copyWith(color: Colors.white, fontSize: 15.0),
+        formatButtonShowsNext: false,
+        formatButtonTextStyle: TextStyle().copyWith(
+            color: Colors.white, fontSize: 15.0),
         formatButtonDecoration: BoxDecoration(
           color: Colors.deepOrange[400],
           borderRadius: BorderRadius.circular(16.0),
@@ -198,7 +199,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                         SizedBox(width: 10,),
 
                         Expanded(
-                          child: Text(rideLogsFromDatabase[int.parse(event)].logFilePath.substring(rideLogsFromDatabase[int.parse(event)].logFilePath.lastIndexOf("/") + 1, rideLogsFromDatabase[int.parse(event)].logFilePath.lastIndexOf("/") + 20).split("T").join("\r\n")),
+                          child: Text(rideLogsFromDatabase[int.parse(event)].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)),
                         ),
 
                         SizedBox(
@@ -278,9 +279,9 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
     });
   }
 
-  void _onVisibleDaysChanged(
-      DateTime first, DateTime last, CalendarFormat format) {
+  void _onVisibleDaysChanged(DateTime first, DateTime last, CalendarFormat format) {
     //globalLogger.wtf('CALLBACK: _onVisibleDaysChanged');
+    //TODO: capture calendar format changes and store with user preferences for determining initial viewing format
   }
 
   void _onCalendarCreated(
@@ -534,7 +535,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                     SizedBox(width: 10,),
 
                                     Expanded(
-                                      child: Text(rideLogsFromDatabase[index].logFilePath.substring(rideLogsFromDatabase[index].logFilePath.lastIndexOf("/") + 1, rideLogsFromDatabase[index].logFilePath.lastIndexOf("/") + 20).split("T").join("\r\n")),
+                                      child: Text(rideLogsFromDatabase[index].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)),
                                     ),
 
                                     SizedBox(

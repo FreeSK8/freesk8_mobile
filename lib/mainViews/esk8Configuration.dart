@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_blue/flutter_blue.dart';
+import '../components/crc16.dart';
 import '../widgets/throttleCurvePainter.dart';
 import '../subViews/escProfileEditor.dart';
 import '../globalUtilities.dart';
@@ -13,7 +14,7 @@ import '../subViews/focWizard.dart';
 import '../hardwareSupport/escHelper/escHelper.dart';
 import '../hardwareSupport/escHelper/appConf.dart';
 import '../hardwareSupport/escHelper/mcConf.dart';
-import '../hardwareSupport/bleHelper.dart';
+import '../hardwareSupport/escHelper/dataTypes.dart';
 
 import 'package:image_picker/image_picker.dart';
 
@@ -336,7 +337,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       byteData.setFloat32(35, widget.escMotorConfiguration.l_watt_max);
     }
 
-    int checksum = BLEHelper.crc16(byteData.buffer.asUint8List(), 2, 37);
+    int checksum = CRC16.crc16(byteData.buffer.asUint8List(), 2, 37);
     byteData.setUint16(39, checksum);
     byteData.setUint8(41, 0x03); //End of packet
 
@@ -348,23 +349,22 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
   }
 
-  void requestMCCONFCAN(int canID) {
+  void requestMCCONFCAN(int canID) async {
     var byteData = new ByteData(8);
     byteData.setUint8(0, 0x02);
     byteData.setUint8(1, 0x03);
     byteData.setUint8(2, COMM_PACKET_ID.COMM_FORWARD_CAN.index);
     byteData.setUint8(3, canID);
     byteData.setUint8(4, COMM_PACKET_ID.COMM_GET_MCCONF.index);
-    int checksum = BLEHelper.crc16(byteData.buffer.asUint8List(), 2, 3);
+    int checksum = CRC16.crc16(byteData.buffer.asUint8List(), 2, 3);
     byteData.setUint16(5, checksum);
     byteData.setUint8(7, 0x03); //End of packet
 
-    widget.theTXCharacteristic.write(byteData.buffer.asUint8List()).then((value){
+    if (!await sendBLEData(widget.theTXCharacteristic, byteData.buffer.asUint8List(), false)) {
+      globalLogger.e('COMM_GET_MCCONF request failed for CAN ID $canID');
+    } else {
       globalLogger.d('COMM_GET_MCCONF requested from CAN ID $canID');
-      //TODO: indicate we are waiting for ESC response?
-    }).catchError((e){
-      globalLogger.e("COMM_GET_MCCONF: Exception: $e");
-    });
+    }
   }
 
   void saveMCCONF(int optionalCANID) async {
@@ -401,7 +401,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     for (int i=0;i<serializedMcconf.lengthInBytes;++i) {
       blePacket.setInt8(packetIndex++, serializedMcconf.getInt8(i));
     }
-    int checksum = BLEHelper.crc16(blePacket.buffer.asUint8List(), 3, payloadSize);
+    int checksum = CRC16.crc16(blePacket.buffer.asUint8List(), 3, payloadSize);
     blePacket.setUint16(packetIndex, checksum); packetIndex += 2;
     blePacket.setUint8(packetIndex, 0x03); //End of packet
 
@@ -479,7 +479,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     for (int i=0;i<serializedAppconf.lengthInBytes;++i) {
       blePacket.setInt8(packetIndex++, serializedAppconf.getInt8(i));
     }
-    int checksum = BLEHelper.crc16(blePacket.buffer.asUint8List(), 3, payloadSize);
+    int checksum = CRC16.crc16(blePacket.buffer.asUint8List(), 3, payloadSize);
     blePacket.setUint16(packetIndex, checksum); packetIndex += 2;
     blePacket.setUint8(packetIndex, 0x03); //End of packet
 
@@ -538,7 +538,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       byteData.setUint8(3, optionalCANID);
     }
     byteData.setUint8(sendCAN ? 4:2, COMM_PACKET_ID.COMM_GET_DECODED_PPM.index);
-    int checksum = BLEHelper.crc16(byteData.buffer.asUint8List(), 2, sendCAN ? 3:1);
+    int checksum = CRC16.crc16(byteData.buffer.asUint8List(), 2, sendCAN ? 3:1);
     byteData.setUint16(sendCAN ? 5:3, checksum);
     byteData.setUint8(sendCAN ? 7:5, 0x03); //End of packet
 
@@ -2035,7 +2035,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                       byteData.setUint8(1, 0x05);
                                       byteData.setUint8(2, COMM_PACKET_ID.COMM_NRF_START_PAIRING.index);
                                       byteData.setUint32(3, 10000); //milliseconds
-                                      int checksum = BLEHelper.crc16(byteData.buffer.asUint8List(), 2, 5);
+                                      int checksum = CRC16.crc16(byteData.buffer.asUint8List(), 2, 5);
                                       byteData.setUint16(7, checksum);
                                       byteData.setUint8(9, 0x03); //End of packet
 
