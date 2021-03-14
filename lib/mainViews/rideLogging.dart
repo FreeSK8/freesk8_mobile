@@ -139,7 +139,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
   // Simple TableCalendar configuration (using Styles)
   Widget _buildTableCalendar() {
     return TableCalendar(
-      initialCalendarFormat: CalendarFormat.twoWeeks,
+      initialCalendarFormat: CalendarFormat.month,
       calendarController: _calendarController,
       events: _events,
       //holidays: _holidays,
@@ -147,12 +147,13 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
       calendarStyle: CalendarStyle(
         selectedColor: Colors.deepOrange[400],
         todayColor: Colors.deepOrange[200],
-        markersColor: Colors.brown[700],
+        markersColor: Colors.white,
         outsideDaysVisible: false,
       ),
       headerStyle: HeaderStyle(
-        formatButtonTextStyle:
-        TextStyle().copyWith(color: Colors.white, fontSize: 15.0),
+        formatButtonShowsNext: false,
+        formatButtonTextStyle: TextStyle().copyWith(
+            color: Colors.white, fontSize: 15.0),
         formatButtonDecoration: BoxDecoration(
           color: Colors.deepOrange[400],
           borderRadius: BorderRadius.circular(16.0),
@@ -278,9 +279,9 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
     });
   }
 
-  void _onVisibleDaysChanged(
-      DateTime first, DateTime last, CalendarFormat format) {
+  void _onVisibleDaysChanged(DateTime first, DateTime last, CalendarFormat format) {
     //globalLogger.wtf('CALLBACK: _onVisibleDaysChanged');
+    //TODO: capture calendar format changes and store with user preferences for determining initial viewing format
   }
 
   void _onCalendarCreated(
