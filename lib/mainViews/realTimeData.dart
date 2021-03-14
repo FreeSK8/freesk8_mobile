@@ -80,7 +80,7 @@ class RealTimeDataState extends State<RealTimeData> {
 
   static ESCTelemetry escTelemetry;
 
-  static double batteryRemaining = 0;
+  double batteryRemaining = 0;
 
   double calculateSpeedKph(double eRpm) {
     double ratio = 1.0 / widget.currentSettings.settings.gearRatio;
@@ -411,6 +411,10 @@ class RealTimeDataState extends State<RealTimeData> {
 
     if (escTelemetry.battery_level != null) {
       batteryRemaining = (0.25 * escTelemetry.battery_level * 100) + (0.75 * batteryRemaining);
+      if (batteryRemaining < 0.0 || batteryRemaining > 100.0) {
+        globalLogger.e("Battery Remaining $batteryRemaining battery_level ${escTelemetry.battery_level}");
+        batteryRemaining = 0;
+      }
     }
 
 
