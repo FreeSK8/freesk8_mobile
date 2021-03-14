@@ -46,10 +46,10 @@ class ESCTelemetry {
     fault_code = mc_fault_code.FAULT_CODE_NONE;
 
     //NOTE: Extras for COMM_GET_VALUES_SETUP
-    speed = 0;
+    speed = null;
     battery_level = null;
-    num_vescs = 0;
-    battery_wh = 0;
+    num_vescs = null;
+    battery_wh = null;
   }
   //FW 5
   double v_in;
@@ -220,7 +220,6 @@ class ESCHelper {
     telemetryPacket.rpm = buffer_get_float32(payload, index, 1.0); index += 4;
     telemetryPacket.speed = buffer_get_float32(payload, index, 1000.0); index += 4;
     telemetryPacket.v_in = buffer_get_float16(payload, index, 10.0); index += 2;
-    //battery level
     telemetryPacket.battery_level = buffer_get_float16(payload, index, 1000.0); index += 2;
     telemetryPacket.amp_hours = buffer_get_float32(payload, index, 10000.0); index += 4;
     telemetryPacket.amp_hours_charged = buffer_get_float32(payload, index, 10000.0); index += 4;
@@ -232,7 +231,7 @@ class ESCHelper {
     telemetryPacket.fault_code = mc_fault_code.values[payload[index++]];
     telemetryPacket.vesc_id = payload[index++];
     telemetryPacket.num_vescs = payload[index++];
-    //battery_wh
+    telemetryPacket.battery_wh = buffer_get_float32(payload, index, 1000.0); index += 4;
 
     return telemetryPacket;
   }
