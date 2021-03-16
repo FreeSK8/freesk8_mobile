@@ -199,63 +199,63 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
     // TextEditingController Listeners for ESC Configurator
     tecBatterySeriesCount.addListener(() { widget.escMotorConfiguration.si_battery_cells = int.tryParse(tecBatterySeriesCount.text); });
-    tecBatteryCapacityAh.addListener(() { widget.escMotorConfiguration.si_battery_ah = doublePrecision(double.tryParse(tecBatteryCapacityAh.text), 2) ; });
-    tecWheelDiameterMillimeters.addListener(() { widget.escMotorConfiguration.si_wheel_diameter = doublePrecision(double.tryParse(tecWheelDiameterMillimeters.text) / 1000.0, 2); });
+    tecBatteryCapacityAh.addListener(() { widget.escMotorConfiguration.si_battery_ah = doublePrecision(double.tryParse(tecBatteryCapacityAh.text.replaceFirst(',', '.')), 2); });
+    tecWheelDiameterMillimeters.addListener(() { widget.escMotorConfiguration.si_wheel_diameter = doublePrecision(double.tryParse(tecWheelDiameterMillimeters.text.replaceFirst(',', '.')) / 1000.0, 2); });
     tecMotorPoles.addListener(() { widget.escMotorConfiguration.si_motor_poles = int.tryParse(tecMotorPoles.text); });
-    tecGearRatio.addListener(() { widget.escMotorConfiguration.si_gear_ratio = doublePrecision(double.tryParse(tecGearRatio.text), 1); });
-    tecCurrentMax.addListener(() { widget.escMotorConfiguration.l_current_max = doublePrecision(double.tryParse(tecCurrentMax.text), 1); });
+    tecGearRatio.addListener(() { widget.escMotorConfiguration.si_gear_ratio = doublePrecision(double.tryParse(tecGearRatio.text.replaceFirst(',', '.')), 1); });
+    tecCurrentMax.addListener(() { widget.escMotorConfiguration.l_current_max = doublePrecision(double.tryParse(tecCurrentMax.text.replaceFirst(',', '.')), 1); });
     tecCurrentMin.addListener(() {
-      double newValue = double.tryParse(tecCurrentMin.text);
+      double newValue = double.tryParse(tecCurrentMin.text.replaceFirst(',', '.'));
       if(newValue==null) newValue = 0.0; //Ensure not null
       if(newValue>0.0) newValue *= -1; //Ensure negative
       widget.escMotorConfiguration.l_current_min = doublePrecision(newValue, 1);
     });
-    tecInCurrentMax.addListener(() { widget.escMotorConfiguration.l_in_current_max = doublePrecision(double.tryParse(tecInCurrentMax.text), 1); });
+    tecInCurrentMax.addListener(() { widget.escMotorConfiguration.l_in_current_max = doublePrecision(double.tryParse(tecInCurrentMax.text.replaceFirst(',', '.')), 1); });
     tecInCurrentMin.addListener(() {
-      double newValue = double.tryParse(tecInCurrentMin.text);
+      double newValue = double.tryParse(tecInCurrentMin.text.replaceFirst(',', '.'));
       if(newValue==null) newValue = 0.0; //Ensure not null
       if(newValue>0.0) newValue *= -1; //Ensure negative
       widget.escMotorConfiguration.l_in_current_min = doublePrecision(newValue, 1);
     });
-    tecABSCurrentMax.addListener(() { widget.escMotorConfiguration.l_abs_current_max = doublePrecision(double.tryParse(tecABSCurrentMax.text), 1); });
-    tecMaxERPM.addListener(() { widget.escMotorConfiguration.l_max_erpm = int.tryParse(tecMaxERPM.text).toDouble(); });
+    tecABSCurrentMax.addListener(() { widget.escMotorConfiguration.l_abs_current_max = doublePrecision(double.tryParse(tecABSCurrentMax.text.replaceFirst(',', '.')), 1); });
+    tecMaxERPM.addListener(() { widget.escMotorConfiguration.l_max_erpm = int.tryParse(tecMaxERPM.text.replaceFirst(',', '.')).toDouble(); });
     tecMinERPM.addListener(() {
-      double newValue = double.tryParse(tecMinERPM.text);
+      double newValue = double.tryParse(tecMinERPM.text.replaceFirst(',', '.'));
       if(newValue==null) newValue = 0.0; //Ensure not null
       if(newValue>0.0) newValue *= -1; //Ensure negative
       widget.escMotorConfiguration.l_min_erpm = newValue;
     });
-    tecMinVIN.addListener(() { widget.escMotorConfiguration.l_min_vin = doublePrecision(double.tryParse(tecMinVIN.text), 1); });
-    tecMaxVIN.addListener(() { widget.escMotorConfiguration.l_max_vin = doublePrecision(double.tryParse(tecMaxVIN.text), 1); });
-    tecBatteryCutStart.addListener(() { widget.escMotorConfiguration.l_battery_cut_start = doublePrecision(double.tryParse(tecBatteryCutStart.text), 1); });
-    tecBatteryCutEnd.addListener(() { widget.escMotorConfiguration.l_battery_cut_end = doublePrecision(double.tryParse(tecBatteryCutEnd.text), 1); });
-    tecTempFETStart.addListener(() { widget.escMotorConfiguration.l_temp_fet_start = doublePrecision(double.tryParse(tecTempFETStart.text), 1); });
-    tecTempFETEnd.addListener(() { widget.escMotorConfiguration.l_temp_fet_end = doublePrecision(double.tryParse(tecTempFETEnd.text), 1); });
-    tecTempMotorStart.addListener(() { widget.escMotorConfiguration.l_temp_motor_start = doublePrecision(double.tryParse(tecTempMotorStart.text), 1); });
-    tecTempMotorEnd.addListener(() { widget.escMotorConfiguration.l_temp_motor_end = doublePrecision(double.tryParse(tecTempMotorEnd.text), 1); });
+    tecMinVIN.addListener(() { widget.escMotorConfiguration.l_min_vin = doublePrecision(double.tryParse(tecMinVIN.text.replaceFirst(',', '.')), 1); });
+    tecMaxVIN.addListener(() { widget.escMotorConfiguration.l_max_vin = doublePrecision(double.tryParse(tecMaxVIN.text.replaceFirst(',', '.')), 1); });
+    tecBatteryCutStart.addListener(() { widget.escMotorConfiguration.l_battery_cut_start = doublePrecision(double.tryParse(tecBatteryCutStart.text.replaceFirst(',', '.')), 1); });
+    tecBatteryCutEnd.addListener(() { widget.escMotorConfiguration.l_battery_cut_end = doublePrecision(double.tryParse(tecBatteryCutEnd.text.replaceFirst(',', '.')), 1); });
+    tecTempFETStart.addListener(() { widget.escMotorConfiguration.l_temp_fet_start = doublePrecision(double.tryParse(tecTempFETStart.text.replaceFirst(',', '.')), 1); });
+    tecTempFETEnd.addListener(() { widget.escMotorConfiguration.l_temp_fet_end = doublePrecision(double.tryParse(tecTempFETEnd.text.replaceFirst(',', '.')), 1); });
+    tecTempMotorStart.addListener(() { widget.escMotorConfiguration.l_temp_motor_start = doublePrecision(double.tryParse(tecTempMotorStart.text.replaceFirst(',', '.')), 1); });
+    tecTempMotorEnd.addListener(() { widget.escMotorConfiguration.l_temp_motor_end = doublePrecision(double.tryParse(tecTempMotorEnd.text.replaceFirst(',', '.')), 1); });
     tecWattMin.addListener(() {
-      double newValue = double.tryParse(tecWattMin.text);
+      double newValue = double.tryParse(tecWattMin.text.replaceFirst(',', '.'));
       if(newValue==null) newValue = 0.0; //Ensure not null
       if(newValue>0.0) newValue *= -1; //Ensure negative
       widget.escMotorConfiguration.l_watt_min = doublePrecision(newValue, 1);
     });
-    tecWattMax.addListener(() { widget.escMotorConfiguration.l_watt_max = doublePrecision(double.tryParse(tecWattMax.text), 1); });
+    tecWattMax.addListener(() { widget.escMotorConfiguration.l_watt_max = doublePrecision(double.tryParse(tecWattMax.text.replaceFirst(',', '.')), 1); });
     tecCurrentMinScale.addListener(() {
-      double newValue = double.tryParse(tecCurrentMinScale.text);
+      double newValue = double.tryParse(tecCurrentMinScale.text.replaceFirst(',', '.'));
       if(newValue==null) newValue = 0.0; //Ensure not null
       if(newValue>1.0) newValue = 1.0; //Ensure under 1.0
       if(newValue<0.0) newValue = 0.0; //Ensure greater than 0.0
       widget.escMotorConfiguration.l_current_min_scale = doublePrecision(newValue, 2);
     });
     tecCurrentMaxScale.addListener(() {
-      double newValue = double.tryParse(tecCurrentMaxScale.text);
+      double newValue = double.tryParse(tecCurrentMaxScale.text.replaceFirst(',', '.'));
       if(newValue==null) newValue = 0.0; //Ensure not null
       if(newValue>1.0) newValue = 1.0; //Ensure under 1.0
       if(newValue<0.0) newValue = 0.0; //Ensure greater than 0.0
       widget.escMotorConfiguration.l_current_max_scale = doublePrecision(newValue, 2);
     });
     tecDutyStart.addListener(() {
-      double newValue = double.tryParse(tecDutyStart.text);
+      double newValue = double.tryParse(tecDutyStart.text.replaceFirst(',', '.'));
       if(newValue==null) newValue = 0.0; //Ensure not null
       if(newValue>1.0) newValue = 1.0; //Ensure under 1.0
       if(newValue<0.0) newValue = 0.0; //Ensure greater than 0.0
@@ -1793,7 +1793,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Battery Capacity (Ah)"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(formatPositiveDouble)
                               ]
                           ),
                           TextField(
@@ -1817,7 +1817,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Gear Ratio"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(formatPositiveDouble)
                               ]
                           ),
 
@@ -1831,7 +1831,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Max Current (Amps)"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(formatPositiveDouble)
                               ]
                           ),
                           TextField(
@@ -1847,7 +1847,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Battery Max Current (Amps)"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(formatPositiveDouble)
                               ]
                           ),
                           TextField(
@@ -1863,7 +1863,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "ABS Max Current (Amps)"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(formatPositiveDouble)
                               ]
                           ),
 
@@ -1880,7 +1880,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Min ERPM"),
                               keyboardType: TextInputType.number,
                               inputFormatters: <TextInputFormatter>[
-                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(formatPositiveDouble)
                               ]
                           ),
 
@@ -1889,7 +1889,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Minimum Voltage Input"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(formatPositiveDouble)
                               ]
                           ),
                           TextField(
@@ -1897,7 +1897,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Maximum Voltage Input"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(formatPositiveDouble)
                               ]
                           ),
 
@@ -1906,7 +1906,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Battery Cutoff Start (Volts)"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(formatPositiveDouble)
                               ]
                           ),
                           TextField(
@@ -1914,7 +1914,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Battery Cutoff End (Volts)"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(formatPositiveDouble)
                               ]
                           ),
                           TextField(
@@ -1922,7 +1922,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "ESC Temperature Cutoff Start (Celsius)"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(formatPositiveDouble)
                               ]
                           ),
                           TextField(
@@ -1930,7 +1930,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "ESC Temperature Cutoff End (Celsius)"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(formatPositiveDouble)
                               ]
                           ),
                           TextField(
@@ -1938,7 +1938,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Motor Temperature Cutoff Start (Celsius)"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(formatPositiveDouble)
                               ]
                           ),
                           TextField(
@@ -1946,7 +1946,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Motor Temperature Cutoff End (Celsius)"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(formatPositiveDouble)
                               ]
                           ),
 
@@ -1963,7 +1963,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Maximum Wattage"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(formatPositiveDouble)
                               ]
                           ),
                           TextField(
@@ -1971,7 +1971,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Min Current Scale"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(formatPositiveDouble)
                               ]
                           ),
                           TextField(
@@ -1979,7 +1979,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Max Current Scale"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(formatPositiveDouble)
                               ]
                           ),
                           TextField(
@@ -1987,7 +1987,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               decoration: new InputDecoration(labelText: "Duty Cycle Current Limit Start"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
-                                FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                                FilteringTextInputFormatter.allow(formatPositiveDouble)
                               ]
                           ),
 

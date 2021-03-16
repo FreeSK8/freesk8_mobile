@@ -72,12 +72,12 @@ class ConfigureESCState extends State<ConfigureESC> {
     super.initState();
     loadESCDefaults = false;
     tecBatteryCurrentRegen.addListener(() {
-      focDetectMinBatteryAmps = double.tryParse(tecBatteryCurrentRegen.text); //Try parse so we don't throw
+      focDetectMinBatteryAmps = double.tryParse(tecBatteryCurrentRegen.text.replaceFirst(',', '.')); //Try parse so we don't throw
       if(focDetectMinBatteryAmps==null) focDetectMinBatteryAmps = 0.0; //Ensure not null
       if(focDetectMinBatteryAmps>0.0) focDetectMinBatteryAmps *= -1; //Ensure negative
     });
     tecBatteryCurrentOutput.addListener(() {
-      focDetectMaxBatteryAmps = double.tryParse(tecBatteryCurrentOutput.text); //Try parse so we don't throw
+      focDetectMaxBatteryAmps = double.tryParse(tecBatteryCurrentOutput.text.replaceFirst(',', '.')); //Try parse so we don't throw
       if(focDetectMaxBatteryAmps==null) focDetectMaxBatteryAmps = 0.0; //Ensure not null
     });
   }
@@ -127,7 +127,7 @@ class ConfigureESCState extends State<ConfigureESC> {
                 decoration: new InputDecoration(labelText: "Battery Output Current Limit (0.0 = Defaults)"),
                 keyboardType: TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: <TextInputFormatter>[
-                  FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                  FilteringTextInputFormatter.allow(formatPositiveDouble)
                 ]
             ),
           ],),

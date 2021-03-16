@@ -10,6 +10,9 @@ import 'package:logger/logger.dart';
 import 'components/crc16.dart';
 import 'hardwareSupport/escHelper/dataTypes.dart';
 
+// RegExp for FilteringTextInputFormatter that allows only positive decimal values
+final RegExp formatPositiveDouble = RegExp(r'^[+-]?([0-9]+([.,][0-9]*)?|[.,][0-9]+)$');
+
 Uint8List simpleVESCRequest(int messageIndex, {int optionalCANID}) {
   bool sendCAN = optionalCANID != null;
   var byteData = new ByteData(sendCAN ? 8:6); //<start><payloadLen><packetID><crc1><crc2><end>

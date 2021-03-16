@@ -186,7 +186,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
       }
     });
     tecLogAutoStopLowVoltage.addListener(() {
-      myArguments.currentConfiguration.logAutoStopLowVoltage = double.tryParse(tecLogAutoStopLowVoltage.text).abs();
+      myArguments.currentConfiguration.logAutoStopLowVoltage = double.tryParse(tecLogAutoStopLowVoltage.text.replaceFirst(',', '.')).abs();
       if (myArguments.currentConfiguration.logAutoStopLowVoltage > 128.0) {
         setState(() {
           myArguments.currentConfiguration.logAutoStopLowVoltage = 128.0;
@@ -194,7 +194,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
       }
     });
     tecAlertVoltageLow.addListener(() {
-      myArguments.currentConfiguration.alertVoltageLow = doublePrecision(double.tryParse(tecAlertVoltageLow.text).abs(), 1);
+      myArguments.currentConfiguration.alertVoltageLow = doublePrecision(double.tryParse(tecAlertVoltageLow.text.replaceFirst(',', '.')).abs(), 1);
       if (myArguments.currentConfiguration.alertVoltageLow > 128.0) {
         setState(() {
           myArguments.currentConfiguration.alertVoltageLow = 128.0;
@@ -202,7 +202,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
       }
     });
     tecAlertESCTemp.addListener(() {
-      myArguments.currentConfiguration.alertESCTemp = doublePrecision(double.tryParse(tecAlertESCTemp.text).abs(), 1);
+      myArguments.currentConfiguration.alertESCTemp = doublePrecision(double.tryParse(tecAlertESCTemp.text.replaceFirst(',', '.')).abs(), 1);
       if (myArguments.currentConfiguration.alertESCTemp > 85.0) {
         setState(() {
           myArguments.currentConfiguration.alertESCTemp = 85.0;
@@ -210,7 +210,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
       }
     });
     tecAlertMotorTemp.addListener(() {
-      myArguments.currentConfiguration.alertMotorTemp = doublePrecision(double.tryParse(tecAlertMotorTemp.text).abs(), 1);
+      myArguments.currentConfiguration.alertMotorTemp = doublePrecision(double.tryParse(tecAlertMotorTemp.text.replaceFirst(',', '.')).abs(), 1);
       if (myArguments.currentConfiguration.alertMotorTemp > 120.0) {
         setState(() {
           myArguments.currentConfiguration.alertMotorTemp = 120.0;
@@ -273,7 +273,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                       decoration: new InputDecoration(labelText: "Log Auto Stop Low Voltage Threshold (Volts)"),
                       keyboardType: TextInputType.numberWithOptions(decimal: true),
                       inputFormatters: <TextInputFormatter>[
-                        FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                        FilteringTextInputFormatter.allow(formatPositiveDouble)
                       ]
                   ),
 
@@ -391,7 +391,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                       decoration: new InputDecoration(labelText: "Alert Low Voltage (0 = no alert)"),
                       keyboardType: TextInputType.numberWithOptions(decimal: true),
                       inputFormatters: <TextInputFormatter>[
-                        FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                        FilteringTextInputFormatter.allow(formatPositiveDouble)
                       ]
                   ),
                   TextField(
@@ -399,7 +399,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                       decoration: new InputDecoration(labelText: "Alert ESC Temperature °C (0 = no alert)"),
                       keyboardType: TextInputType.numberWithOptions(decimal: true),
                       inputFormatters: <TextInputFormatter>[
-                        FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                        FilteringTextInputFormatter.allow(formatPositiveDouble)
                       ]
                   ),
                   TextField(
@@ -407,7 +407,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                       decoration: new InputDecoration(labelText: "Alert Motor Temperature °C (0 = no alert)"),
                       keyboardType: TextInputType.numberWithOptions(decimal: true),
                       inputFormatters: <TextInputFormatter>[
-                        FilteringTextInputFormatter.allow(RegExp(r'^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$'))
+                        FilteringTextInputFormatter.allow(formatPositiveDouble)
                       ]
                   ),
 
