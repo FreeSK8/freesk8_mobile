@@ -246,13 +246,20 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                           ),
                         ),
 
-                        SizedBox(
-                          width: 32,
-                          child: Icon(Icons.timer),
-                        ),
+                        SizedBox(width: 10),
+                        //SizedBox(
+                        //  width: 32,
+                        //  child: Icon(Icons.timer),
+                        //),
                         SizedBox(
                             //child: Text("${(File(rideLogsFromDatabase[index].logFilePath).statSync().size / 1024).round()} kb"),
-                            child: Text("${Duration(seconds: rideLogsFromDatabase[int.parse(event)].durationSeconds).toString().substring(0,Duration(seconds: rideLogsFromDatabase[int.parse(event)].durationSeconds).toString().indexOf("."))}")
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("${Duration(seconds: rideLogsFromDatabase[int.parse(event)].durationSeconds).toString().substring(0,Duration(seconds: rideLogsFromDatabase[int.parse(event)].durationSeconds).toString().indexOf("."))}"),
+                                Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[int.parse(event)].distance) : rideLogsFromDatabase[int.parse(event)].distance} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}")
+                              ],
+                            )
                         ),
                       ],
                     )
@@ -512,7 +519,9 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                 margin: const EdgeInsets.only(left: 10.0),
                                 color: Theme.of(context).dialogBackgroundColor,
                                 child: Row(
+
                                   mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
                                   children: <Widget>[
                                     /*
                                         SizedBox(width: 5,),
@@ -582,14 +591,22 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                       ),
                                     ),
 
-                                    SizedBox(
-                                      width: 32,
-                                      child: Icon(Icons.timer),
-                                    ),
+                                    SizedBox(width: 10),
+                                    //SizedBox(
+                                    //  width: 32,
+                                    //  child: Icon(Icons.timer),
+                                    //),
                                     SizedBox(
                                         width: 60,
                                         //child: Text("${(File(rideLogsFromDatabase[index].logFilePath).statSync().size / 1024).round()} kb"),
-                                        child: Text("${Duration(seconds: rideLogsFromDatabase[index].durationSeconds).toString().substring(0,Duration(seconds: rideLogsFromDatabase[index].durationSeconds).toString().indexOf("."))}")
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text("${Duration(seconds: rideLogsFromDatabase[index].durationSeconds).toString().substring(0,Duration(seconds: rideLogsFromDatabase[index].durationSeconds).toString().indexOf("."))}"),
+                                            Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[index].distance) : rideLogsFromDatabase[index].distance} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}")
+                                          ],
+                                        )
                                     ),
                                   ],
                                 )
