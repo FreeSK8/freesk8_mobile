@@ -349,24 +349,11 @@ class RealTimeDataState extends State<RealTimeData> {
       );
     }
 
-    // Assemble ESC telemetry from all ESCs
+    //TODO: Using COMM_GET_VALUE_SETUP for RT so map is not actually needed
     if (widget.telemetryMap.length == 0) {
       escTelemetry = new ESCTelemetry();
     } else {
       escTelemetry = widget.telemetryMap.values.first;
-      for (var mapEntry in widget.telemetryMap.entries) {
-        if (mapEntry.key != escTelemetry.vesc_id) {
-          escTelemetry.amp_hours += mapEntry.value.amp_hours;
-          escTelemetry.amp_hours_charged += mapEntry.value.amp_hours_charged;
-          escTelemetry.current_in += mapEntry.value.current_in;
-          escTelemetry.current_motor += mapEntry.value.current_motor;
-          escTelemetry.watt_hours += mapEntry.value.watt_hours;
-          escTelemetry.watt_hours_charged += mapEntry.value.watt_hours_charged;
-          if (mapEntry.value.fault_code != mc_fault_code.FAULT_CODE_NONE && escTelemetry.fault_code == mc_fault_code.FAULT_CODE_NONE) {
-            mapEntry.value.fault_code = escTelemetry.fault_code;
-          }
-        }
-      }
     }
 
     doubleItemWidth = MediaQuery.of(context).size.width /2 - 10;
@@ -392,7 +379,7 @@ class RealTimeDataState extends State<RealTimeData> {
     //String speed = widget.currentSettings.settings.useImperial ? "$speedNow mph" : "$speedNow kph";
 
     //String distance = widget.currentSettings.settings.useImperial ? "${kmToMile(escTelemetry.tachometer_abs / 1000.0)} miles" : "${escTelemetry.tachometer_abs / 1000.0} km";
-    double distanceTraveled = calculateDistanceKm(escTelemetry.tachometer_abs * 1.0);
+    double distanceTraveled = doublePrecision(escTelemetry.tachometer_abs / 1000.0, 2);
     String distance = widget.currentSettings.settings.useImperial ? "${kmToMile(distanceTraveled)} miles" : "$distanceTraveled km";
 
 
@@ -577,8 +564,8 @@ class RealTimeDataState extends State<RealTimeData> {
                 Text(" ${doublePrecision(escTelemetry.current_in, 2)} A")
               ]),
               TableRow(children: [
-                Text("ESC ID${widget.telemetryMap.length > 1 ? "s":""}: ", textAlign: TextAlign.right,),
-                Text(" ${widget.telemetryMap.keys}")
+                Text("ESC ID: ", textAlign: TextAlign.right,),
+                Text(" ${escTelemetry.vesc_id}")
               ]),
               TableRow(children: [
                 Text("Fault Now: ", textAlign: TextAlign.right,),

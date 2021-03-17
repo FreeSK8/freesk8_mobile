@@ -1462,28 +1462,18 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         }
         else if ( packetID == COMM_PACKET_ID.COMM_GET_VALUES.index ) {
           if(_showDieBieMS) {
-            //TODO: Parse DieBieMS GET_VALUES packet - A shame they share the same ID as ESC values
+            // Parse DieBieMS GET_VALUES packet - A shame they share the same ID as ESC values
             dieBieMSTelemetry = dieBieMSHelper.processTelemetry(bleHelper.getPayload(), smartBMSCANID);
-            bleHelper.resetPacket(); //Prepare for next packet
-            return;
+
+            if(controller.index == 1) { //Only re-draw if we are on the real time data tab
+              setState(() { //Re-drawing with updated telemetry data
+              });
+            }
           }
 
-
-          ///Telemetry packet
-          telemetryPacket = escHelper.processTelemetry(bleHelper.getPayload());
-
-          // Update map of ESC telemetry
-          telemetryMap[telemetryPacket.vesc_id] = telemetryPacket;
-
-          if(controller.index == 1) { //Only re-draw if we are on the real time data tab
-            setState(() { //Re-drawing with updated telemetry data
-            });
-          }
-
-          // Watch here for all fault codes received. Populate an array with time and fault for display to user
-          if ( telemetryPacket.fault_code != mc_fault_code.FAULT_CODE_NONE ) {
-            globalLogger.w("WARNING! Fault code received! ${telemetryPacket.fault_code}");
-          }
+          //TODO: Old Telemetry packet
+          //telemetryPacket = escHelper.processTelemetry(bleHelper.getPayload());
+          //print("goodValues ${telemetryPacket.vesc_id} ${telemetryPacket.tachometer} ${telemetryPacket.tachometer_abs} ${telemetryPacket.amp_hours} ${telemetryPacket.amp_hours_charged} ${telemetryPacket.watt_hours}");
 
           // Prepare for the next packet
           bleHelper.resetPacket();

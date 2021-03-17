@@ -197,7 +197,7 @@ class ESCHelper {
     telemetryPacket.tachometer = buffer_get_int32(payload, index); index += 4;
     telemetryPacket.tachometer_abs = buffer_get_int32(payload, index); index += 4;
     telemetryPacket.fault_code = mc_fault_code.values[payload[index++]];
-    telemetryPacket.position = buffer_get_float32(payload, index, 10.0); index += 4;
+    telemetryPacket.position = buffer_get_float32(payload, index, 1000000.0); index += 4;
     telemetryPacket.vesc_id = payload[index++];
     telemetryPacket.temp_mos_1 = buffer_get_float16(payload, index, 10.0); index += 2;
     telemetryPacket.temp_mos_2 = buffer_get_float16(payload, index, 10.0); index += 2;
@@ -208,6 +208,10 @@ class ESCHelper {
     return telemetryPacket;
   }
 
+  //Dear future people,
+  //COMM_GET_VALUES and COMM_GET_VALUES_SETUP are quite similar but have some differences:
+  //In SETUP the energy values are from all ESCs
+  //In SETUP the distance values are in meters
   ESCTelemetry processSetupValues(Uint8List payload) {
     int index = 1;
     ESCTelemetry telemetryPacket = new ESCTelemetry();
@@ -225,9 +229,9 @@ class ESCHelper {
     telemetryPacket.amp_hours_charged = buffer_get_float32(payload, index, 10000.0); index += 4;
     telemetryPacket.watt_hours = buffer_get_float32(payload, index, 10000.0); index += 4;
     telemetryPacket.watt_hours_charged = buffer_get_float32(payload, index, 10000.0); index += 4;
-    telemetryPacket.tachometer = buffer_get_int32(payload, index); index += 4;
-    telemetryPacket.tachometer_abs = buffer_get_int32(payload, index); index += 4;
-    telemetryPacket.position = buffer_get_float32(payload, index, 10.0); index += 4;
+    telemetryPacket.tachometer = buffer_get_float32(payload, index, 1000.0).toInt(); index += 4;
+    telemetryPacket.tachometer_abs = buffer_get_float32(payload, index, 1000.0).toInt(); index += 4;
+    telemetryPacket.position = buffer_get_float32(payload, index, 1e6); index += 4;
     telemetryPacket.fault_code = mc_fault_code.values[payload[index++]];
     telemetryPacket.vesc_id = payload[index++];
     telemetryPacket.num_vescs = payload[index++];
