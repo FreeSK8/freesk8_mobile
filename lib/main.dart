@@ -1055,8 +1055,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 if(entry[1] == "gps" && entry.length >= 7) {
                   //dt,gps,satellites,altitude,speed,latitude,longitude
                   // Determine date times
-                  firstEntryTime ??= DateTime.tryParse(entry[0]);
-                  lastEntryTime = DateTime.tryParse(entry[0]);
+                  DateTime thisEntryTime = DateTime.tryParse(entry[0]);
+                  firstEntryTime ??= thisEntryTime;
+                  if (thisEntryTime != null) lastEntryTime = thisEntryTime;
 
                   // Track elevation change
                   double elevation = double.tryParse(entry[3]);
@@ -1070,8 +1071,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 else if (entry[1] == "esc" && entry.length >= 14) {
                   //dt,esc,esc_id,voltage,motor_temp,esc_temp,duty_cycle,motor_current,battery_current,watt_hours,watt_hours_regen,e_rpm,e_distance,fault
                   // Determine date times
-                  firstEntryTime ??= DateTime.tryParse(entry[0]);
-                  lastEntryTime = DateTime.tryParse(entry[0]);
+                  DateTime thisEntryTime = DateTime.tryParse(entry[0]);
+                  firstEntryTime ??= thisEntryTime;
+                  if (thisEntryTime != null) lastEntryTime = thisEntryTime;
 
                   // ESC ID
                   int escID = int.parse(entry[2]);
@@ -1136,33 +1138,29 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             //int test = null;
             //int fail = test + 420;
 
-            /// Compute duration from timestamps
-            int durationSeconds = 0;
-            if (lastEntryTime != null && firstEntryTime != null) {
-              durationSeconds = lastEntryTime.difference(firstEntryTime).inSeconds;
-            } else {
-              globalLogger.wtf("cat,complete: lastEntryTime && firstEntryTime == null; duration=$durationSeconds");
-            }
-
             /// Insert record into database
-            await DatabaseAssistant.dbInsertLog(LogInfoItem(
-                dateTime: firstEntryTime,
-                boardID: widget.myUserSettings.currentDeviceID,
-                boardAlias: widget.myUserSettings.settings.boardAlias,
-                logFilePath: savedFilePath,
-                avgSpeed: -1.0,
-                maxSpeed: maxSpeedKph,
-                elevationChange: maxElevation != null ? maxElevation - minElevation : -1.0,
-                maxAmpsBattery: maxCurrentBattery,
-                maxAmpsMotors: maxCurrentMotor,
-                wattHoursTotal: wattHours,
-                wattHoursRegenTotal: wattHoursRegen,
-                distance: distanceTotal,
-                durationSeconds: durationSeconds,
-                faultCount: faultCodeCount,
-                rideName: "",
-                notes: ""
-            ));
+            if (lastEntryTime == null && firstEntryTime == null) {
+              globalLogger.e("cat,complete: Unable to create database entry for $catCurrentFilename");
+            } else {
+              await DatabaseAssistant.dbInsertLog(LogInfoItem(
+                  dateTime: firstEntryTime,
+                  boardID: widget.myUserSettings.currentDeviceID,
+                  boardAlias: widget.myUserSettings.settings.boardAlias,
+                  logFilePath: savedFilePath,
+                  avgSpeed: -1.0,
+                  maxSpeed: maxSpeedKph,
+                  elevationChange: maxElevation != null ? maxElevation - minElevation : -1.0,
+                  maxAmpsBattery: maxCurrentBattery,
+                  maxAmpsMotors: maxCurrentMotor,
+                  wattHoursTotal: wattHours,
+                  wattHoursRegenTotal: wattHoursRegen,
+                  distance: distanceTotal,
+                  durationSeconds: lastEntryTime.difference(firstEntryTime).inSeconds,
+                  faultCount: faultCodeCount,
+                  rideName: "",
+                  notes: ""
+              ));
+            }
 
             /// Advance the sync process after success
             fileListToDelete.add(catCurrentFilename); // Add this file to fileListToDelete
