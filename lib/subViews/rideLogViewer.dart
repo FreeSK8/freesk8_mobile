@@ -414,12 +414,13 @@ class RideLogViewerState extends State<RideLogViewer> {
               wattHoursStartPrimary ??= wattHoursNow;
               wattHoursRegenStartPrimary ??= wattHoursRegenNow;
 
-              double wattHours = wattHoursNow - wattHoursStartPrimary - wattHoursRegenStartPrimary - wattHoursRegenNow ;
+              double wattHours = (wattHoursNow - wattHoursStartPrimary) - (wattHoursRegenNow - wattHoursRegenStartPrimary);
               double totalDistance = distanceEndPrimary - distanceStartPrimary;
               double consumption = wattHours / (myArguments.userSettings.settings.useImperial ? kmToMile(totalDistance) : totalDistance);
               if (consumption.isNaN || consumption.isInfinite) {
                 consumption = 0;
               }
+              //print("whNow $wattHoursNow whStart $wattHoursStartPrimary whRegenNow $wattHoursRegenNow whRegenStart $wattHoursRegenStartPrimary wh $wattHours td $totalDistance consumption $consumption");
               escTimeSeriesMap[thisDt].consumption = doublePrecision(consumption, 2);
               break;
             case 1:
