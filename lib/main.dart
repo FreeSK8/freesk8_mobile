@@ -1020,7 +1020,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             // Then generate database statistics
             // Then create database entry
             // Then rebuild state and continue sync process
-            String savedFilePath = await FileManager.saveLogToDocuments(filename: catCurrentFilename);
+            String savedFilePath = await FileManager.saveLogToDocuments(filename: catCurrentFilename, userSettings: widget.myUserSettings);
 
             /// Analyze log to generate database statistics
             Map<int, double> wattHoursStartByESC = new Map();

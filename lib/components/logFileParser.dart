@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:freesk8_mobile/components/userSettings.dart';
+
 import '../hardwareSupport/escHelper/dataTypes.dart';
 import '../globalUtilities.dart';
 import 'package:path_provider/path_provider.dart';
@@ -73,7 +75,7 @@ class LogGPS {
 }
 
 class LogFileParser {
-  static Future<Pair<String, File>> parseFile(File file, String fileName) async {
+  static Future<Pair<String, File>> parseFile(File file, String fileName, UserSettings userSettings) async {
     String fileNameOut = fileName;
     LogESC lastESCPacket = new LogESC();
     LogGPS lastGPSPacket = new LogGPS();
@@ -84,9 +86,12 @@ class LogFileParser {
     await convertedFile.writeAsString('');
 
     // Write header contents
-    convertedFile.writeAsStringSync("header,format_esc,esc_id,voltage,motor_temp,esc_temp,duty_cycle,motor_current,battery_current,watt_hours,watt_hours_regen,e_rpm,e_distance,fault\n", mode: FileMode.append);
+    convertedFile.writeAsStringSync("header,format_esc,esc_id,voltage,motor_temp,esc_temp,duty_cycle,motor_current,battery_current,watt_hours,watt_hours_regen,e_rpm,e_distance,fault,speed_kph,distance_km\n", mode: FileMode.append);
     convertedFile.writeAsStringSync("header,format_gps,satellites,altitude,speed,latitude,longitude\n", mode: FileMode.append);
     convertedFile.writeAsStringSync("header,format_err,fault_name,fault_code,esc_id\n", mode: FileMode.append);
+    convertedFile.writeAsStringSync("header,gear_ratio,${userSettings.settings.gearRatio}\n");
+    convertedFile.writeAsStringSync("header,wheel_diameter_mm,${userSettings.settings.wheelDiameterMillimeters}\n");
+    convertedFile.writeAsStringSync("header,motor_poles,${userSettings.settings.motorPoles}\n");
 
     // Iterate contents of file
     Uint8List bytes = file.readAsBytesSync();
@@ -322,7 +327,9 @@ class LogFileParser {
             "${parsedESC[i].wattHoursRegen},"
             "${parsedESC[i].eRPM},"
             "${parsedESC[i].eDistance},"
-            "${parsedESC[i].faultCode}\n";
+            "${parsedESC[i].faultCode},"
+            "${eRPMToKph(parsedESC[i].eRPM.toDouble(), userSettings.settings.gearRatio, userSettings.settings.wheelDiameterMillimeters, userSettings.settings.motorPoles)},"
+            "${eDistanceToKm(parsedESC[i].eDistance.toDouble(), userSettings.settings.gearRatio, userSettings.settings.wheelDiameterMillimeters, userSettings.settings.motorPoles)}\n";
 
         // Store faults on their own line
         if (parsedESC[i].faultCode != 0) {

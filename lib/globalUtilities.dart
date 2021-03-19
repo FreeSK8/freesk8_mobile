@@ -101,17 +101,17 @@ double mileToKm(double mile) {
   return doublePrecision(distance, 2);
 }
 
-double eRPMToKph(double eRpm, double gearRatio, int wheelDiameterMillimeters, int motorPoles) {
+double eRPMToKph(double eRPM, double gearRatio, int wheelDiameterMillimeters, int motorPoles) {
   double ratio = 1.0 / gearRatio;
   int minutesToHour = 60;
-  double ratioRpmSpeed = (ratio * minutesToHour * wheelDiameterMillimeters * pi) / ((motorPoles / 2) * 1000000);
-  double speed = eRpm * ratioRpmSpeed;
+  double ratioRpmSpeed = (ratio * minutesToHour * wheelDiameterMillimeters * pi) / ((motorPoles / 2) * 1e6);
+  double speed = eRPM * ratioRpmSpeed;
   return doublePrecision(speed, 2);
 }
 
 double eDistanceToKm(double eCount, double gearRatio, int wheelDiameterMillimeters, int motorPoles) {
   double ratio = 1.0 / gearRatio;
-  double ratioPulseDistance = (ratio * wheelDiameterMillimeters * pi) / ((motorPoles * 3) * 1000000);
+  double ratioPulseDistance = (ratio * wheelDiameterMillimeters * pi) / ((motorPoles * 3) * 1e6);
   double distance = eCount * ratioPulseDistance;
   return doublePrecision(distance, 2);
 }
