@@ -55,7 +55,7 @@ import 'package:logger_flutter/logger_flutter.dart';
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.13.2";
+const String freeSK8ApplicationVersion = "0.13.3";
 const String robogotchiFirmwareExpectedVersion = "0.8.2";
 
 void main() {
