@@ -1127,24 +1127,19 @@ class RideLogViewerState extends State<RideLogViewer> {
                       primaryMeasureAxis: new charts.NumericAxisSpec(
                           tickProviderSpec: new charts.BasicNumericTickProviderSpec(zeroBound: false)),
 
-                      //TODO: Customizing the domainAxis tickFormatterSpec causes PanAndZoomBehavior to stop working, WHY?
-                      /*
+                      // Customize the domainAxis tickFormatterSpec
                       domainAxis: new charts.DateTimeAxisSpec(
+                          viewport: new charts.DateTimeExtents(start: escTimeSeriesList.first.time, end: escTimeSeriesList.first.time.add(Duration(minutes: 5))),
                           tickFormatterSpec: new charts.AutoDateTimeTickFormatterSpec(
                             minute: new charts.TimeFormatterSpec(
-                              format: 'HH:mm', // or even HH:mm here too
-                              transitionFormat: 'HH:mm',
+                              format: 'HH:mm:ss', // or even HH:mm here too
+                              transitionFormat: 'HH:mm:ss',
                             ),
                           )
                       ),
-                      */
-                      behaviors: [
-                        //TODO: if the timeline has 1 tick we get this error here that you didn't know much about until now.... fix it please....
 
-                        //TODO: "PanAndZoomBehavior()" causes "Exception caught by gesture" : "Bad state: No element" but works
-                        //TODO: charts.PointRenderer() line 255. Add: if (!componentBounds.containsPoint(point)) continue;
-                        //TODO: https://github.com/janstol/charts/commit/899476a06875422aafde82376cdf57ba0c2e65a5
-                        //NOTE: disabled due to poor performance: new charts.PanAndZoomBehavior(),
+                      behaviors: [
+                        //TODO: Revisit: https://github.com/janstol/charts/commit/899476a06875422aafde82376cdf57ba0c2e65a5
                         new charts.SlidingViewport(),
                         new charts.PanAndZoomBehavior(),
                         new charts.PanBehavior(),
