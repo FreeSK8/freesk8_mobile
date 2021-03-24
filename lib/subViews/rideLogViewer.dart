@@ -1129,7 +1129,7 @@ class RideLogViewerState extends State<RideLogViewer> {
 
                       // Customize the domainAxis tickFormatterSpec
                       domainAxis: new charts.DateTimeAxisSpec(
-                          viewport: new charts.DateTimeExtents(start: escTimeSeriesList.first.time, end: escTimeSeriesList.first.time.add(Duration(minutes: 5))),
+                          viewport: new charts.DateTimeExtents(start: escTimeSeriesList.first.time, end: escTimeSeriesList.last.time.isBefore(escTimeSeriesList.first.time.add(Duration(minutes: 5))) ? escTimeSeriesList.last.time : escTimeSeriesList.first.time.add(Duration(minutes: 5))),
                           tickFormatterSpec: new charts.AutoDateTimeTickFormatterSpec(
                             minute: new charts.TimeFormatterSpec(
                               format: 'HH:mm:ss', // or even HH:mm here too
