@@ -10,6 +10,9 @@ import 'package:logger/logger.dart';
 import 'components/crc16.dart';
 import 'hardwareSupport/escHelper/dataTypes.dart';
 
+// Format a duration to look nice as a string
+prettyPrintDuration(Duration d) => d.toString().split('.').first.padLeft(8, "0");
+
 // RegExp for FilteringTextInputFormatter that allows only positive decimal values
 final RegExp formatPositiveDouble = RegExp(r'^[+-]?([0-9]+([.,][0-9]*)?|[.,][0-9]+)$');
 
