@@ -892,6 +892,15 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     });
   }
 
+  // Compute logged distance and consumption
+  void updateComputedVehicleStatistics(bool doSetState) async {
+    connectedVehicleOdometer = await DatabaseAssistant.dbGetOdometer(widget.myUserSettings.currentDeviceID);
+    connectedVehicleConsumption = await DatabaseAssistant.dbGetConsumption(widget.myUserSettings.currentDeviceID, widget.myUserSettings.settings.useImperial);
+    if (doSetState) {
+      setState(() {});
+    }
+  }
+
   // Prepare the BLE Services and Characteristics required to interact with the ESC
   void prepareConnectedDevice() async {
     bool foundService = false;
@@ -1176,9 +1185,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               ///check if syncInProgress and start the next file
             });
 
-            // Compute logged distance and consumption
-            connectedVehicleOdometer = await DatabaseAssistant.dbGetOdometer(widget.myUserSettings.currentDeviceID);
-            connectedVehicleConsumption = await DatabaseAssistant.dbGetConsumption(widget.myUserSettings.currentDeviceID, widget.myUserSettings.settings.useImperial);
+            updateComputedVehicleStatistics(false);
 
             ///Save file operation complete
             return;
@@ -1802,8 +1809,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     }
 
     // Compute logged distance and consumption
-    connectedVehicleOdometer = await DatabaseAssistant.dbGetOdometer(widget.myUserSettings.currentDeviceID);
-    connectedVehicleConsumption = await DatabaseAssistant.dbGetConsumption(widget.myUserSettings.currentDeviceID, widget.myUserSettings.settings.useImperial);
+    updateComputedVehicleStatistics(false);
 
     // Keep the device on while connected
     Wakelock.enable();
@@ -2654,6 +2660,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 notifyStopStartPPMCalibrate: notifyStopStartPPMCalibrate,
                 ppmCalibrateReady: _isPPMCalibrationReady,
                 escFirmwareVersion: escFirmwareVersion,
+                updateComputedVehicleStatistics: updateComputedVehicleStatistics,
               ),
               RideLogging(
                   myUserSettings: widget.myUserSettings,

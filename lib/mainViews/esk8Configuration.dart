@@ -43,6 +43,7 @@ class ESK8Configuration extends StatefulWidget {
     this.notifyStopStartPPMCalibrate,
     this.ppmCalibrateReady,
     this.escFirmwareVersion,
+    this.updateComputedVehicleStatistics,
   });
   final UserSettings myUserSettings;
   final BluetoothDevice currentDevice;
@@ -65,6 +66,8 @@ class ESK8Configuration extends StatefulWidget {
   final bool ppmCalibrateReady;
 
   final ESC_FIRMWARE escFirmwareVersion;
+
+  final ValueChanged<bool> updateComputedVehicleStatistics;
 
   ESK8ConfigurationState createState() => new ESK8ConfigurationState();
 
@@ -2242,7 +2245,11 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                           // NOTE: Board avatar is updated with the image picker
                           await widget.myUserSettings.saveSettings();
 
+                          // Update cached avatar
                           widget.updateCachedAvatar(true);
+
+                          // Recompute statistics in case we change measurement units
+                          widget.updateComputedVehicleStatistics(false);
 
                         } catch (e) {
                           globalLogger.e("Save Settings Exception $e");
