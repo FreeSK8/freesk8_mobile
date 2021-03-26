@@ -154,22 +154,23 @@ class DatabaseAssistant {
 
   static Future<int> dbInsertLog(LogInfoItem logItem) async {
     final Database db = await getDatabase();
-
-    return db.insert('logs', logItem.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
-    //TODO: consider closing database// .then((value){db.close();return value;});
+    var response = db.insert('logs', logItem.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+    await db.close();
+    return response;
   }
 
   static Future<int> dbRemoveLog(String logFilePath) async {
     final Database db = await getDatabase();
-
-    return db.delete('logs', where: "log_file_path = '$logFilePath'" );
+    var response = db.delete('logs', where: "log_file_path = '$logFilePath'");
+    await db.close();
+    return response;
   }
 
   static Future<List<LogInfoItem>> dbSelectLogs({String orderByClause = "id DESC"}) async {
     final Database db = await getDatabase();
     final List<Map<String, dynamic>> rideLogEntries = await db.query('logs', orderBy: orderByClause);
 
-    return List.generate(rideLogEntries.length, (i) {
+    var response = List.generate(rideLogEntries.length, (i) {
       return LogInfoItem(
           dateTime:        DateTime.fromMillisecondsSinceEpoch(rideLogEntries[i]['date_time'] * 1000),
           boardID:         rideLogEntries[i]['board_id'],
@@ -189,11 +190,16 @@ class DatabaseAssistant {
           notes:           rideLogEntries[i]['notes']
       );
     });
+
+    await db.close();
+    return response;
   }
-  
+
   static Future<int> dbUpdateNote( String file, String note ) async {
     final Database db = await getDatabase();
-    return db.update('logs', {'notes': note}, where: 'log_file_path = ?', whereArgs: [file]);
+    var response = db.update('logs', {'notes': note}, where: 'log_file_path = ?', whereArgs: [file]);
+    await db.close();
+    return response;
   }
   
   static Future<void> close() async {
