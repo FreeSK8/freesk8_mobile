@@ -55,7 +55,7 @@ import 'package:logger_flutter/logger_flutter.dart';
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.13.3";
+const String freeSK8ApplicationVersion = "0.14.0";
 const String robogotchiFirmwareExpectedVersion = "0.8.2";
 
 void main() {
@@ -795,6 +795,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static bool syncEraseOnComplete = true;
   static bool isLoggerLogging = false; //TODO: this is redundant
   static RobogotchiStatus gotchiStatus = new RobogotchiStatus();
+  static double connectedVehicleOdometer = 0;
+  static double connectedVehicleConsumption = 0;
   static DateTime syncLastACK = DateTime.now();
   static List<ESCFault> escFaults = new List();
 
@@ -1174,6 +1176,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               ///check if syncInProgress and start the next file
             });
 
+            // Compute logged distance and consumption
+            connectedVehicleOdometer = await DatabaseAssistant.dbGetOdometer(widget.myUserSettings.currentDeviceID);
+            connectedVehicleConsumption = await DatabaseAssistant.dbGetConsumption(widget.myUserSettings.currentDeviceID, widget.myUserSettings.settings.useImperial);
+
             ///Save file operation complete
             return;
 
@@ -1259,6 +1265,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           gotchiStatus.fileCount = int.tryParse(values[6]);
           gotchiStatus.gpsFix = int.tryParse(values[7]);
           gotchiStatus.gpsSatellites = int.tryParse(values[8]);
+          gotchiStatus.lastPriorityAlertReason = RobogotchiAlertReasons.values[int.tryParse(values[9])];
+          gotchiStatus.melodySnoozeSeconds = int.tryParse(values[10]);
         });
       }
       else if(receiveStr.startsWith("faults,")) {
@@ -1792,6 +1800,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     if (_initMsgSequencer == null) {
       _initMsgSequencer = new Timer.periodic(Duration(milliseconds: 200), (Timer t) => _requestInitMessages());
     }
+
+    // Compute logged distance and consumption
+    connectedVehicleOdometer = await DatabaseAssistant.dbGetOdometer(widget.myUserSettings.currentDeviceID);
+    connectedVehicleConsumption = await DatabaseAssistant.dbGetConsumption(widget.myUserSettings.currentDeviceID, widget.myUserSettings.settings.useImperial);
 
     // Keep the device on while connected
     Wakelock.enable();
@@ -2604,6 +2616,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 robogotchiVersion: robogotchiVersion,
                 imageBoardAvatar: cachedBoardAvatar,
                 gotchiStatus: gotchiStatus,
+                connectedVehicleOdometer: connectedVehicleOdometer,
+                connectedVehicleConsumption: connectedVehicleConsumption,
                 theTXLoggerCharacteristic: theTXLoggerCharacteristic,
                 unexpectedDisconnect: unexpectedDisconnect,
                 delayedTabControllerIndexChange: _delayedTabControllerIndexChange,
