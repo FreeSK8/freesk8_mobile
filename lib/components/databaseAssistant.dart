@@ -154,16 +154,16 @@ class DatabaseAssistant {
 
   static Future<int> dbInsertLog(LogInfoItem logItem) async {
     final Database db = await getDatabase();
-    var response = db.insert('logs', logItem.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+    int response = await db.insert('logs', logItem.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
     await db.close();
-    return response;
+    return Future.value(response);
   }
 
   static Future<int> dbRemoveLog(String logFilePath) async {
     final Database db = await getDatabase();
-    var response = db.delete('logs', where: "log_file_path = '$logFilePath'");
+    int response = await db.delete('logs', where: "log_file_path = '$logFilePath'");
     await db.close();
-    return response;
+    return Future.value(response);
   }
 
   static Future<List<LogInfoItem>> dbSelectLogs({String orderByClause = "id DESC"}) async {
@@ -197,14 +197,9 @@ class DatabaseAssistant {
 
   static Future<int> dbUpdateNote( String file, String note ) async {
     final Database db = await getDatabase();
-    var response = db.update('logs', {'notes': note}, where: 'log_file_path = ?', whereArgs: [file]);
+    int response = await db.update('logs', {'notes': note}, where: 'log_file_path = ?', whereArgs: [file]);
     await db.close();
-    return response;
-  }
-  
-  static Future<void> close() async {
-    final Database db = await getDatabase();
-    await db.close();
+    return Future.value(response);
   }
 
   static Future<double> dbGetOdometer(String boardID) async {
