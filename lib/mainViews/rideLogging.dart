@@ -79,10 +79,10 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
   static bool showDevTools = false; // Flag to control shoting developer stuffs
   static bool showListView = false; // Flag to control showing list view vs calendar
   String temporaryLog = "";
-  List<FileSystemEntity> rideLogs = new List();
-  List<FileStat> rideLogsFileStats = new List();
+  List<FileSystemEntity> rideLogs = [];
+  List<FileStat> rideLogsFileStats = [];
   final GlobalKey<State> _keyLoader = new GlobalKey<State>();
-  List<LogInfoItem> rideLogsFromDatabase = new List();
+  List<LogInfoItem> rideLogsFromDatabase = [];
   String orderByClause = "date_created DESC";
 
   final tecRideNotes = TextEditingController();
@@ -217,7 +217,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                               tecRideNotes.text = rideLogsFromDatabase[int.parse(event)].notes;
 
                               showDialog(context: context,
-                                  child: AlertDialog(
+                                  builder: (_) => AlertDialog(
                                     title: const Icon(Icons.chat, size:40),
                                     content: TextField(
                                       controller: tecRideNotes,
@@ -562,7 +562,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                           tecRideNotes.text = rideLogsFromDatabase[index].notes;
 
                                           showDialog(context: context,
-                                              child: AlertDialog(
+                                              builder: (_) =>  AlertDialog(
                                                 title: const Icon(Icons.chat, size:40),
                                                 content: TextField(
                                                   controller: tecRideNotes,
