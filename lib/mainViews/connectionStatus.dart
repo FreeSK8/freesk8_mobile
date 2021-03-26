@@ -133,7 +133,7 @@ class ConnectionStatus extends StatelessWidget {
                   GestureDetector(
                       onTap: () async {
                         if (gotchiStatus.melodySnoozeSeconds > 0) {
-                          theTXLoggerCharacteristic.write(utf8.encode("snooze,0~"));
+                          sendBLEData(theTXLoggerCharacteristic, utf8.encode("snooze,0~"), false);
                           return;
                         }
                         var resultingDuration = await showDurationPicker(
