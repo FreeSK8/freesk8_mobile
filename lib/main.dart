@@ -1264,16 +1264,20 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         //logger.d("Status packet received: $receiveStr");
         List<String> values = receiveStr.split(",");
         setState(() {
-          isLoggerLogging = (values[2] == "1");
-          gotchiStatus.isLogging = isLoggerLogging;
-          gotchiStatus.faultCount = int.tryParse(values[3]);
-          gotchiStatus.faultCode = int.tryParse(values[4]);
-          gotchiStatus.percentFree = int.tryParse(values[5]);
-          gotchiStatus.fileCount = int.tryParse(values[6]);
-          gotchiStatus.gpsFix = int.tryParse(values[7]);
-          gotchiStatus.gpsSatellites = int.tryParse(values[8]);
-          gotchiStatus.lastPriorityAlertReason = RobogotchiAlertReasons.values[int.tryParse(values[9])];
-          gotchiStatus.melodySnoozeSeconds = int.tryParse(values[10]);
+          try {
+            isLoggerLogging = (values[2] == "1");
+            gotchiStatus.isLogging = isLoggerLogging;
+            gotchiStatus.faultCount = int.tryParse(values[3]);
+            gotchiStatus.faultCode = int.tryParse(values[4]);
+            gotchiStatus.percentFree = int.tryParse(values[5]);
+            gotchiStatus.fileCount = int.tryParse(values[6]);
+            gotchiStatus.gpsFix = int.tryParse(values[7]);
+            gotchiStatus.gpsSatellites = int.tryParse(values[8]);
+            gotchiStatus.lastPriorityAlertReason = RobogotchiAlertReasons.values[int.tryParse(values[9])];
+            gotchiStatus.melodySnoozeSeconds = int.tryParse(values[10]);
+          } catch (e) {
+            print("Robogotchi status parsing caught an exception: $e");
+          }
         });
       }
       else if(receiveStr.startsWith("faults,")) {
