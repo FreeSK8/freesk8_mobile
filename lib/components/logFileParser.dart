@@ -93,10 +93,10 @@ class LogFileParser {
     convertedFile.writeAsStringSync("header,format_esc,esc_id,voltage,motor_temp,esc_temp,duty_cycle,motor_current,battery_current,watt_hours,watt_hours_regen,e_rpm,e_distance,fault,speed_kph,distance_km\n", mode: FileMode.append);
     convertedFile.writeAsStringSync("header,format_gps,satellites,altitude,speed,latitude,longitude\n", mode: FileMode.append);
     convertedFile.writeAsStringSync("header,format_err,fault_name,fault_code,esc_id\n", mode: FileMode.append);
-    convertedFile.writeAsStringSync("header,version_output,$ParserVersion\n");
-    convertedFile.writeAsStringSync("header,gear_ratio,${userSettings.settings.gearRatio}\n");
-    convertedFile.writeAsStringSync("header,wheel_diameter_mm,${userSettings.settings.wheelDiameterMillimeters}\n");
-    convertedFile.writeAsStringSync("header,motor_poles,${userSettings.settings.motorPoles}\n");
+    convertedFile.writeAsStringSync("header,version_output,$ParserVersion\n", mode: FileMode.append);
+    convertedFile.writeAsStringSync("header,gear_ratio,${userSettings.settings.gearRatio}\n", mode: FileMode.append);
+    convertedFile.writeAsStringSync("header,wheel_diameter_mm,${userSettings.settings.wheelDiameterMillimeters}\n", mode: FileMode.append);
+    convertedFile.writeAsStringSync("header,motor_poles,${userSettings.settings.motorPoles}\n", mode: FileMode.append);
 
     // Iterate contents of file
     Uint8List bytes = file.readAsBytesSync();
