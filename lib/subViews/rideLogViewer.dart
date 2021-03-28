@@ -731,16 +731,29 @@ class RideLogViewerState extends State<RideLogViewer> {
         _avgSpeed += escTimeSeriesList[i].speed;
       }
 
-      // Monitor Battery Current
+      //TODO: battery, motor, temp are only supporting single and dual ESC
+      // Max Battery Current
       if(escTimeSeriesList[i].currentInput != null && escTimeSeriesList[i].currentInput > _maxAmpsBattery){
         _maxAmpsBattery = escTimeSeriesList[i].currentInput;
       }
-      // Monitor Motor Current
+      if(escTimeSeriesList[i].currentInput != null && escTimeSeriesList[i].currentInput2 != null && escTimeSeriesList[i].currentInput + escTimeSeriesList[i].currentInput2 > _maxAmpsBattery){
+        _maxAmpsBattery = escTimeSeriesList[i].currentInput +  escTimeSeriesList[i].currentInput2;
+      }
+
+      // Max Motor Current
       if(escTimeSeriesList[i].currentMotor != null && escTimeSeriesList[i].currentMotor > _maxAmpsMotor){
         _maxAmpsMotor = escTimeSeriesList[i].currentMotor;
       }
+      if(escTimeSeriesList[i].currentMotor != null && escTimeSeriesList[i].currentMotor2 != null && escTimeSeriesList[i].currentMotor + escTimeSeriesList[i].currentMotor > _maxAmpsMotor){
+        _maxAmpsMotor = escTimeSeriesList[i].currentMotor + escTimeSeriesList[i].currentMotor2;
+      }
+
       // Monitor Max ESC Temp
       if(_tsESCMaxESCTemp == null || escTimeSeriesList[i].tempMosfet != null && escTimeSeriesList[i].tempMosfet > _tsESCMaxESCTemp.tempMosfet){
+        // Store time series moment for map point generation and data popup
+        _tsESCMaxESCTemp = escTimeSeriesList[i];
+      }
+      if(_tsESCMaxESCTemp == null || escTimeSeriesList[i].tempMosfet2 != null && escTimeSeriesList[i].tempMosfet2 > _tsESCMaxESCTemp.tempMosfet){
         // Store time series moment for map point generation and data popup
         _tsESCMaxESCTemp = escTimeSeriesList[i];
       }
@@ -1129,7 +1142,7 @@ class RideLogViewerState extends State<RideLogViewer> {
 
                       // Customize the domainAxis tickFormatterSpec
                       domainAxis: new charts.DateTimeAxisSpec(
-                          viewport: new charts.DateTimeExtents(start: escTimeSeriesList.first.time, end: escTimeSeriesList.last.time.isBefore(escTimeSeriesList.first.time.add(Duration(minutes: 5))) ? escTimeSeriesList.last.time : escTimeSeriesList.first.time.add(Duration(minutes: 5))),
+                          viewport: new charts.DateTimeExtents(start: escTimeSeriesList.first.time, end: escTimeSeriesList.last.time),
                           tickFormatterSpec: new charts.AutoDateTimeTickFormatterSpec(
                             minute: new charts.TimeFormatterSpec(
                               format: 'HH:mm:ss', // or even HH:mm here too
