@@ -2241,7 +2241,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       ListTile(
         leading: Icon(Icons.settings_applications),
-        title: Text("Show ESC Configurator"),
+        title: Text("Motor Configuration"),
         onTap: () async {
           if (_connectedDevice == null) {
             showDialog(
