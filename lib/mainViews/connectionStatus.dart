@@ -139,6 +139,11 @@ class ConnectionStatus extends StatelessWidget {
                         var resultingDuration = await showDurationPicker(
                           context: context,
                           initialTime: Duration(seconds: 0),
+                          decoration: new BoxDecoration(
+                            shape: BoxShape.rectangle,
+                            color: Theme.of(context).dialogBackgroundColor,
+                            borderRadius: new BorderRadius.all(new Radius.circular(32.0)),
+                          ),
                         );
                         if (resultingDuration != null) {
                           sendBLEData(theTXLoggerCharacteristic, utf8.encode("snooze,${resultingDuration.inSeconds}~"), false);

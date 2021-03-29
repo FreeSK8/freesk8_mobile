@@ -122,6 +122,9 @@ double eDistanceToKm(double eCount, double gearRatio, int wheelDiameterMillimete
 Future<dynamic> genericConfirmationDialog(BuildContext context, Widget cancelButton, Widget continueButton, String alertTitle, Widget alertBody) {
   // set up the AlertDialog
   AlertDialog alert = AlertDialog(
+    shape: RoundedRectangleBorder (
+        borderRadius: BorderRadius.all(Radius.circular(10))
+    ),
     title: Text(alertTitle),
     content: alertBody,
     actions: [
@@ -144,6 +147,9 @@ Future<void> genericAlert(BuildContext context, String alertTitle, Widget alertB
     context: context,
     builder: (BuildContext context) {
       return AlertDialog(
+        shape: RoundedRectangleBorder (
+            borderRadius: BorderRadius.all(Radius.circular(10))
+        ),
         title: Text(alertTitle),
         content: SingleChildScrollView(
           child: alertBody

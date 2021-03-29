@@ -1985,7 +1985,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                         ]),
                       ),
                     )
-                  ]));
+                  ],
+                  shape: RoundedRectangleBorder (
+                      borderRadius: BorderRadius.all(Radius.circular(10))
+                  ),
+              )
+          );
         });
   }
 
