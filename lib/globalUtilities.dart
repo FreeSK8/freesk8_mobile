@@ -10,6 +10,9 @@ import 'package:logger/logger.dart';
 import 'components/crc16.dart';
 import 'hardwareSupport/escHelper/dataTypes.dart';
 
+// Format a duration to look nice as a string
+prettyPrintDuration(Duration d) => d.toString().split('.').first.padLeft(8, "0");
+
 // RegExp for FilteringTextInputFormatter that allows only positive decimal values
 final RegExp formatPositiveDouble = RegExp(r'^[+-]?([0-9]+([.,][0-9]*)?|[.,][0-9]+)$');
 
@@ -101,17 +104,17 @@ double mileToKm(double mile) {
   return doublePrecision(distance, 2);
 }
 
-double eRPMToKph(double eRpm, double gearRatio, int wheelDiameterMillimeters, int motorPoles) {
+double eRPMToKph(double eRPM, double gearRatio, int wheelDiameterMillimeters, int motorPoles) {
   double ratio = 1.0 / gearRatio;
   int minutesToHour = 60;
-  double ratioRpmSpeed = (ratio * minutesToHour * wheelDiameterMillimeters * pi) / ((motorPoles / 2) * 1000000);
-  double speed = eRpm * ratioRpmSpeed;
+  double ratioRpmSpeed = (ratio * minutesToHour * wheelDiameterMillimeters * pi) / ((motorPoles / 2) * 1e6);
+  double speed = eRPM * ratioRpmSpeed;
   return doublePrecision(speed, 2);
 }
 
 double eDistanceToKm(double eCount, double gearRatio, int wheelDiameterMillimeters, int motorPoles) {
   double ratio = 1.0 / gearRatio;
-  double ratioPulseDistance = (ratio * wheelDiameterMillimeters * pi) / ((motorPoles * 3) * 1000000);
+  double ratioPulseDistance = (ratio * wheelDiameterMillimeters * pi) / ((motorPoles * 3) * 1e6);
   double distance = eCount * ratioPulseDistance;
   return doublePrecision(distance, 2);
 }
@@ -119,6 +122,9 @@ double eDistanceToKm(double eCount, double gearRatio, int wheelDiameterMillimete
 Future<dynamic> genericConfirmationDialog(BuildContext context, Widget cancelButton, Widget continueButton, String alertTitle, Widget alertBody) {
   // set up the AlertDialog
   AlertDialog alert = AlertDialog(
+    shape: RoundedRectangleBorder (
+        borderRadius: BorderRadius.all(Radius.circular(10))
+    ),
     title: Text(alertTitle),
     content: alertBody,
     actions: [
@@ -141,6 +147,9 @@ Future<void> genericAlert(BuildContext context, String alertTitle, Widget alertB
     context: context,
     builder: (BuildContext context) {
       return AlertDialog(
+        shape: RoundedRectangleBorder (
+            borderRadius: BorderRadius.all(Radius.circular(10))
+        ),
         title: Text(alertTitle),
         content: SingleChildScrollView(
           child: alertBody

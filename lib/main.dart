@@ -55,8 +55,8 @@ import 'package:logger_flutter/logger_flutter.dart';
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.13.2";
-const String robogotchiFirmwareExpectedVersion = "0.8.2";
+const String freeSK8ApplicationVersion = "0.14.0";
+const String robogotchiFirmwareExpectedVersion = "0.9.0";
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -795,6 +795,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static bool syncEraseOnComplete = true;
   static bool isLoggerLogging = false; //TODO: this is redundant
   static RobogotchiStatus gotchiStatus = new RobogotchiStatus();
+  static double connectedVehicleOdometer = 0;
+  static double connectedVehicleConsumption = 0;
   static DateTime syncLastACK = DateTime.now();
   static List<ESCFault> escFaults = new List();
 
@@ -888,6 +890,15 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           break;
       }
     });
+  }
+
+  // Compute logged distance and consumption
+  void updateComputedVehicleStatistics(bool doSetState) async {
+    connectedVehicleOdometer = await DatabaseAssistant.dbGetOdometer(widget.myUserSettings.currentDeviceID);
+    connectedVehicleConsumption = await DatabaseAssistant.dbGetConsumption(widget.myUserSettings.currentDeviceID, widget.myUserSettings.settings.useImperial);
+    if (doSetState) {
+      setState(() {});
+    }
   }
 
   // Prepare the BLE Services and Characteristics required to interact with the ESC
@@ -1020,7 +1031,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             // Then generate database statistics
             // Then create database entry
             // Then rebuild state and continue sync process
-            String savedFilePath = await FileManager.saveLogToDocuments(filename: catCurrentFilename);
+            String savedFilePath = await FileManager.saveLogToDocuments(filename: catCurrentFilename, userSettings: widget.myUserSettings);
 
             /// Analyze log to generate database statistics
             Map<int, double> wattHoursStartByESC = new Map();
@@ -1174,6 +1185,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               ///check if syncInProgress and start the next file
             });
 
+            updateComputedVehicleStatistics(false);
+
             ///Save file operation complete
             return;
 
@@ -1251,14 +1264,20 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         //logger.d("Status packet received: $receiveStr");
         List<String> values = receiveStr.split(",");
         setState(() {
-          isLoggerLogging = (values[2] == "1");
-          gotchiStatus.isLogging = isLoggerLogging;
-          gotchiStatus.faultCount = int.tryParse(values[3]);
-          gotchiStatus.faultCode = int.tryParse(values[4]);
-          gotchiStatus.percentFree = int.tryParse(values[5]);
-          gotchiStatus.fileCount = int.tryParse(values[6]);
-          gotchiStatus.gpsFix = int.tryParse(values[7]);
-          gotchiStatus.gpsSatellites = int.tryParse(values[8]);
+          try {
+            isLoggerLogging = (values[2] == "1");
+            gotchiStatus.isLogging = isLoggerLogging;
+            gotchiStatus.faultCount = int.tryParse(values[3]);
+            gotchiStatus.faultCode = int.tryParse(values[4]);
+            gotchiStatus.percentFree = int.tryParse(values[5]);
+            gotchiStatus.fileCount = int.tryParse(values[6]);
+            gotchiStatus.gpsFix = int.tryParse(values[7]);
+            gotchiStatus.gpsSatellites = int.tryParse(values[8]);
+            gotchiStatus.lastPriorityAlertReason = RobogotchiAlertReasons.values[int.tryParse(values[9])];
+            gotchiStatus.melodySnoozeSeconds = int.tryParse(values[10]);
+          } catch (e) {
+            print("Robogotchi status parsing caught an exception: $e");
+          }
         });
       }
       else if(receiveStr.startsWith("faults,")) {
@@ -1793,6 +1812,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       _initMsgSequencer = new Timer.periodic(Duration(milliseconds: 200), (Timer t) => _requestInitMessages());
     }
 
+    // Compute logged distance and consumption
+    updateComputedVehicleStatistics(false);
+
     // Keep the device on while connected
     Wakelock.enable();
 
@@ -1963,7 +1985,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                         ]),
                       ),
                     )
-                  ]));
+                  ],
+                  shape: RoundedRectangleBorder (
+                      borderRadius: BorderRadius.all(Radius.circular(10))
+                  ),
+              )
+          );
         });
   }
 
@@ -2219,7 +2246,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       ListTile(
         leading: Icon(Icons.settings_applications),
-        title: Text("Show ESC Configurator"),
+        title: Text("Motor Configuration"),
         onTap: () async {
           if (_connectedDevice == null) {
             showDialog(
@@ -2604,6 +2631,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 robogotchiVersion: robogotchiVersion,
                 imageBoardAvatar: cachedBoardAvatar,
                 gotchiStatus: gotchiStatus,
+                connectedVehicleOdometer: connectedVehicleOdometer,
+                connectedVehicleConsumption: connectedVehicleConsumption,
                 theTXLoggerCharacteristic: theTXLoggerCharacteristic,
                 unexpectedDisconnect: unexpectedDisconnect,
                 delayedTabControllerIndexChange: _delayedTabControllerIndexChange,
@@ -2640,6 +2669,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 notifyStopStartPPMCalibrate: notifyStopStartPPMCalibrate,
                 ppmCalibrateReady: _isPPMCalibrationReady,
                 escFirmwareVersion: escFirmwareVersion,
+                updateComputedVehicleStatistics: updateComputedVehicleStatistics,
               ),
               RideLogging(
                   myUserSettings: widget.myUserSettings,

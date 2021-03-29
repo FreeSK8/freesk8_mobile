@@ -43,6 +43,7 @@ class ESK8Configuration extends StatefulWidget {
     this.notifyStopStartPPMCalibrate,
     this.ppmCalibrateReady,
     this.escFirmwareVersion,
+    this.updateComputedVehicleStatistics,
   });
   final UserSettings myUserSettings;
   final BluetoothDevice currentDevice;
@@ -65,6 +66,8 @@ class ESK8Configuration extends StatefulWidget {
   final bool ppmCalibrateReady;
 
   final ESC_FIRMWARE escFirmwareVersion;
+
+  final ValueChanged<bool> updateComputedVehicleStatistics;
 
   ESK8ConfigurationState createState() => new ESK8ConfigurationState();
 
@@ -197,12 +200,16 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     //TODO: these try parse can return null.. then the device will remove null because it's not a number
     tecBoardAlias.addListener(() { widget.myUserSettings.settings.boardAlias = tecBoardAlias.text; });
 
-    // TextEditingController Listeners for ESC Configurator
+    // TextEditingController Listeners for Motor Configuration
     tecBatterySeriesCount.addListener(() { widget.escMotorConfiguration.si_battery_cells = int.tryParse(tecBatterySeriesCount.text); });
     tecBatteryCapacityAh.addListener(() { widget.escMotorConfiguration.si_battery_ah = doublePrecision(double.tryParse(tecBatteryCapacityAh.text.replaceFirst(',', '.')), 2); });
-    tecWheelDiameterMillimeters.addListener(() { widget.escMotorConfiguration.si_wheel_diameter = doublePrecision(double.tryParse(tecWheelDiameterMillimeters.text.replaceFirst(',', '.')) / 1000.0, 2); });
+    tecWheelDiameterMillimeters.addListener(() {
+      try {
+        widget.escMotorConfiguration.si_wheel_diameter = doublePrecision(double.tryParse(tecWheelDiameterMillimeters.text.replaceFirst(',', '.')) / 1000.0, 3);
+      } catch (e) {}
+    });
     tecMotorPoles.addListener(() { widget.escMotorConfiguration.si_motor_poles = int.tryParse(tecMotorPoles.text); });
-    tecGearRatio.addListener(() { widget.escMotorConfiguration.si_gear_ratio = doublePrecision(double.tryParse(tecGearRatio.text.replaceFirst(',', '.')), 1); });
+    tecGearRatio.addListener(() { widget.escMotorConfiguration.si_gear_ratio = doublePrecision(double.tryParse(tecGearRatio.text.replaceFirst(',', '.')), 2); });
     tecCurrentMax.addListener(() { widget.escMotorConfiguration.l_current_max = doublePrecision(double.tryParse(tecCurrentMax.text.replaceFirst(',', '.')), 1); });
     tecCurrentMin.addListener(() {
       double newValue = double.tryParse(tecCurrentMin.text.replaceFirst(',', '.'));
@@ -774,7 +781,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                 size: 80.0,
                 color: Colors.blue,
               ),
-              Text("ESC\nApplication\nConfigurator", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
+              Text("Input\nConfiguration", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
             ],),
 
             Icon(Icons.file_download),
@@ -1438,7 +1445,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                 child: IconButton(
                     icon: Icon(Icons.clear),
                     onPressed: (){
-                      globalLogger.d("User Close ESC Application Configurator");
+                      globalLogger.d("User Close Input Configuration");
                       genericConfirmationDialog(
                           context,
                           FlatButton(
@@ -1454,7 +1461,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               widget.closeESCApplicationConfigurator(true);
                             },
                           ),
-                          "Exit Configurator?",
+                          "Exit Input Configuration?",
                           Text("Unsaved changes will be lost.")
                       );
                     }
@@ -1481,7 +1488,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                 size: 80.0,
                 color: Colors.blue,
               ),
-              Text("ESC\nConfigurator", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
+              Text("Motor\nConfiguration", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
             ],),
 
             Icon(Icons.file_download),
@@ -1496,7 +1503,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       tecBatterySeriesCount.selection = TextSelection.fromPosition(TextPosition(offset: tecBatterySeriesCount.text.length));
       tecBatteryCapacityAh.text = doublePrecision(widget.escMotorConfiguration.si_battery_ah,2).toString();
       tecBatteryCapacityAh.selection = TextSelection.fromPosition(TextPosition(offset: tecBatteryCapacityAh.text.length));
-      tecWheelDiameterMillimeters.text = (widget.escMotorConfiguration.si_wheel_diameter * 1000.0).toInt().toString();
+      tecWheelDiameterMillimeters.text = doublePrecision(widget.escMotorConfiguration.si_wheel_diameter * 1000.0, 3).toInt().toString();
       tecWheelDiameterMillimeters.selection = TextSelection.fromPosition(TextPosition(offset: tecWheelDiameterMillimeters.text.length));
       tecMotorPoles.text = widget.escMotorConfiguration.si_motor_poles.toString();
       tecMotorPoles.selection = TextSelection.fromPosition(TextPosition(offset: tecMotorPoles.text.length));
@@ -1568,7 +1575,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                             size: 80.0,
                             color: Colors.blue,
                           ),
-                          Text("ESC\nConfigurator", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
+                          Text("Motor\nConfiguration", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
                         ],),
 
                         SizedBox(height:10),
@@ -2099,7 +2106,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                 child: IconButton(
                     icon: Icon(Icons.clear),
                     onPressed: (){
-                      globalLogger.d("User Close ESC Configurator");
+                      globalLogger.d("User Close Motor Configuration");
                       genericConfirmationDialog(
                           context,
                           FlatButton(
@@ -2115,7 +2122,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               widget.closeESCConfigurator(true);
                             },
                           ),
-                          "Exit Configurator?",
+                          "Close Motor Configuration?",
                           Text("Unsaved changes will be lost.")
                       );
                     }
@@ -2242,7 +2249,11 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                           // NOTE: Board avatar is updated with the image picker
                           await widget.myUserSettings.saveSettings();
 
+                          // Update cached avatar
                           widget.updateCachedAvatar(true);
+
+                          // Recompute statistics in case we change measurement units
+                          widget.updateComputedVehicleStatistics(false);
 
                         } catch (e) {
                           globalLogger.e("Save Settings Exception $e");

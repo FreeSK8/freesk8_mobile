@@ -3,11 +3,24 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_blue/flutter_blue.dart';
-import '../components/databaseAssistant.dart';
+import 'package:duration_picker/duration_picker.dart';
+
 import '../globalUtilities.dart';
 
 import '../hardwareSupport/escHelper/escHelper.dart';
 import '../components/userSettings.dart';
+
+enum RobogotchiAlertReasons {
+  NONE,
+  GOTCHI_FAULT,
+  ESC_FAULT,
+  BLE_FAIL, // Not reported
+  BLE_SUCCESS, // Not reported
+  STORAGE_LIMIT,
+  ESC_TEMP,
+  MOTOR_TEMP,
+  VOLTAGE_LOW,
+}
 
 class RobogotchiStatus {
   bool isLogging;
@@ -17,6 +30,8 @@ class RobogotchiStatus {
   int fileCount;
   int gpsFix;
   int gpsSatellites;
+  int melodySnoozeSeconds;
+  RobogotchiAlertReasons lastPriorityAlertReason;
   RobogotchiStatus(){
     isLogging = null;
     faultCount = 0;
@@ -25,6 +40,8 @@ class RobogotchiStatus {
     fileCount = 0;
     gpsFix = 0;
     gpsSatellites = 0;
+    melodySnoozeSeconds = 0;
+    lastPriorityAlertReason = RobogotchiAlertReasons.NONE;
   }
 }
 
@@ -42,6 +59,8 @@ class ConnectionStatus extends StatelessWidget {
         this.robogotchiVersion,
         this.imageBoardAvatar,
         this.gotchiStatus,
+        this.connectedVehicleOdometer,
+        this.connectedVehicleConsumption,
         this.theTXLoggerCharacteristic,
         this.unexpectedDisconnect,
         this.delayedTabControllerIndexChange,
@@ -56,6 +75,8 @@ class ConnectionStatus extends StatelessWidget {
   final String robogotchiVersion;
   final MemoryImage imageBoardAvatar;
   final RobogotchiStatus gotchiStatus;
+  final double connectedVehicleOdometer;
+  final double connectedVehicleConsumption;
   final BluetoothCharacteristic theTXLoggerCharacteristic;
   final bool unexpectedDisconnect;
   final ValueChanged<int> delayedTabControllerIndexChange;
@@ -82,33 +103,61 @@ class ConnectionStatus extends StatelessWidget {
                 children: [
                   //
                   GestureDetector(
-                    onTap: () {
-                      delayedTabControllerIndexChange(3);
-                    },
-                    child: Column(
-                      children: [
-                        Icon(gotchiStatus.isLogging ? Icons.save_outlined : Icons.save, color: gotchiStatus.isLogging ? Colors.orange: Colors.green),
-                        Text("${gotchiStatus.isLogging ? "Logging":"Log Idle"}"), //TODO: show if sync in progress
-                        Text("${gotchiStatus.fileCount} ${gotchiStatus.fileCount == 1 ? "file":"files"}"),
-                        Text("${gotchiStatus.percentFree}% Free"),
-                      ],
-                    )
+                      onTap: () {
+                        delayedTabControllerIndexChange(3);
+                      },
+                      child: Column(
+                        children: [
+                          Icon(gotchiStatus.isLogging ? Icons.save_outlined : Icons.save, color: gotchiStatus.isLogging ? Colors.orange: Colors.green),
+                          Text("${gotchiStatus.isLogging ? "Logging":"Log Idle"}"), //TODO: show if sync in progress
+                          Text("${gotchiStatus.fileCount} ${gotchiStatus.fileCount == 1 ? "file":"files"}"),
+                          Text("${gotchiStatus.percentFree}% Free"),
+                        ],
+                      )
                   ),
 
                   GestureDetector(
-                    onTap: (){
-                      theTXLoggerCharacteristic.write(utf8.encode("faults~"));
-                    },
-                    child: Column(
-                      children: [
-                        Icon(gotchiStatus.faultCount > 0 ? Icons.error : Icons.check_circle, color: gotchiStatus.faultCount > 0 ? Colors.red : Colors.greenAccent, size: 25),
-                        Text("${gotchiStatus.faultCount} ${gotchiStatus.faultCount == 1 ? "fault" : "faults"}"),
-                        Text("FW: $robogotchiVersion"),
-                        Text("")
-                      ],
-                    )
+                      onTap: (){
+                        theTXLoggerCharacteristic.write(utf8.encode("faults~"));
+                      },
+                      child: Column(
+                        children: [
+                          Icon(gotchiStatus.faultCount > 0 ? Icons.error : Icons.check_circle, color: gotchiStatus.faultCount > 0 ? Colors.red : Colors.greenAccent, size: 25),
+                          Text("${gotchiStatus.faultCount} ${gotchiStatus.faultCount == 1 ? "fault" : "faults"}"),
+                          Text("FW: $robogotchiVersion"),
+                          Text("")
+                        ],
+                      )
                   ),
 
+                  GestureDetector(
+                      onTap: () async {
+                        if (gotchiStatus.melodySnoozeSeconds > 0) {
+                          sendBLEData(theTXLoggerCharacteristic, utf8.encode("snooze,0~"), false);
+                          return;
+                        }
+                        var resultingDuration = await showDurationPicker(
+                          context: context,
+                          initialTime: Duration(seconds: 0),
+                          decoration: new BoxDecoration(
+                            shape: BoxShape.rectangle,
+                            color: Theme.of(context).dialogBackgroundColor,
+                            borderRadius: new BorderRadius.all(new Radius.circular(32.0)),
+                          ),
+                        );
+                        if (resultingDuration != null) {
+                          sendBLEData(theTXLoggerCharacteristic, utf8.encode("snooze,${resultingDuration.inSeconds}~"), false);
+                        }
+                      },
+                      child: Column(
+                        children: [
+                          Icon(gotchiStatus.melodySnoozeSeconds > 0 ? Icons.notifications_off : Icons.notifications_active, color: gotchiStatus.melodySnoozeSeconds > 0 ? Colors.grey : Colors.blue, size: 25),
+                          Text(gotchiStatus.melodySnoozeSeconds > 0 ? "${prettyPrintDuration(new Duration(seconds: gotchiStatus.melodySnoozeSeconds))}" : "Audio On"),
+                          Text(gotchiStatus.lastPriorityAlertReason != RobogotchiAlertReasons.NONE ? gotchiStatus.lastPriorityAlertReason.toString().substring(23) : "No alerts"),
+                          Text(""),
+                        ],
+                      )
+                  ),
 
                   Column(
                     children: [
@@ -135,26 +184,10 @@ class ConnectionStatus extends StatelessWidget {
               Text(currentDevice.name == '' ? '(unknown device)' : currentDevice.name),
 
               gotchiStatus.isLogging != null ?
-              FutureBuilder<double>(
-                  future: DatabaseAssistant.dbGetOdometer(userSettings.currentDeviceID),
-                  builder: (BuildContext context, AsyncSnapshot<double> snapshot) {
-                    if (snapshot.data == null) {
-                      return Text("Distance Logged");
-                    }
-                    return Text("Distance Logged ${doublePrecision(userSettings.settings.useImperial ? kmToMile(snapshot.data) : snapshot.data, 2)} ${userSettings.settings.useImperial ? "miles" : "km"}");
-                  }
-              ) : Container(),
+              Text("Distance Logged ${doublePrecision(userSettings.settings.useImperial ? kmToMile(connectedVehicleOdometer) : connectedVehicleOdometer, 2)} ${userSettings.settings.useImperial ? "miles" : "km"}") : Container(),
 
               gotchiStatus.isLogging != null ?
-              FutureBuilder<double>(
-                  future: DatabaseAssistant.dbGetConsumption(userSettings.currentDeviceID, userSettings.settings.useImperial),
-                  builder: (BuildContext context, AsyncSnapshot<double> snapshot) {
-                    if (snapshot.data == null) {
-                      return Text("Average Consumption");
-                    }
-                    return Text("Average Consumption ${doublePrecision(snapshot.data, 2)} wh/${userSettings.settings.useImperial ? "mile" : "km"}");
-                  }
-              ) : Container(),
+              Text("Average Consumption ${doublePrecision(connectedVehicleConsumption, 2)} wh/${userSettings.settings.useImperial ? "mile" : "km"}") : Container(),
 
               //Text(currentDevice.id.toString()),
 
@@ -162,7 +195,7 @@ class ConnectionStatus extends StatelessWidget {
               Text("ESC Firmware: ${currentFirmware.fw_version_major}.${currentFirmware.fw_version_minor}"),
 
 
-              RaisedButton(
+              ElevatedButton(
                   child: Text("Disconnect"),
                   // On press of the button
                   onPressed: () {
@@ -189,7 +222,7 @@ class ConnectionStatus extends StatelessWidget {
                 color: unexpectedDisconnect ? Colors.yellow : Colors.red,
               ),
               unexpectedDisconnect ? Text("Disconnected") : Text("No connection"),
-              RaisedButton(
+              ElevatedButton(
                   child: Text(active ? "Stop Scan" : "Scan Bluetooth"),
                   // On press of the button
                   onPressed: () {

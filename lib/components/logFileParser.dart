@@ -1,10 +1,16 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import '../hardwareSupport/escHelper/dataTypes.dart';
-import '../globalUtilities.dart';
 import 'package:path_provider/path_provider.dart';
 
+import './userSettings.dart';
+import '../globalUtilities.dart';
+import '../hardwareSupport/escHelper/dataTypes.dart';
+
+// Define the version for the parser's output, increment with changes to CSV
+const int ParserVersion = 1;
+
+// Define the expected start and ending of a log entry
 const int PacketStart = 0x0d;
 const int PacketEnd = 0x0a;
 
@@ -73,7 +79,7 @@ class LogGPS {
 }
 
 class LogFileParser {
-  static Future<Pair<String, File>> parseFile(File file, String fileName) async {
+  static Future<Pair<String, File>> parseFile(File file, String fileName, UserSettings userSettings) async {
     String fileNameOut = fileName;
     LogESC lastESCPacket = new LogESC();
     LogGPS lastGPSPacket = new LogGPS();
@@ -84,9 +90,13 @@ class LogFileParser {
     await convertedFile.writeAsString('');
 
     // Write header contents
-    convertedFile.writeAsStringSync("header,format_esc,esc_id,voltage,motor_temp,esc_temp,duty_cycle,motor_current,battery_current,watt_hours,watt_hours_regen,e_rpm,e_distance,fault\n", mode: FileMode.append);
+    convertedFile.writeAsStringSync("header,format_esc,esc_id,voltage,motor_temp,esc_temp,duty_cycle,motor_current,battery_current,watt_hours,watt_hours_regen,e_rpm,e_distance,fault,speed_kph,distance_km\n", mode: FileMode.append);
     convertedFile.writeAsStringSync("header,format_gps,satellites,altitude,speed,latitude,longitude\n", mode: FileMode.append);
     convertedFile.writeAsStringSync("header,format_err,fault_name,fault_code,esc_id\n", mode: FileMode.append);
+    convertedFile.writeAsStringSync("header,version_output,$ParserVersion\n", mode: FileMode.append);
+    convertedFile.writeAsStringSync("header,gear_ratio,${userSettings.settings.gearRatio}\n", mode: FileMode.append);
+    convertedFile.writeAsStringSync("header,wheel_diameter_mm,${userSettings.settings.wheelDiameterMillimeters}\n", mode: FileMode.append);
+    convertedFile.writeAsStringSync("header,motor_poles,${userSettings.settings.motorPoles}\n", mode: FileMode.append);
 
     // Iterate contents of file
     Uint8List bytes = file.readAsBytesSync();
@@ -129,7 +139,7 @@ class LogFileParser {
 
             if (bytes[i] == PacketEnd) {
               // Store log file header data from Robogotchi
-              parsedResults += "header,version,$logFileVersion\n";
+              parsedResults += "header,version_input,$logFileVersion\n";
               parsedResults += "header,multi_esc_mode,$logMultiESCMode\n";
               parsedResults += "header,esc_hz,$logFileHz\n";
             } else {
@@ -322,7 +332,9 @@ class LogFileParser {
             "${parsedESC[i].wattHoursRegen},"
             "${parsedESC[i].eRPM},"
             "${parsedESC[i].eDistance},"
-            "${parsedESC[i].faultCode}\n";
+            "${parsedESC[i].faultCode},"
+            "${eRPMToKph(parsedESC[i].eRPM.toDouble(), userSettings.settings.gearRatio, userSettings.settings.wheelDiameterMillimeters, userSettings.settings.motorPoles)},"
+            "${eDistanceToKm(parsedESC[i].eDistance.toDouble(), userSettings.settings.gearRatio, userSettings.settings.wheelDiameterMillimeters, userSettings.settings.motorPoles)}\n";
 
         // Store faults on their own line
         if (parsedESC[i].faultCode != 0) {

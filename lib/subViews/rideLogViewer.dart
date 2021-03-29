@@ -317,6 +317,10 @@ class RideLogViewerState extends State<RideLogViewer> {
     double distanceEndPrimary;
     double wattHoursStartPrimary;
     double wattHoursRegenStartPrimary;
+    int outOfOrderESCRecords = 0;
+    int outOfOrderGPSRecords = 0;
+    String outOfOrderESCFirstMessage;
+    String outOfOrderGPSFirstMessage;
 
     // Fault tracking
     DateTime lastReportedFaultDt;
@@ -327,6 +331,7 @@ class RideLogViewerState extends State<RideLogViewer> {
     thisRideLogEntries = new List<String>();
     _positionEntries = new List<LatLng>();
     Map<DateTime, LatLng> gpsLatLngMap = new Map();
+    Map<DateTime, LatLng> gpsLatLngRejectMap = new Map();
 
     //Receive arguments building this widget
     myArguments = ModalRoute.of(context).settings.arguments;
@@ -369,6 +374,19 @@ class RideLogViewerState extends State<RideLogViewer> {
           double thisSpeed = double.tryParse(entry[4]);
           gpsAverageSpeed += thisSpeed;
           if (thisSpeed > gpsMaxSpeed) {gpsMaxSpeed = thisSpeed;}
+
+          // Watch for OoO records
+          if (gpsLatLngMap.isNotEmpty && gpsLatLngMap.keys.last.isAfter(thisGPSTime)) {
+            ++outOfOrderGPSRecords;
+            outOfOrderGPSFirstMessage ??= "GPS out of order: Now $thisGPSTime Previous ${gpsLatLngMap.keys.last}";
+            //globalLogger.wtf("GPS out of order: Now $thisGPSTime Previous ${gpsLatLngMap.keys.last}; Skipping record");
+            gpsLatLngRejectMap[thisGPSTime] = thisPosition;
+            continue;
+          }
+
+          if (gpsLatLngMap[thisGPSTime] != null) {
+            globalLogger.w("GPS timeslot already reported: $thisGPSTime value ${gpsLatLngMap[thisGPSTime]} replaced with $thisPosition");
+          }
           // Map DateTime to LatLng
           gpsLatLngMap[thisGPSTime] = thisPosition;
         }
@@ -377,6 +395,13 @@ class RideLogViewerState extends State<RideLogViewer> {
           //dt,esc,esc_id,voltage,motor_temp,esc_temp,duty_cycle,motor_current,battery_current,watt_hours,watt_hours_regen,e_rpm,e_distance,fault
           DateTime thisDt = DateTime.parse(entry[0]).add((DateTime.now().timeZoneOffset));
           int thisESCID = int.parse(entry[2]);
+
+          // Watch for OoO records
+          if (escTimeSeriesMap.isNotEmpty && escTimeSeriesMap.keys.last.isAfter(thisDt)) {
+            ++outOfOrderESCRecords;
+            outOfOrderESCFirstMessage ??= "ESC out of order:  $thisDt Previous ${escTimeSeriesMap.keys.last}";
+            //globalLogger.wtf("ESC out of order: Now $thisDt Previous ${escTimeSeriesMap.keys.last}; Skipping record");
+          }
 
           if (!escIDsInLog.contains(thisESCID)) {
             globalLogger.d("Adding ESC ID $thisESCID to list of known ESC IDs in this data set");
@@ -597,8 +622,20 @@ class RideLogViewerState extends State<RideLogViewer> {
       }
     }
     globalLogger.d("rideLogViewer rideLogEntry iteration complete");
+
+    // Notify debugger if OoO records were observed in this file
+    if (outOfOrderESCRecords > 0){
+      globalLogger.w("$outOfOrderESCRecords ESC records were out of order: First notice: $outOfOrderESCFirstMessage");
+    }
+    if (outOfOrderGPSRecords > 0){
+      globalLogger.w("$outOfOrderGPSRecords GPS records were out of order: First notice: $outOfOrderGPSFirstMessage");
+    }
+
     // Convert ESC data map into a list
-    escTimeSeriesMap.forEach((key, value) {
+    // Sorting in case we have experienced out of order records
+    var sortedESCMapKeysTEST = escTimeSeriesMap.keys.toList()..sort();
+    sortedESCMapKeysTEST.forEach((element) {
+      var value = escTimeSeriesMap[element];
       // Multiply consumption by number of ESCs for smooth chart line
       //TODO: This is not the most accurate way to represent consumption for multiple ESCs
       if(value.consumption != null) {
@@ -694,16 +731,29 @@ class RideLogViewerState extends State<RideLogViewer> {
         _avgSpeed += escTimeSeriesList[i].speed;
       }
 
-      // Monitor Battery Current
+      //TODO: battery, motor, temp are only supporting single and dual ESC
+      // Max Battery Current
       if(escTimeSeriesList[i].currentInput != null && escTimeSeriesList[i].currentInput > _maxAmpsBattery){
         _maxAmpsBattery = escTimeSeriesList[i].currentInput;
       }
-      // Monitor Motor Current
+      if(escTimeSeriesList[i].currentInput != null && escTimeSeriesList[i].currentInput2 != null && escTimeSeriesList[i].currentInput + escTimeSeriesList[i].currentInput2 > _maxAmpsBattery){
+        _maxAmpsBattery = escTimeSeriesList[i].currentInput +  escTimeSeriesList[i].currentInput2;
+      }
+
+      // Max Motor Current
       if(escTimeSeriesList[i].currentMotor != null && escTimeSeriesList[i].currentMotor > _maxAmpsMotor){
         _maxAmpsMotor = escTimeSeriesList[i].currentMotor;
       }
+      if(escTimeSeriesList[i].currentMotor != null && escTimeSeriesList[i].currentMotor2 != null && escTimeSeriesList[i].currentMotor + escTimeSeriesList[i].currentMotor > _maxAmpsMotor){
+        _maxAmpsMotor = escTimeSeriesList[i].currentMotor + escTimeSeriesList[i].currentMotor2;
+      }
+
       // Monitor Max ESC Temp
       if(_tsESCMaxESCTemp == null || escTimeSeriesList[i].tempMosfet != null && escTimeSeriesList[i].tempMosfet > _tsESCMaxESCTemp.tempMosfet){
+        // Store time series moment for map point generation and data popup
+        _tsESCMaxESCTemp = escTimeSeriesList[i];
+      }
+      if(_tsESCMaxESCTemp == null || escTimeSeriesList[i].tempMosfet2 != null && escTimeSeriesList[i].tempMosfet2 > _tsESCMaxESCTemp.tempMosfet){
         // Store time series moment for map point generation and data popup
         _tsESCMaxESCTemp = escTimeSeriesList[i];
       }
@@ -751,8 +801,34 @@ class RideLogViewerState extends State<RideLogViewer> {
     //TODO: color polyline based on stats other than speed
     List<Polyline> polylineList = new List();
     if (gpsLatLngMap.values.length > 0) {
-      LatLng lastPoint = gpsLatLngMap.values.first;
-      gpsLatLngMap.forEach((key, value) {
+      // Sorting in case we have experienced out of order records
+      var sortedGPSMapKeysTEST = gpsLatLngMap.keys.toList()..sort();
+      LatLng lastPoint = gpsLatLngMap[sortedGPSMapKeysTEST.first];
+      sortedGPSMapKeysTEST.forEach((element) {
+        var value = gpsLatLngMap[element];
+        var key = element;
+        Color thisColor = Colors.blue;
+        //TODO: Reduce number of GPS points to keep things moving on phones
+        if (calculateDistance(lastPoint, value) > 0.01) {
+          // Compute color for this section of the route
+          if (escTimeSeriesMap[key] != null && escTimeSeriesMap[key].speed != null && _maxSpeed > 0.0) {
+            thisColor = Color.lerp(Colors.yellow, Colors.redAccent[700], escTimeSeriesMap[key].speed.abs() / _maxSpeed);
+          }
+          // Add colored polyline from last section to this one
+          polylineList.add(Polyline(points: [lastPoint, value], strokeWidth: 4, color: thisColor));
+          // Capture last point added
+          lastPoint = value;
+        }
+      });
+    }
+
+    if (gpsLatLngRejectMap.values.length > 0) {
+      // Sorting in case we have experienced out of order records
+      var sortedGPSMapKeysTEST = gpsLatLngRejectMap.keys.toList()..sort();
+      LatLng lastPoint = gpsLatLngRejectMap[sortedGPSMapKeysTEST.first];
+      sortedGPSMapKeysTEST.forEach((element) {
+        var value = gpsLatLngRejectMap[element];
+        var key = element;
         Color thisColor = Colors.blue;
         //TODO: Reduce number of GPS points to keep things moving on phones
         if (calculateDistance(lastPoint, value) > 0.01) {
@@ -1064,22 +1140,19 @@ class RideLogViewerState extends State<RideLogViewer> {
                       primaryMeasureAxis: new charts.NumericAxisSpec(
                           tickProviderSpec: new charts.BasicNumericTickProviderSpec(zeroBound: false)),
 
-                      //TODO: Customizing the domainAxis tickFormatterSpec causes PanAndZoomBehavior to stop working, WHY?
-                      /*
+                      // Customize the domainAxis tickFormatterSpec
                       domainAxis: new charts.DateTimeAxisSpec(
+                          viewport: new charts.DateTimeExtents(start: escTimeSeriesList.first.time, end: escTimeSeriesList.last.time),
                           tickFormatterSpec: new charts.AutoDateTimeTickFormatterSpec(
                             minute: new charts.TimeFormatterSpec(
-                              format: 'HH:mm', // or even HH:mm here too
-                              transitionFormat: 'HH:mm',
+                              format: 'HH:mm:ss', // or even HH:mm here too
+                              transitionFormat: 'HH:mm:ss',
                             ),
                           )
                       ),
-                      */
+
                       behaviors: [
-                        //TODO: "PanAndZoomBehavior()" causes "Exception caught by gesture" : "Bad state: No element" but works
-                        //TODO: charts.PointRenderer() line 255. Add: if (!componentBounds.containsPoint(point)) continue;
-                        //TODO: https://github.com/janstol/charts/commit/899476a06875422aafde82376cdf57ba0c2e65a5
-                        //NOTE: disabled due to poor performance: new charts.PanAndZoomBehavior(),
+                        //TODO: Revisit: https://github.com/janstol/charts/commit/899476a06875422aafde82376cdf57ba0c2e65a5
                         new charts.SlidingViewport(),
                         new charts.PanAndZoomBehavior(),
                         new charts.PanBehavior(),

@@ -1,11 +1,12 @@
 
 import 'dart:io';
 
-import '../components/logFileParser.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 import '../globalUtilities.dart';
+import '../components/logFileParser.dart';
+import '../components/userSettings.dart';
 
 class FileManager {
 
@@ -41,11 +42,11 @@ class FileManager {
     logFileStartTime = DateTime.now();
   }
 
-  static Future<String> saveLogToDocuments({String filename}) async {
+  static Future<String> saveLogToDocuments({String filename, UserSettings userSettings}) async {
     // Get temporary log file
     final file = await _getTempLogFile();
     // Convert binary data to CSV file; Update filename if TIME_SYNC event occurs
-    final Pair<String, File> parserResult = await LogFileParser.parseFile(file, filename);
+    final Pair<String, File> parserResult = await LogFileParser.parseFile(file, filename, userSettings);
     if (filename != parserResult.first) {
       globalLogger.d("fileManager::saveLogToDocuments: Filename changed from $filename to ${parserResult.first}");
     }
