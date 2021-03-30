@@ -357,7 +357,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
 
                   _multiESCMode ? MultiSelectFormField(
                     autovalidate: false,
-                    titleText: _multiESCModeQuad ? "Select CAN IDs" : "Select CAN ID",
+                    title: _multiESCModeQuad ? Text("Select CAN IDs") : Text("Select CAN ID"),
                     validator: (value) {
                       if (value == null || value.length != (_multiESCModeQuad ? 3 : 1)) {
                         if(_multiESCModeQuad) {
@@ -374,7 +374,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                     okButtonLabel: 'OK',
                     cancelButtonLabel: 'CANCEL',
                     // required: true,
-                    hintText: _multiESCModeQuad ? "Select 3 ESC CAN IDs" : "Select 1 ESC CAN ID",
+                    hintWidget: _multiESCModeQuad ? Text("Select 3 ESC CAN IDs") : Text("Select 1 ESC CAN ID"),
                     initialValue: _escCANIDsSelected,
                     onSaved: (value) {
                       if (value == null) return;
