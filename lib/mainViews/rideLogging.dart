@@ -225,7 +225,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                       keyboardType: TextInputType.text,
                                     ),
                                     actions: <Widget>[
-                                      FlatButton(
+                                      TextButton(
                                           onPressed: () async {
                                             // Update notes field in database
                                             await DatabaseAssistant.dbUpdateNote(rideLogsFromDatabase[int.parse(event)].logFilePath, tecRideNotes.text);
@@ -234,7 +234,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                           },
                                           child: const Text("Save")
                                       ),
-                                      FlatButton(
+                                      TextButton(
                                         onPressed: () => Navigator.of(context).pop(false),
                                         child: const Text("Cancel"),
                                       ),
@@ -317,7 +317,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
       // Once finished re-list files and remove a potential snackBar item before re-draw of setState
       if (context != null) {
         _listFiles(true);
-        Scaffold.of(context).removeCurrentSnackBar();
+        ScaffoldMessenger.of(context).removeCurrentSnackBar();
       }
     });
   }
@@ -495,11 +495,11 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                         // Swipe Left to Erase
                         return await genericConfirmationDialog(
                             context,
-                            FlatButton(
+                            TextButton(
                                 onPressed: () => Navigator.of(context).pop(true),
                                 child: const Text("Delete")
                             ),
-                            FlatButton(
+                            TextButton(
                               onPressed: () => Navigator.of(context).pop(false),
                               child: const Text("Cancel"),
                             ),
@@ -570,7 +570,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                                   keyboardType: TextInputType.text,
                                                 ),
                                                 actions: <Widget>[
-                                                  FlatButton(
+                                                  TextButton(
                                                       onPressed: () async {
                                                         // Update notes field in database
                                                         await DatabaseAssistant.dbUpdateNote(rideLogsFromDatabase[index].logFilePath, tecRideNotes.text);
@@ -579,7 +579,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                                       },
                                                       child: const Text("Save")
                                                   ),
-                                                  FlatButton(
+                                                  TextButton(
                                                     onPressed: () => Navigator.of(context).pop(false),
                                                     child: const Text("Cancel"),
                                                   ),
@@ -630,7 +630,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
 
             Row( mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
               SizedBox(width: 5,),
-              RaisedButton(
+              ElevatedButton(
                   child: Text(widget.isLoggerLogging? "Stop Log" : "Start Log"),
                   onPressed: () async {
                     if (!widget.isRobogotchi) {
@@ -644,7 +644,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                   }),
 
               SizedBox(width: 5,),
-              RaisedButton(
+              ElevatedButton(
                   child: Text(widget.syncInProgress?"Stop Sync":"Sync Logs"),
                   onPressed: () async {
                     if (!widget.isRobogotchi) {

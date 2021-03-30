@@ -103,8 +103,8 @@ class bms_config {
 
 class MCCONF {
   MCCONF() {
-    hall_table = new List(8);
-    foc_hall_table = new List(8);
+    hall_table = List.filled(8, 0);
+    foc_hall_table = List.filled(8, 0);
     bms = new bms_config();
   }
   // Switching and drive

@@ -4,7 +4,7 @@ import 'package:flutter/widgets.dart';
 
 import '../hardwareSupport/dieBieMSHelper.dart';
 import '../hardwareSupport/escHelper/escHelper.dart';
-import '../hardwareSupport/escHelper/dataTypes.dart';
+
 import '../globalUtilities.dart';
 import '../components/userSettings.dart';
 
@@ -72,7 +72,7 @@ class RealTimeData extends StatefulWidget {
 
 class RealTimeDataState extends State<RealTimeData> {
 
-  static List<double> motorCurrentGraphPoints = List();
+  static List<double> motorCurrentGraphPoints = [];
 
   static double doubleItemWidth = 150; //This changes on widget build
 

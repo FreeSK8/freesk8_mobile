@@ -157,7 +157,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
 
     // Preselect user configured CAN IDs
     if (_escCANIDsSelected == null) {
-      _escCANIDsSelected = new List();
+      _escCANIDsSelected = [];
       myArguments.currentConfiguration.multiESCIDs.forEach((element) {
         if (element != 0 && myArguments.discoveredCANDevices.contains(element.toInt())) {
           globalLogger.d("Adding user selected CAN ID: $element");
@@ -431,14 +431,14 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
-                      RaisedButton(child:
+                      ElevatedButton(child:
                       Row(mainAxisAlignment: MainAxisAlignment.center , children: <Widget>[Icon(Icons.cancel),Text("Cancel"),],),
                           onPressed: () {
                             Navigator.of(context).pop();
                           }),
 
                       SizedBox(width: 10,),
-                      RaisedButton(child:
+                      ElevatedButton(child:
                       Row(mainAxisAlignment: MainAxisAlignment.center , children: <Widget>[Text("Save"),Icon(Icons.save),],),
                           onPressed: () async {
                             // Validate user input

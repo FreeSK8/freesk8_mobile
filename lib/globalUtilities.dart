@@ -58,7 +58,7 @@ class ListItem {
 }
 
 List<DropdownMenuItem<ListItem>> buildDropDownMenuItems(List listItems) {
-  List<DropdownMenuItem<ListItem>> items = List();
+  List<DropdownMenuItem<ListItem>> items = [];
   for (ListItem listItem in listItems) {
     items.add(
       DropdownMenuItem(
@@ -155,7 +155,7 @@ Future<void> genericAlert(BuildContext context, String alertTitle, Widget alertB
           child: alertBody
         ),
         actions: <Widget>[
-          FlatButton(
+          TextButton(
             child: Text(alertButtonLabel),
             onPressed: () {
               Navigator.of(context).pop();

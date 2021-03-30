@@ -46,7 +46,7 @@ class RideLogViewerState extends State<RideLogViewer> {
   List<String> thisRideLogEntries;
   List<LatLng> _positionEntries;
   MapController _mapController = new MapController();
-  List<Marker> mapMakers = new List();
+  List<Marker> mapMakers = [];
 
   RideLogChartData currentSelection;
 
@@ -63,7 +63,7 @@ class RideLogViewerState extends State<RideLogViewer> {
 
   /// Create time series data for chart using ESC values
   static List<charts.Series<TimeSeriesESC, DateTime>> _createChartingData( List<TimeSeriesESC> values, List<int> escIDsInLog, int faultCodeCount, bool imperialDistance ) {
-      List<charts.Series<TimeSeriesESC, DateTime>> chartData = new List();
+      List<charts.Series<TimeSeriesESC, DateTime>> chartData = [];
 
       /* Good example but not necessary
       if (faultCodeCount > 0) {
@@ -309,7 +309,7 @@ class RideLogViewerState extends State<RideLogViewer> {
     String gpsDistanceStr = "N/A";
 
     //Charting and data
-    List<TimeSeriesESC> escTimeSeriesList = new List<TimeSeriesESC>();
+    List<TimeSeriesESC> escTimeSeriesList = [];
     Map<DateTime, TimeSeriesESC> escTimeSeriesMap = new Map();
     List<charts.Series> seriesList;
     int faultCodeCount = 0;
@@ -324,12 +324,12 @@ class RideLogViewerState extends State<RideLogViewer> {
 
     // Fault tracking
     DateTime lastReportedFaultDt;
-    List<charts.RangeAnnotationSegment> faultRangeAnnotations = new List();
-    List<ESCFault> faultsObserved = new List();
+    List<charts.RangeAnnotationSegment> faultRangeAnnotations = [];
+    List<ESCFault> faultsObserved = [];
 
     //Mapping
-    thisRideLogEntries = new List<String>();
-    _positionEntries = new List<LatLng>();
+    thisRideLogEntries = [];
+    _positionEntries = [];
     Map<DateTime, LatLng> gpsLatLngMap = new Map();
     Map<DateTime, LatLng> gpsLatLngRejectMap = new Map();
 
@@ -351,7 +351,7 @@ class RideLogViewerState extends State<RideLogViewer> {
     }
 
     // Parse lines of log file as CSV
-    List<int> escIDsInLog = new List();
+    List<int> escIDsInLog = [];
     thisRideLogEntries = thisRideLog.split("\n");
     globalLogger.d("rideLogViewer rideLogEntry count: ${thisRideLog.length}");
     for(int i=0; i<thisRideLogEntries.length; ++i) {
@@ -799,7 +799,7 @@ class RideLogViewerState extends State<RideLogViewer> {
     globalLogger.d("rideLogViewer creating map polyline from ${_positionEntries.length} points");
 
     //TODO: color polyline based on stats other than speed
-    List<Polyline> polylineList = new List();
+    List<Polyline> polylineList = [];
     if (gpsLatLngMap.values.length > 0) {
       // Sorting in case we have experienced out of order records
       var sortedGPSMapKeysTEST = gpsLatLngMap.keys.toList()..sort();
@@ -1001,19 +1001,19 @@ class RideLogViewerState extends State<RideLogViewer> {
                   GestureDetector(
                     onTap: () {
                       String shareData = "";
-                      List<Widget> children = new List();
+                      List<Widget> children = [];
                       faultsObserved.forEach((element) {
                         children.add(Text(element.toString()));
                         children.add(Text(""));
                         shareData += element.toString() + "\n\n";
                       });
                       //genericAlert(context, "Faults observed", Column(children: children), "OK");
-                      genericConfirmationDialog(context, FlatButton(
+                      genericConfirmationDialog(context, TextButton(
                         child: Text("Copy / Share"),
                         onPressed: () {
                           Share.text('Faults observed', shareData, 'text/plain');
                         },
-                      ), FlatButton(
+                      ), TextButton(
                         child: Text("Close"),
                         onPressed: () {
                           Navigator.of(context).pop();
@@ -1037,19 +1037,19 @@ class RideLogViewerState extends State<RideLogViewer> {
 
               Row(mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  RaisedButton(
+                  ElevatedButton(
                       child: Text("Delete log"),
                       onPressed: () async {
                         //confirm with user
                         genericConfirmationDialog(
                             context,
-                            FlatButton(
+                            TextButton(
                               child: Text("Cancel"),
                               onPressed: () {
                                 Navigator.of(context).pop();
                               },
                             ),
-                            FlatButton(
+                            TextButton(
                               child: Text("Delete"),
                               onPressed: () async {
                                 //Remove from Database
@@ -1067,7 +1067,7 @@ class RideLogViewerState extends State<RideLogViewer> {
 
                   SizedBox(width: 10,),
 
-                  RaisedButton(
+                  ElevatedButton(
                       child: Text("Share Log"),
                       onPressed: () async {
                         String fileSummary = 'Robogotchi gotchi!';
