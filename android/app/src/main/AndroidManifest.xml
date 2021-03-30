@@ -1,6 +1,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.derelictrobot.freesk8_mobile">
 
+    <!-- This is for image_picker on Android SDK 30
+     See: https://github.com/flutter/flutter/issues/63727#issuecomment-690070820 -->
+    <queries>
+        <intent>
+            <action android:name="android.media.action.IMAGE_CAPTURE" />
+        </intent>
+    </queries>
+
     <!-- The INTERNET permission is required for development. Specifically,
      flutter needs it to communicate with the running application
      to allow setting breakpoints, to provide hot reload, etc.
