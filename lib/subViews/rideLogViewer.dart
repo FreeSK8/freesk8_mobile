@@ -731,21 +731,28 @@ class RideLogViewerState extends State<RideLogViewer> {
         _avgSpeed += escTimeSeriesList[i].speed;
       }
 
-      //TODO: battery, motor, temp are only supporting single and dual ESC
       // Max Battery Current
       if(escTimeSeriesList[i].currentInput != null && escTimeSeriesList[i].currentInput > _maxAmpsBattery){
         _maxAmpsBattery = escTimeSeriesList[i].currentInput;
       }
       if(escTimeSeriesList[i].currentInput != null && escTimeSeriesList[i].currentInput2 != null && escTimeSeriesList[i].currentInput + escTimeSeriesList[i].currentInput2 > _maxAmpsBattery){
-        _maxAmpsBattery = escTimeSeriesList[i].currentInput +  escTimeSeriesList[i].currentInput2;
+        _maxAmpsBattery = doublePrecision(escTimeSeriesList[i].currentInput +  escTimeSeriesList[i].currentInput2, 1);
+      }
+      if(escTimeSeriesList[i].currentInput != null && escTimeSeriesList[i].currentInput2 != null && escTimeSeriesList[i].currentInput3 != null && escTimeSeriesList[i].currentInput4 != null &&
+          escTimeSeriesList[i].currentInput + escTimeSeriesList[i].currentInput2 + escTimeSeriesList[i].currentInput3 + escTimeSeriesList[i].currentInput4 > _maxAmpsBattery){
+        _maxAmpsBattery = doublePrecision(escTimeSeriesList[i].currentInput +  escTimeSeriesList[i].currentInput2 + escTimeSeriesList[i].currentInput3 + escTimeSeriesList[i].currentInput4, 1);
       }
 
       // Max Motor Current
       if(escTimeSeriesList[i].currentMotor != null && escTimeSeriesList[i].currentMotor > _maxAmpsMotor){
         _maxAmpsMotor = escTimeSeriesList[i].currentMotor;
       }
-      if(escTimeSeriesList[i].currentMotor != null && escTimeSeriesList[i].currentMotor2 != null && escTimeSeriesList[i].currentMotor + escTimeSeriesList[i].currentMotor > _maxAmpsMotor){
-        _maxAmpsMotor = escTimeSeriesList[i].currentMotor + escTimeSeriesList[i].currentMotor2;
+      if(escTimeSeriesList[i].currentMotor != null && escTimeSeriesList[i].currentMotor2 != null && escTimeSeriesList[i].currentMotor + escTimeSeriesList[i].currentMotor2 > _maxAmpsMotor){
+        _maxAmpsMotor = doublePrecision(escTimeSeriesList[i].currentMotor + escTimeSeriesList[i].currentMotor2, 1);
+      }
+      if(escTimeSeriesList[i].currentMotor != null && escTimeSeriesList[i].currentMotor2 != null && escTimeSeriesList[i].currentMotor3 != null && escTimeSeriesList[i].currentMotor4 != null &&
+          escTimeSeriesList[i].currentMotor + escTimeSeriesList[i].currentMotor2 + escTimeSeriesList[i].currentMotor3 + escTimeSeriesList[i].currentMotor4 > _maxAmpsMotor){
+        _maxAmpsMotor = doublePrecision(escTimeSeriesList[i].currentMotor + escTimeSeriesList[i].currentMotor2 + escTimeSeriesList[i].currentMotor3 + escTimeSeriesList[i].currentMotor4, 1);
       }
 
       // Monitor Max ESC Temp
@@ -754,6 +761,14 @@ class RideLogViewerState extends State<RideLogViewer> {
         _tsESCMaxESCTemp = escTimeSeriesList[i];
       }
       if(_tsESCMaxESCTemp == null || escTimeSeriesList[i].tempMosfet2 != null && escTimeSeriesList[i].tempMosfet2 > _tsESCMaxESCTemp.tempMosfet){
+        // Store time series moment for map point generation and data popup
+        _tsESCMaxESCTemp = escTimeSeriesList[i];
+      }
+      if(_tsESCMaxESCTemp == null || escTimeSeriesList[i].tempMosfet3 != null && escTimeSeriesList[i].tempMosfet3 > _tsESCMaxESCTemp.tempMosfet){
+        // Store time series moment for map point generation and data popup
+        _tsESCMaxESCTemp = escTimeSeriesList[i];
+      }
+      if(_tsESCMaxESCTemp == null || escTimeSeriesList[i].tempMosfet4 != null && escTimeSeriesList[i].tempMosfet4 > _tsESCMaxESCTemp.tempMosfet){
         // Store time series moment for map point generation and data popup
         _tsESCMaxESCTemp = escTimeSeriesList[i];
       }
