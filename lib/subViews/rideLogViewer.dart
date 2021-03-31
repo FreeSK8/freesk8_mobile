@@ -717,6 +717,8 @@ class RideLogViewerState extends State<RideLogViewer> {
     ///Generate ride statistics
     double _maxSpeed = 0.0;
     double _avgSpeed = 0.0;
+    double _avgSpeedMoving = 0.0;
+    int _avgSpeedNonZeroEntries = 0;
     double _maxAmpsBattery = 0.0;
     double _maxAmpsMotor = 0.0;
     TimeSeriesESC _tsESCMaxSpeed;
@@ -727,8 +729,9 @@ class RideLogViewerState extends State<RideLogViewer> {
         // Store time series moment for map point generation and data popup
         _tsESCMaxSpeed = escTimeSeriesList[i];
       }
-      if (escTimeSeriesList[i].speed != null) {
+      if (escTimeSeriesList[i].speed != null && escTimeSeriesList[i].speed != 0) {
         _avgSpeed += escTimeSeriesList[i].speed;
+        ++_avgSpeedNonZeroEntries;
       }
 
       // Max Battery Current
@@ -866,11 +869,19 @@ class RideLogViewerState extends State<RideLogViewer> {
       distance = myArguments.userSettings.settings.useImperial ? "$totalDistance miles" : "$totalDistance km";
       duration = escTimeSeriesList.last.time.difference(escTimeSeriesList.first.time);
 
+      // Compute average moving speed
+      if (_avgSpeedNonZeroEntries > 0) {
+        _avgSpeedMoving =  _avgSpeed / _avgSpeedNonZeroEntries;
+        _avgSpeedMoving = doublePrecision(_avgSpeedMoving, 2);
+      }
+
+      // Compute average overall speed
       _avgSpeed /= escTimeSeriesList.length;
       _avgSpeed = doublePrecision(_avgSpeed, 2);
     }
     String maxSpeed = myArguments.userSettings.settings.useImperial ? "$_maxSpeed mph" : "$_maxSpeed kph";
     String avgSpeed = myArguments.userSettings.settings.useImperial ? "$_avgSpeed mph" : "$_avgSpeed kph";
+    String avgSpeedMoving = myArguments.userSettings.settings.useImperial ? "$_avgSpeedMoving mph" : "$_avgSpeedMoving kph";
 
     // Remove loading dialog since the user has no control
     if(_keyLoader.currentContext != null)
@@ -963,7 +974,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                   Column(children: <Widget>[
                     Text("Average Speed"),
                     Icon(Icons.trending_up),
-                    escTimeSeriesList.length > 0 ? Text(avgSpeed) : Text(gpsAverageSpeed.toString())
+                    escTimeSeriesList.length > 0 ? Text(avgSpeedMoving) : Text(gpsAverageSpeed.toString())
                   ],),
                   SizedBox(width: 10,),
                   Column(children: <Widget>[
@@ -1087,6 +1098,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                       onPressed: () async {
                         String fileSummary = 'Robogotchi gotchi!';
                         fileSummary += "\nTop Speed: $maxSpeed";
+                        fileSummary += "\nAvg Moving Speed: $avgSpeedMoving";
                         fileSummary += "\nAvg Speed: $avgSpeed";
                         fileSummary += "\nDistance: $distance";
                         if (myArguments.logFileInfo.wattHoursTotal != -1.0 && distanceEndPrimary != null) {
