@@ -651,9 +651,23 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                       return _alertLimitedFunctionality(context);
                     }
                     if (widget.isLoggerLogging) {
-                      return genericAlert(context, "Hold up", Text("There is a log file recording. Please stop logging before sync."), "Oh, one sec!");
+                      //return genericAlert(context, "Hold up", Text("There is a log file recording. Please stop logging before sync."), "Oh, one sec!");
+                      genericConfirmationDialog(
+                          context,
+                          TextButton(child: Text("Keep logging"),onPressed: (){
+                            Navigator.of(context).pop(false); // Close dialog
+                          }),
+                          TextButton(child: Text("Stop N Sync"),onPressed: () async {
+                            await sendBLEData(widget.theTXLoggerCharacteristic, utf8.encode("logstop~"), false); // Stop logging
+                            widget._handleSyncPress(); // Start sync routine
+                            Navigator.of(context).pop(true); // Close dialog
+                          }),
+                          "Hold up",
+                          Text("There is a log file recording. Do you want to stop logging and sync now?")
+                      );
+                    } else {
+                      widget._handleSyncPress(); //Start or stop file sync routine
                     }
-                    widget._handleSyncPress(); //Start or stop file sync routine
                   }),
 
 
