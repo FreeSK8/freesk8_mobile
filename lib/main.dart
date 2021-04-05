@@ -2493,9 +2493,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   // Start and stop telemetry streaming timer
   void startStopTelemetryTimer(bool disableTimer) {
     if (!disableTimer){
-      globalLogger.d("startStopTelemetryTimer: Starting timer");
-      const duration = const Duration(milliseconds:100);
-      telemetryTimer = new Timer.periodic(duration, (Timer t) => _requestTelemetry());
+      if (isESCResponding) {
+        globalLogger.d("startStopTelemetryTimer: Starting timer");
+        const duration = const Duration(milliseconds:100);
+        telemetryTimer?.cancel();
+        telemetryTimer = new Timer.periodic(duration, (Timer t) => _requestTelemetry());
+      }
     } else {
       globalLogger.d("startStopTelemetryTimer: Stopping timer");
       if (telemetryTimer != null) {
