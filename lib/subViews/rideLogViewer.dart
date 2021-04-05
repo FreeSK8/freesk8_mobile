@@ -1103,8 +1103,8 @@ class RideLogViewerState extends State<RideLogViewer> {
                         fileSummary += "\nDistance: $distance";
                         if (myArguments.logFileInfo.wattHoursTotal != -1.0 && distanceEndPrimary != null) {
                           fileSummary += "\nConsumption: $consumption Wh/${myArguments.userSettings.settings.useImperial ? "mile" : "km"}";
-                          fileSummary += "\nWatt Hours: ${myArguments.logFileInfo.wattHoursTotal}";
-                          fileSummary += "\nWatt Hours Regen: ${myArguments.logFileInfo.wattHoursRegenTotal}";
+                          fileSummary += "\nWatt Hours: ${doublePrecision(myArguments.logFileInfo.wattHoursTotal, 2)}";
+                          fileSummary += "\nWatt Hours Regen: ${doublePrecision(myArguments.logFileInfo.wattHoursRegenTotal, 2)}";
                         }
                         fileSummary += "\nBattery Amps: $_maxAmpsBattery";
                         fileSummary += "\nMotor Amps: $_maxAmpsMotor";
