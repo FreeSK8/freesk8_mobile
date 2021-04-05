@@ -991,7 +991,7 @@ class RideLogViewerState extends State<RideLogViewer> {
               Row(mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   myArguments.logFileInfo.wattHoursTotal != -1.0 && distanceEndPrimary != null ? Column(children: <Widget>[
-                    Text("Wh"),
+                    Text("${escIDsInLog.length == 1 ? "Single" : escIDsInLog.length == 2 ? "Dual" : "Quad"}"),
                     Icon(Icons.local_gas_station),
                     Text("$consumption Wh/${myArguments.userSettings.settings.useImperial ? "mile" : "km"}")
                   ],) : Container(),
