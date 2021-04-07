@@ -4,7 +4,7 @@ import 'package:flutter/widgets.dart';
 
 import '../hardwareSupport/dieBieMSHelper.dart';
 import '../hardwareSupport/escHelper/escHelper.dart';
-import '../hardwareSupport/escHelper/dataTypes.dart';
+
 import '../globalUtilities.dart';
 import '../components/userSettings.dart';
 
@@ -72,7 +72,7 @@ class RealTimeData extends StatefulWidget {
 
 class RealTimeDataState extends State<RealTimeData> {
 
-  static List<double> motorCurrentGraphPoints = List();
+  static List<double> motorCurrentGraphPoints = [];
 
   static double doubleItemWidth = 150; //This changes on widget build
 
@@ -398,9 +398,12 @@ class RealTimeDataState extends State<RealTimeData> {
 
     if (escTelemetry.battery_level != null) {
       batteryRemaining = (0.25 * escTelemetry.battery_level * 100) + (0.75 * batteryRemaining);
-      if (batteryRemaining < 0.0 || batteryRemaining > 100.0) {
-        globalLogger.e("Battery Remaining $batteryRemaining battery_level ${escTelemetry.battery_level}");
+      if (batteryRemaining < 0.0) {
+        globalLogger.e("Battery Remaining $batteryRemaining battery_level ${escTelemetry.battery_level} v_in ${escTelemetry.v_in}");
         batteryRemaining = 0;
+      }
+      if(batteryRemaining > 100.0) {
+        batteryRemaining = 100.0;
       }
     }
 

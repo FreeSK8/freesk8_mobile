@@ -199,7 +199,7 @@ enum NRF_RETR_DELAY {
 
 class nrf_config {
   nrf_config() {
-    address = new List(3);
+    address = List.filled(3, 0);
   }
   NRF_SPEED speed;
   NRF_POWER power;
@@ -295,9 +295,9 @@ enum AHRS_MODE {
 
 class imu_config {
   imu_config() {
-    accel_offsets = new List(3);
-    gyro_offsets = new List(3);
-    gyro_offset_comp_fact = new List(3);
+    accel_offsets = List.filled(3, 0);
+    gyro_offsets = List.filled(3, 0);
+    gyro_offset_comp_fact = List.filled(3, 0);
   }
   IMU_TYPE type;
   AHRS_MODE mode;

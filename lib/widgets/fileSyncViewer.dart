@@ -53,7 +53,7 @@ class FileSyncViewerState extends State<FileSyncViewer> {
 
     // Compute which children to show
     bool unPackingNow = false;
-    List<Widget> zeChildren = new List();
+    List<Widget> zeChildren = [];
     if (widget.syncStatus.fileList.length > 0 && widget.syncStatus.fileBytesReceived == widget.syncStatus.fileBytesTotal) {
       zeChildren.add(Text("Files remaining: ${widget.syncStatus.fileList.length}"));
       zeChildren.add(Text("Current file: ${widget.syncStatus.fileName}"));

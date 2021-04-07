@@ -157,7 +157,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
 
     // Preselect user configured CAN IDs
     if (_escCANIDsSelected == null) {
-      _escCANIDsSelected = new List();
+      _escCANIDsSelected = [];
       myArguments.currentConfiguration.multiESCIDs.forEach((element) {
         if (element != 0 && myArguments.discoveredCANDevices.contains(element.toInt())) {
           globalLogger.d("Adding user selected CAN ID: $element");
@@ -357,7 +357,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
 
                   _multiESCMode ? MultiSelectFormField(
                     autovalidate: false,
-                    titleText: _multiESCModeQuad ? "Select CAN IDs" : "Select CAN ID",
+                    title: _multiESCModeQuad ? Text("Select CAN IDs") : Text("Select CAN ID"),
                     validator: (value) {
                       if (value == null || value.length != (_multiESCModeQuad ? 3 : 1)) {
                         if(_multiESCModeQuad) {
@@ -374,7 +374,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                     okButtonLabel: 'OK',
                     cancelButtonLabel: 'CANCEL',
                     // required: true,
-                    hintText: _multiESCModeQuad ? "Select 3 ESC CAN IDs" : "Select 1 ESC CAN ID",
+                    hintWidget: _multiESCModeQuad ? Text("Select 3 ESC CAN IDs") : Text("Select 1 ESC CAN ID"),
                     initialValue: _escCANIDsSelected,
                     onSaved: (value) {
                       if (value == null) return;
@@ -431,14 +431,14 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
-                      RaisedButton(child:
+                      ElevatedButton(child:
                       Row(mainAxisAlignment: MainAxisAlignment.center , children: <Widget>[Icon(Icons.cancel),Text("Cancel"),],),
                           onPressed: () {
                             Navigator.of(context).pop();
                           }),
 
                       SizedBox(width: 10,),
-                      RaisedButton(child:
+                      ElevatedButton(child:
                       Row(mainAxisAlignment: MainAxisAlignment.center , children: <Widget>[Text("Save"),Icon(Icons.save),],),
                           onPressed: () async {
                             // Validate user input

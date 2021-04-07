@@ -216,14 +216,14 @@ class ESCProfileEditorState extends State<ESCProfileEditor> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  RaisedButton(child:
+                  ElevatedButton(child:
                   Row(mainAxisAlignment: MainAxisAlignment.center , children: <Widget>[Icon(Icons.cancel),Text("Cancel"),],),
                       onPressed: () {
                         Navigator.of(context).pop();
                       }),
 
                   SizedBox(width: 10,),
-                  RaisedButton(child:
+                  ElevatedButton(child:
                   Row(mainAxisAlignment: MainAxisAlignment.center , children: <Widget>[Text("Save"),Icon(Icons.save),],),
                       onPressed: () async {
                         await ESCHelper.setESCProfile(myArguments.profileIndex, myArguments.profile);

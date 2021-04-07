@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 
 import '../components/crc16.dart';
-import '../hardwareSupport/escHelper/escHelper.dart';
 import '../hardwareSupport/escHelper/dataTypes.dart';
 
 import '../globalUtilities.dart';

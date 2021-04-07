@@ -151,7 +151,7 @@ class RobogotchiDFUState extends State<RobogotchiDFU> with SingleTickerProviderS
             ),
           ),
           actions: <Widget>[
-            FlatButton(
+            TextButton(
               child: Text('OK'),
               onPressed: () {
                 Navigator.of(context).pop(); // Close this dialog
@@ -280,7 +280,7 @@ class DeviceItem extends StatelessWidget {
                 ],
               ),
             ),
-            FlatButton(onPressed: inDFUMode ? onPress : null, child: Text(inDFUMode ? "Start Update" : "Not Ready"))
+            TextButton(onPressed: inDFUMode ? onPress : null, child: Text(inDFUMode ? "Start Update" : "Not Ready"))
           ],
         ),
       ),

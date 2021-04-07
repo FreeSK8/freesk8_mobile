@@ -46,7 +46,7 @@ class RideLogViewerState extends State<RideLogViewer> {
   List<String> thisRideLogEntries;
   List<LatLng> _positionEntries;
   MapController _mapController = new MapController();
-  List<Marker> mapMakers = new List();
+  List<Marker> mapMakers = [];
 
   RideLogChartData currentSelection;
 
@@ -63,7 +63,7 @@ class RideLogViewerState extends State<RideLogViewer> {
 
   /// Create time series data for chart using ESC values
   static List<charts.Series<TimeSeriesESC, DateTime>> _createChartingData( List<TimeSeriesESC> values, List<int> escIDsInLog, int faultCodeCount, bool imperialDistance ) {
-      List<charts.Series<TimeSeriesESC, DateTime>> chartData = new List();
+      List<charts.Series<TimeSeriesESC, DateTime>> chartData = [];
 
       /* Good example but not necessary
       if (faultCodeCount > 0) {
@@ -309,7 +309,7 @@ class RideLogViewerState extends State<RideLogViewer> {
     String gpsDistanceStr = "N/A";
 
     //Charting and data
-    List<TimeSeriesESC> escTimeSeriesList = new List<TimeSeriesESC>();
+    List<TimeSeriesESC> escTimeSeriesList = [];
     Map<DateTime, TimeSeriesESC> escTimeSeriesMap = new Map();
     List<charts.Series> seriesList;
     int faultCodeCount = 0;
@@ -324,12 +324,12 @@ class RideLogViewerState extends State<RideLogViewer> {
 
     // Fault tracking
     DateTime lastReportedFaultDt;
-    List<charts.RangeAnnotationSegment> faultRangeAnnotations = new List();
-    List<ESCFault> faultsObserved = new List();
+    List<charts.RangeAnnotationSegment> faultRangeAnnotations = [];
+    List<ESCFault> faultsObserved = [];
 
     //Mapping
-    thisRideLogEntries = new List<String>();
-    _positionEntries = new List<LatLng>();
+    thisRideLogEntries = [];
+    _positionEntries = [];
     Map<DateTime, LatLng> gpsLatLngMap = new Map();
     Map<DateTime, LatLng> gpsLatLngRejectMap = new Map();
 
@@ -351,7 +351,7 @@ class RideLogViewerState extends State<RideLogViewer> {
     }
 
     // Parse lines of log file as CSV
-    List<int> escIDsInLog = new List();
+    List<int> escIDsInLog = [];
     thisRideLogEntries = thisRideLog.split("\n");
     globalLogger.d("rideLogViewer rideLogEntry count: ${thisRideLog.length}");
     for(int i=0; i<thisRideLogEntries.length; ++i) {
@@ -717,6 +717,8 @@ class RideLogViewerState extends State<RideLogViewer> {
     ///Generate ride statistics
     double _maxSpeed = 0.0;
     double _avgSpeed = 0.0;
+    double _avgSpeedMoving = 0.0;
+    int _avgSpeedNonZeroEntries = 0;
     double _maxAmpsBattery = 0.0;
     double _maxAmpsMotor = 0.0;
     TimeSeriesESC _tsESCMaxSpeed;
@@ -727,25 +729,33 @@ class RideLogViewerState extends State<RideLogViewer> {
         // Store time series moment for map point generation and data popup
         _tsESCMaxSpeed = escTimeSeriesList[i];
       }
-      if (escTimeSeriesList[i].speed != null) {
+      if (escTimeSeriesList[i].speed != null && escTimeSeriesList[i].speed != 0) {
         _avgSpeed += escTimeSeriesList[i].speed;
+        ++_avgSpeedNonZeroEntries;
       }
 
-      //TODO: battery, motor, temp are only supporting single and dual ESC
       // Max Battery Current
       if(escTimeSeriesList[i].currentInput != null && escTimeSeriesList[i].currentInput > _maxAmpsBattery){
         _maxAmpsBattery = escTimeSeriesList[i].currentInput;
       }
       if(escTimeSeriesList[i].currentInput != null && escTimeSeriesList[i].currentInput2 != null && escTimeSeriesList[i].currentInput + escTimeSeriesList[i].currentInput2 > _maxAmpsBattery){
-        _maxAmpsBattery = escTimeSeriesList[i].currentInput +  escTimeSeriesList[i].currentInput2;
+        _maxAmpsBattery = doublePrecision(escTimeSeriesList[i].currentInput +  escTimeSeriesList[i].currentInput2, 1);
+      }
+      if(escTimeSeriesList[i].currentInput != null && escTimeSeriesList[i].currentInput2 != null && escTimeSeriesList[i].currentInput3 != null && escTimeSeriesList[i].currentInput4 != null &&
+          escTimeSeriesList[i].currentInput + escTimeSeriesList[i].currentInput2 + escTimeSeriesList[i].currentInput3 + escTimeSeriesList[i].currentInput4 > _maxAmpsBattery){
+        _maxAmpsBattery = doublePrecision(escTimeSeriesList[i].currentInput +  escTimeSeriesList[i].currentInput2 + escTimeSeriesList[i].currentInput3 + escTimeSeriesList[i].currentInput4, 1);
       }
 
       // Max Motor Current
       if(escTimeSeriesList[i].currentMotor != null && escTimeSeriesList[i].currentMotor > _maxAmpsMotor){
         _maxAmpsMotor = escTimeSeriesList[i].currentMotor;
       }
-      if(escTimeSeriesList[i].currentMotor != null && escTimeSeriesList[i].currentMotor2 != null && escTimeSeriesList[i].currentMotor + escTimeSeriesList[i].currentMotor > _maxAmpsMotor){
-        _maxAmpsMotor = escTimeSeriesList[i].currentMotor + escTimeSeriesList[i].currentMotor2;
+      if(escTimeSeriesList[i].currentMotor != null && escTimeSeriesList[i].currentMotor2 != null && escTimeSeriesList[i].currentMotor + escTimeSeriesList[i].currentMotor2 > _maxAmpsMotor){
+        _maxAmpsMotor = doublePrecision(escTimeSeriesList[i].currentMotor + escTimeSeriesList[i].currentMotor2, 1);
+      }
+      if(escTimeSeriesList[i].currentMotor != null && escTimeSeriesList[i].currentMotor2 != null && escTimeSeriesList[i].currentMotor3 != null && escTimeSeriesList[i].currentMotor4 != null &&
+          escTimeSeriesList[i].currentMotor + escTimeSeriesList[i].currentMotor2 + escTimeSeriesList[i].currentMotor3 + escTimeSeriesList[i].currentMotor4 > _maxAmpsMotor){
+        _maxAmpsMotor = doublePrecision(escTimeSeriesList[i].currentMotor + escTimeSeriesList[i].currentMotor2 + escTimeSeriesList[i].currentMotor3 + escTimeSeriesList[i].currentMotor4, 1);
       }
 
       // Monitor Max ESC Temp
@@ -754,6 +764,14 @@ class RideLogViewerState extends State<RideLogViewer> {
         _tsESCMaxESCTemp = escTimeSeriesList[i];
       }
       if(_tsESCMaxESCTemp == null || escTimeSeriesList[i].tempMosfet2 != null && escTimeSeriesList[i].tempMosfet2 > _tsESCMaxESCTemp.tempMosfet){
+        // Store time series moment for map point generation and data popup
+        _tsESCMaxESCTemp = escTimeSeriesList[i];
+      }
+      if(_tsESCMaxESCTemp == null || escTimeSeriesList[i].tempMosfet3 != null && escTimeSeriesList[i].tempMosfet3 > _tsESCMaxESCTemp.tempMosfet){
+        // Store time series moment for map point generation and data popup
+        _tsESCMaxESCTemp = escTimeSeriesList[i];
+      }
+      if(_tsESCMaxESCTemp == null || escTimeSeriesList[i].tempMosfet4 != null && escTimeSeriesList[i].tempMosfet4 > _tsESCMaxESCTemp.tempMosfet){
         // Store time series moment for map point generation and data popup
         _tsESCMaxESCTemp = escTimeSeriesList[i];
       }
@@ -799,7 +817,7 @@ class RideLogViewerState extends State<RideLogViewer> {
     globalLogger.d("rideLogViewer creating map polyline from ${_positionEntries.length} points");
 
     //TODO: color polyline based on stats other than speed
-    List<Polyline> polylineList = new List();
+    List<Polyline> polylineList = [];
     if (gpsLatLngMap.values.length > 0) {
       // Sorting in case we have experienced out of order records
       var sortedGPSMapKeysTEST = gpsLatLngMap.keys.toList()..sort();
@@ -851,11 +869,19 @@ class RideLogViewerState extends State<RideLogViewer> {
       distance = myArguments.userSettings.settings.useImperial ? "$totalDistance miles" : "$totalDistance km";
       duration = escTimeSeriesList.last.time.difference(escTimeSeriesList.first.time);
 
+      // Compute average moving speed
+      if (_avgSpeedNonZeroEntries > 0) {
+        _avgSpeedMoving =  _avgSpeed / _avgSpeedNonZeroEntries;
+        _avgSpeedMoving = doublePrecision(_avgSpeedMoving, 2);
+      }
+
+      // Compute average overall speed
       _avgSpeed /= escTimeSeriesList.length;
       _avgSpeed = doublePrecision(_avgSpeed, 2);
     }
     String maxSpeed = myArguments.userSettings.settings.useImperial ? "$_maxSpeed mph" : "$_maxSpeed kph";
     String avgSpeed = myArguments.userSettings.settings.useImperial ? "$_avgSpeed mph" : "$_avgSpeed kph";
+    String avgSpeedMoving = myArguments.userSettings.settings.useImperial ? "$_avgSpeedMoving mph" : "$_avgSpeedMoving kph";
 
     // Remove loading dialog since the user has no control
     if(_keyLoader.currentContext != null)
@@ -948,7 +974,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                   Column(children: <Widget>[
                     Text("Average Speed"),
                     Icon(Icons.trending_up),
-                    escTimeSeriesList.length > 0 ? Text(avgSpeed) : Text(gpsAverageSpeed.toString())
+                    escTimeSeriesList.length > 0 ? Text(avgSpeedMoving) : Text(gpsAverageSpeed.toString())
                   ],),
                   SizedBox(width: 10,),
                   Column(children: <Widget>[
@@ -965,7 +991,7 @@ class RideLogViewerState extends State<RideLogViewer> {
               Row(mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   myArguments.logFileInfo.wattHoursTotal != -1.0 && distanceEndPrimary != null ? Column(children: <Widget>[
-                    Text("Wh"),
+                    Text("${escIDsInLog.length == 1 ? "Single" : escIDsInLog.length == 2 ? "Dual" : "Quad"}"),
                     Icon(Icons.local_gas_station),
                     Text("$consumption Wh/${myArguments.userSettings.settings.useImperial ? "mile" : "km"}")
                   ],) : Container(),
@@ -1001,19 +1027,19 @@ class RideLogViewerState extends State<RideLogViewer> {
                   GestureDetector(
                     onTap: () {
                       String shareData = "";
-                      List<Widget> children = new List();
+                      List<Widget> children = [];
                       faultsObserved.forEach((element) {
                         children.add(Text(element.toString()));
                         children.add(Text(""));
                         shareData += element.toString() + "\n\n";
                       });
                       //genericAlert(context, "Faults observed", Column(children: children), "OK");
-                      genericConfirmationDialog(context, FlatButton(
+                      genericConfirmationDialog(context, TextButton(
                         child: Text("Copy / Share"),
                         onPressed: () {
                           Share.text('Faults observed', shareData, 'text/plain');
                         },
-                      ), FlatButton(
+                      ), TextButton(
                         child: Text("Close"),
                         onPressed: () {
                           Navigator.of(context).pop();
@@ -1037,19 +1063,19 @@ class RideLogViewerState extends State<RideLogViewer> {
 
               Row(mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  RaisedButton(
+                  ElevatedButton(
                       child: Text("Delete log"),
                       onPressed: () async {
                         //confirm with user
                         genericConfirmationDialog(
                             context,
-                            FlatButton(
+                            TextButton(
                               child: Text("Cancel"),
                               onPressed: () {
                                 Navigator.of(context).pop();
                               },
                             ),
-                            FlatButton(
+                            TextButton(
                               child: Text("Delete"),
                               onPressed: () async {
                                 //Remove from Database
@@ -1067,17 +1093,18 @@ class RideLogViewerState extends State<RideLogViewer> {
 
                   SizedBox(width: 10,),
 
-                  RaisedButton(
+                  ElevatedButton(
                       child: Text("Share Log"),
                       onPressed: () async {
                         String fileSummary = 'Robogotchi gotchi!';
                         fileSummary += "\nTop Speed: $maxSpeed";
+                        fileSummary += "\nAvg Moving Speed: $avgSpeedMoving";
                         fileSummary += "\nAvg Speed: $avgSpeed";
                         fileSummary += "\nDistance: $distance";
                         if (myArguments.logFileInfo.wattHoursTotal != -1.0 && distanceEndPrimary != null) {
                           fileSummary += "\nConsumption: $consumption Wh/${myArguments.userSettings.settings.useImperial ? "mile" : "km"}";
-                          fileSummary += "\nWatt Hours: ${myArguments.logFileInfo.wattHoursTotal}";
-                          fileSummary += "\nWatt Hours Regen: ${myArguments.logFileInfo.wattHoursRegenTotal}";
+                          fileSummary += "\nWatt Hours: ${doublePrecision(myArguments.logFileInfo.wattHoursTotal, 2)}";
+                          fileSummary += "\nWatt Hours Regen: ${doublePrecision(myArguments.logFileInfo.wattHoursRegenTotal, 2)}";
                         }
                         fileSummary += "\nBattery Amps: $_maxAmpsBattery";
                         fileSummary += "\nMotor Amps: $_maxAmpsMotor";

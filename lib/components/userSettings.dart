@@ -29,7 +29,7 @@ class UserSettings {
 
   UserSettings({this.settings, this.currentDeviceID, this.knownDevices}) {
     settings = new UserSettingsStructure();
-    knownDevices = new List();
+    knownDevices = [];
     currentDeviceID = "defaults";
   }
 

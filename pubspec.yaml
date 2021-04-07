@@ -33,7 +33,10 @@ dependencies:
 
   flutter_thermometer: ^1.0.0
   flutter_gauge:
-    path: ./flutter_gauge
+    git:
+      url: git@github.com:FreeSK8/flutter_gauge.git
+      ref: freesk8_mobile
+
   oscilloscope: 0.0.3
   intl: ^0.16.1
 
@@ -43,20 +46,23 @@ dependencies:
   charts_flutter: 0.10.0
   sliding_up_panel: ^1.0.2
   #this one does not support files# share: 0.6.4+2
-  esys_flutter_share: ^1.0.2
+  esys_flutter_share: ^1.0.2 #https://pub.dev/packages/esys_flutter_share/changelog
 
   wakelock: 0.1.4+1
 
   multiselect_formfield: ^0.1.3
 
-  table_calendar: ^2.3.0
+  table_calendar: ^2.3.3 #https://pub.dev/packages/table_calendar/changelog
 
   flutter_nordic_dfu: ^2.4.0
 
   get_ip: ^0.4.0
 
-  logger_flutter: #^0.7.1
-    path: ./logger_flutter
+  logger_flutter:
+    #path: ../forked_packages/logger_flutter
+    git:
+      url: git@github.com:FreeSK8/logger_flutter.git
+      ref: freesk8_mobile
 
   device_info: ^1.0.0
 

@@ -24,7 +24,7 @@ class DieBieMSTelemetry {
     faultState = 0;
     canID = 0;
     noOfCells = 0;
-    cellVoltage = new List();
+    cellVoltage = [];
   }
   // DieBieMS COMM_GET_VALUES
   double packVoltage;
@@ -61,7 +61,7 @@ class DieBieMSHelper {
     int index = 1;
 
     latestTelemetry.noOfCells = payload[index++];
-    latestTelemetry.cellVoltage = new List();
+    latestTelemetry.cellVoltage = [];
     for( int i=0; i<latestTelemetry.noOfCells; ++i) {
       latestTelemetry.cellVoltage.add(buffer_get_float16(payload, index, 1e3));
       index += 2;

@@ -629,7 +629,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                   return Text("${snapshot.data}");
                                 }),
 
-                            RaisedButton(
+                            ElevatedButton(
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: <Widget>[
@@ -643,9 +643,14 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
                                 });
                               },
-                              color: Colors.transparent,
+                              style: ButtonStyle(backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
+                                if (states.contains(MaterialState.disabled)) {
+                                  return Colors.grey[100];
+                                }
+                                return Colors.transparent;
+                              })),
                             ),
-                            RaisedButton(
+                            ElevatedButton(
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: <Widget>[
@@ -656,9 +661,14 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                 // navigate to the editor
                                 Navigator.of(context).pushNamed(ESCProfileEditor.routeName, arguments: ESCProfileEditorArguments(widget.theTXCharacteristic, await ESCHelper.getESCProfile(i), i, widget.myUserSettings.settings.useImperial));
                               },
-                              color: Colors.transparent,
+                              style: ButtonStyle(backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
+                                if (states.contains(MaterialState.disabled)) {
+                                  return Colors.grey[100];
+                                }
+                                return Colors.transparent;
+                              })),
                             ),
-                            RaisedButton(
+                            ElevatedButton(
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: <Widget>[
@@ -668,7 +678,12 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               onPressed: () async {
                                 setMCCONFTemp(_applyESCProfilePermanently, await ESCHelper.getESCProfile(i));
                               },
-                              color: Colors.transparent,
+                              style: ButtonStyle(backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
+                                if (states.contains(MaterialState.disabled)) {
+                                  return Colors.grey[100];
+                                }
+                                return Colors.transparent;
+                              })),
                             )
                           ]
                       ),
@@ -746,7 +761,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
-                      RaisedButton(child:
+                      ElevatedButton(child:
                       Row(mainAxisAlignment: MainAxisAlignment.center , children: <Widget>[Text("Finished"),Icon(Icons.check),],),
                           onPressed: () {
                             widget.onExitProfiles(false);
@@ -889,7 +904,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                           _selectedCANFwdID = null;
                                           // Request primary ESC application configuration
                                           widget.requestESCApplicationConfiguration(_selectedCANFwdID);
-                                          Scaffold
+                                          ScaffoldMessenger
                                               .of(context)
                                               .showSnackBar(SnackBar(content: Text("Requesting ESC application configuration from primary ESC")));
                                         });
@@ -937,7 +952,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                           _selectedCANFwdID = null;
                                           // Request primary ESC application configuration
                                           widget.requestESCApplicationConfiguration(_selectedCANFwdID);
-                                          Scaffold
+                                          ScaffoldMessenger
                                               .of(context)
                                               .showSnackBar(SnackBar(content: Text("Requesting ESC application configuration from primary ESC")));
                                         });
@@ -946,7 +961,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                           _selectedCANFwdID = widget.discoveredCANDevices[index-1];
                                           // Request APPCONF from CAN device
                                           widget.requestESCApplicationConfiguration(_selectedCANFwdID);
-                                          Scaffold
+                                          ScaffoldMessenger
                                               .of(context)
                                               .showSnackBar(SnackBar(content: Text("Requesting ESC application configuration from CAN ID $_selectedCANFwdID")));
                                         }
@@ -1008,7 +1023,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                           Divider(thickness: 3),
                           Text("Calibrate PPM"),
 
-                          RaisedButton(onPressed: (){
+                          ElevatedButton(onPressed: (){
                             // If we are not currently calibrating...
                             if (!ppmCalibrate) {
                               // Clear the captured values when starting calibration
@@ -1073,7 +1088,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                       ),
                                     ),
                                     actions: <Widget>[
-                                      FlatButton(
+                                      TextButton(
                                         child: Text('Reject'),
                                         onPressed: () {
                                           setState(() {
@@ -1089,7 +1104,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                           Navigator.of(context).pop();
                                         },
                                       ),
-                                      FlatButton(
+                                      TextButton(
                                         child: Text('Accept'),
                                         onPressed: () {
                                           setState(() {
@@ -1193,7 +1208,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                             },
                           ),
 
-                          RaisedButton(onPressed: (){
+                          ElevatedButton(onPressed: (){
                             setState(() {
                               showAdvancedOptions = !showAdvancedOptions;
                             });
@@ -1381,13 +1396,13 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                           //Text("app adc ctrl type ${widget.escAppConfiguration.app_adc_conf.ctrl_type}"),
 
 
-                          showAdvancedOptions ? RaisedButton(onPressed: (){
+                          showAdvancedOptions ? ElevatedButton(onPressed: (){
                             setState(() {
                               showAdvancedOptions = false;
                             });
                           }, child: Text("Hide Advanced Options"),) : Container(),
 
-                          RaisedButton(
+                          ElevatedButton(
                               child: Text("Save to ESC${_selectedCANFwdID != null ? "/CAN $_selectedCANFwdID" : ""}"),
                               onPressed: () {
                                 if (widget.currentDevice != null) {
@@ -1397,7 +1412,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                 }
                               }),
 
-                          RaisedButton(
+                          ElevatedButton(
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -1448,13 +1463,13 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                       globalLogger.d("User Close Input Configuration");
                       genericConfirmationDialog(
                           context,
-                          FlatButton(
+                          TextButton(
                             child: Text("Not yet"),
                             onPressed: () {
                               Navigator.of(context).pop();
                             },
                           ),
-                          FlatButton(
+                          TextButton(
                             child: Text("Yes"),
                             onPressed: () async {
                               Navigator.of(context).pop();
@@ -1608,7 +1623,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                                 _selectedCANFwdID = null;
                                                 // Request primary ESC settings
                                                 widget.onAutoloadESCSettings(true);
-                                                Scaffold
+                                                ScaffoldMessenger
                                                     .of(context)
                                                     .showSnackBar(SnackBar(content: Text("Requesting ESC configuration from primary ESC")));
                                               });
@@ -1655,7 +1670,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                                 _selectedCANFwdID = null;
                                                 // Request primary ESC settings
                                                 widget.onAutoloadESCSettings(true);
-                                                Scaffold
+                                                ScaffoldMessenger
                                                     .of(context)
                                                     .showSnackBar(SnackBar(content: Text("Requesting ESC configuration from primary ESC")));
                                               });
@@ -1666,7 +1681,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                                   _selectedCANFwdID = widget.discoveredCANDevices[index-1];
                                                   // Request MCCONF from CAN device
                                                   requestMCCONFCAN(_selectedCANFwdID);
-                                                  Scaffold
+                                                  ScaffoldMessenger
                                                       .of(context)
                                                       .showSnackBar(SnackBar(content: Text("Requesting ESC configuration from CAN ID $_selectedCANFwdID")));
                                                 });
@@ -1704,19 +1719,19 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                           Center(child:
                           Column(children: <Widget>[
                             Text("ESC Information"),
-                            RaisedButton(
+                            ElevatedButton(
                                 child: Text("Request from ESC${_selectedCANFwdID != null ? "/CAN $_selectedCANFwdID" : ""}"),
                                 onPressed: () {
                                   if (widget.currentDevice != null) {
                                     setState(() {
                                       if ( _selectedCANFwdID != null ) {
                                         requestMCCONFCAN(_selectedCANFwdID);
-                                        Scaffold
+                                        ScaffoldMessenger
                                             .of(context)
                                             .showSnackBar(SnackBar(content: Text("Requesting ESC configuration from CAN ID $_selectedCANFwdID")));
                                       } else {
                                         widget.onAutoloadESCSettings(true);
-                                        Scaffold
+                                        ScaffoldMessenger
                                             .of(context)
                                             .showSnackBar(SnackBar(content: Text("Requesting ESC configuration")));
                                       }
@@ -2000,7 +2015,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
                           //Text(" ${widget.escMotorConfiguration.}"),
 
-                          RaisedButton(
+                          ElevatedButton(
                               child: Text("Save to ESC${_selectedCANFwdID != null ? "/CAN $_selectedCANFwdID" : ""}"),
                               onPressed: () {
                                 if (widget.currentDevice != null) {
@@ -2028,7 +2043,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                           Center(child: Text("Additional Tools"),),
                           Row( mainAxisAlignment: MainAxisAlignment.spaceBetween ,
                             children: <Widget>[
-                              RaisedButton(
+                              ElevatedButton(
                                 //TODO: quick pair for CAN FWD device?
                                   child: Row(children: <Widget>[
                                     Icon(Icons.settings_remote),
@@ -2065,7 +2080,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                     }
                                   }),
 
-                              RaisedButton(
+                              ElevatedButton(
                                   child: Row(children: <Widget>[
                                     Icon(Icons.donut_large),
                                     Text("FOC Wizard")
@@ -2109,13 +2124,13 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                       globalLogger.d("User Close Motor Configuration");
                       genericConfirmationDialog(
                           context,
-                          FlatButton(
+                          TextButton(
                             child: Text("Not yet"),
                             onPressed: () {
                               Navigator.of(context).pop();
                             },
                           ),
-                          FlatButton(
+                          TextButton(
                             child: Text("Yes"),
                             onPressed: () async {
                               Navigator.of(context).pop();
@@ -2189,7 +2204,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                     Text("Board Avatar"),
                     SizedBox(
                       width: 125,
-                      child:  RaisedButton(
+                      child:  ElevatedButton(
                           child:
                           Row(mainAxisAlignment: MainAxisAlignment.center , children: <Widget>[Text("Take "),Icon(Icons.camera_alt),],),
 
@@ -2199,7 +2214,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                     ),
                     SizedBox(
                       width: 125,
-                      child:  RaisedButton(
+                      child:  ElevatedButton(
                           child:
                           Row(mainAxisAlignment: MainAxisAlignment.center , children: <Widget>[Text("Select "),Icon(Icons.filter),],),
 
@@ -2226,12 +2241,12 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
                 SizedBox(height:10),
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-                  RaisedButton(
+                  ElevatedButton(
                       child: Text("Revert Settings"),
                       onPressed: () {
                         setState(() {
                           widget.myUserSettings.reloadSettings();
-                          Scaffold
+                          ScaffoldMessenger
                               .of(context)
                               .showSnackBar(SnackBar(content: Text('Application settings loaded from last state')));
                         });
@@ -2239,7 +2254,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
                   SizedBox(width:15),
 
-                  RaisedButton(
+                  ElevatedButton(
                       child: Text("Save Settings"),
                       onPressed: () async {
                         FocusScope.of(context).requestFocus(new FocusNode()); //Hide keyboard
@@ -2257,11 +2272,11 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
                         } catch (e) {
                           globalLogger.e("Save Settings Exception $e");
-                          Scaffold
+                          ScaffoldMessenger
                               .of(context)
                               .showSnackBar(SnackBar(content: Text('Sorry friend. Save settings failed =(')));
                         }
-                        Scaffold
+                        ScaffoldMessenger
                             .of(context)
                             .showSnackBar(SnackBar(content: Text('Application settings saved')));
                       }),

@@ -55,7 +55,7 @@ import 'package:logger_flutter/logger_flutter.dart';
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.14.1";
+const String freeSK8ApplicationVersion = "0.14.2";
 const String robogotchiFirmwareExpectedVersion = "0.9.0";
 
 void main() {
@@ -90,7 +90,7 @@ void main() {
 class MyHome extends StatefulWidget {
 
   final FlutterBlue flutterBlue = FlutterBlue.instance;
-  final List<BluetoothDevice> devicesList = new List<BluetoothDevice>();
+  final List<BluetoothDevice> devicesList = [];
 
   final UserSettings myUserSettings = new UserSettings();
 
@@ -109,7 +109,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
   LatLng lastLocation;
   DateTime lastTimeLocation;
-  List<LatLng> routeTakenLocations = new List<LatLng>();
+  List<LatLng> routeTakenLocations = [];
   
   /* Testing preferences, for fun, keep a counter of how many times the app was opened */
   int counter = -1;
@@ -140,7 +140,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static APPCONF escApplicationConfiguration;
   static int ppmLastDuration;
   static Uint8List escMotorConfigurationDefaults;
-  static List<int> _validCANBusDeviceIDs = new List();
+  static List<int> _validCANBusDeviceIDs = [];
   static String robogotchiVersion;
 
   static bool deviceIsConnected = false;
@@ -636,7 +636,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   //This builds a grid view of found BLE devices... works pretty ok
   GridView _buildGridViewOfDevices() {
     final int crossAxisCount = 2;
-    List<Widget> containers = new List<Widget>();
+    List<Widget> containers = [];
 
     containers.add(
       Container(
@@ -660,8 +660,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               ),
             //),
 
-            FlatButton(
-              color: Theme.of(context).buttonColor,
+            ElevatedButton(
               child: Text(
                 'Cancel',
                 style: TextStyle(color: Colors.white),
@@ -787,18 +786,18 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static bool syncAdvanceProgress = false;
   static bool lsInProgress = false;
   static bool catInProgress = false;
-  static List<int> catBytesRaw = new List();
+  static List<int> catBytesRaw = [];
   static int catBytesReceived = 0;
   static int catBytesTotal = 0;
-  static List<FileToSync> fileList = new List<FileToSync>();
-  static List<String> fileListToDelete = new List();
+  static List<FileToSync> fileList = [];
+  static List<String> fileListToDelete = [];
   static bool syncEraseOnComplete = true;
   static bool isLoggerLogging = false; //TODO: this is redundant
   static RobogotchiStatus gotchiStatus = new RobogotchiStatus();
   static double connectedVehicleOdometer = 0;
   static double connectedVehicleConsumption = 0;
   static DateTime syncLastACK = DateTime.now();
-  static List<ESCFault> escFaults = new List();
+  static List<ESCFault> escFaults = [];
 
   // Handler for RideLogging's sync button
   void _handleBLESyncState(bool startSync) async {
@@ -1158,13 +1157,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   boardID: widget.myUserSettings.currentDeviceID,
                   boardAlias: widget.myUserSettings.settings.boardAlias,
                   logFilePath: savedFilePath,
-                  avgSpeed: -1.0,
+                  avgSpeed: -1.0, //TODO: compute average speed
                   maxSpeed: maxSpeedKph,
                   elevationChange: maxElevation != null ? maxElevation - minElevation : -1.0,
                   maxAmpsBattery: maxCurrentBattery,
                   maxAmpsMotors: maxCurrentMotor,
-                  wattHoursTotal: wattHours,
-                  wattHoursRegenTotal: wattHoursRegen,
+                  wattHoursTotal: doublePrecision(wattHours, 2),
+                  wattHoursRegenTotal: doublePrecision(wattHoursRegen, 2),
                   distance: distanceTotal,
                   durationSeconds: lastEntryTime.difference(firstEntryTime).inSeconds,
                   faultCount: faultCodeCount,
@@ -1194,12 +1193,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             globalLogger.e("cat,complete threw an exception: ${e.toString()}");
 
             // Alert user something went wrong with the parsing
-            genericConfirmationDialog(context, FlatButton(
+            genericConfirmationDialog(context, TextButton(
               child: Text("Copy / Share"),
               onPressed: () {
                 Share.text(catCurrentFilename, "${e.toString()}\n\n$logFileContentsForDebugging}", 'text/plain');
               },
-            ), FlatButton(
+            ), TextButton(
               child: Text("Close"),
               onPressed: () {
                 Navigator.of(context).pop();
@@ -1296,19 +1295,19 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         escFaults = escHelper.processFaults(count, dataBuffer);
 
         String shareData = "";
-        List<Widget> children = new List();
+        List<Widget> children = [];
         escFaults.forEach((element) {
           children.add(Text(element.toString()));
           children.add(Text(""));
           shareData += element.toString() + "\n\n";
         });
         //genericAlert(context, "Faults observed", Column(children: children), "OK");
-        genericConfirmationDialog(context, FlatButton(
+        genericConfirmationDialog(context, TextButton(
           child: Text("Copy / Share"),
           onPressed: () {
             Share.text('Faults observed', shareData, 'text/plain');
           },
-        ), FlatButton(
+        ), TextButton(
           child: Text("Close"),
           onPressed: () {
             Navigator.of(context).pop();
@@ -1908,12 +1907,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       // Alert user if Robogotchi firmware update is expected
       if (_deviceIsRobogotchi && robogotchiVersion != robogotchiFirmwareExpectedVersion) {
-        genericConfirmationDialog(context, FlatButton(
+        genericConfirmationDialog(context, TextButton(
           child: Text("NO"),
           onPressed: () {
             Navigator.of(context).pop();
           },
-        ), FlatButton(
+        ), TextButton(
           child: Text("YES"),
           onPressed: () async {
             // Navigate to Firmware Update view
@@ -2021,7 +2020,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             ),
           ),
           actions: <Widget>[
-            FlatButton(
+            TextButton(
               child: Text('Noice'),
               onPressed: () {
                 Navigator.of(context).pop();
@@ -2050,7 +2049,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             ),
           ),
           actions: <Widget>[
-            FlatButton(
+            TextButton(
               child: Text('Give it another go'),
               onPressed: () {
                 Navigator.of(context).pop();
@@ -2078,7 +2077,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             ),
           ),
           actions: <Widget>[
-            FlatButton(
+            TextButton(
               child: Text('OK'),
               onPressed: () {
                 Navigator.of(context).pop();
@@ -2109,7 +2108,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             ),
           ),
           actions: <Widget>[
-            FlatButton(
+            TextButton(
               child: Text('Whoa'),
               onPressed: () {
                 Navigator.of(context).pop();
@@ -2337,13 +2336,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                     ),
                   ),
                   actions: <Widget>[
-                    FlatButton(
+                    TextButton(
                       child: Text('No thank you.'),
                       onPressed: () {
                         Navigator.of(context).pop();
                       },
                     ),
-                    FlatButton(
+                    TextButton(
                       child: Text('YES'),
                       onPressed: () async {
                         await theTXLoggerCharacteristic.write(utf8.encode("dfumode~")).timeout(Duration(milliseconds: 500)).whenComplete((){
@@ -2494,9 +2493,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   // Start and stop telemetry streaming timer
   void startStopTelemetryTimer(bool disableTimer) {
     if (!disableTimer){
-      globalLogger.d("startStopTelemetryTimer: Starting timer");
-      const duration = const Duration(milliseconds:100);
-      telemetryTimer = new Timer.periodic(duration, (Timer t) => _requestTelemetry());
+      if (isESCResponding) {
+        globalLogger.d("startStopTelemetryTimer: Starting timer");
+        const duration = const Duration(milliseconds:100);
+        telemetryTimer?.cancel();
+        telemetryTimer = new Timer.periodic(duration, (Timer t) => _requestTelemetry());
+      }
     } else {
       globalLogger.d("startStopTelemetryTimer: Stopping timer");
       if (telemetryTimer != null) {
