@@ -80,7 +80,7 @@ class RealTimeDataState extends State<RealTimeData> {
 
   static ESCTelemetry escTelemetry;
 
-  double batteryRemaining = 0;
+  double batteryRemaining;
 
   double calculateSpeedKph(double eRpm) {
     double ratio = 1.0 / widget.currentSettings.settings.gearRatio;
@@ -394,6 +394,12 @@ class RealTimeDataState extends State<RealTimeData> {
       averageVoltageInput = (0.25 * doublePrecision(escTelemetry.v_in, 1)) + (0.75 * averageVoltageInput);
     } else {
       averageVoltageInput = powerMinimum;
+    }
+
+    if (batteryRemaining == null && escTelemetry.battery_level != null) {
+      batteryRemaining = escTelemetry.battery_level * 100;
+    } else {
+      batteryRemaining = 0;
     }
 
     if (escTelemetry.battery_level != null) {
