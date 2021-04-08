@@ -10,6 +10,12 @@ import 'package:logger/logger.dart';
 import 'components/crc16.dart';
 import 'hardwareSupport/escHelper/dataTypes.dart';
 
+// Define the TabController's indexes
+final int controllerViewConnection = 0;
+final int controllerViewRealTime = 1;
+final int controllerViewLogging = 2;
+final int controllerViewConfiguration = 3;
+
 // Format a duration to look nice as a string
 prettyPrintDuration(Duration d) => d.toString().split('.').first.padLeft(8, "0");
 

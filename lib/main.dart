@@ -221,7 +221,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   }
 
   void _monitorGotchiTimer() {
-    if (_gotchiStatusTimer == null && theTXLoggerCharacteristic != null && initMsgSqeuencerCompleted && (controller.index == 0 || controller.index == 3) && !syncInProgress) {
+    if (_gotchiStatusTimer == null && theTXLoggerCharacteristic != null && initMsgSqeuencerCompleted && (controller.index == controllerViewConnection || controller.index == controllerViewLogging) && !syncInProgress) {
       globalLogger.d("_monitorGotchiTimer: Starting gotchiStatusTimer");
       startStopGotchiTimer(false);
     } else if (syncInProgress) {
@@ -312,10 +312,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           icon: Icon(Icons.multiline_chart),
         ),
         Tab(
-          icon: Icon(Icons.settings),
+          icon: Icon(Icons.format_align_left),
         ),
         Tab(
-          icon: Icon(Icons.format_align_left),
+          icon: Icon(Icons.settings),
         ),
       ],
       // setup the controller
@@ -510,7 +510,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       stopTCPServer();
 
       // Navigate back to the connection tab
-      _delayedTabControllerIndexChange(0);
+      _delayedTabControllerIndexChange(controllerViewConnection);
     }
   }
 
@@ -1483,7 +1483,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           // Update map of ESC telemetry
           telemetryMap[telemetryPacket.vesc_id] = telemetryPacket;
 
-          if(controller.index == 1) { //Only re-draw if we are on the real time data tab
+          if(controller.index == controllerViewRealTime) { //Only re-draw if we are on the real time data tab
             setState(() { //Re-drawing with updated telemetry data
             });
           }
@@ -1501,7 +1501,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             // Parse DieBieMS GET_VALUES packet - A shame they share the same ID as ESC values
             dieBieMSTelemetry = dieBieMSHelper.processTelemetry(bleHelper.getPayload(), smartBMSCANID);
 
-            if(controller.index == 1) { //Only re-draw if we are on the real time data tab
+            if(controller.index == controllerViewRealTime) { //Only re-draw if we are on the real time data tab
               setState(() { //Re-drawing with updated telemetry data
               });
             }
@@ -1561,7 +1561,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             case 1:
               globalLogger.d("Pairing Successful");
               Navigator.of(context).pop(); //Pop Quick Pair initial dialog
-              if (controller.index == 1) startStopTelemetryTimer(
+              if (controller.index == controllerViewRealTime) startStopTelemetryTimer(
                   false); //Resume the telemetry timer
 
               showDialog(
@@ -1578,7 +1578,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             case 2:
               globalLogger.d("Pairing timeout");
               Navigator.of(context).pop(); //Pop Quick Pair initial dialog
-              if (controller.index == 1) startStopTelemetryTimer(
+              if (controller.index == controllerViewRealTime) startStopTelemetryTimer(
                   false); //Resume the telemetry timer
 
               showDialog(
@@ -1595,7 +1595,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             default:
               globalLogger.e("ERROR: Pairing unknown payload");
               Navigator.of(context).pop(); //Pop Quick Pair initial dialog
-              if (controller.index == 1) {
+              if (controller.index == controllerViewRealTime) {
                 //Resume the telemetry timer
                 startStopTelemetryTimer(false);
               }
@@ -1648,7 +1648,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           // Check flag to show ESC Profiles when MCCONF data is received
           if (_showESCProfiles) {
             setState(() {
-              controller.index = 2; // Navigate user to Configuration tab
+              controller.index = controllerViewConfiguration; // Navigate user to Configuration tab
             });
           }
 
@@ -1703,7 +1703,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           if (_showESCApplicationConfigurator) {
             setState(() {
               _hideAllSubviews();
-              controller.index = 2;
+              controller.index = controllerViewConfiguration;
               _showESCApplicationConfigurator = true;
             });
           } else {
@@ -1731,7 +1731,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           int resultFOCDetection = byteData.getInt16(1);
 
           Navigator.of(context).pop(); //Pop away the FOC wizard Loading Overlay
-          if (controller.index == 1) startStopTelemetryTimer(false); //Resume the telemetry timer
+          if (controller.index == controllerViewRealTime) startStopTelemetryTimer(false); //Resume the telemetry timer
 
           if (resultFOCDetection >= 0) {
             Navigator.of(context).pop(); //Pop away the FOC wizard on success
@@ -1962,7 +1962,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         globalLogger.d("_requestInitMessages: Connected device is not known. Notifying user");
         //TODO: navigate to setup widget if we create one..
         genericAlert(context, "New device!", Text("You have connected to a new device. Take a picture, give it a name and save your settings now for the best experience."), "OK");
-        _delayedTabControllerIndexChange(2); // Switch to the configuration tab
+        _delayedTabControllerIndexChange(controllerViewConfiguration); // Switch to the configuration tab
       }
 
       globalLogger.i("_requestInitMessages: initMsgSequencer is complete! Great success!");
@@ -2253,7 +2253,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             setState(() {
               _showDieBieMS = true;
             });
-            _delayedTabControllerIndexChange(1);
+            _delayedTabControllerIndexChange(controllerViewRealTime);
             globalLogger.d("Smart BMS RealTime Enabled");
             Navigator.pop(context); // Close drawer
           }
@@ -2302,7 +2302,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               _hideAllSubviews();
               _showESCConfigurator = true;
             });
-            _delayedTabControllerIndexChange(2);
+            _delayedTabControllerIndexChange(controllerViewConfiguration);
             globalLogger.d("ESC Configurator Displayed");
             // Close the menu
             Navigator.pop(context);
@@ -2410,7 +2410,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
   // Called by timer on interval to request Robogotchi Status packet
   void _requestGotchiStatus() {
-    if ((controller.index != 0 && controller.index != 3 ) || syncInProgress || theTXLoggerCharacteristic == null) {
+    if ((controller.index != controllerViewConnection && controller.index != controllerViewLogging ) || syncInProgress || theTXLoggerCharacteristic == null) {
       globalLogger.d("_requestGotchiStatus: Auto stopping gotchi timer");
       startStopGotchiTimer(true);
     } else {
@@ -2654,6 +2654,17 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 smartBMSID: smartBMSCANID,
                 deviceIsConnected: deviceIsConnected,
               ),
+              RideLogging(
+                  myUserSettings: widget.myUserSettings,
+                  theTXLoggerCharacteristic: theTXLoggerCharacteristic,
+                  syncInProgress: syncInProgress, //TODO: RideLogging receives syncInProgress in syncStatus object
+                  onSyncPress: _handleBLESyncState,
+                  syncStatus: syncStatus,
+                  eraseOnSync: syncEraseOnComplete,
+                  onSyncEraseSwitch: _handleEraseOnSyncButton,
+                  isLoggerLogging: isLoggerLogging,
+                  isRobogotchi : _deviceIsRobogotchi
+              ),
               ESK8Configuration(
                 myUserSettings: widget.myUserSettings,
                 currentDevice: _connectedDevice,
@@ -2676,17 +2687,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 escFirmwareVersion: escFirmwareVersion,
                 updateComputedVehicleStatistics: updateComputedVehicleStatistics,
                 applicationDocumentsDirectory: applicationDocumentsDirectory,
-              ),
-              RideLogging(
-                  myUserSettings: widget.myUserSettings,
-                  theTXLoggerCharacteristic: theTXLoggerCharacteristic,
-                  syncInProgress: syncInProgress, //TODO: RideLogging receives syncInProgress in syncStatus object
-                  onSyncPress: _handleBLESyncState,
-                  syncStatus: syncStatus,
-                  eraseOnSync: syncEraseOnComplete,
-                  onSyncEraseSwitch: _handleEraseOnSyncButton,
-                  isLoggerLogging: isLoggerLogging,
-                  isRobogotchi : _deviceIsRobogotchi
               )
             ])
           ),
