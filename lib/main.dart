@@ -55,7 +55,7 @@ import 'package:logger_flutter/logger_flutter.dart';
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.14.2";
+const String freeSK8ApplicationVersion = "0.14.3";
 const String robogotchiFirmwareExpectedVersion = "0.9.0";
 
 void main() {
@@ -1019,9 +1019,22 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         if (receiveStr == "cat,complete") {
           String logFileContentsForDebugging = "";
           try {
+            //TODO: validate file transmission. We need a proper packet definition and CRC
+            // Verify the correct number of bytes were received, retry file if necessary
+            if (catBytesReceived != catBytesTotal) {
+              globalLogger.e("Concatenate file operation complete but received $catBytesReceived of $catBytesTotal bytes. Retrying $catCurrentFilename");
+              // Take the current file and add it to the front of the fileList to be re-attempted
+              fileList.insert(0,fileList.first);
+              // Advance the sync process after failure
+              setState(() {
+                catInProgress = false;
+                syncAdvanceProgress = true;
+              });
+              return;
+            }
+
             globalLogger.d("Concatenate file operation complete on $catCurrentFilename with $catBytesReceived bytes");
 
-            //TODO: validate file transmission. We need a proper packet definition and CRC
             // Write raw bytes from cat operation to the filesystem
             await FileManager.writeBytesToLogFile(catBytesRaw);
             catBytesRaw.clear();
@@ -2579,7 +2592,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       if(fileList.length>0){
         catCurrentFilename = fileList.first.fileName;
         catBytesTotal = fileList.first.fileSize; //Set the total expected bytes for the current file
-        globalLogger.d("Sync requesting cat of ${fileList.first.fileName}");
+        globalLogger.d("Sync requesting cat of $catCurrentFilename with $catBytesTotal bytes");
         sendBLEData(theTXLoggerCharacteristic, utf8.encode("cat ${fileList.first.fileName}~"), false); //Request next file
       }
       else if(fileListToDelete.length>0){
