@@ -2423,7 +2423,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   // Called by timer on interval to request telemetry packet
   static int telemetryRateLimiter = 0;
   void _requestTelemetry() async {
-    if ( _connectedDevice != null || !this.mounted && isESCResponding){
+    if ((_connectedDevice != null || !this.mounted) && isESCResponding){
+
+      // Do not request telemetry while performing sync
+      if (syncInProgress) {
+        return;
+      }
 
       //Request telemetry packet; On error increase error counter
       if(_showDieBieMS) {
