@@ -115,24 +115,29 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
   }
 
   void _listFiles(bool doSetState) async {
-    rideLogsFromDatabase = await DatabaseAssistant.dbSelectLogs(orderByClause: orderByClause);
+    //globalLogger.wtf("selecting logs from database");
+    try {
+      rideLogsFromDatabase = await DatabaseAssistant.dbSelectLogs(orderByClause: orderByClause);
 
-    // Prepare data for Calendar View
-    _events = {}; // Clear events before populating from database
-    rideLogsFromDatabase.forEach((element) {
-      DateTime thisDate = DateTime.parse(new DateFormat("yyyy-MM-dd").format(element.dateTime.add(DateTime.now().timeZoneOffset)));
-      if (_events.containsKey(thisDate)) {
-        //globalLogger.wtf("updating $thisDate");
-        _events[thisDate].add('${rideLogsFromDatabase.indexOf(element)}');
-      } else {
-        //globalLogger.wtf("adding $thisDate");
-        _events[thisDate] = ['${rideLogsFromDatabase.indexOf(element)}'];
-      }
-    });
-    _selectedEvents = _events[_selectedDay] ?? [];
+      // Prepare data for Calendar View
+      _events = {}; // Clear events before populating from database
+      rideLogsFromDatabase.forEach((element) {
+        DateTime thisDate = DateTime.parse(new DateFormat("yyyy-MM-dd").format(element.dateTime.add(DateTime.now().timeZoneOffset)));
+        if (_events.containsKey(thisDate)) {
+          //globalLogger.wtf("updating $thisDate");
+          _events[thisDate].add('${rideLogsFromDatabase.indexOf(element)}');
+        } else {
+          //globalLogger.wtf("adding $thisDate");
+          _events[thisDate] = ['${rideLogsFromDatabase.indexOf(element)}'];
+        }
+      });
+      _selectedEvents = _events[_selectedDay] ?? [];
 
-    // Set state if requested and is an appropriate time
-    if (doSetState && this.mounted) setState(() {});
+      // Set state if requested and is an appropriate time
+      if (doSetState && this.mounted) setState(() {});
+    } catch (e) {
+      globalLogger.w("_listFiles threw an exception (rebuilding too often?): ${e.toString()}");
+    }
   }
 
 
