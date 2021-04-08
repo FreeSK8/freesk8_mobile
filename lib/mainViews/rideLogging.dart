@@ -326,7 +326,8 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
   Widget build(BuildContext context) {
     print("Build: RideLogging");
 
-    if(widget.syncInProgress) {
+    // Access database to request file list if we are not performing Sync operation
+    if (!widget.syncInProgress) {
       _listFiles(false);
     }
 
