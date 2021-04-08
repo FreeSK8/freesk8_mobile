@@ -44,6 +44,7 @@ class ESK8Configuration extends StatefulWidget {
     this.ppmCalibrateReady,
     this.escFirmwareVersion,
     this.updateComputedVehicleStatistics,
+    @required this.applicationDocumentsDirectory,
   });
   final UserSettings myUserSettings;
   final BluetoothDevice currentDevice;
@@ -69,6 +70,8 @@ class ESK8Configuration extends StatefulWidget {
 
   final ValueChanged<bool> updateComputedVehicleStatistics;
 
+  final String applicationDocumentsDirectory;
+
   ESK8ConfigurationState createState() => new ESK8ConfigurationState();
 
   static const String routeName = "/settings";
@@ -83,6 +86,8 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
   bool _writeESCInProgress;
 
+  FileImage _boardAvatar;
+
   Future getImage(bool fromUserGallery) async {
     final documentsDirectory = await getApplicationDocumentsDirectory();
     final imagePicker = ImagePicker();
@@ -95,6 +100,15 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       finalImage.writeAsBytesSync(await temporaryImage.readAsBytes());
       globalLogger.d("Board avatar file destination: ${finalImage.path}");
 
+      // Let go of the old image that we are displaying here
+      setState(() {
+        _boardAvatar = null;
+      });
+
+      // Wait for the application
+      await Future.delayed(Duration(milliseconds: 500),(){});
+
+      // Clear the image cache and load the new image
       setState(() {
         //NOTE: A FileImage is the fastest way to load these images but because
         //      it's cached they will only update once. Unless you explicitly
@@ -103,6 +117,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
         imageCache.clear();
         imageCache.clearLiveImages();
 
+        _boardAvatar = new FileImage(new File("${widget.applicationDocumentsDirectory}${widget.myUserSettings.settings.boardAvatarPath}"));
         widget.myUserSettings.settings.boardAvatarPath = "/avatars/${widget.currentDevice.id}";
       });
     }
@@ -193,6 +208,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
   @override
   void initState() {
     super.initState();
+
+    if (widget.myUserSettings.settings.boardAvatarPath != null) {
+      _boardAvatar = FileImage(File("${widget.applicationDocumentsDirectory}${widget.myUserSettings.settings.boardAvatarPath}"));
+    }
 
     _applyESCProfilePermanently = false;
     _writeESCInProgress = false;
@@ -2225,17 +2244,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                   ],),
 
                   SizedBox(width: 15),
-                  FutureBuilder<Directory>(
-                      future: getApplicationDocumentsDirectory(),
-                      builder: (BuildContext context, AsyncSnapshot<Directory> snapshot) {
-                        if(snapshot.connectionState == ConnectionState.waiting){
-                          return Container();
-                        }
-                        return CircleAvatar(
-                            backgroundImage: widget.myUserSettings.settings.boardAvatarPath != null ? FileImage(File("${snapshot.data.path}${widget.myUserSettings.settings.boardAvatarPath}")) : AssetImage('assets/FreeSK8_Mobile.jpg'),
-                            radius: 100,
-                            backgroundColor: Colors.white);
-                      }),
+                  CircleAvatar(
+                      backgroundImage: _boardAvatar != null ? _boardAvatar : AssetImage('assets/FreeSK8_Mobile.jpg'),
+                      radius: 100,
+                      backgroundColor: Colors.white)
 
                 ]),
 
