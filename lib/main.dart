@@ -2611,7 +2611,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     return Scaffold(
         // Appbar
         appBar: AppBar(
-            title: Text("FreeSK8 (v$freeSK8ApplicationVersion)"),
+            title: Row(children: [
+              Text("FreeSK8 (v$freeSK8ApplicationVersion)"),
+              syncInProgress ? Icon(Icons.sync) : Container()
+            ],),
             // Set the background color of the App Bar
             backgroundColor: serverTCPSocket != null ? Colors.blueAccent : Theme.of(context).primaryColor,
             // Set the bottom property of the Appbar to include a Tab Bar
