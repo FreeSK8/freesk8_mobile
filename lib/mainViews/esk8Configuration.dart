@@ -117,8 +117,8 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
         imageCache.clear();
         imageCache.clearLiveImages();
 
-        _boardAvatar = new FileImage(new File("${widget.applicationDocumentsDirectory}${widget.myUserSettings.settings.boardAvatarPath}"));
         widget.myUserSettings.settings.boardAvatarPath = "/avatars/${widget.currentDevice.id}";
+        _boardAvatar = new FileImage(new File("${widget.applicationDocumentsDirectory}${widget.myUserSettings.settings.boardAvatarPath}"));
       });
     }
   }
