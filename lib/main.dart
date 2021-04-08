@@ -154,12 +154,17 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static StreamSubscription<Position> positionStream;
 
   MemoryImage cachedBoardAvatar;
+  String applicationDocumentsDirectory;
 
   @override
   void initState() {
     super.initState();
 
     print("main initState");
+
+    getApplicationDocumentsDirectory().then((value){
+      applicationDocumentsDirectory = value.path;
+    });
 
     bleHelper = new BLEHelper();
     escHelper = new ESCHelper();
@@ -2172,6 +2177,60 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       ],
     );
 
+    bool menuOptionIsReady({bool isRobogotchiOption}) {
+      // Check if we are connected
+      if (!isRobogotchiOption && _connectedDevice == null) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text("No Connection"),
+              content: Text("Oops. Try connecting to your board first."),
+            );
+          },
+        );
+        return false;
+      } else if (!isRobogotchiOption && !isESCResponding) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text("No data"),
+              content: Text("There is an active connection but no communication from the ESC. Please check your configuration."),
+            );
+          },
+        );
+        return false;
+      // Check if we are connected to a Robogotchi
+      } else if (isRobogotchiOption && (!_deviceIsRobogotchi || theTXLoggerCharacteristic == null)) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text("Robogotchi Feature"),
+              content: Text("This selection requires an active Robogotchi connection"),
+            );
+          },
+        );
+        return false;
+      // Check if we are syncing
+      } else if (syncInProgress) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text("Sync in progress"),
+              content: Text("This feature is restricted until the sync operation is completed"),
+            );
+          },
+        );
+        return false;
+      }
+
+      // It's safe to proceed with this menu option
+      return true;
+    }
+
     var myNavChildren = [
       headerChild,
       //getNavItem(Icons.settings, "Testies", Test.routeName),
@@ -2190,7 +2249,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             });
             globalLogger.d("Smart BMS RealTime Disabled");
             Navigator.pop(context); // Close drawer
-          } else {
+          } else if (menuOptionIsReady(isRobogotchiOption: false)) {
             setState(() {
               _showDieBieMS = true;
             });
@@ -2205,8 +2264,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         leading: Icon(Icons.timer),
         title: Text("Speed Profiles"),
         onTap: () {
-          // Don't write if not connected
-          if (theTXCharacteristic != null) {
+          if (menuOptionIsReady(isRobogotchiOption: false)) {
             setState(() {
               _hideAllSubviews();
               // Set the flag to show ESC profiles. Display when MCCONF is returned
@@ -2215,16 +2273,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
             requestMCCONF();
             Navigator.pop(context); // Close the drawer
-          } else {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text("No Connection"),
-                  content: Text("Oops. Try connecting to your board first."),
-                );
-              },
-            );
           }
         },
       ),
@@ -2234,24 +2282,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         leading: Icon(Icons.settings_applications_outlined),
         title: Text("Input Configuration"),
         onTap: () {
-          // Don't write if not connected
-          if (theTXCharacteristic != null) {
+          if (menuOptionIsReady(isRobogotchiOption: false)) {
             setState(() {
               _hideAllSubviews();
               _showESCApplicationConfigurator = true;
             });
             requestAPPCONF(null);
             Navigator.of(context).pop();
-          } else {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text("No Connection"),
-                  content: Text("Oops. Try connecting to your board first."),
-                );
-              },
-            );
           }
         },
       ),
@@ -2260,28 +2297,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         leading: Icon(Icons.settings_applications),
         title: Text("Motor Configuration"),
         onTap: () async {
-          if (_connectedDevice == null) {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text("No connection"),
-                  content: Text("This feature requires an active connection. Please try again."),
-                );
-              },
-            );
-          }
-          else if (!isESCResponding) {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text("No data"),
-                  content: Text("There is an active connection but no communication from the ESC. Please check your configuration."),
-                );
-              },
-            );
-          } else {
+          if (menuOptionIsReady(isRobogotchiOption: false)) {
             setState(() {
               _hideAllSubviews();
               _showESCConfigurator = true;
@@ -2291,7 +2307,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             // Close the menu
             Navigator.pop(context);
           }
-
         },
       ),
 
@@ -2300,21 +2315,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         leading: Icon(Icons.settings),
         title: Text("Robogotchi Config"),
         onTap: () {
-          // Don't write if not connected
-          if (theTXLoggerCharacteristic != null) {
-            theTXLoggerCharacteristic.write(utf8.encode("getcfg~"))..catchError((e){
-              globalLogger.e("Gotchi User Config Request: Exception: $e");
-            });
-          } else {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text("Robogotchi Config"),
-                  content: Text("Oops. Try connecting to your robogotchi first."),
-                );
-              },
-            );
+          if (menuOptionIsReady(isRobogotchiOption: true)) {
+            sendBLEData(theTXLoggerCharacteristic, utf8.encode("getcfg~"), false);
           }
         },
       ),
@@ -2333,7 +2335,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         },
         onTap: () {
           // Don't write if not connected
-          if (theTXLoggerCharacteristic != null) {
+          if (menuOptionIsReady(isRobogotchiOption: true)) {
             showDialog(
               context: context,
               builder: (BuildContext context) {
@@ -2378,16 +2380,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 );
               },
             );
-          } else {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text("Firmware Update"),
-                  content: Text("Oops. Try connecting to your Robogotchi first."),
-                );
-              },
-            );
           }
         },
       ),
@@ -2398,17 +2390,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         title: Text(serverTCPSocket == null ? "Enable TCP Bridge" : "Disable TCP Bridge"),
         onTap: () {
           // Don't start if not connected
-          if (theTXCharacteristic == null || !isESCResponding || !deviceIsConnected) {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text("No Connection"),
-                  content: Text("Oops. Try connecting to your board first."),
-                );
-              },
-            );
-          } else if (serverTCPSocket == null) {
+          if (menuOptionIsReady(isRobogotchiOption: false) && serverTCPSocket == null) {
             setState(() {
               startTCPServer();
             });
@@ -2685,6 +2667,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 ppmCalibrateReady: _isPPMCalibrationReady,
                 escFirmwareVersion: escFirmwareVersion,
                 updateComputedVehicleStatistics: updateComputedVehicleStatistics,
+                applicationDocumentsDirectory: applicationDocumentsDirectory,
               ),
               RideLogging(
                   myUserSettings: widget.myUserSettings,
