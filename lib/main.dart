@@ -1671,7 +1671,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             widget.myUserSettings.settings.wheelDiameterMillimeters = (escMotorConfiguration.si_wheel_diameter * 1000).toInt();
             widget.myUserSettings.settings.motorPoles = escMotorConfiguration.si_motor_poles;
             widget.myUserSettings.settings.maxERPM = escMotorConfiguration.l_max_erpm;
-            widget.myUserSettings.settings.gearRatio = escMotorConfiguration.si_gear_ratio;
+            widget.myUserSettings.settings.gearRatio = doublePrecision(escMotorConfiguration.si_gear_ratio, 2);
 
             widget.myUserSettings.saveSettings();
 

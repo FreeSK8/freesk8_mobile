@@ -1106,8 +1106,8 @@ class RideLogViewerState extends State<RideLogViewer> {
                           fileSummary += "\nWatt Hours: ${doublePrecision(myArguments.logFileInfo.wattHoursTotal, 2)}";
                           fileSummary += "\nWatt Hours Regen: ${doublePrecision(myArguments.logFileInfo.wattHoursRegenTotal, 2)}";
                         }
-                        fileSummary += "\nBattery Amps: $_maxAmpsBattery";
-                        fileSummary += "\nMotor Amps: $_maxAmpsMotor";
+                        fileSummary += "\nBattery Amps: ${doublePrecision(_maxAmpsBattery, 1)}";
+                        fileSummary += "\nMotor Amps: ${doublePrecision(_maxAmpsMotor, 1)}";
                         fileSummary += "\nDuration: ${duration.toString().substring(0,duration.toString().lastIndexOf("."))}";
                         await Share.file('FreeSK8Log', filename, utf8.encode(thisRideLog), 'text/csv', text: fileSummary);
                       }),
