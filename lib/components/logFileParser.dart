@@ -97,6 +97,7 @@ class LogFileParser {
     convertedFile.writeAsStringSync("header,gear_ratio,${userSettings.settings.gearRatio}\n", mode: FileMode.append);
     convertedFile.writeAsStringSync("header,wheel_diameter_mm,${userSettings.settings.wheelDiameterMillimeters}\n", mode: FileMode.append);
     convertedFile.writeAsStringSync("header,motor_poles,${userSettings.settings.motorPoles}\n", mode: FileMode.append);
+    convertedFile.writeAsStringSync("header,utc_offset,${DateTime.now().timeZoneOffset}\n", mode: FileMode.append);
 
     // Iterate contents of file
     Uint8List bytes = file.readAsBytesSync();
