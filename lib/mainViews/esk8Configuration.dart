@@ -867,6 +867,15 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
         _rangeSliderDiscreteValues = RangeValues(ppmMinMS / 1000000, ppmMaxMS / 1000000);
       }
 
+      // Perform rounding to make doubles pretty
+      widget.escAppConfiguration.app_ppm_conf.hyst = doublePrecision(widget.escAppConfiguration.app_ppm_conf.hyst, 2);
+      widget.escAppConfiguration.app_ppm_conf.ramp_time_pos = doublePrecision(widget.escAppConfiguration.app_ppm_conf.ramp_time_pos, 2);
+      widget.escAppConfiguration.app_ppm_conf.ramp_time_neg = doublePrecision(widget.escAppConfiguration.app_ppm_conf.ramp_time_neg, 2);
+      widget.escAppConfiguration.app_ppm_conf.smart_rev_max_duty = doublePrecision(widget.escAppConfiguration.app_ppm_conf.smart_rev_max_duty, 2);
+      widget.escAppConfiguration.app_ppm_conf.smart_rev_ramp_time = doublePrecision(widget.escAppConfiguration.app_ppm_conf.smart_rev_ramp_time, 2);
+      widget.escAppConfiguration.app_ppm_conf.throttle_exp_brake = doublePrecision(widget.escAppConfiguration.app_ppm_conf.throttle_exp_brake, 2);
+      widget.escAppConfiguration.app_ppm_conf.throttle_exp = doublePrecision(widget.escAppConfiguration.app_ppm_conf.throttle_exp, 2);
+
       return Container(
           child: Stack(children: <Widget>[
             Center(
@@ -1222,7 +1231,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                             label: "${(widget.escAppConfiguration.app_ppm_conf.hyst * 100.0).toInt()}%",
                             onChanged: (value) {
                               setState(() {
-                                widget.escAppConfiguration.app_ppm_conf.hyst = doublePrecision(value, 2);
+                                widget.escAppConfiguration.app_ppm_conf.hyst = value;
                               });
                             },
                           ),
@@ -1257,12 +1266,11 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               label: "${widget.escAppConfiguration.app_ppm_conf.ramp_time_pos} seconds",
                               onChanged: (value) {
                                 setState(() {
-                                  widget.escAppConfiguration.app_ppm_conf.ramp_time_pos = doublePrecision(value, 2);
+                                  widget.escAppConfiguration.app_ppm_conf.ramp_time_pos = value;
                                 });
                               },
                             ),
-                            //Text("ramp time pos ${widget.escAppConfiguration.app_ppm_conf.ramp_time_pos}"),
-                            Text("Negative Ramping Time: ${doublePrecision(widget.escAppConfiguration.app_ppm_conf.ramp_time_neg,2)} seconds (0.2 = default)"),
+                            Text("Negative Ramping Time: ${widget.escAppConfiguration.app_ppm_conf.ramp_time_neg} seconds (0.2 = default)"),
                             Slider(
                               value: widget.escAppConfiguration.app_ppm_conf.ramp_time_neg,
                               min: 0.01,
@@ -1271,11 +1279,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               label: "${widget.escAppConfiguration.app_ppm_conf.ramp_time_neg} seconds",
                               onChanged: (value) {
                                 setState(() {
-                                  widget.escAppConfiguration.app_ppm_conf.ramp_time_neg = doublePrecision(value, 2);
+                                  widget.escAppConfiguration.app_ppm_conf.ramp_time_neg = value;
                                 });
                               },
                             ),
-                            //Text("ramp time neg ${widget.escAppConfiguration.app_ppm_conf.ramp_time_neg}"),
                             Text("PID Max ERPM ${widget.escAppConfiguration.app_ppm_conf.pid_max_erpm} (15000 = default)"),
                             Slider(
                               value: widget.escAppConfiguration.app_ppm_conf.pid_max_erpm,
@@ -1311,7 +1318,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               label: "${widget.escAppConfiguration.app_ppm_conf.smart_rev_max_duty}",
                               onChanged: (value) {
                                 setState(() {
-                                  widget.escAppConfiguration.app_ppm_conf.smart_rev_max_duty = doublePrecision(value, 2);
+                                  widget.escAppConfiguration.app_ppm_conf.smart_rev_max_duty = value;
                                 });
                               },
                             ),
@@ -1324,12 +1331,11 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               label: "${widget.escAppConfiguration.app_ppm_conf.smart_rev_ramp_time}",
                               onChanged: (value) {
                                 setState(() {
-                                  widget.escAppConfiguration.app_ppm_conf.smart_rev_ramp_time = doublePrecision(value, 2);
+                                  widget.escAppConfiguration.app_ppm_conf.smart_rev_ramp_time = value;
                                 });
                               },
                             ),
 
-                            //Text("throttle exp mode ${widget.escAppConfiguration.app_ppm_conf.throttle_exp_mode}"),
                             Text("Select Throttle Exponential Mode"),
                             Center(child:
                             DropdownButton<ListItem>(
@@ -1364,7 +1370,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               label: "${widget.escAppConfiguration.app_ppm_conf.throttle_exp}",
                               onChanged: (value) {
                                 setState(() {
-                                  widget.escAppConfiguration.app_ppm_conf.throttle_exp = doublePrecision(value, 2);
+                                  widget.escAppConfiguration.app_ppm_conf.throttle_exp = value;
                                 });
                               },
                             ),
@@ -1378,7 +1384,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               label: "${widget.escAppConfiguration.app_ppm_conf.throttle_exp_brake}",
                               onChanged: (value) {
                                 setState(() {
-                                  widget.escAppConfiguration.app_ppm_conf.throttle_exp_brake = doublePrecision(value, 2);
+                                  widget.escAppConfiguration.app_ppm_conf.throttle_exp_brake = value;
                                 });
                               },
                             ),
