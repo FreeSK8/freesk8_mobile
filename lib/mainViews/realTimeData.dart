@@ -76,7 +76,7 @@ class RealTimeDataState extends State<RealTimeData> {
 
   static double doubleItemWidth = 150; //This changes on widget build
 
-  static double averageVoltageInput = 0;
+  static double averageVoltageInput;
 
   static ESCTelemetry escTelemetry;
 
@@ -390,6 +390,7 @@ class RealTimeDataState extends State<RealTimeData> {
 
     double powerMax = widget.currentSettings.settings.batterySeriesCount * widget.currentSettings.settings.batteryCellMaxVoltage;
     double powerMinimum = widget.currentSettings.settings.batterySeriesCount * widget.currentSettings.settings.batteryCellMinVoltage;
+    averageVoltageInput ??= powerMinimum; // Set to minimum if null
     if (widget.deviceIsConnected) {
       averageVoltageInput = (0.25 * doublePrecision(escTelemetry.v_in, 1)) + (0.75 * averageVoltageInput);
     } else {
