@@ -1471,9 +1471,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
         }
         else if ( packetID == DieBieMSHelper.COMM_GET_BMS_CELLS ) {
-          setState(() {
-            dieBieMSTelemetry = dieBieMSHelper.processCells(bleHelper.getPayload());
-          });
+          if (controller.index == controllerViewRealTime) { //Only re-draw if we are on the real time data tab
+            setState(() {
+              dieBieMSTelemetry = dieBieMSHelper.processCells(bleHelper.getPayload());
+            });
+          }
           bleHelper.resetPacket(); //Prepare for next packet
         }
         else if (packetID == COMM_PACKET_ID.COMM_GET_VALUES_SETUP.index) {
@@ -1499,10 +1501,25 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         else if ( packetID == COMM_PACKET_ID.COMM_GET_VALUES.index ) {
           if(_showDieBieMS) {
             // Parse DieBieMS GET_VALUES packet - A shame they share the same ID as ESC values
-            dieBieMSTelemetry = dieBieMSHelper.processTelemetry(bleHelper.getPayload(), smartBMSCANID);
+            DieBieMSTelemetry parsedTelemetry = dieBieMSHelper.processTelemetry(bleHelper.getPayload(), smartBMSCANID);
 
-            if(controller.index == controllerViewRealTime) { //Only re-draw if we are on the real time data tab
-              setState(() { //Re-drawing with updated telemetry data
+            if (parsedTelemetry != null) {
+              dieBieMSTelemetry = parsedTelemetry;
+
+              /// Automatically request cell data from DieBieMS
+              var byteData = new ByteData(10);
+              byteData.setUint8(0, 0x02); // Start of packet
+              byteData.setUint8(1, 3); // Packet length
+              byteData.setUint8(2, COMM_PACKET_ID.COMM_FORWARD_CAN.index);
+              byteData.setUint8(3, smartBMSCANID); //CAN ID
+              byteData.setUint8(4, DieBieMSHelper.COMM_GET_BMS_CELLS);
+              int checksum = CRC16.crc16(byteData.buffer.asUint8List(), 2, 3);
+              byteData.setUint16(5, checksum);
+              byteData.setUint8(7, 0x03); // End of packet
+
+              theTXCharacteristic.write(byteData.buffer.asUint8List(), withoutResponse: true).
+              catchError((e) {
+                globalLogger.w("Exception while requesting COMM_GET_BMS_CELLS $e");
               });
             }
           }
@@ -2432,7 +2449,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       //Request telemetry packet; On error increase error counter
       if(_showDieBieMS) {
-        if(++telemetryRateLimiter > 4) {
+        /// Request DieBieMS Telemetry
+        if(++telemetryRateLimiter > 7) {
           telemetryRateLimiter = 0;
         } else {
           return;
@@ -2453,22 +2471,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         catchError((e) {
           ++bleTXErrorCount;
           globalLogger.e("_requestTelemetry() failed ($bleTXErrorCount) times. Exception: $e");
-        });
-
-        //TODO: This should be delayed because the characteristic might not be ready to write...
-        /// Request cell data from DieBieMS
-        byteData.setUint8(0, 0x02); //Start of packet
-        byteData.setUint8(1, packetLength);
-        byteData.setUint8(2, COMM_PACKET_ID.COMM_FORWARD_CAN.index);
-        byteData.setUint8(3, smartBMSCANID); //CAN ID
-        byteData.setUint8(4, DieBieMSHelper.COMM_GET_BMS_CELLS);
-        checksum = CRC16.crc16(byteData.buffer.asUint8List(), 2, packetLength);
-        byteData.setUint16(5, checksum);
-        byteData.setUint8(7, 0x03); //End of packet
-
-        await theTXCharacteristic.write(byteData.buffer.asUint8List(), withoutResponse: true).
-        catchError((e) {
-          globalLogger.w("TODO: You should request the next packet type upon reception of the prior");
         });
       } else {
         /// Request ESC Telemetry
@@ -2553,7 +2555,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   }
 
   void changeSmartBMSIDFunc(int nextID) {
-    globalLogger.d("changeSmartBMSIDFunc: Setting smart BMS CAN FWD ID to $smartBMSCANID");
+    globalLogger.d("changeSmartBMSIDFunc: Setting smart BMS CAN FWD ID to $nextID from $smartBMSCANID");
     setState(() {
       smartBMSCANID = nextID;
     });

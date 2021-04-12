@@ -98,7 +98,8 @@ class DieBieMSHelper {
     if( parsedTelemetry.canID == expectedCANID ) {
       latestTelemetry = parsedTelemetry;
     } else {
-      print("TODO: this is an ESC packet");
+      // This is not the data we are expecting
+      return null;
     }
 
     return latestTelemetry;
