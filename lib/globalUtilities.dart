@@ -10,6 +10,23 @@ import 'package:logger/logger.dart';
 import 'components/crc16.dart';
 import 'hardwareSupport/escHelper/dataTypes.dart';
 
+import 'dart:io';
+import 'package:path/path.dart' as path;
+
+void copyDirectory(Directory source, Directory destination) =>
+    source.listSync(recursive: false)
+        .forEach((var entity) {
+      if (entity is Directory) {
+        var newDirectory = Directory(path.join(destination.absolute.path, path.basename(entity.path)));
+        newDirectory.createSync();
+
+        copyDirectory(entity.absolute, newDirectory);
+      } else if (entity is File) {
+        print(entity);
+        entity.copySync(path.join(destination.path, path.basename(entity.path)));
+      }
+    });
+
 // Define the TabController's indexes
 final int controllerViewConnection = 0;
 final int controllerViewRealTime = 1;
