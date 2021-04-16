@@ -2378,7 +2378,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                   globalLogger.e("Export Data Exception $e");
                                   ScaffoldMessenger
                                       .of(context)
-                                      .showSnackBar(SnackBar(content: Text("Import Exception. Please send debug log")));
+                                      .showSnackBar(SnackBar(content: Text("Export Exception. Please send debug log")));
                                 }
                               }),
 
