@@ -2391,14 +2391,13 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                   final supportDirectory = await getApplicationSupportDirectory();
 
 
-
                                   FlutterDocumentPickerParams params = FlutterDocumentPickerParams(
                                     allowedFileExtensions: ["zip"],
                                     allowedMimeTypes: ["application/zip"],
                                   );
 
                                   String result = await FlutterDocumentPicker.openDocument(params: params);
-                                  globalLogger.wtf(result);
+                                  globalLogger.d("Import Data: User imported file: $result");
 
                                   // Read the Zip file from disk.
                                   final bytes = File(result).readAsBytesSync();
@@ -2421,8 +2420,16 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                     }
                                   }
 
+                                  // Make sure we've extracted the a userSettings file for importing
+                                  final String importSettingsFilePath = "${documentsDirectory.path}/freesk8_beta_userSettings.json";
+                                  if (!File(importSettingsFilePath).existsSync()) {
+                                    return ScaffoldMessenger
+                                        .of(context)
+                                        .showSnackBar(SnackBar(content: Text("Invalid Import File Selected")));
+                                  }
+
                                   // Import UserSettings
-                                  if (await importSettings("${documentsDirectory.path}/freesk8_beta_userSettings.json")) {
+                                  if (await importSettings(importSettingsFilePath)) {
                                     // Import Ride Log Database
                                     String dbPath = await getDatabasesPath();
                                     File("${documentsDirectory.path}/logDatabase.db").copy("$dbPath/logDatabase.db");
@@ -2431,6 +2438,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                     ScaffoldMessenger
                                         .of(context)
                                         .showSnackBar(SnackBar(content: Text("Import Data Completed Successfully")));
+
+                                    // Removing import files to free space and clear import state
+                                    File(importSettingsFilePath).deleteSync();
+                                    File(result).deleteSync();
                                   } else {
                                     globalLogger.d("Import did not finish successfully");
                                     ScaffoldMessenger
