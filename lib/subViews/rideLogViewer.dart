@@ -942,11 +942,9 @@ class RideLogViewerState extends State<RideLogViewer> {
     return Scaffold(
       appBar: AppBar(
         title: Row(children: <Widget>[
-          Icon( Icons.map,
-          size: 35.0,
-          color: Colors.blue,
-          ),
           Text(myArguments.logFileInfo.dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)),
+          Spacer(),
+          Image(width: 40, height: 40, image: AssetImage('assets/FreeSK8_Icon.png')),
         ],),
       ),
       body: SafeArea(
