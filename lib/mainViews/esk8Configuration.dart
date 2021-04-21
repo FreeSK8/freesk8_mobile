@@ -2422,7 +2422,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                   }
 
                                   // Import UserSettings
-                                  if (await importSettings("${documentsDirectory.path}/unzip/freesk8_beta_userSettings.json")) {
+                                  if (await importSettings("${documentsDirectory.path}/freesk8_beta_userSettings.json")) {
                                     // Import Ride Log Database
                                     String dbPath = await getDatabasesPath();
                                     File("${documentsDirectory.path}/logDatabase.db").copy("$dbPath/logDatabase.db");
