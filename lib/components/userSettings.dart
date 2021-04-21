@@ -196,8 +196,11 @@ Future<bool> importSettings(String filePath) async {
   print(importFile.readAsStringSync());
   List<dynamic> jsonSettings = json.decode(importFile.readAsStringSync());
 
+  bool importResult = false;
   jsonSettings.forEach((value) async {
-    if (value['version'] != 0) {
+    if (value['version'] == 0) {
+      importResult = true;
+    } else {
       globalLogger.e("importSettings: version mismatch: expected 0 received: ${value['version']}");
       return false;
     }
@@ -212,5 +215,5 @@ Future<bool> importSettings(String filePath) async {
     await importSettings.saveSettings();
   });
 
-  return true;
+  return importResult;
 }
