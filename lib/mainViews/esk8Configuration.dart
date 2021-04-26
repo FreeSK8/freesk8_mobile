@@ -2399,6 +2399,12 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                   String result = await FlutterDocumentPicker.openDocument(params: params);
                                   globalLogger.d("Import Data: User imported file: $result");
 
+                                  if (result == null) {
+                                    return ScaffoldMessenger
+                                        .of(context)
+                                        .showSnackBar(SnackBar(content: Text("Import Aborted: No File Specified")));
+                                  }
+
                                   // Read the Zip file from disk.
                                   final bytes = File(result).readAsBytesSync();
 
