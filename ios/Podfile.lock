@@ -10,6 +10,8 @@ PODS:
   - flutter_blue/Protos (0.0.1):
     - Flutter
     - Protobuf (~> 3.11.4)
+  - flutter_document_picker (0.0.1):
+    - Flutter
   - flutter_nordic_dfu (0.0.1):
     - Flutter
     - iOSDFULibrary (~> 4.5.1)
@@ -45,6 +47,7 @@ DEPENDENCIES:
   - esys_flutter_share (from `.symlinks/plugins/esys_flutter_share/ios`)
   - Flutter (from `Flutter`)
   - flutter_blue (from `.symlinks/plugins/flutter_blue/ios`)
+  - flutter_document_picker (from `.symlinks/plugins/flutter_document_picker/ios`)
   - flutter_nordic_dfu (from `.symlinks/plugins/flutter_nordic_dfu/ios`)
   - geolocator (from `.symlinks/plugins/geolocator/ios`)
   - get_ip (from `.symlinks/plugins/get_ip/ios`)
@@ -72,6 +75,8 @@ EXTERNAL SOURCES:
     :path: Flutter
   flutter_blue:
     :path: ".symlinks/plugins/flutter_blue/ios"
+  flutter_document_picker:
+    :path: ".symlinks/plugins/flutter_document_picker/ios"
   flutter_nordic_dfu:
     :path: ".symlinks/plugins/flutter_nordic_dfu/ios"
   geolocator:
@@ -98,11 +103,12 @@ SPEC CHECKSUMS:
   esys_flutter_share: 403498dab005b36ce1f8d7aff377e81f0621b0b4
   Flutter: 434fef37c0980e73bb6479ef766c45957d4b510c
   flutter_blue: eeb381dc4727a0954dede73515f683865494b370
+  flutter_document_picker: 109ba1c4622e6e62bfced17c22ff544a9a3541f4
   flutter_nordic_dfu: b265b606c5b200764e8e377e83fb3f5d161f3990
   FMDB: 2ce00b547f966261cd18927a3ddb07cb6f3db82a
   geolocator: f7622e0e7e2a24718285b73916d60c4a54b9f5b6
   get_ip: c063133e0a399ae4089048c90d6a232cb2344846
-  image_picker: 50e7c7ff960e5f58faa4d1f4af84a771c671bc4a
+  image_picker: 9c3312491f862b28d21ecd8fdf0ee14e601b3f09
   iOSDFULibrary: 87c6a088cf7172e3694dfaa8305e7ded5eda2547
   location_permissions: 7e0f9aa0f60deb8ff93ddf0e2a164c7e8197bc94
   path_provider: abfe2b5c733d04e238b0d8691db0cfd63a27a93c
