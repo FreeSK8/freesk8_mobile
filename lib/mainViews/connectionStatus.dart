@@ -104,7 +104,7 @@ class ConnectionStatus extends StatelessWidget {
                   //
                   GestureDetector(
                       onTap: () {
-                        delayedTabControllerIndexChange(3);
+                        delayedTabControllerIndexChange(controllerViewLogging);
                       },
                       child: Column(
                         children: [

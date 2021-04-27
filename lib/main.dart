@@ -55,8 +55,8 @@ import 'package:logger_flutter/logger_flutter.dart';
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.14.2";
-const String robogotchiFirmwareExpectedVersion = "0.9.0";
+const String freeSK8ApplicationVersion = "0.15.0";
+const String robogotchiFirmwareExpectedVersion = "0.9.1";
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -154,12 +154,17 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static StreamSubscription<Position> positionStream;
 
   MemoryImage cachedBoardAvatar;
+  String applicationDocumentsDirectory;
 
   @override
   void initState() {
     super.initState();
 
     print("main initState");
+
+    getApplicationDocumentsDirectory().then((value){
+      applicationDocumentsDirectory = value.path;
+    });
 
     bleHelper = new BLEHelper();
     escHelper = new ESCHelper();
@@ -216,7 +221,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   }
 
   void _monitorGotchiTimer() {
-    if (_gotchiStatusTimer == null && theTXLoggerCharacteristic != null && initMsgSqeuencerCompleted && (controller.index == 0 || controller.index == 3) && !syncInProgress) {
+    if (_gotchiStatusTimer == null && theTXLoggerCharacteristic != null && initMsgSqeuencerCompleted && (controller.index == controllerViewConnection || controller.index == controllerViewLogging) && !syncInProgress) {
       globalLogger.d("_monitorGotchiTimer: Starting gotchiStatusTimer");
       startStopGotchiTimer(false);
     } else if (syncInProgress) {
@@ -307,10 +312,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           icon: Icon(Icons.multiline_chart),
         ),
         Tab(
-          icon: Icon(Icons.settings),
+          icon: Icon(Icons.format_align_left),
         ),
         Tab(
-          icon: Icon(Icons.format_align_left),
+          icon: Icon(Icons.settings),
         ),
       ],
       // setup the controller
@@ -505,7 +510,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       stopTCPServer();
 
       // Navigate back to the connection tab
-      _delayedTabControllerIndexChange(0);
+      _delayedTabControllerIndexChange(controllerViewConnection);
     }
   }
 
@@ -1019,9 +1024,22 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         if (receiveStr == "cat,complete") {
           String logFileContentsForDebugging = "";
           try {
+            //TODO: validate file transmission. We need a proper packet definition and CRC
+            // Verify the correct number of bytes were received, retry file if necessary
+            if (catBytesReceived != catBytesTotal) {
+              globalLogger.e("Concatenate file operation complete but received $catBytesReceived of $catBytesTotal bytes. Retrying $catCurrentFilename");
+              // Take the current file and add it to the front of the fileList to be re-attempted
+              fileList.insert(0,fileList.first);
+              // Advance the sync process after failure
+              setState(() {
+                catInProgress = false;
+                syncAdvanceProgress = true;
+              });
+              return;
+            }
+
             globalLogger.d("Concatenate file operation complete on $catCurrentFilename with $catBytesReceived bytes");
 
-            //TODO: validate file transmission. We need a proper packet definition and CRC
             // Write raw bytes from cat operation to the filesystem
             await FileManager.writeBytesToLogFile(catBytesRaw);
             catBytesRaw.clear();
@@ -1453,9 +1471,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
         }
         else if ( packetID == DieBieMSHelper.COMM_GET_BMS_CELLS ) {
-          setState(() {
-            dieBieMSTelemetry = dieBieMSHelper.processCells(bleHelper.getPayload());
-          });
+          if (controller.index == controllerViewRealTime) { //Only re-draw if we are on the real time data tab
+            setState(() {
+              dieBieMSTelemetry = dieBieMSHelper.processCells(bleHelper.getPayload());
+            });
+          }
           bleHelper.resetPacket(); //Prepare for next packet
         }
         else if (packetID == COMM_PACKET_ID.COMM_GET_VALUES_SETUP.index) {
@@ -1465,7 +1485,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           // Update map of ESC telemetry
           telemetryMap[telemetryPacket.vesc_id] = telemetryPacket;
 
-          if(controller.index == 1) { //Only re-draw if we are on the real time data tab
+          if(controller.index == controllerViewRealTime) { //Only re-draw if we are on the real time data tab
             setState(() { //Re-drawing with updated telemetry data
             });
           }
@@ -1481,10 +1501,25 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         else if ( packetID == COMM_PACKET_ID.COMM_GET_VALUES.index ) {
           if(_showDieBieMS) {
             // Parse DieBieMS GET_VALUES packet - A shame they share the same ID as ESC values
-            dieBieMSTelemetry = dieBieMSHelper.processTelemetry(bleHelper.getPayload(), smartBMSCANID);
+            DieBieMSTelemetry parsedTelemetry = dieBieMSHelper.processTelemetry(bleHelper.getPayload(), smartBMSCANID);
 
-            if(controller.index == 1) { //Only re-draw if we are on the real time data tab
-              setState(() { //Re-drawing with updated telemetry data
+            if (parsedTelemetry != null) {
+              dieBieMSTelemetry = parsedTelemetry;
+
+              /// Automatically request cell data from DieBieMS
+              var byteData = new ByteData(10);
+              byteData.setUint8(0, 0x02); // Start of packet
+              byteData.setUint8(1, 3); // Packet length
+              byteData.setUint8(2, COMM_PACKET_ID.COMM_FORWARD_CAN.index);
+              byteData.setUint8(3, smartBMSCANID); //CAN ID
+              byteData.setUint8(4, DieBieMSHelper.COMM_GET_BMS_CELLS);
+              int checksum = CRC16.crc16(byteData.buffer.asUint8List(), 2, 3);
+              byteData.setUint16(5, checksum);
+              byteData.setUint8(7, 0x03); // End of packet
+
+              theTXCharacteristic.write(byteData.buffer.asUint8List(), withoutResponse: true).
+              catchError((e) {
+                globalLogger.w("Exception while requesting COMM_GET_BMS_CELLS $e");
               });
             }
           }
@@ -1543,7 +1578,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             case 1:
               globalLogger.d("Pairing Successful");
               Navigator.of(context).pop(); //Pop Quick Pair initial dialog
-              if (controller.index == 1) startStopTelemetryTimer(
+              if (controller.index == controllerViewRealTime) startStopTelemetryTimer(
                   false); //Resume the telemetry timer
 
               showDialog(
@@ -1560,7 +1595,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             case 2:
               globalLogger.d("Pairing timeout");
               Navigator.of(context).pop(); //Pop Quick Pair initial dialog
-              if (controller.index == 1) startStopTelemetryTimer(
+              if (controller.index == controllerViewRealTime) startStopTelemetryTimer(
                   false); //Resume the telemetry timer
 
               showDialog(
@@ -1577,7 +1612,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             default:
               globalLogger.e("ERROR: Pairing unknown payload");
               Navigator.of(context).pop(); //Pop Quick Pair initial dialog
-              if (controller.index == 1) {
+              if (controller.index == controllerViewRealTime) {
                 //Resume the telemetry timer
                 startStopTelemetryTimer(false);
               }
@@ -1630,7 +1665,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           // Check flag to show ESC Profiles when MCCONF data is received
           if (_showESCProfiles) {
             setState(() {
-              controller.index = 2; // Navigate user to Configuration tab
+              controller.index = controllerViewConfiguration; // Navigate user to Configuration tab
             });
           }
 
@@ -1653,7 +1688,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             widget.myUserSettings.settings.wheelDiameterMillimeters = (escMotorConfiguration.si_wheel_diameter * 1000).toInt();
             widget.myUserSettings.settings.motorPoles = escMotorConfiguration.si_motor_poles;
             widget.myUserSettings.settings.maxERPM = escMotorConfiguration.l_max_erpm;
-            widget.myUserSettings.settings.gearRatio = escMotorConfiguration.si_gear_ratio;
+            widget.myUserSettings.settings.gearRatio = doublePrecision(escMotorConfiguration.si_gear_ratio, 2);
 
             widget.myUserSettings.saveSettings();
 
@@ -1685,7 +1720,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           if (_showESCApplicationConfigurator) {
             setState(() {
               _hideAllSubviews();
-              controller.index = 2;
+              controller.index = controllerViewConfiguration;
               _showESCApplicationConfigurator = true;
             });
           } else {
@@ -1713,7 +1748,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           int resultFOCDetection = byteData.getInt16(1);
 
           Navigator.of(context).pop(); //Pop away the FOC wizard Loading Overlay
-          if (controller.index == 1) startStopTelemetryTimer(false); //Resume the telemetry timer
+          if (controller.index == controllerViewRealTime) startStopTelemetryTimer(false); //Resume the telemetry timer
 
           if (resultFOCDetection >= 0) {
             Navigator.of(context).pop(); //Pop away the FOC wizard on success
@@ -1944,7 +1979,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         globalLogger.d("_requestInitMessages: Connected device is not known. Notifying user");
         //TODO: navigate to setup widget if we create one..
         genericAlert(context, "New device!", Text("You have connected to a new device. Take a picture, give it a name and save your settings now for the best experience."), "OK");
-        _delayedTabControllerIndexChange(2); // Switch to the configuration tab
+        _delayedTabControllerIndexChange(controllerViewConfiguration); // Switch to the configuration tab
       }
 
       globalLogger.i("_requestInitMessages: initMsgSequencer is complete! Great success!");
@@ -2159,6 +2194,60 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       ],
     );
 
+    bool menuOptionIsReady({bool isRobogotchiOption}) {
+      // Check if we are connected
+      if (!isRobogotchiOption && _connectedDevice == null) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text("No Connection"),
+              content: Text("Oops. Try connecting to your board first."),
+            );
+          },
+        );
+        return false;
+      } else if (!isRobogotchiOption && !isESCResponding) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text("No data"),
+              content: Text("There is an active connection but no communication from the ESC. Please check your configuration."),
+            );
+          },
+        );
+        return false;
+      // Check if we are connected to a Robogotchi
+      } else if (isRobogotchiOption && (!_deviceIsRobogotchi || theTXLoggerCharacteristic == null)) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text("Robogotchi Feature"),
+              content: Text("This selection requires an active Robogotchi connection"),
+            );
+          },
+        );
+        return false;
+      // Check if we are syncing
+      } else if (syncInProgress) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text("Sync in progress"),
+              content: Text("This feature is restricted until the sync operation is completed"),
+            );
+          },
+        );
+        return false;
+      }
+
+      // It's safe to proceed with this menu option
+      return true;
+    }
+
     var myNavChildren = [
       headerChild,
       //getNavItem(Icons.settings, "Testies", Test.routeName),
@@ -2177,11 +2266,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             });
             globalLogger.d("Smart BMS RealTime Disabled");
             Navigator.pop(context); // Close drawer
-          } else {
+          } else if (menuOptionIsReady(isRobogotchiOption: false)) {
             setState(() {
               _showDieBieMS = true;
             });
-            _delayedTabControllerIndexChange(1);
+            _delayedTabControllerIndexChange(controllerViewRealTime);
             globalLogger.d("Smart BMS RealTime Enabled");
             Navigator.pop(context); // Close drawer
           }
@@ -2192,8 +2281,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         leading: Icon(Icons.timer),
         title: Text("Speed Profiles"),
         onTap: () {
-          // Don't write if not connected
-          if (theTXCharacteristic != null) {
+          if (menuOptionIsReady(isRobogotchiOption: false)) {
             setState(() {
               _hideAllSubviews();
               // Set the flag to show ESC profiles. Display when MCCONF is returned
@@ -2202,16 +2290,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
             requestMCCONF();
             Navigator.pop(context); // Close the drawer
-          } else {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text("No Connection"),
-                  content: Text("Oops. Try connecting to your board first."),
-                );
-              },
-            );
           }
         },
       ),
@@ -2221,24 +2299,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         leading: Icon(Icons.settings_applications_outlined),
         title: Text("Input Configuration"),
         onTap: () {
-          // Don't write if not connected
-          if (theTXCharacteristic != null) {
+          if (menuOptionIsReady(isRobogotchiOption: false)) {
             setState(() {
               _hideAllSubviews();
               _showESCApplicationConfigurator = true;
             });
             requestAPPCONF(null);
             Navigator.of(context).pop();
-          } else {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text("No Connection"),
-                  content: Text("Oops. Try connecting to your board first."),
-                );
-              },
-            );
           }
         },
       ),
@@ -2247,38 +2314,16 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         leading: Icon(Icons.settings_applications),
         title: Text("Motor Configuration"),
         onTap: () async {
-          if (_connectedDevice == null) {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text("No connection"),
-                  content: Text("This feature requires an active connection. Please try again."),
-                );
-              },
-            );
-          }
-          else if (!isESCResponding) {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text("No data"),
-                  content: Text("There is an active connection but no communication from the ESC. Please check your configuration."),
-                );
-              },
-            );
-          } else {
+          if (menuOptionIsReady(isRobogotchiOption: false)) {
             setState(() {
               _hideAllSubviews();
               _showESCConfigurator = true;
             });
-            _delayedTabControllerIndexChange(2);
+            _delayedTabControllerIndexChange(controllerViewConfiguration);
             globalLogger.d("ESC Configurator Displayed");
             // Close the menu
             Navigator.pop(context);
           }
-
         },
       ),
 
@@ -2287,21 +2332,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         leading: Icon(Icons.settings),
         title: Text("Robogotchi Config"),
         onTap: () {
-          // Don't write if not connected
-          if (theTXLoggerCharacteristic != null) {
-            theTXLoggerCharacteristic.write(utf8.encode("getcfg~"))..catchError((e){
-              globalLogger.e("Gotchi User Config Request: Exception: $e");
-            });
-          } else {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text("Robogotchi Config"),
-                  content: Text("Oops. Try connecting to your robogotchi first."),
-                );
-              },
-            );
+          if (menuOptionIsReady(isRobogotchiOption: true)) {
+            sendBLEData(theTXLoggerCharacteristic, utf8.encode("getcfg~"), false);
           }
         },
       ),
@@ -2320,7 +2352,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         },
         onTap: () {
           // Don't write if not connected
-          if (theTXLoggerCharacteristic != null) {
+          if (menuOptionIsReady(isRobogotchiOption: true)) {
             showDialog(
               context: context,
               builder: (BuildContext context) {
@@ -2365,16 +2397,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 );
               },
             );
-          } else {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text("Firmware Update"),
-                  content: Text("Oops. Try connecting to your Robogotchi first."),
-                );
-              },
-            );
           }
         },
       ),
@@ -2385,17 +2407,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         title: Text(serverTCPSocket == null ? "Enable TCP Bridge" : "Disable TCP Bridge"),
         onTap: () {
           // Don't start if not connected
-          if (theTXCharacteristic == null || !isESCResponding || !deviceIsConnected) {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text("No Connection"),
-                  content: Text("Oops. Try connecting to your board first."),
-                );
-              },
-            );
-          } else if (serverTCPSocket == null) {
+          if (menuOptionIsReady(isRobogotchiOption: false) && serverTCPSocket == null) {
             setState(() {
               startTCPServer();
             });
@@ -2415,7 +2427,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
   // Called by timer on interval to request Robogotchi Status packet
   void _requestGotchiStatus() {
-    if ((controller.index != 0 && controller.index != 3 ) || syncInProgress || theTXLoggerCharacteristic == null) {
+    if ((controller.index != controllerViewConnection && controller.index != controllerViewLogging ) || syncInProgress || theTXLoggerCharacteristic == null) {
       globalLogger.d("_requestGotchiStatus: Auto stopping gotchi timer");
       startStopGotchiTimer(true);
     } else {
@@ -2428,11 +2440,17 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   // Called by timer on interval to request telemetry packet
   static int telemetryRateLimiter = 0;
   void _requestTelemetry() async {
-    if ( _connectedDevice != null || !this.mounted && isESCResponding){
+    if ((_connectedDevice != null || !this.mounted) && isESCResponding){
+
+      // Do not request telemetry while performing sync
+      if (syncInProgress) {
+        return;
+      }
 
       //Request telemetry packet; On error increase error counter
       if(_showDieBieMS) {
-        if(++telemetryRateLimiter > 4) {
+        /// Request DieBieMS Telemetry
+        if(++telemetryRateLimiter > 7) {
           telemetryRateLimiter = 0;
         } else {
           return;
@@ -2453,22 +2471,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         catchError((e) {
           ++bleTXErrorCount;
           globalLogger.e("_requestTelemetry() failed ($bleTXErrorCount) times. Exception: $e");
-        });
-
-        //TODO: This should be delayed because the characteristic might not be ready to write...
-        /// Request cell data from DieBieMS
-        byteData.setUint8(0, 0x02); //Start of packet
-        byteData.setUint8(1, packetLength);
-        byteData.setUint8(2, COMM_PACKET_ID.COMM_FORWARD_CAN.index);
-        byteData.setUint8(3, smartBMSCANID); //CAN ID
-        byteData.setUint8(4, DieBieMSHelper.COMM_GET_BMS_CELLS);
-        checksum = CRC16.crc16(byteData.buffer.asUint8List(), 2, packetLength);
-        byteData.setUint16(5, checksum);
-        byteData.setUint8(7, 0x03); //End of packet
-
-        await theTXCharacteristic.write(byteData.buffer.asUint8List(), withoutResponse: true).
-        catchError((e) {
-          globalLogger.w("TODO: You should request the next packet type upon reception of the prior");
         });
       } else {
         /// Request ESC Telemetry
@@ -2553,7 +2555,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   }
 
   void changeSmartBMSIDFunc(int nextID) {
-    globalLogger.d("changeSmartBMSIDFunc: Setting smart BMS CAN FWD ID to $smartBMSCANID");
+    globalLogger.d("changeSmartBMSIDFunc: Setting smart BMS CAN FWD ID to $nextID from $smartBMSCANID");
     setState(() {
       smartBMSCANID = nextID;
     });
@@ -2579,7 +2581,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       if(fileList.length>0){
         catCurrentFilename = fileList.first.fileName;
         catBytesTotal = fileList.first.fileSize; //Set the total expected bytes for the current file
-        globalLogger.d("Sync requesting cat of ${fileList.first.fileName}");
+        globalLogger.d("Sync requesting cat of $catCurrentFilename with $catBytesTotal bytes");
         sendBLEData(theTXLoggerCharacteristic, utf8.encode("cat ${fileList.first.fileName}~"), false); //Request next file
       }
       else if(fileListToDelete.length>0){
@@ -2611,7 +2613,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     return Scaffold(
         // Appbar
         appBar: AppBar(
-            title: Text("FreeSK8 (v$freeSK8ApplicationVersion)"),
+            title: Row(children: [
+              Text("FreeSK8 (v$freeSK8ApplicationVersion)"),
+              syncInProgress ? Icon(Icons.sync) : Container()
+            ],),
             // Set the background color of the App Bar
             backgroundColor: serverTCPSocket != null ? Colors.blueAccent : Theme.of(context).primaryColor,
             // Set the bottom property of the Appbar to include a Tab Bar
@@ -2651,6 +2656,17 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 smartBMSID: smartBMSCANID,
                 deviceIsConnected: deviceIsConnected,
               ),
+              RideLogging(
+                  myUserSettings: widget.myUserSettings,
+                  theTXLoggerCharacteristic: theTXLoggerCharacteristic,
+                  syncInProgress: syncInProgress, //TODO: RideLogging receives syncInProgress in syncStatus object
+                  onSyncPress: _handleBLESyncState,
+                  syncStatus: syncStatus,
+                  eraseOnSync: syncEraseOnComplete,
+                  onSyncEraseSwitch: _handleEraseOnSyncButton,
+                  isLoggerLogging: isLoggerLogging,
+                  isRobogotchi : _deviceIsRobogotchi
+              ),
               ESK8Configuration(
                 myUserSettings: widget.myUserSettings,
                 currentDevice: _connectedDevice,
@@ -2672,17 +2688,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 ppmCalibrateReady: _isPPMCalibrationReady,
                 escFirmwareVersion: escFirmwareVersion,
                 updateComputedVehicleStatistics: updateComputedVehicleStatistics,
-              ),
-              RideLogging(
-                  myUserSettings: widget.myUserSettings,
-                  theTXLoggerCharacteristic: theTXLoggerCharacteristic,
-                  syncInProgress: syncInProgress, //TODO: RideLogging receives syncInProgress in syncStatus object
-                  onSyncPress: _handleBLESyncState,
-                  syncStatus: syncStatus,
-                  eraseOnSync: syncEraseOnComplete,
-                  onSyncEraseSwitch: _handleEraseOnSyncButton,
-                  isLoggerLogging: isLoggerLogging,
-                  isRobogotchi : _deviceIsRobogotchi
+                applicationDocumentsDirectory: applicationDocumentsDirectory,
               )
             ])
           ),

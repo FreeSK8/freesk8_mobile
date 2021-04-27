@@ -722,6 +722,7 @@ class RideLogViewerState extends State<RideLogViewer> {
     double _maxAmpsBattery = 0.0;
     double _maxAmpsMotor = 0.0;
     TimeSeriesESC _tsESCMaxSpeed;
+    double _maxESCTempObserved;
     TimeSeriesESC _tsESCMaxESCTemp;
     for(int i=0; i<escTimeSeriesList.length;++i) {
       if(escTimeSeriesList[i].speed != null && escTimeSeriesList[i].speed > _maxSpeed){
@@ -759,21 +760,25 @@ class RideLogViewerState extends State<RideLogViewer> {
       }
 
       // Monitor Max ESC Temp
-      if(_tsESCMaxESCTemp == null || escTimeSeriesList[i].tempMosfet != null && escTimeSeriesList[i].tempMosfet > _tsESCMaxESCTemp.tempMosfet){
+      if(_tsESCMaxESCTemp == null || escTimeSeriesList[i].tempMosfet != null && escTimeSeriesList[i].tempMosfet > _maxESCTempObserved){
         // Store time series moment for map point generation and data popup
         _tsESCMaxESCTemp = escTimeSeriesList[i];
+        _maxESCTempObserved = escTimeSeriesList[i].tempMosfet;
       }
-      if(_tsESCMaxESCTemp == null || escTimeSeriesList[i].tempMosfet2 != null && escTimeSeriesList[i].tempMosfet2 > _tsESCMaxESCTemp.tempMosfet){
+      if(_tsESCMaxESCTemp == null || escTimeSeriesList[i].tempMosfet2 != null && escTimeSeriesList[i].tempMosfet2 > _maxESCTempObserved){
         // Store time series moment for map point generation and data popup
         _tsESCMaxESCTemp = escTimeSeriesList[i];
+        _maxESCTempObserved = escTimeSeriesList[i].tempMosfet2;
       }
-      if(_tsESCMaxESCTemp == null || escTimeSeriesList[i].tempMosfet3 != null && escTimeSeriesList[i].tempMosfet3 > _tsESCMaxESCTemp.tempMosfet){
+      if(_tsESCMaxESCTemp == null || escTimeSeriesList[i].tempMosfet3 != null && escTimeSeriesList[i].tempMosfet3 > _maxESCTempObserved){
         // Store time series moment for map point generation and data popup
         _tsESCMaxESCTemp = escTimeSeriesList[i];
+        _maxESCTempObserved = escTimeSeriesList[i].tempMosfet3;
       }
-      if(_tsESCMaxESCTemp == null || escTimeSeriesList[i].tempMosfet4 != null && escTimeSeriesList[i].tempMosfet4 > _tsESCMaxESCTemp.tempMosfet){
+      if(_tsESCMaxESCTemp == null || escTimeSeriesList[i].tempMosfet4 != null && escTimeSeriesList[i].tempMosfet4 > _maxESCTempObserved){
         // Store time series moment for map point generation and data popup
         _tsESCMaxESCTemp = escTimeSeriesList[i];
+        _maxESCTempObserved = escTimeSeriesList[i].tempMosfet4;
       }
     }
     // Add map marker for the hottest ESC temp
@@ -788,7 +793,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           margin: EdgeInsets.fromLTRB(0, 0, 0, 25),
           child: GestureDetector(
             onTap: (){
-              genericAlert(context, "Max ESC Temperature", Text("${_tsESCMaxESCTemp.tempMosfet} degrees at ${_tsESCMaxESCTemp.time.toIso8601String().substring(0,19)}"), "Hot dog!");
+              genericAlert(context, "Max ESC Temperature", Text("$_maxESCTempObserved degrees at ${_tsESCMaxESCTemp.time.toIso8601String().substring(0,19)}"), "Hot dog!");
             },
             child: Image(image: AssetImage("assets/map_max_temp.png")),
           ),
@@ -942,11 +947,9 @@ class RideLogViewerState extends State<RideLogViewer> {
     return Scaffold(
       appBar: AppBar(
         title: Row(children: <Widget>[
-          Icon( Icons.map,
-          size: 35.0,
-          color: Colors.blue,
-          ),
           Text(myArguments.logFileInfo.dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)),
+          Spacer(),
+          Image(width: 40, height: 40, image: AssetImage('assets/FreeSK8_Icon.png')),
         ],),
       ),
       body: SafeArea(
@@ -1106,8 +1109,8 @@ class RideLogViewerState extends State<RideLogViewer> {
                           fileSummary += "\nWatt Hours: ${doublePrecision(myArguments.logFileInfo.wattHoursTotal, 2)}";
                           fileSummary += "\nWatt Hours Regen: ${doublePrecision(myArguments.logFileInfo.wattHoursRegenTotal, 2)}";
                         }
-                        fileSummary += "\nBattery Amps: $_maxAmpsBattery";
-                        fileSummary += "\nMotor Amps: $_maxAmpsMotor";
+                        fileSummary += "\nBattery Amps: ${doublePrecision(_maxAmpsBattery, 1)}";
+                        fileSummary += "\nMotor Amps: ${doublePrecision(_maxAmpsMotor, 1)}";
                         fileSummary += "\nDuration: ${duration.toString().substring(0,duration.toString().lastIndexOf("."))}";
                         await Share.file('FreeSK8Log', filename, utf8.encode(thisRideLog), 'text/csv', text: fileSummary);
                       }),

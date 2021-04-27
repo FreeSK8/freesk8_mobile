@@ -94,9 +94,10 @@ class LogFileParser {
     convertedFile.writeAsStringSync("header,format_gps,satellites,altitude,speed,latitude,longitude\n", mode: FileMode.append);
     convertedFile.writeAsStringSync("header,format_err,fault_name,fault_code,esc_id\n", mode: FileMode.append);
     convertedFile.writeAsStringSync("header,version_output,$ParserVersion\n", mode: FileMode.append);
-    convertedFile.writeAsStringSync("header,gear_ratio,${userSettings.settings.gearRatio}\n", mode: FileMode.append);
+    convertedFile.writeAsStringSync("header,gear_ratio,${doublePrecision(userSettings.settings.gearRatio, 2)}\n", mode: FileMode.append);
     convertedFile.writeAsStringSync("header,wheel_diameter_mm,${userSettings.settings.wheelDiameterMillimeters}\n", mode: FileMode.append);
     convertedFile.writeAsStringSync("header,motor_poles,${userSettings.settings.motorPoles}\n", mode: FileMode.append);
+    convertedFile.writeAsStringSync("header,utc_offset,${prettyPrintDuration(DateTime.now().timeZoneOffset)}\n", mode: FileMode.append);
 
     // Iterate contents of file
     Uint8List bytes = file.readAsBytesSync();
@@ -156,11 +157,11 @@ class LogFileParser {
             lastESCPacket.dutyCycle = buffer_get_int16(bytes, i, Endian.little) / 1000.0; i+=2;
             lastESCPacket.motorCurrent = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
             lastESCPacket.batteryCurrent = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
-            lastESCPacket.wattHours = buffer_get_uint16(bytes, i, Endian.little) / 100.0; i+=2;
+            i+=2; //NOTE: alignment
             lastESCPacket.wattHoursRegen = buffer_get_uint16(bytes, i, Endian.little) / 100.0; i+=2;
             lastESCPacket.faultCode = bytes[i++];
             ++i; //NOTE: alignment
-            i+=4; //NOTE: alignment
+            lastESCPacket.wattHours = buffer_get_uint32(bytes, i, Endian.little) / 100.0; i+=4;
             lastESCPacket.eRPM = buffer_get_int32(bytes, i, Endian.little); i+=4;
             lastESCPacket.eDistance = buffer_get_uint32(bytes, i, Endian.little); i+=4;
             //globalLogger.wtf("ESC Duty ${lastESCPacket.dutyCycle}");

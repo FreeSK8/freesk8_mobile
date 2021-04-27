@@ -40,8 +40,8 @@ dependencies:
   oscilloscope: 0.0.3
   intl: ^0.16.1
 
-  image_picker: 0.7.3 #https://pub.dev/packages/image_picker/changelog
-  path_provider: 1.6.7
+  image_picker: 0.7.0 #https://pub.dev/packages/image_picker/changelog
+  path_provider: 1.6.7 #https://pub.dev/packages/path_provider/changelog
 
   charts_flutter: 0.10.0
   sliding_up_panel: ^1.0.2
@@ -69,6 +69,10 @@ dependencies:
   duration_picker: ^1.0.1
 
   sqflite: 2.0.0+3 #https://pub.dev/packages/sqflite/changelog
+
+  archive: ^3.1.2 #https://pub.dev/packages/archive/changelog
+
+  flutter_document_picker: ^4.0.1 #https://pub.dev/packages/flutter_document_picker/changelog
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -104,7 +108,8 @@ flutter:
   #  - images/a_dot_ham.jpeg
 
   assets:
-    - assets/firmware/Robogotchi_0.9.0.zip
+    - assets/FreeSK8_Icon.png
+    - assets/firmware/Robogotchi_0.9.1.zip
     - assets/robogotchi_render.png
     - assets/FreeSK8_Mobile.jpg
     - assets/FreeSK8_MobileLogo.png

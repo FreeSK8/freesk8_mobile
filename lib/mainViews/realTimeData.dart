@@ -76,11 +76,11 @@ class RealTimeDataState extends State<RealTimeData> {
 
   static double doubleItemWidth = 150; //This changes on widget build
 
-  static double averageVoltageInput = 0;
+  static double averageVoltageInput;
 
   static ESCTelemetry escTelemetry;
 
-  double batteryRemaining = 0;
+  double batteryRemaining;
 
   double calculateSpeedKph(double eRpm) {
     double ratio = 1.0 / widget.currentSettings.settings.gearRatio;
@@ -390,10 +390,17 @@ class RealTimeDataState extends State<RealTimeData> {
 
     double powerMax = widget.currentSettings.settings.batterySeriesCount * widget.currentSettings.settings.batteryCellMaxVoltage;
     double powerMinimum = widget.currentSettings.settings.batterySeriesCount * widget.currentSettings.settings.batteryCellMinVoltage;
+    averageVoltageInput ??= powerMinimum; // Set to minimum if null
     if (widget.deviceIsConnected) {
       averageVoltageInput = (0.25 * doublePrecision(escTelemetry.v_in, 1)) + (0.75 * averageVoltageInput);
     } else {
       averageVoltageInput = powerMinimum;
+    }
+
+    if (batteryRemaining == null && escTelemetry.battery_level != null) {
+      batteryRemaining = escTelemetry.battery_level * 100;
+    } else {
+      batteryRemaining = 0;
     }
 
     if (escTelemetry.battery_level != null) {
