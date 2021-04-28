@@ -397,12 +397,16 @@ class RealTimeDataState extends State<RealTimeData> {
       averageVoltageInput = powerMinimum;
     }
 
-    if (batteryRemaining == null && escTelemetry.battery_level != null) {
-      batteryRemaining = escTelemetry.battery_level * 100;
-    } else {
-      batteryRemaining = 0;
+    // Set initial batteryRemaining value
+    if (batteryRemaining == null) {
+      if (escTelemetry.battery_level != null) {
+        batteryRemaining = escTelemetry.battery_level * 100;
+      } else {
+        batteryRemaining = 0;
+      }
     }
 
+    // Smooth battery remaining from ESC
     if (escTelemetry.battery_level != null) {
       batteryRemaining = (0.25 * escTelemetry.battery_level * 100) + (0.75 * batteryRemaining);
       if (batteryRemaining < 0.0) {
@@ -423,7 +427,7 @@ class RealTimeDataState extends State<RealTimeData> {
     FlutterGauge _gaugePowerRemaining = FlutterGauge(inactiveColor: Colors.red,activeColor: Colors.black,numberInAndOut: NumberInAndOut.inside, index: batteryRemaining,counterStyle: TextStyle(color: Theme.of(context).textTheme.bodyText1.color,fontSize: 25,),widthCircle: 10,secondsMarker: SecondsMarker.secondsAndMinute,number: Number.all);
     FlutterGauge _gaugeVolts = FlutterGauge(inactiveColor: Colors.red,activeColor: Colors.black,hand: Hand.short,index: averageVoltageInput,fontFamily: "Courier",start: powerMinimum.floor().toInt(), end: powerMax.ceil().toInt(),number: Number.endAndCenterAndStart,secondsMarker: SecondsMarker.secondsAndMinute,counterStyle: TextStyle(color: Theme.of(context).textTheme.bodyText1.color,fontSize: 25,));
     //TODO: scale efficiency and adjust end value for imperial users
-    FlutterGauge _gaugeEfficiency = FlutterGauge(reverseDial: true, reverseDigits: true, hand: Hand.short,index: efficiencyGauge,fontFamily: "Courier",start: 0, end: 42,number: Number.endAndStart,secondsMarker: SecondsMarker.secondsAndMinute,counterStyle: TextStyle(color: Theme.of(context).textTheme.bodyText1.color,fontSize: 25,));
+    FlutterGauge _gaugeEfficiency = FlutterGauge(reverseDial: true, reverseDigits: true, hand: Hand.short,index: efficiencyGauge,fontFamily: "Courier",start: 0, end: 100,number: Number.endAndStart,secondsMarker: SecondsMarker.secondsAndMinute,counterStyle: TextStyle(color: Theme.of(context).textTheme.bodyText1.color,fontSize: 25,));
 
     Oscilloscope scopeOne = Oscilloscope(
       backgroundColor: Colors.transparent,
