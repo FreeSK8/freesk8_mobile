@@ -55,7 +55,7 @@ import 'package:logger_flutter/logger_flutter.dart';
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.15.0";
+const String freeSK8ApplicationVersion = "0.15.1";
 const String robogotchiFirmwareExpectedVersion = "0.9.1";
 
 void main() {
@@ -2008,14 +2008,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                       child: GestureDetector(
                         onLongPress: () async {
                           globalLogger.d("_changeConnectedDialogMessage: Long press received. Closing dialog.");
-                          Navigator.of(context).pop(); // Remove communicating with ESC dialog
+                          Navigator.of(context).pop(); // Remove connection dialog
                         },
                         child: Column(children: [
                           Icon(Icons.bluetooth_searching, size: 80,color: Colors.green),
                           SizedBox(height: 10,),
                           Text("Connected"),
                           Text(message),
-                          Text("(long press to dismiss)", style: TextStyle(fontSize: 7))
                         ]),
                       ),
                     )
