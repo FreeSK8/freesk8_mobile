@@ -441,7 +441,7 @@ class RideLogViewerState extends State<RideLogViewer> {
 
               double wattHours = (wattHoursNow - wattHoursStartPrimary) - (wattHoursRegenNow - wattHoursRegenStartPrimary);
               double totalDistance = distanceEndPrimary - distanceStartPrimary;
-              double consumption = wattHours / (myArguments.userSettings.settings.useImperial ? kmToMile(totalDistance) : totalDistance);
+              double consumption = wattHours / totalDistance;
               if (consumption.isNaN || consumption.isInfinite) {
                 consumption = 0;
               }
