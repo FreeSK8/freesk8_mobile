@@ -397,12 +397,16 @@ class RealTimeDataState extends State<RealTimeData> {
       averageVoltageInput = powerMinimum;
     }
 
-    if (batteryRemaining == null && escTelemetry.battery_level != null) {
-      batteryRemaining = escTelemetry.battery_level * 100;
-    } else {
-      batteryRemaining = 0;
+    // Set initial batteryRemaining value
+    if (batteryRemaining == null) {
+      if (escTelemetry.battery_level != null) {
+        batteryRemaining = escTelemetry.battery_level * 100;
+      } else {
+        batteryRemaining = 0;
+      }
     }
 
+    // Smooth battery remaining from ESC
     if (escTelemetry.battery_level != null) {
       batteryRemaining = (0.25 * escTelemetry.battery_level * 100) + (0.75 * batteryRemaining);
       if (batteryRemaining < 0.0) {
