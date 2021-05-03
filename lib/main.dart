@@ -55,7 +55,7 @@ import 'package:logger_flutter/logger_flutter.dart';
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.15.1";
+const String freeSK8ApplicationVersion = "0.15.2";
 const String robogotchiFirmwareExpectedVersion = "0.9.1";
 
 void main() {
@@ -212,8 +212,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           }
         });
 
-    //TODO: watching AppLifecycleState but not doing anything
-    WidgetsBinding.instance.addObserver(AutoStopHandler());
+    // Watching AppLifecycleState for when the application is put in the background/resumed
+    WidgetsBinding.instance.addObserver(AutoStopHandler(_delayedTabControllerIndexChange, unexpectedDisconnect));
 
     _timerMonitor = new Timer.periodic(Duration(seconds: 1), (Timer t) => _monitorGotchiTimer());
 
