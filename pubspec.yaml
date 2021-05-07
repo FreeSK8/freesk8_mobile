@@ -74,6 +74,8 @@ dependencies:
 
   flutter_document_picker: ^4.0.1 #https://pub.dev/packages/flutter_document_picker/changelog
 
+  url_launcher: ^6.0.3 #https://pub.dev/packages/url_launcher/changelog
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^0.1.2

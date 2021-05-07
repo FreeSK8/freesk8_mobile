@@ -52,10 +52,12 @@ import 'package:get_ip/get_ip.dart';
 
 import 'package:logger_flutter/logger_flutter.dart';
 
+import 'package:url_launcher/url_launcher.dart';
+
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.15.2";
+const String freeSK8ApplicationVersion = "0.16.0";
 const String robogotchiFirmwareExpectedVersion = "0.9.1";
 
 void main() {
@@ -2449,6 +2451,70 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               stopTCPServer();
             });
           }
+        },
+      ),
+
+      ListTile(
+        leading: Icon(Icons.contact_support_outlined),
+        title: Text("Help & Support"),
+        onTap: () {
+          String url = "https://t.me/FreeSK8Beta";
+          String url2 = "https://github.com/FreeSK8/FreeSK8-Robogotchi-Hardware/wiki";
+          String url3 = "https://derelictrobot.com/";
+          genericAlert(
+              context,
+              "🆘 Need some assistance?",
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Contact us on Telegram:"),
+                  SizedBox(height: 5),
+                  GestureDetector(
+                    child: Text(url, style: TextStyle(color: Colors.blue),),
+                    onTap: () async {
+                      if (await canLaunch(url)) {
+                        await launch(
+                          url,
+                          forceSafariVC: false,
+                          forceWebView: false,
+                        );
+                      }
+                    },
+                  ),
+                  SizedBox(height: 10),
+                  Text("Learn more about Robogotchi:"),
+                  SizedBox(height: 5),
+                  GestureDetector(
+                    child: Text(url2, style: TextStyle(color: Colors.blue)),
+                    onTap: () async {
+                      if (await canLaunch(url2)) {
+                        await launch(
+                          url2,
+                          forceSafariVC: false,
+                          forceWebView: false,
+                        );
+                      }
+                    },
+                  ),
+                  SizedBox(height: 10),
+                  Text("Visit DRI Shop:"),
+                  SizedBox(height: 5),
+                  GestureDetector(
+                    child: Text(url3, style: TextStyle(color: Colors.blue)),
+                    onTap: () async {
+                      if (await canLaunch(url3)) {
+                        await launch(
+                          url3,
+                          forceSafariVC: false,
+                          forceWebView: false,
+                        );
+                      }
+                    },
+                  )
+                ],
+              ),
+              "OK"
+          );
         },
       ),
     ];
