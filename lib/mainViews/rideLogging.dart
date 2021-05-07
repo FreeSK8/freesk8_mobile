@@ -636,8 +636,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
 
 
             Row( mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-              SizedBox(width: 5,),
-              ElevatedButton(
+              widget.syncInProgress ? Container() : ElevatedButton(
                   child: Text(widget.isLoggerLogging? "Stop Log" : "Start Log"),
                   onPressed: () async {
                     if (!widget.isRobogotchi) {
@@ -649,7 +648,6 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                       sendBLEData(widget.theTXLoggerCharacteristic, utf8.encode("logstart~"), false);
                     }
                   }),
-
               SizedBox(width: 5,),
               ElevatedButton(
                   child: Text(widget.syncInProgress?"Stop Sync":"Sync Logs"),
