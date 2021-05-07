@@ -364,8 +364,9 @@ class RealTimeDataState extends State<RealTimeData> {
 
     double tempMosfet = widget.currentSettings.settings.useFahrenheit ? cToF(escTelemetry.temp_mos) : escTelemetry.temp_mos;
     double tempMotor = widget.currentSettings.settings.useFahrenheit ? cToF(escTelemetry.temp_motor) : escTelemetry.temp_motor;
-    // Around -99.9 is the value received if there is no/faulty temp sensor, Set to 0 so the gauges don't shit themselves
-    if (tempMotor < -32) { tempMotor = 0; }
+    // The gauges don't like to display outside their coded range
+    if (tempMotor < 0) { tempMotor = 0; }
+    if (tempMotor > 90) { tempMotor = 90; }
 
     String temperatureMosfet = widget.currentSettings.settings.useFahrenheit ? "$tempMosfet F" : "$tempMosfet C";
     //String temperatureMosfet1 = widget.currentSettings.settings.useFahrenheit ? "${cToF(escTelemetry.temp_mos_1)} F" : "${escTelemetry.temp_mos_1} C";
