@@ -197,7 +197,8 @@ Future<bool> importSettings(String filePath) async {
   List<dynamic> jsonSettings = json.decode(importFile.readAsStringSync());
 
   bool importResult = false;
-  jsonSettings.forEach((value) async {
+  for (int i=0; i<jsonSettings.length; ++i) {
+    var value = jsonSettings[i];
     if (value['version'] == 0) {
       importResult = true;
     } else {
@@ -213,7 +214,7 @@ Future<bool> importSettings(String filePath) async {
     importSettings.settings.boardAlias = value['boardAlias'];
     importSettings.settings.gearRatio = value['gearRatio'];
     await importSettings.saveSettings();
-  });
+  }
 
   return importResult;
 }
