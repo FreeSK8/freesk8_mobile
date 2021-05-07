@@ -27,8 +27,9 @@ import '../hardwareSupport/escHelper/dataTypes.dart';
 class RideLogViewerArguments {
   final UserSettings userSettings;
   final LogInfoItem logFileInfo;
+  final FileImage imageBoardAvatar;
 
-  RideLogViewerArguments(this.logFileInfo,this.userSettings);
+  RideLogViewerArguments(this.logFileInfo,this.userSettings, this.imageBoardAvatar);
 }
 
 class RideLogViewer extends StatefulWidget {
@@ -1218,7 +1219,11 @@ class RideLogViewerState extends State<RideLogViewer> {
                                     builder: (ctx) =>
                                     new Container(
                                       margin: EdgeInsets.fromLTRB(0, 0, 0, 10),
-                                      child: new Image(height: 50, image: AssetImage("assets/map_selection.png")),
+                                      child: CircleAvatar(
+                                        backgroundImage: myArguments.userSettings.settings.boardAvatarPath != null ? myArguments.imageBoardAvatar : AssetImage('assets/FreeSK8_Mobile.jpg'),
+                                        radius: 10,
+                                        backgroundColor: Colors.white
+                                      )
                                     ),
                                   ));
                                   _mapController.move(closestMapPoint, _mapController.zoom);
