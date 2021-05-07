@@ -58,7 +58,7 @@ import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
 const String freeSK8ApplicationVersion = "0.16.0";
-const String robogotchiFirmwareExpectedVersion = "0.9.1";
+const String robogotchiFirmwareExpectedVersion = "0.10.0";
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
