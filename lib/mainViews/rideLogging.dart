@@ -316,7 +316,8 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
     Navigator.of(context).pushReplacementNamed(RideLogViewer.routeName,
       arguments: RideLogViewerArguments(
           rideLogsFromDatabase[index],
-          selectedBoardSettings
+          selectedBoardSettings,
+          selectedBoardSettings.settings.boardAvatarPath == null ? null : FileImage(File(await UserSettings.getBoardAvatarPath(rideLogsFromDatabase[index].boardID)))
       ),
     ).then((value){
       // Once finished re-list files and remove a potential snackBar item before re-draw of setState
@@ -644,7 +645,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                     }
                     if (widget.isLoggerLogging) {
                       sendBLEData(widget.theTXLoggerCharacteristic, utf8.encode("logstop~"), false);
-                    } else {
+                    } else if (!widget.syncInProgress) {
                       sendBLEData(widget.theTXLoggerCharacteristic, utf8.encode("logstart~"), false);
                     }
                   }),
