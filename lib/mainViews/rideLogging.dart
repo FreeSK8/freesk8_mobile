@@ -262,7 +262,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text("${Duration(seconds: rideLogsFromDatabase[int.parse(event)].durationSeconds).toString().substring(0,Duration(seconds: rideLogsFromDatabase[int.parse(event)].durationSeconds).toString().indexOf("."))}"),
-                                Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[int.parse(event)].distance) : rideLogsFromDatabase[int.parse(event)].distance} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}")
+                                rideLogsFromDatabase[int.parse(event)].distance == -1.0 ? Container() : Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[int.parse(event)].distance) : rideLogsFromDatabase[int.parse(event)].distance} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}")
                               ],
                             )
                         ),
@@ -611,7 +611,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text("${Duration(seconds: rideLogsFromDatabase[index].durationSeconds).toString().substring(0,Duration(seconds: rideLogsFromDatabase[index].durationSeconds).toString().indexOf("."))}"),
-                                            Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[index].distance) : rideLogsFromDatabase[index].distance} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}")
+                                            rideLogsFromDatabase[index].distance == -1.0 ? Container() : Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[index].distance) : rideLogsFromDatabase[index].distance} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}")
                                           ],
                                         )
                                     ),
