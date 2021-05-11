@@ -725,6 +725,8 @@ class RideLogViewerState extends State<RideLogViewer> {
     TimeSeriesESC _tsESCMaxSpeed;
     double _maxESCTempObserved;
     TimeSeriesESC _tsESCMaxESCTemp;
+    TimeSeriesESC _tsESCMaxBatteryAmps;
+    TimeSeriesESC _tsESCMaxMotorAmps;
     for(int i=0; i<escTimeSeriesList.length;++i) {
       if(escTimeSeriesList[i].speed != null && escTimeSeriesList[i].speed > _maxSpeed){
         _maxSpeed = escTimeSeriesList[i].speed;
@@ -739,25 +741,31 @@ class RideLogViewerState extends State<RideLogViewer> {
       // Max Battery Current
       if(escTimeSeriesList[i].currentInput != null && escTimeSeriesList[i].currentInput > _maxAmpsBattery){
         _maxAmpsBattery = escTimeSeriesList[i].currentInput;
+        _tsESCMaxBatteryAmps = escTimeSeriesList[i];
       }
       if(escTimeSeriesList[i].currentInput != null && escTimeSeriesList[i].currentInput2 != null && escTimeSeriesList[i].currentInput + escTimeSeriesList[i].currentInput2 > _maxAmpsBattery){
         _maxAmpsBattery = doublePrecision(escTimeSeriesList[i].currentInput +  escTimeSeriesList[i].currentInput2, 1);
+        _tsESCMaxBatteryAmps = escTimeSeriesList[i];
       }
       if(escTimeSeriesList[i].currentInput != null && escTimeSeriesList[i].currentInput2 != null && escTimeSeriesList[i].currentInput3 != null && escTimeSeriesList[i].currentInput4 != null &&
           escTimeSeriesList[i].currentInput + escTimeSeriesList[i].currentInput2 + escTimeSeriesList[i].currentInput3 + escTimeSeriesList[i].currentInput4 > _maxAmpsBattery){
         _maxAmpsBattery = doublePrecision(escTimeSeriesList[i].currentInput +  escTimeSeriesList[i].currentInput2 + escTimeSeriesList[i].currentInput3 + escTimeSeriesList[i].currentInput4, 1);
+        _tsESCMaxBatteryAmps = escTimeSeriesList[i];
       }
 
       // Max Motor Current
       if(escTimeSeriesList[i].currentMotor != null && escTimeSeriesList[i].currentMotor > _maxAmpsMotor){
         _maxAmpsMotor = escTimeSeriesList[i].currentMotor;
+        _tsESCMaxMotorAmps = escTimeSeriesList[i];
       }
       if(escTimeSeriesList[i].currentMotor != null && escTimeSeriesList[i].currentMotor2 != null && escTimeSeriesList[i].currentMotor + escTimeSeriesList[i].currentMotor2 > _maxAmpsMotor){
         _maxAmpsMotor = doublePrecision(escTimeSeriesList[i].currentMotor + escTimeSeriesList[i].currentMotor2, 1);
+        _tsESCMaxMotorAmps = escTimeSeriesList[i];
       }
       if(escTimeSeriesList[i].currentMotor != null && escTimeSeriesList[i].currentMotor2 != null && escTimeSeriesList[i].currentMotor3 != null && escTimeSeriesList[i].currentMotor4 != null &&
           escTimeSeriesList[i].currentMotor + escTimeSeriesList[i].currentMotor2 + escTimeSeriesList[i].currentMotor3 + escTimeSeriesList[i].currentMotor4 > _maxAmpsMotor){
         _maxAmpsMotor = doublePrecision(escTimeSeriesList[i].currentMotor + escTimeSeriesList[i].currentMotor2 + escTimeSeriesList[i].currentMotor3 + escTimeSeriesList[i].currentMotor4, 1);
+        _tsESCMaxMotorAmps = escTimeSeriesList[i];
       }
 
       // Monitor Max ESC Temp
@@ -781,6 +789,26 @@ class RideLogViewerState extends State<RideLogViewer> {
         _tsESCMaxESCTemp = escTimeSeriesList[i];
         _maxESCTempObserved = escTimeSeriesList[i].tempMosfet4;
       }
+    }
+
+    // Add map marker for Max Battery Amps
+    if(_tsESCMaxBatteryAmps != null && gpsLatLngMap.length > 0) {
+      // Add fault marker to map
+      mapMakers.add(new Marker(
+        width: 50.0,
+        height: 50.0,
+        point: selectNearestGPSPoint(_tsESCMaxBatteryAmps.time,gpsLatLngMap),
+        builder: (ctx) =>
+        new Container(
+          margin: EdgeInsets.fromLTRB(0, 0, 0, 25),
+          child: GestureDetector(
+            onTap: (){
+              genericAlert(context, "Max Battery Amps", Text("$_maxAmpsBattery amps at ${_tsESCMaxBatteryAmps.time.toIso8601String().substring(0,19)}"), "OK");
+            },
+            child: Image(image: AssetImage("assets/map_max_amps.png")),
+          ),
+        ),
+      ));
     }
     // Add map marker for the hottest ESC temp
     if(_tsESCMaxESCTemp != null && gpsLatLngMap.length > 0) {
