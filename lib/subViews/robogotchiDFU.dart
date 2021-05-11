@@ -22,8 +22,7 @@ class RobogotchiDFUState extends State<RobogotchiDFU> with SingleTickerProviderS
 
   String _deviceAddress;
   int _percent = 0;
-  double _speed;
-  double _avgSpeed;
+
   int _currentPart;
   int _partsTotal;
 
@@ -80,8 +79,6 @@ class RobogotchiDFUState extends State<RobogotchiDFU> with SingleTickerProviderS
             setState(() {
               _deviceAddress = deviceAddress;
               _percent = percent;
-              _speed = doublePrecision(speed, 1);
-              _avgSpeed = doublePrecision(avgSpeed, 1);
               _currentPart = currentPart;
               _partsTotal = partsTotal;
             });
