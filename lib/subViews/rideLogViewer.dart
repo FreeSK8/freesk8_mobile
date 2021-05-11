@@ -294,6 +294,36 @@ class RideLogViewerState extends State<RideLogViewer> {
     return gpsLatLngMap.entries.last.value;
   }
 
+  void _buildDialog(String title, TimeSeriesESC eventData, DateTime logStart) {
+    double _batteryAmps = eventData.currentInput;
+    if(eventData.currentInput != null && eventData.currentInput2 != null){
+      _batteryAmps = doublePrecision(eventData.currentInput + eventData.currentInput2, 1);
+    }
+    if(eventData.currentInput != null && eventData.currentInput2 != null && eventData.currentInput3 != null && eventData.currentInput4 != null){
+      _batteryAmps = doublePrecision(eventData.currentInput + eventData.currentInput2 + eventData.currentInput3 + eventData.currentInput4, 1);
+    }
+
+    genericAlert(context, title, Column(
+      children: [
+        Text("${eventData.time.toIso8601String().substring(0,19)}"),
+        SizedBox(height: 10),
+        Row(children: [Icon(Icons.watch), Text("${prettyPrintDuration(eventData.time.difference(logStart))}")],),
+        Row(children: [Transform.rotate(angle: 3.14159, child: Icon(Icons.av_timer),), Text("${eventData.speed}${myArguments.userSettings.settings.useImperial ? "mph" : "kph"}")],),
+        Row(children: [Icon(Icons.rotate_right), Text("Duty ${(eventData.dutyCycle * 100).toInt()}%")],),
+        Row(children: [Icon(Icons.battery_charging_full), Text("${_batteryAmps}A") ],),
+        Row(children: [Icon(Icons.slow_motion_video), Text("M1 ${eventData.currentMotor}A")],),
+        eventData.currentMotor2 == null ? Container() : Row(children: [Icon(Icons.slow_motion_video), Text("M2 ${eventData.currentMotor2}A")],),
+        eventData.currentMotor3 == null ? Container() : Row(children: [Icon(Icons.slow_motion_video), Text("M3 ${eventData.currentMotor3}A")],),
+        eventData.currentMotor4 == null ? Container() : Row(children: [Icon(Icons.slow_motion_video), Text("M4 ${eventData.currentMotor4}A")],),
+        Row(children: [Icon(Icons.local_fire_department), Text("ESC1 ${eventData.tempMosfet}°C")],),
+        eventData.tempMosfet2 == null ? Container() : Row(children: [Icon(Icons.local_fire_department), Text("ESC2 ${eventData.tempMosfet2}°C")],),
+        eventData.tempMosfet3 == null ? Container() : Row(children: [Icon(Icons.local_fire_department), Text("ESC3 ${eventData.tempMosfet3}°C")],),
+        eventData.tempMosfet4 == null ? Container() : Row(children: [Icon(Icons.local_fire_department), Text("ESC4 ${eventData.tempMosfet4}°C")],),
+        eventData.faultCode == null ? Container() : Row(children: [Icon(Icons.warning_amber_outlined), Text("${mc_fault_code.values[eventData.faultCode].toString().substring(14)}")],),
+      ],
+    ), "OK");
+  }
+
   @override
   Widget build(BuildContext context) {
     globalLogger.d("Build: rideLogViewer");
@@ -803,7 +833,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           margin: EdgeInsets.fromLTRB(0, 0, 0, 25),
           child: GestureDetector(
             onTap: (){
-              genericAlert(context, "Max Battery Amps", Text("$_maxAmpsBattery amps at ${_tsESCMaxBatteryAmps.time.toIso8601String().substring(0,19)}"), "OK");
+              _buildDialog("Max Battery Amps", _tsESCMaxBatteryAmps, escTimeSeriesList.first.time);
             },
             child: Image(image: AssetImage("assets/map_max_amps.png")),
           ),
@@ -822,7 +852,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           margin: EdgeInsets.fromLTRB(0, 0, 0, 25),
           child: GestureDetector(
             onTap: (){
-              genericAlert(context, "Max ESC Temperature", Text("$_maxESCTempObserved degrees at ${_tsESCMaxESCTemp.time.toIso8601String().substring(0,19)}"), "Hot dog!");
+              _buildDialog("Max ESC Temperature", _tsESCMaxESCTemp, escTimeSeriesList.first.time);
             },
             child: Image(image: AssetImage("assets/map_max_temp.png")),
           ),
@@ -841,7 +871,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           margin: EdgeInsets.fromLTRB(0, 0, 0, 25),
           child: GestureDetector(
             onTap: (){
-              genericAlert(context, "Top Speed", Text("${_tsESCMaxSpeed.speed} ${myArguments.userSettings.settings.useImperial ? "mph" : "kph"} at ${_tsESCMaxSpeed.time.toIso8601String().substring(0,19)}"), "Woo!");
+              _buildDialog("Top Speed", _tsESCMaxSpeed, escTimeSeriesList.first.time);
             },
             child: Image(image: AssetImage("assets/map_top_speed.png")),
           ),
