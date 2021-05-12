@@ -74,6 +74,8 @@ dependencies:
 
   flutter_document_picker: ^4.0.1 #https://pub.dev/packages/flutter_document_picker/changelog
 
+  url_launcher: ^6.0.3 #https://pub.dev/packages/url_launcher/changelog
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^0.1.2
@@ -109,7 +111,7 @@ flutter:
 
   assets:
     - assets/FreeSK8_Icon.png
-    - assets/firmware/Robogotchi_0.9.1.zip
+    - assets/firmware/Robogotchi_0.10.0.zip
     - assets/robogotchi_render.png
     - assets/FreeSK8_Mobile.jpg
     - assets/FreeSK8_MobileLogo.png

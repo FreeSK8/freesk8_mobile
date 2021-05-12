@@ -27,8 +27,9 @@ import '../hardwareSupport/escHelper/dataTypes.dart';
 class RideLogViewerArguments {
   final UserSettings userSettings;
   final LogInfoItem logFileInfo;
+  final FileImage imageBoardAvatar;
 
-  RideLogViewerArguments(this.logFileInfo,this.userSettings);
+  RideLogViewerArguments(this.logFileInfo,this.userSettings, this.imageBoardAvatar);
 }
 
 class RideLogViewer extends StatefulWidget {
@@ -291,6 +292,84 @@ class RideLogViewerState extends State<RideLogViewer> {
 
     globalLogger.d("selectNearestGPSPoint: Returning last point =(");
     return gpsLatLngMap.entries.last.value;
+  }
+
+  void _buildDialog(String title, TimeSeriesESC eventData, DateTime logStart) {
+    double _batteryAmps = eventData.currentInput;
+    if(eventData.currentInput != null && eventData.currentInput2 != null){
+      _batteryAmps = doublePrecision(eventData.currentInput + eventData.currentInput2, 1);
+    }
+    if(eventData.currentInput != null && eventData.currentInput2 != null && eventData.currentInput3 != null && eventData.currentInput4 != null){
+      _batteryAmps = doublePrecision(eventData.currentInput + eventData.currentInput2 + eventData.currentInput3 + eventData.currentInput4, 1);
+    }
+
+    List<TableRow> tableChildren = [];
+    tableChildren.add(TableRow(children: [
+      Icon(Icons.watch),
+      Text("${prettyPrintDuration(eventData.time.difference(logStart))}",
+          textAlign: TextAlign.center)]));
+    tableChildren.add(TableRow(children: [
+      Transform.rotate(angle: 3.14159, child: Icon(Icons.av_timer),),
+      Text("${eventData.speed}${myArguments.userSettings.settings.useImperial ? "mph" : "kph"}",
+          textAlign: TextAlign.center)]));
+    tableChildren.add(TableRow(children: [
+      Icon(Icons.rotate_right),
+      Text("Duty ${(eventData.dutyCycle * 100).toInt()}%",
+          textAlign: TextAlign.center)]));
+    tableChildren.add(TableRow(children: [
+      Icon(Icons.battery_charging_full),
+      Text("${_batteryAmps}A",
+          textAlign: TextAlign.center) ]));
+    tableChildren.add(TableRow(children: [
+      Icon(Icons.slow_motion_video),
+      Text("M1 ${eventData.currentMotor}A",
+          textAlign: TextAlign.center)]));
+    if (eventData.currentMotor2 != null) tableChildren.add(TableRow(children: [
+      Icon(Icons.slow_motion_video),
+      Text("M2 ${eventData.currentMotor2}A",
+          textAlign: TextAlign.center)]));
+    if (eventData.currentMotor3 != null) tableChildren.add(TableRow(children: [
+      Icon(Icons.slow_motion_video),
+      Text("M3 ${eventData.currentMotor3}A",
+          textAlign: TextAlign.center)]));
+    if (eventData.currentMotor4 != null) tableChildren.add(TableRow(children: [
+      Icon(Icons.slow_motion_video),
+      Text("M4 ${eventData.currentMotor4}A",
+          textAlign: TextAlign.center)]));
+    tableChildren.add(TableRow(children: [
+      Icon(Icons.local_fire_department),
+      Text("ESC1 ${eventData.tempMosfet}°C",
+          textAlign: TextAlign.center)]));
+    if (eventData.tempMosfet2 != null) tableChildren.add(TableRow(children: [
+      Icon(Icons.local_fire_department),
+      Text("ESC2 ${eventData.tempMosfet2}°C",
+          textAlign: TextAlign.center)]));
+    if (eventData.tempMosfet3 != null) tableChildren.add(TableRow(children: [
+      Icon(Icons.local_fire_department),
+      Text("ESC3 ${eventData.tempMosfet3}°C",
+          textAlign: TextAlign.center)]));
+    if (eventData.tempMosfet4 != null) tableChildren.add(TableRow(children: [
+      Icon(Icons.local_fire_department),
+      Text("ESC4 ${eventData.tempMosfet4}°C",
+          textAlign: TextAlign.center)]));
+    if (eventData.faultCode != null) tableChildren.add(TableRow(children: [
+      Icon(Icons.warning_amber_outlined),
+      Text("${mc_fault_code.values[eventData.faultCode].toString().substring(14)}",
+          textAlign: TextAlign.center)]));
+
+    genericAlert(context, title, Column(
+      children: [
+        Text("${eventData.time.toIso8601String().substring(0,19)}"),
+        SizedBox(height: 10),
+        Table(
+            columnWidths: {
+              0: FlexColumnWidth(1),
+              1: FlexColumnWidth(2),
+            },
+          children: tableChildren
+        )
+      ],
+    ), "OK");
   }
 
   @override
@@ -724,6 +803,8 @@ class RideLogViewerState extends State<RideLogViewer> {
     TimeSeriesESC _tsESCMaxSpeed;
     double _maxESCTempObserved;
     TimeSeriesESC _tsESCMaxESCTemp;
+    TimeSeriesESC _tsESCMaxBatteryAmps;
+    TimeSeriesESC _tsESCMaxMotorAmps;
     for(int i=0; i<escTimeSeriesList.length;++i) {
       if(escTimeSeriesList[i].speed != null && escTimeSeriesList[i].speed > _maxSpeed){
         _maxSpeed = escTimeSeriesList[i].speed;
@@ -738,25 +819,31 @@ class RideLogViewerState extends State<RideLogViewer> {
       // Max Battery Current
       if(escTimeSeriesList[i].currentInput != null && escTimeSeriesList[i].currentInput > _maxAmpsBattery){
         _maxAmpsBattery = escTimeSeriesList[i].currentInput;
+        _tsESCMaxBatteryAmps = escTimeSeriesList[i];
       }
       if(escTimeSeriesList[i].currentInput != null && escTimeSeriesList[i].currentInput2 != null && escTimeSeriesList[i].currentInput + escTimeSeriesList[i].currentInput2 > _maxAmpsBattery){
         _maxAmpsBattery = doublePrecision(escTimeSeriesList[i].currentInput +  escTimeSeriesList[i].currentInput2, 1);
+        _tsESCMaxBatteryAmps = escTimeSeriesList[i];
       }
       if(escTimeSeriesList[i].currentInput != null && escTimeSeriesList[i].currentInput2 != null && escTimeSeriesList[i].currentInput3 != null && escTimeSeriesList[i].currentInput4 != null &&
           escTimeSeriesList[i].currentInput + escTimeSeriesList[i].currentInput2 + escTimeSeriesList[i].currentInput3 + escTimeSeriesList[i].currentInput4 > _maxAmpsBattery){
         _maxAmpsBattery = doublePrecision(escTimeSeriesList[i].currentInput +  escTimeSeriesList[i].currentInput2 + escTimeSeriesList[i].currentInput3 + escTimeSeriesList[i].currentInput4, 1);
+        _tsESCMaxBatteryAmps = escTimeSeriesList[i];
       }
 
       // Max Motor Current
       if(escTimeSeriesList[i].currentMotor != null && escTimeSeriesList[i].currentMotor > _maxAmpsMotor){
         _maxAmpsMotor = escTimeSeriesList[i].currentMotor;
+        _tsESCMaxMotorAmps = escTimeSeriesList[i];
       }
       if(escTimeSeriesList[i].currentMotor != null && escTimeSeriesList[i].currentMotor2 != null && escTimeSeriesList[i].currentMotor + escTimeSeriesList[i].currentMotor2 > _maxAmpsMotor){
         _maxAmpsMotor = doublePrecision(escTimeSeriesList[i].currentMotor + escTimeSeriesList[i].currentMotor2, 1);
+        _tsESCMaxMotorAmps = escTimeSeriesList[i];
       }
       if(escTimeSeriesList[i].currentMotor != null && escTimeSeriesList[i].currentMotor2 != null && escTimeSeriesList[i].currentMotor3 != null && escTimeSeriesList[i].currentMotor4 != null &&
           escTimeSeriesList[i].currentMotor + escTimeSeriesList[i].currentMotor2 + escTimeSeriesList[i].currentMotor3 + escTimeSeriesList[i].currentMotor4 > _maxAmpsMotor){
         _maxAmpsMotor = doublePrecision(escTimeSeriesList[i].currentMotor + escTimeSeriesList[i].currentMotor2 + escTimeSeriesList[i].currentMotor3 + escTimeSeriesList[i].currentMotor4, 1);
+        _tsESCMaxMotorAmps = escTimeSeriesList[i];
       }
 
       // Monitor Max ESC Temp
@@ -781,6 +868,26 @@ class RideLogViewerState extends State<RideLogViewer> {
         _maxESCTempObserved = escTimeSeriesList[i].tempMosfet4;
       }
     }
+
+    // Add map marker for Max Battery Amps
+    if(_tsESCMaxBatteryAmps != null && gpsLatLngMap.length > 0) {
+      // Add fault marker to map
+      mapMakers.add(new Marker(
+        width: 50.0,
+        height: 50.0,
+        point: selectNearestGPSPoint(_tsESCMaxBatteryAmps.time,gpsLatLngMap),
+        builder: (ctx) =>
+        new Container(
+          margin: EdgeInsets.fromLTRB(0, 0, 0, 25),
+          child: GestureDetector(
+            onTap: (){
+              _buildDialog("Max Battery Amps", _tsESCMaxBatteryAmps, escTimeSeriesList.first.time);
+            },
+            child: Image(image: AssetImage("assets/map_max_amps.png")),
+          ),
+        ),
+      ));
+    }
     // Add map marker for the hottest ESC temp
     if(_tsESCMaxESCTemp != null && gpsLatLngMap.length > 0) {
       // Add fault marker to map
@@ -793,7 +900,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           margin: EdgeInsets.fromLTRB(0, 0, 0, 25),
           child: GestureDetector(
             onTap: (){
-              genericAlert(context, "Max ESC Temperature", Text("$_maxESCTempObserved degrees at ${_tsESCMaxESCTemp.time.toIso8601String().substring(0,19)}"), "Hot dog!");
+              _buildDialog("Max ESC Temperature", _tsESCMaxESCTemp, escTimeSeriesList.first.time);
             },
             child: Image(image: AssetImage("assets/map_max_temp.png")),
           ),
@@ -812,7 +919,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           margin: EdgeInsets.fromLTRB(0, 0, 0, 25),
           child: GestureDetector(
             onTap: (){
-              genericAlert(context, "Top Speed", Text("${_tsESCMaxSpeed.speed} ${myArguments.userSettings.settings.useImperial ? "mph" : "kph"} at ${_tsESCMaxSpeed.time.toIso8601String().substring(0,19)}"), "Woo!");
+              _buildDialog("Top Speed", _tsESCMaxSpeed, escTimeSeriesList.first.time);
             },
             child: Image(image: AssetImage("assets/map_top_speed.png")),
           ),
@@ -1218,7 +1325,11 @@ class RideLogViewerState extends State<RideLogViewer> {
                                     builder: (ctx) =>
                                     new Container(
                                       margin: EdgeInsets.fromLTRB(0, 0, 0, 10),
-                                      child: new Image(height: 50, image: AssetImage("assets/map_selection.png")),
+                                      child: CircleAvatar(
+                                        backgroundImage: myArguments.userSettings.settings.boardAvatarPath != null ? myArguments.imageBoardAvatar : AssetImage('assets/FreeSK8_Mobile.jpg'),
+                                        radius: 10,
+                                        backgroundColor: Colors.white
+                                      )
                                     ),
                                   ));
                                   _mapController.move(closestMapPoint, _mapController.zoom);

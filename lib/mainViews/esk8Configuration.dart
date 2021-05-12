@@ -11,7 +11,6 @@ import '../widgets/throttleCurvePainter.dart';
 import '../subViews/escProfileEditor.dart';
 import '../globalUtilities.dart';
 
-import '../components/databaseAssistant.dart';
 import '../components/userSettings.dart';
 import '../subViews/focWizard.dart';
 import '../hardwareSupport/escHelper/escHelper.dart';
@@ -30,7 +29,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:archive/archive_io.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:flutter_document_picker/flutter_document_picker.dart';
-import 'package:path/path.dart' as path;
 
 class ESK8Configuration extends StatefulWidget {
   ESK8Configuration({
@@ -2349,7 +2347,6 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
                                   // Manually create a zip of individual files
                                   encoder.create("${supportDirectory.path}/freesk8_beta_backup.zip");
-                                  List<LogInfoItem> rideLogsFromDatabase = await DatabaseAssistant.dbSelectLogs();
 
                                   // Add log files
                                   encoder.addDirectory(Directory("${documentsDirectory.path}/logs"));
@@ -2388,8 +2385,6 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                 FocusScope.of(context).requestFocus(new FocusNode()); //Hide keyboard
                                 try {
                                   final documentsDirectory = await getApplicationDocumentsDirectory();
-                                  final supportDirectory = await getApplicationSupportDirectory();
-
 
                                   FlutterDocumentPickerParams params = FlutterDocumentPickerParams(
                                     allowedFileExtensions: ["zip"],

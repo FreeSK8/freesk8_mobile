@@ -52,11 +52,13 @@ import 'package:get_ip/get_ip.dart';
 
 import 'package:logger_flutter/logger_flutter.dart';
 
+import 'package:url_launcher/url_launcher.dart';
+
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.15.1";
-const String robogotchiFirmwareExpectedVersion = "0.9.1";
+const String freeSK8ApplicationVersion = "0.16.0";
+const String robogotchiFirmwareExpectedVersion = "0.10.0";
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -186,6 +188,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
     // Initialize the Tab Controller
     controller = TabController(length: 4, vsync: this);
+    controller.addListener(() {
+      if (syncInProgress && controller.index != controllerViewLogging) {
+        globalLogger.wtf("no tab change please");
+        controller.index = controller.previousIndex;
+      }
+    });
 
     // Setup BLE event listeners
     widget.flutterBlue.connectedDevices
@@ -212,8 +220,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           }
         });
 
-    //TODO: watching AppLifecycleState but not doing anything
-    WidgetsBinding.instance.addObserver(AutoStopHandler());
+    // Watching AppLifecycleState for when the application is put in the background/resumed
+    WidgetsBinding.instance.addObserver(AutoStopHandler(_delayedTabControllerIndexChange, unexpectedDisconnect));
 
     _timerMonitor = new Timer.periodic(Duration(seconds: 1), (Timer t) => _monitorGotchiTimer());
 
@@ -224,7 +232,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     if (_gotchiStatusTimer == null && theTXLoggerCharacteristic != null && initMsgSqeuencerCompleted && (controller.index == controllerViewConnection || controller.index == controllerViewLogging) && !syncInProgress) {
       globalLogger.d("_monitorGotchiTimer: Starting gotchiStatusTimer");
       startStopGotchiTimer(false);
-    } else if (syncInProgress) {
+    } else if (syncInProgress && !catUnpackingFile) {
       // Monitor data reception for loss of communication
       if (DateTime.now().millisecondsSinceEpoch - syncLastACK.millisecondsSinceEpoch > 5 * 1000) {
         // It's been 5 seconds since you looked at me.
@@ -456,8 +464,15 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       // Reset deviceHasDisconnected flag
       deviceHasDisconnected = false;
 
-      // Reset syncInProgress flag
+      // Reset syncInProgress flags
       syncInProgress = false;
+      syncAdvanceProgress = false;
+      lsInProgress = false;
+      catInProgress = false;
+      catUnpackingFile = false;
+      catCurrentFilename = "";
+      fileList = [];
+      fileListToDelete = [];
 
       // Reset device is a Robogotchi flag
       _deviceIsRobogotchi = false;
@@ -791,6 +806,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static bool syncAdvanceProgress = false;
   static bool lsInProgress = false;
   static bool catInProgress = false;
+  static bool catUnpackingFile = false;
   static List<int> catBytesRaw = [];
   static int catBytesReceived = 0;
   static int catBytesTotal = 0;
@@ -807,18 +823,26 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   // Handler for RideLogging's sync button
   void _handleBLESyncState(bool startSync) async {
     globalLogger.i("_handleBLESyncState: startSync = $startSync");
-    if (startSync) {
+    if (startSync && !syncInProgress) {
       // Start syncing all files by setting syncInProgress to true and request
       // the file list from the receiver
       setState(() {
+        syncLastACK = DateTime.now();
         syncInProgress = true;
         // Prevent the status timer from interrupting this request
         _gotchiStatusTimer?.cancel();
         _gotchiStatusTimer = null;
       });
-      // Request the files to begin the process
-      if (!await sendBLEData(theTXLoggerCharacteristic, utf8.encode("ls~"), false)) {
-        globalLogger.e("_handleBLESyncState: failed to request file list");
+      // Send syncstart message to the Robogotchi
+      if (await sendBLEData(theTXLoggerCharacteristic, utf8.encode("syncstart~"), false)) {
+        globalLogger.i("_handleBLESyncState: syncstart command sent");
+
+        // Request the files to begin the process
+        if (!await sendBLEData(theTXLoggerCharacteristic, utf8.encode("ls~"), false)) {
+          globalLogger.e("_handleBLESyncState: failed to request file list");
+        }
+      } else {
+        globalLogger.e("_handleBLESyncState: syncstart failed to send");
       }
     } else {
       globalLogger.i("_handleBLESyncState: Stopping Sync Process");
@@ -827,15 +851,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         syncAdvanceProgress = false;
         lsInProgress = false;
         catInProgress = false;
+        catUnpackingFile = false;
         catCurrentFilename = "";
+        fileList = [];
+        fileListToDelete = [];
       });
       // After stopping the sync on this end, request stop on the Robogotchi
-      if (await sendBLEData(theTXLoggerCharacteristic, utf8.encode("syncstop~"), false)) {
-        globalLogger.i("_handleBLESyncState: syncstop command sent");
-      } else {
-        globalLogger.e("_handleBLESyncState: syncstop failed to send");
-      }
-
+      await sendSyncStop();
     }
   }
   void _handleEraseOnSyncButton(bool eraseOnSync) {
@@ -843,6 +865,16 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     setState(() {
       syncEraseOnComplete = eraseOnSync;
     });
+  }
+  Future<bool> sendSyncStop() async {
+    // Inform the Robogotchi we've completed the sync process
+    if (await sendBLEData(theTXLoggerCharacteristic, utf8.encode("syncstop~"), false)) {
+      globalLogger.i("_handleBLESyncState: syncstop command sent");
+      return Future.value(true);
+    } else {
+      globalLogger.e("_handleBLESyncState: syncstop failed to send");
+      return Future.value(false);
+    }
   }
   //TODO: ^^ move this stuff when you feel like it ^^
 
@@ -982,6 +1014,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           });
 
           if(fileList.length == 0) {
+            await sendSyncStop();
             //Nothing to sync
             setState(() {
               syncInProgress = false;
@@ -1048,7 +1081,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             // Then generate database statistics
             // Then create database entry
             // Then rebuild state and continue sync process
+            catUnpackingFile = true; // Pause the gotchiTimer from NACKing while this expensive task completes
             String savedFilePath = await FileManager.saveLogToDocuments(filename: catCurrentFilename, userSettings: widget.myUserSettings);
+            syncLastACK = DateTime.now(); // Lie about the last ACK time before unpausing the gotchiTimer
+            catUnpackingFile = false; // Un-pause gotchiTimer
 
             /// Analyze log to generate database statistics
             Map<int, double> wattHoursStartByESC = new Map();
@@ -1221,7 +1257,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-            ), "File processing error", Text("Something unexpected may have happened!\n\nPlease share with renee@derelictrobot.com"));
+            ), "File processing error", Text("Something unexpected may have happened!\n\nPlease share on Telegram and check the debug log for more information."));
 
             /// Advance the sync process after failure
             {
@@ -2417,6 +2453,70 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           }
         },
       ),
+
+      ListTile(
+        leading: Icon(Icons.contact_support_outlined),
+        title: Text("Help & Support"),
+        onTap: () {
+          String url = "https://t.me/FreeSK8Beta";
+          String url2 = "https://github.com/FreeSK8/FreeSK8-Robogotchi-Hardware/wiki";
+          String url3 = "https://derelictrobot.com/";
+          genericAlert(
+              context,
+              "🆘 Need some assistance?",
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Contact us on Telegram:"),
+                  SizedBox(height: 5),
+                  GestureDetector(
+                    child: Text(url, style: TextStyle(color: Colors.blue),),
+                    onTap: () async {
+                      if (await canLaunch(url)) {
+                        await launch(
+                          url,
+                          forceSafariVC: false,
+                          forceWebView: false,
+                        );
+                      }
+                    },
+                  ),
+                  SizedBox(height: 10),
+                  Text("Learn more about Robogotchi:"),
+                  SizedBox(height: 5),
+                  GestureDetector(
+                    child: Text(url2, style: TextStyle(color: Colors.blue)),
+                    onTap: () async {
+                      if (await canLaunch(url2)) {
+                        await launch(
+                          url2,
+                          forceSafariVC: false,
+                          forceWebView: false,
+                        );
+                      }
+                    },
+                  ),
+                  SizedBox(height: 10),
+                  Text("Visit DRI Shop:"),
+                  SizedBox(height: 5),
+                  GestureDetector(
+                    child: Text(url3, style: TextStyle(color: Colors.blue)),
+                    onTap: () async {
+                      if (await canLaunch(url3)) {
+                        await launch(
+                          url3,
+                          forceSafariVC: false,
+                          forceWebView: false,
+                        );
+                      }
+                    },
+                  )
+                ],
+              ),
+              "OK"
+          );
+        },
+      ),
     ];
 
     return Drawer(
@@ -2594,12 +2694,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           // We are finished with the sync process because the user does not
           // want to erase files on the receiver
           globalLogger.d("Sync complete without performing erase");
+          sendSyncStop();
           syncInProgress = false;
-          //TODO: NOTE: setState here does not reload file list after sync is finished
         }
       }
       else {
         globalLogger.d("Sync complete!");
+        sendSyncStop();
         syncInProgress = false;
       }
     }

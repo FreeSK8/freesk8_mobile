@@ -5,7 +5,7 @@ import 'package:flutter_nordic_dfu/flutter_nordic_dfu.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import '../globalUtilities.dart';
 
-const String updateFileName = "Robogotchi_0.9.1"; //TODO: NOTE: Must match that of /assets/firmware/<*>.zip
+const String updateFileName = "Robogotchi_0.10.0"; //TODO: NOTE: Must match that of /assets/firmware/<*>.zip
 
 class RobogotchiDFU extends StatefulWidget {
   @override
@@ -22,8 +22,7 @@ class RobogotchiDFUState extends State<RobogotchiDFU> with SingleTickerProviderS
 
   String _deviceAddress;
   int _percent = 0;
-  double _speed;
-  double _avgSpeed;
+
   int _currentPart;
   int _partsTotal;
 
@@ -80,8 +79,6 @@ class RobogotchiDFUState extends State<RobogotchiDFU> with SingleTickerProviderS
             setState(() {
               _deviceAddress = deviceAddress;
               _percent = percent;
-              _speed = doublePrecision(speed, 1);
-              _avgSpeed = doublePrecision(avgSpeed, 1);
               _currentPart = currentPart;
               _partsTotal = partsTotal;
             });
