@@ -366,7 +366,6 @@ class RealTimeDataState extends State<RealTimeData> {
     double tempMotor = widget.currentSettings.settings.useFahrenheit ? cToF(escTelemetry.temp_motor) : escTelemetry.temp_motor;
     // The gauges don't like to display outside their coded range
     if (tempMotor < 0) { tempMotor = 0; }
-    if (tempMotor > 90) { tempMotor = 90; }
 
     String temperatureMosfet = widget.currentSettings.settings.useFahrenheit ? "$tempMosfet F" : "$tempMosfet C";
     //String temperatureMosfet1 = widget.currentSettings.settings.useFahrenheit ? "${cToF(escTelemetry.temp_mos_1)} F" : "${escTelemetry.temp_mos_1} C";
