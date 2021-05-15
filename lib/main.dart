@@ -57,7 +57,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.16.0";
+const String freeSK8ApplicationVersion = "0.16.1";
 const String robogotchiFirmwareExpectedVersion = "0.10.0";
 
 void main() {
@@ -221,7 +221,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         });
 
     // Watching AppLifecycleState for when the application is put in the background/resumed
-    WidgetsBinding.instance.addObserver(AutoStopHandler(_delayedTabControllerIndexChange, unexpectedDisconnect));
+    WidgetsBinding.instance.addObserver(AutoStopHandler());
 
     _timerMonitor = new Timer.periodic(Duration(seconds: 1), (Timer t) => _monitorGotchiTimer());
 
@@ -246,6 +246,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         syncLastACK = DateTime.now();
       }
     } else {
+      //TODO: Testing fix for backgrounded iOS app disconnecting but not showing disconnected state
+      if (unexpectedDisconnect && Platform.isIOS) {
+        setState(() {
+          // Just refresh bc on iOS we might display a stale state after being backgrounded for extended period of time
+        });
+      }
       //logger.wtf("_monitorGotchiTimer is alive");
     }
   }
