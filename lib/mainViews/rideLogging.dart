@@ -262,7 +262,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text("${Duration(seconds: rideLogsFromDatabase[int.parse(event)].durationSeconds).toString().substring(0,Duration(seconds: rideLogsFromDatabase[int.parse(event)].durationSeconds).toString().indexOf("."))}"),
-                                rideLogsFromDatabase[int.parse(event)].distance == -1.0 ? Container() : Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[int.parse(event)].distance) : rideLogsFromDatabase[int.parse(event)].distance} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}")
+                                rideLogsFromDatabase[int.parse(event)].distance == -1.0 || widget.myUserSettings.settings.useGPSData ? Container() : Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[int.parse(event)].distance) : rideLogsFromDatabase[int.parse(event)].distance} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}")
                               ],
                             )
                         ),
@@ -493,7 +493,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                       globalLogger.d("rideLogging::Dismissible: ${direction.toString()}");
                       // Swipe Right to Share
                       if (direction == DismissDirection.startToEnd) {
-                        //TODO: share file dialog
+                        // Share file dialog
                         String fileSummary = 'Robogotchi gotchi!';
                         String fileContents = await FileManager.openLogFile(rideLogsFromDatabase[index].logFilePath);
                         await Share.file('FreeSK8Log', "${rideLogsFromDatabase[index].logFilePath.substring(rideLogsFromDatabase[index].logFilePath.lastIndexOf("/") + 1)}", utf8.encode(fileContents), 'text/csv', text: fileSummary);
@@ -611,7 +611,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text("${Duration(seconds: rideLogsFromDatabase[index].durationSeconds).toString().substring(0,Duration(seconds: rideLogsFromDatabase[index].durationSeconds).toString().indexOf("."))}"),
-                                            rideLogsFromDatabase[index].distance == -1.0 ? Container() : Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[index].distance) : rideLogsFromDatabase[index].distance} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}")
+                                            rideLogsFromDatabase[index].distance == -1.0 || widget.myUserSettings.settings.useGPSData ? Container() : Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[index].distance) : rideLogsFromDatabase[index].distance} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}")
                                           ],
                                         )
                                     ),
