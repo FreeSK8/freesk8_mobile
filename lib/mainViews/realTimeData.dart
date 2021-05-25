@@ -121,11 +121,6 @@ class RealTimeDataState extends State<RealTimeData> {
     return double.parse((distance).toStringAsFixed(2));
   }
 
-  double cToF(double c) {
-    double temp = (c * 1.8) + 32;
-    return double.parse((temp).toStringAsFixed(2));
-  }
-
   @override
   void initState() {
     super.initState();
