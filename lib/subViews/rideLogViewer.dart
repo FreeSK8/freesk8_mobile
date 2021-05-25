@@ -294,7 +294,7 @@ class RideLogViewerState extends State<RideLogViewer> {
     return gpsLatLngMap.entries.last.value;
   }
 
-  void _buildDialog(String title, TimeSeriesESC eventData, DateTime logStart) {
+  void _buildDialog(String title, TimeSeriesESC eventData, DateTime logStart, bool useFahrenheit) {
     double _batteryAmps = eventData.currentInput;
     if(eventData.currentInput != null && eventData.currentInput2 != null){
       _batteryAmps = doublePrecision(eventData.currentInput + eventData.currentInput2, 1);
@@ -338,19 +338,19 @@ class RideLogViewerState extends State<RideLogViewer> {
           textAlign: TextAlign.center)]));
     tableChildren.add(TableRow(children: [
       Icon(Icons.local_fire_department),
-      Text("ESC1 ${eventData.tempMosfet}°C",
+      Text("ESC1 ${eventData.tempMosfet}°${useFahrenheit ? "F" : "C"}",
           textAlign: TextAlign.center)]));
     if (eventData.tempMosfet2 != null) tableChildren.add(TableRow(children: [
       Icon(Icons.local_fire_department),
-      Text("ESC2 ${eventData.tempMosfet2}°C",
+      Text("ESC2 ${eventData.tempMosfet2}°${useFahrenheit ? "F" : "C"}",
           textAlign: TextAlign.center)]));
     if (eventData.tempMosfet3 != null) tableChildren.add(TableRow(children: [
       Icon(Icons.local_fire_department),
-      Text("ESC3 ${eventData.tempMosfet3}°C",
+      Text("ESC3 ${eventData.tempMosfet3}°${useFahrenheit ? "F" : "C"}",
           textAlign: TextAlign.center)]));
     if (eventData.tempMosfet4 != null) tableChildren.add(TableRow(children: [
       Icon(Icons.local_fire_department),
-      Text("ESC4 ${eventData.tempMosfet4}°C",
+      Text("ESC4 ${eventData.tempMosfet4}°${useFahrenheit ? "F" : "C"}",
           textAlign: TextAlign.center)]));
     if (eventData.faultCode != null) tableChildren.add(TableRow(children: [
       Icon(Icons.warning_amber_outlined),
@@ -509,8 +509,8 @@ class RideLogViewerState extends State<RideLogViewer> {
             case 0:
             // Primary ESC
               escTimeSeriesMap[thisDt].voltage = double.tryParse(entry[3]);
-              escTimeSeriesMap[thisDt].tempMotor = double.tryParse(entry[4]);
-              escTimeSeriesMap[thisDt].tempMosfet = double.tryParse(entry[5]);
+              escTimeSeriesMap[thisDt].tempMotor = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[4]), places: 1) : double.tryParse(entry[4]);
+              escTimeSeriesMap[thisDt].tempMosfet = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[5]), places: 1) : double.tryParse(entry[5]);
               escTimeSeriesMap[thisDt].dutyCycle = double.tryParse(entry[6]);
               escTimeSeriesMap[thisDt].currentMotor = double.tryParse(entry[7]);
               escTimeSeriesMap[thisDt].currentInput = double.tryParse(entry[8]);
@@ -541,22 +541,22 @@ class RideLogViewerState extends State<RideLogViewer> {
               break;
             case 1:
             // Second ESC in multiESC configuration
-              escTimeSeriesMap[thisDt].tempMotor2 = double.tryParse(entry[4]);
-              escTimeSeriesMap[thisDt].tempMosfet2 = double.tryParse(entry[5]);
+              escTimeSeriesMap[thisDt].tempMotor2 = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[4]), places: 1) : double.tryParse(entry[4]);
+              escTimeSeriesMap[thisDt].tempMosfet2 = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[5]), places: 1) : double.tryParse(entry[5]);
               escTimeSeriesMap[thisDt].currentMotor2 = double.tryParse(entry[7]);
               escTimeSeriesMap[thisDt].currentInput2 = double.tryParse(entry[8]);
               break;
             case 2:
             // Third ESC in multiESC configuration
-              escTimeSeriesMap[thisDt].tempMotor3 = double.tryParse(entry[4]);
-              escTimeSeriesMap[thisDt].tempMosfet3 = double.tryParse(entry[5]);
+              escTimeSeriesMap[thisDt].tempMotor3 = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[4]), places: 1) : double.tryParse(entry[4]);
+              escTimeSeriesMap[thisDt].tempMosfet3 = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[5]), places: 1) : double.tryParse(entry[5]);
               escTimeSeriesMap[thisDt].currentMotor3 = double.tryParse(entry[7]);
               escTimeSeriesMap[thisDt].currentInput3 = double.tryParse(entry[8]);
               break;
             case 3:
             // Fourth ESC in multiESC configuration
-              escTimeSeriesMap[thisDt].tempMotor4 = double.tryParse(entry[4]);
-              escTimeSeriesMap[thisDt].tempMosfet4 = double.tryParse(entry[5]);
+              escTimeSeriesMap[thisDt].tempMotor4 = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[4]), places: 1) : double.tryParse(entry[4]);
+              escTimeSeriesMap[thisDt].tempMosfet4 = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[5]), places: 1) : double.tryParse(entry[5]);
               escTimeSeriesMap[thisDt].currentMotor4 = double.tryParse(entry[7]);
               escTimeSeriesMap[thisDt].currentInput4 = double.tryParse(entry[8]);
               break;
@@ -629,7 +629,8 @@ class RideLogViewerState extends State<RideLogViewer> {
             lastReportedFaultDt = thisDt;
           }
         }
-        // TODO: NOTE Early tester file format follows:
+        //TODO: NOTE: Early beta tester file format follows:
+        //TODO: We'll want to dispose of position/values entries eventually
         else if(entry[1] == "position" && entry.length >= 6) {
           //DateTime, 'position', lat, lon, accuracy, altitude, speed, speedAccuracy
           LatLng thisPosition = new LatLng(double.parse(entry[2]),double.parse(entry[3]));
@@ -676,8 +677,8 @@ class RideLogViewerState extends State<RideLogViewer> {
             case 0:
             // Primary ESC
               escTimeSeriesMap[thisDt].voltage = double.tryParse(entry[2]);
-              escTimeSeriesMap[thisDt].tempMotor = double.tryParse(entry[3]);
-              escTimeSeriesMap[thisDt].tempMosfet = double.tryParse(entry[4]);
+              escTimeSeriesMap[thisDt].tempMotor = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[3]), places: 1) : double.tryParse(entry[3]);
+              escTimeSeriesMap[thisDt].tempMosfet = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[4]), places: 1) : double.tryParse(entry[4]);
               escTimeSeriesMap[thisDt].dutyCycle = double.tryParse(entry[5]);
               escTimeSeriesMap[thisDt].currentMotor = double.tryParse(entry[6]);
               escTimeSeriesMap[thisDt].currentInput = double.tryParse(entry[7]);
@@ -692,22 +693,22 @@ class RideLogViewerState extends State<RideLogViewer> {
               break;
             case 1:
             // Second ESC in multiESC configuration
-              escTimeSeriesMap[thisDt].tempMotor2 = double.tryParse(entry[3]);
-              escTimeSeriesMap[thisDt].tempMosfet2 = double.tryParse(entry[4]);
+              escTimeSeriesMap[thisDt].tempMotor2 = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[3]), places: 1) : double.tryParse(entry[3]);
+              escTimeSeriesMap[thisDt].tempMosfet2 = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[4]), places: 1) : double.tryParse(entry[4]);
               escTimeSeriesMap[thisDt].currentMotor2 = double.tryParse(entry[6]);
               escTimeSeriesMap[thisDt].currentInput2 = double.tryParse(entry[7]);
               break;
             case 2:
             // Third ESC in multiESC configuration
-              escTimeSeriesMap[thisDt].tempMotor3 = double.tryParse(entry[3]);
-              escTimeSeriesMap[thisDt].tempMosfet3 = double.tryParse(entry[4]);
+              escTimeSeriesMap[thisDt].tempMotor3 = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[3]), places: 1) : double.tryParse(entry[3]);
+              escTimeSeriesMap[thisDt].tempMosfet3 = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[4]), places: 1) : double.tryParse(entry[4]);
               escTimeSeriesMap[thisDt].currentMotor3 = double.tryParse(entry[6]);
               escTimeSeriesMap[thisDt].currentInput3 = double.tryParse(entry[7]);
               break;
             case 3:
             // Fourth ESC in multiESC configuration
-              escTimeSeriesMap[thisDt].tempMotor4 = double.tryParse(entry[3]);
-              escTimeSeriesMap[thisDt].tempMosfet4 = double.tryParse(entry[4]);
+              escTimeSeriesMap[thisDt].tempMotor4 = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[3]), places: 1) : double.tryParse(entry[3]);
+              escTimeSeriesMap[thisDt].tempMosfet4 = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[4]), places: 1) : double.tryParse(entry[4]);
               escTimeSeriesMap[thisDt].currentMotor4 = double.tryParse(entry[6]);
               escTimeSeriesMap[thisDt].currentInput4 = double.tryParse(entry[7]);
               break;
@@ -901,7 +902,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           margin: EdgeInsets.fromLTRB(0, 0, 0, 25),
           child: GestureDetector(
             onTap: (){
-              _buildDialog("Max Battery Amps", _tsESCMaxBatteryAmps, escTimeSeriesList.first.time);
+              _buildDialog("Max Battery Amps", _tsESCMaxBatteryAmps, escTimeSeriesList.first.time, myArguments.userSettings.settings.useFahrenheit);
             },
             child: Image(image: AssetImage("assets/map_max_amps.png")),
           ),
@@ -920,7 +921,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           margin: EdgeInsets.fromLTRB(0, 0, 0, 25),
           child: GestureDetector(
             onTap: (){
-              _buildDialog("Max ESC Temperature", _tsESCMaxESCTemp, escTimeSeriesList.first.time);
+              _buildDialog("Max ESC Temperature", _tsESCMaxESCTemp, escTimeSeriesList.first.time, myArguments.userSettings.settings.useFahrenheit);
             },
             child: Image(image: AssetImage("assets/map_max_temp.png")),
           ),
@@ -939,7 +940,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           margin: EdgeInsets.fromLTRB(0, 0, 0, 25),
           child: GestureDetector(
             onTap: (){
-              _buildDialog("Top Speed", _tsESCMaxSpeed, escTimeSeriesList.first.time);
+              _buildDialog("Top Speed", _tsESCMaxSpeed, escTimeSeriesList.first.time, myArguments.userSettings.settings.useFahrenheit);
             },
             child: Image(image: AssetImage("assets/map_top_speed.png")),
           ),
