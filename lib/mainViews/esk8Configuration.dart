@@ -358,8 +358,8 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     byteData.setUint8(6, 0x00); //Divide By Controllers = false
     byteData.setFloat32(7, escProfile.l_current_min_scale);
     byteData.setFloat32(11, escProfile.l_current_max_scale);
-    byteData.setFloat32(15, escProfile.speedKmhRev / 3.6); //TODO: why does Vedder divide by 3.6?
-    byteData.setFloat32(19, escProfile.speedKmh / 3.6); //TODO: why does Vedder divide by 3.6?
+    byteData.setFloat32(15, escProfile.speedKmhRev / 3.6); //kph to m/s
+    byteData.setFloat32(19, escProfile.speedKmh / 3.6); //kph to m/s
     byteData.setFloat32(23, widget.escMotorConfiguration.l_min_duty);
     byteData.setFloat32(27, widget.escMotorConfiguration.l_max_duty);
     if (escProfile.l_watt_min != 0.0){
@@ -446,7 +446,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     /*
     * TODO: determine the best way to deliver this data to the ESC
     * TODO: The ESC does not like two big chunks and sometimes small chunks fails
-    * TODO: this is the only thing that works
+    * TODO: Consider buffering data at BLE module to be relayed between MCUs
     */
     // Send in small chunks?
     int bytesSent = 0;
@@ -460,21 +460,6 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       await Future.delayed(const Duration(milliseconds: 30), () {});
     }
     globalLogger.d("COMM_SET_MCCONF bytes were blasted to ESC =/");
-
-    /*
-    * TODO: Flutter Blue cannot send more than 244 bytes in a message
-    * TODO: This does not work
-    // Send in two big chunks?
-    widget.theTXCharacteristic.write(blePacket.buffer.asUint8List().sublist(0,240)).then((value){
-      Future.delayed(const Duration(milliseconds: 250), () {
-        widget.theTXCharacteristic.write(blePacket.buffer.asUint8List().sublist(240));
-        globalLogger.d("COMM_SET_MCCONF sent to ESC");
-      });
-
-    }).catchError((e){
-      globalLogger.e("COMM_SET_MCCONF: Exception: $e");
-    });
-*/
 
     // Finish with this save attempt
     _writeESCInProgress = false;
@@ -524,7 +509,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     /*
     * TODO: determine the best way to deliver this data to the ESC
     * TODO: The ESC does not like two big chunks and sometimes small chunks fails
-    * TODO: this is the only thing that works
+    * TODO: Consider buffering data at BLE module to be relayed between MCUs
     */
     // Send in small chunks?
     int bytesSent = 0;
@@ -538,21 +523,6 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       await Future.delayed(const Duration(milliseconds: 30), () {});
     }
     globalLogger.d("COMM_SET_APPCONF bytes were blasted to ESC =/");
-
-    /*
-    * TODO: Flutter Blue cannot send more than 244 bytes in a message
-    * TODO: This does not work
-    // Send in two big chunks?
-    widget.theTXCharacteristic.write(blePacket.buffer.asUint8List().sublist(0,240)).then((value){
-      Future.delayed(const Duration(milliseconds: 250), () {
-        widget.theTXCharacteristic.write(blePacket.buffer.asUint8List().sublist(240));
-        globalLogger.d("COMM_SET_MCCONF sent to ESC");
-      });
-
-    }).catchError((e){
-      globalLogger.e("COMM_SET_MCCONF: Exception: $e");
-    });
-*/
 
     // Finish with this save attempt
     _writeESCInProgress = false;
@@ -2225,6 +2195,16 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                   value: widget.myUserSettings.settings.useFahrenheit,
                   onChanged: (bool newValue) { setState((){widget.myUserSettings.settings.useFahrenheit = newValue;}); },
                   secondary: const Icon(Icons.wb_sunny),
+                ),
+                SwitchListTile(
+                  title: Text("Prefer GPS speed/distance in logs"),
+                  value: widget.myUserSettings.settings.useGPSData,
+                  onChanged: (bool newValue) {
+                    setState((){
+                      widget.myUserSettings.settings.useGPSData = newValue;
+                    });
+                  },
+                  secondary: Icon(widget.myUserSettings.settings.useGPSData ? Icons.gps_fixed : Icons.gps_not_fixed),
                 ),
 
                 TextField(
