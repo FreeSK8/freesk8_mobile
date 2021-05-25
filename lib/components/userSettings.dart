@@ -8,6 +8,7 @@ import '../globalUtilities.dart';
 class UserSettingsStructure {
   bool useImperial;
   bool useFahrenheit;
+  bool useGPSData;
 
   //TODO: these are technically board settings below
   String boardAlias;
@@ -92,6 +93,7 @@ class UserSettings {
 
     settings.useImperial = prefs.getBool('useImperial') ?? false;
     settings.useFahrenheit = prefs.getBool('useFahrenheit') ?? false;
+    settings.useGPSData = prefs.getBool('useGPSData') ?? false;
 
     settings.boardAlias =
         prefs.getString('$currentDeviceID boardAlias') ?? "Unnamed";
@@ -122,6 +124,7 @@ class UserSettings {
 
     await prefs.setBool('useImperial', settings.useImperial);
     await prefs.setBool('useFahrenheit', settings.useFahrenheit);
+    await prefs.setBool('useGPSData', settings.useGPSData);
 
     // Do not allow the internal "defaults" profile to update the board image or alias
     if (currentDeviceID != "defaults") {
