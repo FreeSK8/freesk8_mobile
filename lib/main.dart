@@ -57,7 +57,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.16.1";
+const String freeSK8ApplicationVersion = "0.17.0";
 const String robogotchiFirmwareExpectedVersion = "0.10.0";
 
 void main() {
@@ -1727,7 +1727,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 break;
             }
 
-            widget.myUserSettings.settings.wheelDiameterMillimeters = (escMotorConfiguration.si_wheel_diameter * 1000).toInt();
+            widget.myUserSettings.settings.wheelDiameterMillimeters = (doublePrecision(escMotorConfiguration.si_wheel_diameter, 3) * 1000).toInt();
+            //TODO: Take note of this importance: globalLogger.wtf("wheel diameter mm maths ${(doublePrecision(escMotorConfiguration.si_wheel_diameter, 3) * 1000).toInt()} vs ${(escMotorConfiguration.si_wheel_diameter * 1000).toInt()}");
+
             widget.myUserSettings.settings.motorPoles = escMotorConfiguration.si_motor_poles;
             widget.myUserSettings.settings.maxERPM = escMotorConfiguration.l_max_erpm;
             widget.myUserSettings.settings.gearRatio = doublePrecision(escMotorConfiguration.si_gear_ratio, 2);
