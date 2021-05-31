@@ -115,7 +115,7 @@ class ConfigureESCState extends State<ConfigureESC> {
           content: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
             TextField(
                 controller: tecBatteryCurrentRegen,
-                decoration: new InputDecoration(labelText: "Battery Input Current Limit (0.0 = Defaults)"),
+                decoration: new InputDecoration(labelText: "Battery Current Max (0.0 = Defaults)"),
                 keyboardType: TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: <TextInputFormatter>[
                   NumberTextInputFormatter() //This allows for negative doubles
@@ -123,7 +123,7 @@ class ConfigureESCState extends State<ConfigureESC> {
             ),
             TextField(
                 controller: tecBatteryCurrentOutput,
-                decoration: new InputDecoration(labelText: "Battery Output Current Limit (0.0 = Defaults)"),
+                decoration: new InputDecoration(labelText: "Battery Current Max Regen (0.0 = Defaults)"),
                 keyboardType: TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: <TextInputFormatter>[
                   FilteringTextInputFormatter.allow(formatPositiveDouble)
@@ -136,6 +136,7 @@ class ConfigureESCState extends State<ConfigureESC> {
           title: Text("Step 3: Run Detection"),
           subtitle: Text("Watch out, the wheels will go skrrrrrrrr"),
           content: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
+            /*
             SizedBox(height: 80, child: ListView( children: <Widget>[
               SwitchListTile(
                 title: Text("Reset ESC motor configuration before detection (not functional)"),
@@ -146,6 +147,7 @@ class ConfigureESCState extends State<ConfigureESC> {
                 secondary: const Icon(Icons.loop),
               ),
             ],)),
+            */
           ],),
           isActive: currentStepIndex == 2? true: false),
     ];

@@ -1855,7 +1855,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
                           TextField(
                               controller: tecCurrentMax,
-                              decoration: new InputDecoration(labelText: "Max Current (Amps)"),
+                              decoration: new InputDecoration(labelText: "Motor Current Max (Amps)"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
                                 FilteringTextInputFormatter.allow(formatPositiveDouble)
@@ -1863,7 +1863,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                           ),
                           TextField(
                               controller: tecCurrentMin,
-                              decoration: new InputDecoration(labelText: "Max Current Regen (Amps)"),
+                              decoration: new InputDecoration(labelText: "Motor Current Max Brake (Amps)"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
                                 NumberTextInputFormatter() //This allows for negative doubles
@@ -1871,7 +1871,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                           ),
                           TextField(
                               controller: tecInCurrentMax,
-                              decoration: new InputDecoration(labelText: "Battery Max Current (Amps)"),
+                              decoration: new InputDecoration(labelText: "Battery Current Max (Amps)"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
                                 FilteringTextInputFormatter.allow(formatPositiveDouble)
@@ -1879,7 +1879,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                           ),
                           TextField(
                               controller: tecInCurrentMin,
-                              decoration: new InputDecoration(labelText: "Battery Max Current Regen (Amps)"),
+                              decoration: new InputDecoration(labelText: "Battery Current Max Regen (Amps)"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
                                 NumberTextInputFormatter() //This allows for negative doubles
@@ -1887,7 +1887,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                           ),
                           TextField(
                               controller: tecABSCurrentMax,
-                              decoration: new InputDecoration(labelText: "ABS Max Current (Amps)"),
+                              decoration: new InputDecoration(labelText: "Absolute Maximum Current (Amps)"),
                               keyboardType: TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: <TextInputFormatter>[
                                 FilteringTextInputFormatter.allow(formatPositiveDouble)
