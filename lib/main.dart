@@ -58,7 +58,7 @@ import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
 const String freeSK8ApplicationVersion = "0.17.0";
-const String robogotchiFirmwareExpectedVersion = "0.10.0";
+const String robogotchiFirmwareExpectedVersion = "0.10.1";
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -1973,7 +1973,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       } else {
         if (++initMsgESCDevicesCANRequested == 25) {
           globalLogger.e("_requestInitMessages: initMsgESCDevicesCAN did not get a response. Retrying");
-          initMsgESCDevicesCANRequested = 0;
+          initMsgESCDevicesCANRequested = 1;
           _changeConnectedDialogMessage("Requesting CAN IDs (again)");
         }
       }

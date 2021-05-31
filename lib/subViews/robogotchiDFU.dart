@@ -5,7 +5,7 @@ import 'package:flutter_nordic_dfu/flutter_nordic_dfu.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import '../globalUtilities.dart';
 
-const String updateFileName = "Robogotchi_0.10.0"; //TODO: NOTE: Must match that of /assets/firmware/<*>.zip
+const String updateFileName = "Robogotchi_0.10.1"; //TODO: NOTE: Must match that of /assets/firmware/<*>.zip
 
 class RobogotchiDFU extends StatefulWidget {
   @override
