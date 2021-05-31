@@ -1325,7 +1325,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                             desiredMaxColumns: MediaQuery.of(context).size.width ~/ 125,
                             position: charts.BehaviorPosition.bottom,
                             cellPadding: EdgeInsets.all(4.0),
-                            defaultHiddenSeries: ['DutyCycle', 'Motor2Temp', 'Motor2Current', 'MotorCurrent', 'MotorTemp']
+                            defaultHiddenSeries: ['DutyCycle', 'Motor2Temp', 'Motor2Current', 'MotorCurrent', 'MotorTemp', 'Consumption']
                         ),
 
                         // Define one domain and two measure annotations configured to render
