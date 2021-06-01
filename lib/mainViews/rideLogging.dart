@@ -277,6 +277,9 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
           onTap: () async {
             await _loadLogFile(int.parse(event));
           },
+          onLongPress: () {
+            _buildDialog("${rideLogsFromDatabase[int.parse(event)].boardAlias}", rideLogsFromDatabase[int.parse(event)], widget.myUserSettings.settings.useImperial);
+          },
         ),
       ))
           .toList(),
@@ -519,6 +522,9 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                       onTap: () async {
                         await _loadLogFile(index);
                       },
+                      onLongPress: () {
+                        _buildDialog("${rideLogsFromDatabase[index].boardAlias}", rideLogsFromDatabase[index], widget.myUserSettings.settings.useImperial);
+                      },
                       child: Column(
                           children: <Widget>[
                             Container(height: 50,
@@ -712,5 +718,66 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
 
   Future<void> _alertLimitedFunctionality(BuildContext context) async {
     return genericAlert(context, "Not a Robogotchi", Text('This feature only works with the FreeSK8 Robogotchi\n\nPlease connect to a Robogotchi device'), "Shucks");
+  }
+
+  void _buildDialog(String title, LogInfoItem logEntry, bool useImperial) {
+    List<TableRow> tableChildren = [];
+
+    tableChildren.add(TableRow(children: [
+      Icon(Icons.watch),
+      Text("${prettyPrintDuration(Duration(seconds: logEntry.durationSeconds))}",
+          textAlign: TextAlign.center)]));
+
+    if (logEntry.distance != -1.0) tableChildren.add(TableRow(children: [
+      Icon(Icons.flag),
+      Text("${useImperial ? kmToMile(logEntry.distance) : logEntry.distance} ${useImperial ? "mi" : "km"}",
+          textAlign: TextAlign.center)]));
+
+    tableChildren.add(TableRow(children: [
+      Transform.rotate(angle: 3.14159, child: Icon(Icons.av_timer),),
+      Text("${useImperial ? kmToMile(logEntry.maxSpeed) : logEntry.maxSpeed} ${useImperial ? "mph" : "kph"}",
+          textAlign: TextAlign.center)]));
+
+    tableChildren.add(TableRow(children: [
+      Icon(Icons.battery_charging_full),
+      Text("${logEntry.maxAmpsBattery} amps (single)",
+          textAlign: TextAlign.center) ]));
+    tableChildren.add(TableRow(children: [
+      Icon(Icons.slow_motion_video),
+      Text("${logEntry.maxAmpsMotors} amps (single)",
+          textAlign: TextAlign.center)]));
+
+    tableChildren.add(TableRow(children: [
+      Icon(Icons.bolt),
+      Text("${logEntry.wattHoursTotal} wh (total)",
+          textAlign: TextAlign.center)]));
+    tableChildren.add(TableRow(children: [
+      Icon(Icons.bolt),
+      Text("${logEntry.wattHoursRegenTotal} wh regen",
+          textAlign: TextAlign.center)]));
+
+    if (logEntry.elevationChange != -1.0) tableChildren.add(TableRow(children: [
+      Icon(Icons.show_chart),
+      Text("${doublePrecision(logEntry.elevationChange, 2)} meters",
+          textAlign: TextAlign.center)]));
+
+    tableChildren.add(TableRow(children: [
+      Icon(Icons.warning_amber_outlined),
+      Text("${logEntry.faultCount} fault${logEntry.faultCount != 1 ? "s" : ""}",
+          textAlign: TextAlign.center)]));
+
+    genericAlert(context, title, Column(
+      children: [
+        Text("${logEntry.dateTime.toIso8601String().substring(0,19)}"),
+        SizedBox(height: 10),
+        Table(
+            columnWidths: {
+              0: FlexColumnWidth(1),
+              1: FlexColumnWidth(2),
+            },
+            children: tableChildren
+        )
+      ],
+    ), "OK");
   }
 }
