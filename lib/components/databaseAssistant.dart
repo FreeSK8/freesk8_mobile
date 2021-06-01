@@ -109,16 +109,6 @@ class DatabaseAssistant {
       onOpen: (db) async {
         //int version = await db.getVersion();
         //globalLogger.wtf("DatabaseAssistant: getDatabase: openDatabase: onOpen(). Version $version");
-
-        //TODO: remove this patch after everyone moves on from my mistake (0.7.0/0.7.1 did not set the date_time for new files in LogInfoItem.toMap())
-        final List<Map<String, dynamic>> databaseEntries = await db.query('logs', columns: ['id','log_file_path','date_time'], where: 'date_time IS NULL');
-        //globalLogger.wtf(databaseEntries.toString());
-        databaseEntries.forEach((element) async {
-          //globalLogger.wtf("renee was too excited and didn't bug test enough so now we are updating ${element['log_file_path']}");
-          String dtString = element['log_file_path'].substring(element['log_file_path'].lastIndexOf("/") + 1, element['log_file_path'].lastIndexOf("/") + 20);
-          DateTime thisDt = DateTime.parse(dtString);
-          await db.execute('UPDATE logs SET date_time = ${thisDt.millisecondsSinceEpoch / 1000} WHERE id = ${element['id']};');
-        });
       },
       onUpgrade: (Database db, int oldVersion, int newVersion) async {
         globalLogger.d("DatabaseAssistant: getDatabase: openDatabase: onUpgrade(): oldVersion $oldVersion -> newVersion $newVersion");

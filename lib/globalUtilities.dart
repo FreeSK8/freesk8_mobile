@@ -127,6 +127,11 @@ double mileToKm(double mile) {
   return doublePrecision(distance, 2);
 }
 
+double cToF(double c, {int places = 2}) {
+  double temp = (c * 1.8) + 32;
+  return doublePrecision(temp, places);
+}
+
 double eRPMToKph(double eRPM, double gearRatio, int wheelDiameterMillimeters, int motorPoles) {
   double ratio = 1.0 / gearRatio;
   int minutesToHour = 60;

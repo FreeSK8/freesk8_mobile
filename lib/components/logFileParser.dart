@@ -91,7 +91,7 @@ class LogFileParser {
 
     // Write header contents
     convertedFile.writeAsStringSync("header,format_esc,esc_id,voltage,motor_temp,esc_temp,duty_cycle,motor_current,battery_current,watt_hours,watt_hours_regen,e_rpm,e_distance,fault,speed_kph,distance_km\n", mode: FileMode.append);
-    convertedFile.writeAsStringSync("header,format_gps,satellites,altitude,speed,latitude,longitude\n", mode: FileMode.append);
+    convertedFile.writeAsStringSync("header,format_gps,satellites,altitude,speed_kph,latitude,longitude\n", mode: FileMode.append);
     convertedFile.writeAsStringSync("header,format_err,fault_name,fault_code,esc_id\n", mode: FileMode.append);
     convertedFile.writeAsStringSync("header,version_output,$ParserVersion\n", mode: FileMode.append);
     convertedFile.writeAsStringSync("header,gear_ratio,${doublePrecision(userSettings.settings.gearRatio, 2)}\n", mode: FileMode.append);
@@ -220,8 +220,8 @@ class LogFileParser {
             lastGPSPacket.dt = new DateTime.fromMillisecondsSinceEpoch(buffer_get_uint64(bytes, i, Endian.little) * 1000, isUtc: true); i+=8;
             lastGPSPacket.satellites = bytes[i++];
             ++i; //NOTE: alignment
-            lastGPSPacket.altitude = buffer_get_uint16(bytes, i, Endian.little) / 10.0; i+=2;
-            lastGPSPacket.speed = buffer_get_uint16(bytes, i, Endian.little) / 10.0; i+=2;
+            lastGPSPacket.altitude = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
+            lastGPSPacket.speed = buffer_get_int16(bytes, i, Endian.little) / 10.0; i+=2;
             i+=2; //NOTE: alignment
             lastGPSPacket.latitude = buffer_get_int32(bytes, i, Endian.little) / 100000.0; i+=4;
             lastGPSPacket.longitude = buffer_get_int32(bytes, i, Endian.little) / 100000.0; i+=4;

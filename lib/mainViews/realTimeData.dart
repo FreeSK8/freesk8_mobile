@@ -121,11 +121,6 @@ class RealTimeDataState extends State<RealTimeData> {
     return double.parse((distance).toStringAsFixed(2));
   }
 
-  double cToF(double c) {
-    double temp = (c * 1.8) + 32;
-    return double.parse((temp).toStringAsFixed(2));
-  }
-
   @override
   void initState() {
     super.initState();
@@ -390,11 +385,17 @@ class RealTimeDataState extends State<RealTimeData> {
 
     double powerMax = widget.currentSettings.settings.batterySeriesCount * widget.currentSettings.settings.batteryCellMaxVoltage;
     double powerMinimum = widget.currentSettings.settings.batterySeriesCount * widget.currentSettings.settings.batteryCellMinVoltage;
-    averageVoltageInput ??= powerMinimum; // Set to minimum if null
+
     if (widget.deviceIsConnected) {
-      averageVoltageInput = (0.25 * doublePrecision(escTelemetry.v_in, 1)) + (0.75 * averageVoltageInput);
+      averageVoltageInput ??= escTelemetry.v_in; // Set to current value if null
+      if (averageVoltageInput == 0.0) { // Set to minimum if zero
+        averageVoltageInput = powerMinimum;
+      } else {
+        // Smooth voltage input value from ESC
+        averageVoltageInput = (0.25 * doublePrecision(escTelemetry.v_in, 1)) + (0.75 * averageVoltageInput);
+      }
     } else {
-      averageVoltageInput = powerMinimum;
+      averageVoltageInput = 0; // Set to zero when disconnected
     }
 
     // Set initial batteryRemaining value
