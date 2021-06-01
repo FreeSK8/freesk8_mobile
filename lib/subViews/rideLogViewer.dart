@@ -838,7 +838,6 @@ class RideLogViewerState extends State<RideLogViewer> {
                 escTimeSeriesList[i] == _tsESCMaxESCTemp
             )
         ) {
-          globalLogger.wtf("Preserving record");
           // Keep the next record because it contains a fault or value of importance
           escTimeSeriesList[++pos] = escTimeSeriesList[i++];
         }
