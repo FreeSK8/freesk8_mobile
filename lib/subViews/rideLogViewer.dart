@@ -746,73 +746,6 @@ class RideLogViewerState extends State<RideLogViewer> {
     });
     //TODO: not clearing because I want to color a polyline... escTimeSeriesMap.clear();
     globalLogger.d("rideLogViewer escTimeSeriesList length is ${escTimeSeriesList.length}");
-    //TODO: Reduce number of ESC points to keep things moving on phones
-    //TODO: We will need to know the logging rate in the file
-    while(escTimeSeriesList.length > 1200) {
-      int pos = 0;
-      for (int i=0; i<escTimeSeriesList.length; ++i, ++pos) {
-        escTimeSeriesList[pos] = escTimeSeriesList[i++]; // Increment i
-        // Check next record that we intend to remove for a fault
-        if (i<escTimeSeriesList.length && escTimeSeriesList[i].faultCode != null) {
-          globalLogger.d("Saving fault record");
-          // Keep the next record because it contains a fault
-          escTimeSeriesList[++pos] = escTimeSeriesList[i++];
-        }
-        // Skip some records if we have multiple ESCs of data
-        else {
-          switch(escIDsInLog.length) {
-            case 2:
-              ++i;
-            break;
-            case 4:
-              i+=3;
-            break;
-          }
-        }
-      }
-      escTimeSeriesList.removeRange(pos, escTimeSeriesList.length);
-      globalLogger.d("rideLogViewer reduced escTimeSeriesList length to ${escTimeSeriesList.length}");
-    }
-
-    // Create fault range annotations for chart
-    DateTime faultStart;
-    //int faultCode;
-    escTimeSeriesList.forEach((element) {
-      if (element.faultCode != null && faultStart == null){
-        faultStart = element.time;
-        //faultCode = element.faultCode;
-      }
-      else if (element.faultCode == null && faultStart != null) {
-        // Create a new annotation
-        faultRangeAnnotations.add(new charts.RangeAnnotationSegment(
-            faultStart,
-            element.time,
-            charts.RangeAnnotationAxisType.domain,
-            //startLabel: '$faultCode',
-            labelAnchor: charts.AnnotationLabelAnchor.end,
-            color: charts.MaterialPalette.yellow.shadeDefault.lighter,
-            // Override the default vertical direction for domain labels.
-            labelDirection: charts.AnnotationLabelDirection.horizontal));
-        // Clear faultStart for next possible annotation
-        faultStart = null;
-      }
-    });
-
-    if(_positionEntries.length > 1) {
-      // Calculate GPS statistics
-      gpsDuration = gpsEndTime.difference(gpsStartTime);
-      gpsAverageSpeed /= _positionEntries.length;
-      gpsAverageSpeed = doublePrecision(gpsAverageSpeed, 2);
-      gpsDistanceStr = myArguments.userSettings.settings.useImperial ? "${doublePrecision(kmToMile(gpsDistance), 2)} miles" : "${doublePrecision(gpsDistance, 2)} km";
-    }
-
-
-    globalLogger.d("rideLogViewer creating chart data");
-    // Create charting data from ESC time series data
-    seriesList = _createChartingData(escTimeSeriesList, escIDsInLog, faultCodeCount, myArguments.userSettings.settings.useImperial);
-
-    // Capture filename passed via arguments
-    String filename = myArguments.logFileInfo.logFilePath.substring(myArguments.logFileInfo.logFilePath.lastIndexOf("/") + 1);
 
     ///Generate ride statistics
     double _maxSpeed = 0.0;
@@ -889,6 +822,83 @@ class RideLogViewerState extends State<RideLogViewer> {
         _maxESCTempObserved = escTimeSeriesList[i].tempMosfet4;
       }
     }
+
+    //TODO: Reduce number of ESC points to keep things moving on phones
+    //TODO: We will need to know the logging rate in the file
+    while(escTimeSeriesList.length > 1200) {
+      int pos = 0;
+      for (int i=0; i<escTimeSeriesList.length; ++i, ++pos) {
+        escTimeSeriesList[pos] = escTimeSeriesList[i++]; // Increment i
+        // Check next record that we intend to remove for a fault or value of importance
+        if ( i < escTimeSeriesList.length &&
+            ( escTimeSeriesList[i].faultCode != null ||
+                escTimeSeriesList[i] == _tsESCMaxSpeed ||
+                escTimeSeriesList[i] == _tsESCMaxMotorAmps ||
+                escTimeSeriesList[i] == _tsESCMaxBatteryAmps ||
+                escTimeSeriesList[i] == _tsESCMaxESCTemp
+            )
+        ) {
+          globalLogger.wtf("Preserving record");
+          // Keep the next record because it contains a fault or value of importance
+          escTimeSeriesList[++pos] = escTimeSeriesList[i++];
+        }
+        // Skip some records if we have multiple ESCs of data
+        else {
+          switch(escIDsInLog.length) {
+            case 2:
+              ++i;
+            break;
+            case 4:
+              i+=3;
+            break;
+          }
+        }
+      }
+      escTimeSeriesList.removeRange(pos, escTimeSeriesList.length);
+      globalLogger.d("rideLogViewer reduced escTimeSeriesList length to ${escTimeSeriesList.length}");
+    }
+
+    // Create fault range annotations for chart
+    DateTime faultStart;
+    //int faultCode;
+    escTimeSeriesList.forEach((element) {
+      if (element.faultCode != null && faultStart == null){
+        faultStart = element.time;
+        //faultCode = element.faultCode;
+      }
+      else if (element.faultCode == null && faultStart != null) {
+        // Create a new annotation
+        faultRangeAnnotations.add(new charts.RangeAnnotationSegment(
+            faultStart,
+            element.time,
+            charts.RangeAnnotationAxisType.domain,
+            //startLabel: '$faultCode',
+            labelAnchor: charts.AnnotationLabelAnchor.end,
+            color: charts.MaterialPalette.yellow.shadeDefault.lighter,
+            // Override the default vertical direction for domain labels.
+            labelDirection: charts.AnnotationLabelDirection.horizontal));
+        // Clear faultStart for next possible annotation
+        faultStart = null;
+      }
+    });
+
+    if(_positionEntries.length > 1) {
+      // Calculate GPS statistics
+      gpsDuration = gpsEndTime.difference(gpsStartTime);
+      gpsAverageSpeed /= _positionEntries.length;
+      gpsAverageSpeed = doublePrecision(gpsAverageSpeed, 2);
+      gpsDistanceStr = myArguments.userSettings.settings.useImperial ? "${doublePrecision(kmToMile(gpsDistance), 2)} miles" : "${doublePrecision(gpsDistance, 2)} km";
+    }
+
+
+    globalLogger.d("rideLogViewer creating chart data");
+    // Create charting data from ESC time series data
+    seriesList = _createChartingData(escTimeSeriesList, escIDsInLog, faultCodeCount, myArguments.userSettings.settings.useImperial);
+
+    // Capture filename passed via arguments
+    String filename = myArguments.logFileInfo.logFilePath.substring(myArguments.logFileInfo.logFilePath.lastIndexOf("/") + 1);
+
+
 
     // Add map marker for Max Battery Amps
     if(_tsESCMaxBatteryAmps != null && gpsLatLngMap.length > 0) {
