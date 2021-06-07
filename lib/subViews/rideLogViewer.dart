@@ -825,6 +825,7 @@ class RideLogViewerState extends State<RideLogViewer> {
 
     //TODO: Reduce number of ESC points to keep things moving on phones
     //TODO: We will need to know the logging rate in the file
+    int escTimeSeriesListOriginalLength = escTimeSeriesList.length; // Capture unmodified length for average computation
     while(escTimeSeriesList.length > 1200) {
       int pos = 0;
       for (int i=0; i<escTimeSeriesList.length; ++i, ++pos) {
@@ -1018,7 +1019,7 @@ class RideLogViewerState extends State<RideLogViewer> {
       }
 
       // Compute average overall speed
-      _avgSpeed /= escTimeSeriesList.length;
+      _avgSpeed /= escTimeSeriesListOriginalLength;
       _avgSpeed = doublePrecision(_avgSpeed, 2);
     }
     String maxSpeed = myArguments.userSettings.settings.useImperial ? "$_maxSpeed mph" : "$_maxSpeed kph";
