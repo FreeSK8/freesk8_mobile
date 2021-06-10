@@ -644,6 +644,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         await setupConnectedDeviceStreamListener();
         Navigator.of(context).pop(); // Remove attempting connection dialog
 
+        initDialogDismissed = false;
+
         _changeConnectedDialogMessage("Communicating with ESC");
       }
     } catch (e) {
@@ -1914,6 +1916,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   int initMsgESCDevicesCANRequested = 0;
   bool initMsgSqeuencerCompleted = false;
 
+  bool initDialogDismissed = false;
   bool initShowESCVersion = false;
   bool initShowMotorConfiguration = false;
   void _requestInitMessages() {
@@ -2035,6 +2038,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     }
   }
   void _changeConnectedDialogMessage(String message) {
+    if (initDialogDismissed) return; // Do nothing if the user has dismissed dialog
+
     if (Navigator.of(context).canPop()) {
       Navigator.of(context).pop(); // Remove previous dialog
     }
@@ -2052,6 +2057,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                       child: GestureDetector(
                         onLongPress: () async {
                           globalLogger.d("_changeConnectedDialogMessage: Long press received. Closing dialog.");
+                          initDialogDismissed = true;
                           Navigator.of(context).pop(); // Remove connection dialog
                         },
                         child: Column(children: [
