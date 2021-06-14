@@ -610,7 +610,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                     //  child: Icon(Icons.timer),
                                     //),
                                     SizedBox(
-                                        width: 60,
+                                        width: 69,
                                         //child: Text("${(File(rideLogsFromDatabase[index].logFilePath).statSync().size / 1024).round()} kb"),
                                         child: Column(
                                           mainAxisAlignment: MainAxisAlignment.center,
