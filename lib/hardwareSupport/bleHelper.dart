@@ -85,10 +85,10 @@ class BLEHelper {
             //globalLogger.d("message(long) lenPayload is $lenPayload, endMessage is $endMessage");
             break;
           default:
-            //TODO: Uh. If the start of the packet isn't 2 or 3 we are out of alignment
-            //TODO: Advance counter a byte to see if we can fix things
-            ++counter;
-            break;
+            //NOTE: If the start of the packet isn't 2 or 3 we are out of alignment
+            globalLogger.e("BLE buffer unaligned. Resetting. Data to process was ${bytes.length}bytes ${bytes.toString()}");
+            resetPacket();
+            return 0;
         }
       }
 
