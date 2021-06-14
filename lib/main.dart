@@ -57,7 +57,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.17.0";
+const String freeSK8ApplicationVersion = "0.17.1";
 const String robogotchiFirmwareExpectedVersion = "0.10.1";
 
 void main() {
@@ -1889,7 +1889,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     // Begin initMessageSequencer to handle all of the desired communication on connection
     //NOTE: be sure to check if null, iOS could create a second timer
     if (_initMsgSequencer == null) {
-      _initMsgSequencer = new Timer.periodic(Duration(milliseconds: 200), (Timer t) => _requestInitMessages());
+      _initMsgSequencer = new Timer.periodic(Duration(milliseconds: 300), (Timer t) => _requestInitMessages());
     }
 
     // Compute logged distance and consumption
