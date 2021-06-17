@@ -114,7 +114,7 @@ class ConfigureESCState extends State<ConfigureESC> {
           subtitle: Text("(optional) Specify charge and discharge amps"),
           content: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
             TextField(
-                controller: tecBatteryCurrentRegen,
+                controller: tecBatteryCurrentOutput,
                 decoration: new InputDecoration(labelText: "Battery Current Max (0.0 = Defaults)"),
                 keyboardType: TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: <TextInputFormatter>[
@@ -122,7 +122,7 @@ class ConfigureESCState extends State<ConfigureESC> {
                 ]
             ),
             TextField(
-                controller: tecBatteryCurrentOutput,
+                controller: tecBatteryCurrentRegen,
                 decoration: new InputDecoration(labelText: "Battery Current Max Regen (0.0 = Defaults)"),
                 keyboardType: TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: <TextInputFormatter>[
