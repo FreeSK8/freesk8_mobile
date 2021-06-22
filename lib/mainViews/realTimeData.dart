@@ -311,7 +311,10 @@ class RealTimeDataState extends State<RealTimeData> {
                     ),
                   );
                 },
-              ))
+              )),
+              SizedBox(
+                height: 25, //NOTE: We want empty space below the gridView for the SlidingUpPanel's handle
+              )
             ])
           ),
 
