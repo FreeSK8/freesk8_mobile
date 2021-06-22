@@ -207,7 +207,8 @@ class RealTimeDataState extends State<RealTimeData> {
               Table(children: [
                 TableRow(children: [
                   Text("Pack Voltage: ", textAlign: TextAlign.right,textScaleFactor: 1.25,),
-                  Text(" ${widget.dieBieMSTelemetry.packVoltage} (${widget.dieBieMSTelemetry.soc}%)", textScaleFactor: 1.25,)
+                  //TODO: Hiding SOC if value is 50% because the FlexiBMS always reports 50
+                  Text(" ${widget.dieBieMSTelemetry.packVoltage} ${widget.dieBieMSTelemetry.soc != 50 ? "(${widget.dieBieMSTelemetry.soc}%)" : ""}", textScaleFactor: 1.25,)
                 ]),
                 TableRow(children: [
                   Text("Pack Current: ", textAlign: TextAlign.right,),
