@@ -264,7 +264,7 @@ class RealTimeDataState extends State<RealTimeData> {
                                 child: new LinearProgressIndicator(
                                     backgroundColor: Colors.grey,
                                     valueColor: widget.dieBieMSTelemetry.cellVoltage[index] < 0 ?
-                                    new AlwaysStoppedAnimation<Color>(Colors.redAccent) :
+                                    new AlwaysStoppedAnimation<Color>(Colors.orangeAccent) :
                                     new AlwaysStoppedAnimation<Color>(Colors.lightGreen),
                                     value: sigmoidal(
                                         widget.dieBieMSTelemetry.cellVoltage[index].abs(),
@@ -275,7 +275,7 @@ class RealTimeDataState extends State<RealTimeData> {
                           ),
                           new Positioned(
                               top: 5, child: new Text(
-                            "  ${formatTriple.format(widget.dieBieMSTelemetry.cellVoltage[index])} V",
+                            "  ${formatTriple.format(widget.dieBieMSTelemetry.cellVoltage[index].abs())} V",
                             style: TextStyle(color: Colors.black),
                             textScaleFactor: 1.25,)),
                           new Positioned(bottom: 2, child: new Text("  Cell $index")),
