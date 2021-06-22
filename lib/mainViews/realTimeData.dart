@@ -181,7 +181,7 @@ class RealTimeDataState extends State<RealTimeData> {
 
                       children: <Widget>[
                         rowIcon,
-                        Text(" Cell $i"),
+                        Text(" Cell ${i + 1}"),
 
                         Expanded(child: Slider(
                           onChanged: (newValue){},
@@ -278,7 +278,7 @@ class RealTimeDataState extends State<RealTimeData> {
                             "  ${formatTriple.format(widget.dieBieMSTelemetry.cellVoltage[index].abs())} V",
                             style: TextStyle(color: Colors.black),
                             textScaleFactor: 1.25,)),
-                          new Positioned(bottom: 2, child: new Text("  Cell $index")),
+                          new Positioned(bottom: 2, child: new Text("  Cell ${index + 1}")),
                           new ClipRRect(
                               borderRadius: new BorderRadius.circular(10),
                               child: new Container(
