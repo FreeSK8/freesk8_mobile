@@ -348,11 +348,25 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                     secondary: const Icon(Icons.all_out),
                   ),
 
-                  _multiESCMode ? SwitchListTile(
-                    title: Text(_multiESCModeQuad ? "Quad ESC Mode" : "Dual ESC Mode"),
-                    value: _multiESCModeQuad,
-                    onChanged: (bool newValue) { setState((){ _multiESCModeQuad = newValue;}); },
-                    secondary: _multiESCModeQuad ? const Icon(Icons.looks_4) : const Icon(Icons.looks_two),
+                  _multiESCMode ? RadioListTile(
+                    title: const Text("Dual ESC Mode"),
+                    value: false,
+                    groupValue: _multiESCModeQuad,
+                    onChanged: (bool value){
+                      setState(() {
+                        _multiESCModeQuad = value;
+                      });
+                    },
+                  ) : Container(),
+                  _multiESCMode ? RadioListTile(
+                    title: const Text("Quad ESC Mode"),
+                    value: true,
+                    groupValue: _multiESCModeQuad,
+                    onChanged: (bool value){
+                      setState(() {
+                        _multiESCModeQuad = value;
+                      });
+                    },
                   ) : Container(),
 
                   _multiESCMode ? MultiSelectFormField(
