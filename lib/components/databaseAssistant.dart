@@ -194,14 +194,20 @@ class DatabaseAssistant {
 
   static Future<double> dbGetOdometer(String boardID) async {
     final Database db = await getDatabase();
-    final List<Map<String, dynamic>> rideLogEntries = await db.query('logs', columns: ["distance_km"], where: "board_id = ?", whereArgs: [boardID]);
     double distance = 0;
-    rideLogEntries.forEach((element) {
-      if (element['distance_km'] != -1.0) {
-        distance += element['distance_km'];
-      }
-    });
-    await db.close();
+    try {
+      final List<Map<String, dynamic>> rideLogEntries = await db.query('logs', columns: ["distance_km"], where: "board_id = ?", whereArgs: [boardID]);
+
+      rideLogEntries.forEach((element) {
+        if (element['distance_km'] != -1.0) {
+          distance += element['distance_km'];
+        }
+      });
+      await db.close();
+    } catch (e) {
+      globalLogger.e(e);
+    }
+
     return distance;
   }
 

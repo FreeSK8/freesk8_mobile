@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import '../components/crc16.dart';
 import '../widgets/throttleCurvePainter.dart';
 import '../subViews/escProfileEditor.dart';
+import '../subViews/vehicleManager.dart';
 import '../globalUtilities.dart';
 
 import '../components/userSettings.dart';
@@ -2439,6 +2440,16 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                       .showSnackBar(SnackBar(content: Text("Import Exception. Please send debug log")));
 
                                 }
+                              }),
+
+                          ElevatedButton(
+                              child: Text("Open Board Manager"),
+                              onPressed: () {
+                                FocusScope.of(context).requestFocus(new FocusNode()); //Hide keyboard
+                                setState(() {
+                                  // navigate to the route
+                                  Navigator.of(context).pushNamed(VehicleManager.routeName, arguments: null);
+                                });
                               }),
                         ],),
                       isExpanded: _showAdvanced

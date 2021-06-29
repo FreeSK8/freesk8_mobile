@@ -170,6 +170,41 @@ class UserSettings {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('$deviceID boardAlias') ?? null;
   }
+
+  static Future<List<String>> getKnownDevices() async {
+    final prefs = await SharedPreferences.getInstance();
+    var knownDevices =
+    prefs.getStringList('knownDevices') != null ? prefs.getStringList(
+        'knownDevices') : [];
+    return knownDevices;
+  }
+
+  static Future<UserSettingsStructure> getSettings(String deviceID) async {
+    final prefs = await SharedPreferences.getInstance();
+    UserSettingsStructure settings = new UserSettingsStructure();
+    settings.deviceID = deviceID;
+    settings.boardAlias =
+        prefs.getString('$deviceID boardAlias') ?? "Unnamed";
+
+    settings.boardAvatarPath =
+        prefs.getString('$deviceID boardAvatarPath') ?? null;
+
+    settings.batterySeriesCount =
+        prefs.getInt('$deviceID batterySeriesCount') ?? 12;
+    settings.batteryCellMinVoltage =
+        prefs.getDouble('$deviceID batteryCellMinVoltage') ?? 3.2;
+    settings.batteryCellMaxVoltage =
+        prefs.getDouble('$deviceID batteryCellMaxVoltage') ?? 4.2;
+
+    settings.wheelDiameterMillimeters =
+        prefs.getInt('$deviceID wheelDiameterMillimeters') ?? 110;
+    settings.motorPoles = prefs.getInt('$deviceID motorPoles') ?? 14;
+
+    settings.maxERPM = prefs.getDouble('$deviceID maxERPM') ?? 100000;
+    settings.gearRatio = prefs.getDouble('$deviceID gearRatio') ?? 4.0;
+
+    return settings;
+  }
 }
 
 Future<File> exportSettings(String filePath) async {

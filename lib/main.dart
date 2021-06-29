@@ -21,6 +21,7 @@ import 'subViews/rideLogViewer.dart';
 import 'subViews/focWizard.dart';
 import 'subViews/escProfileEditor.dart';
 import 'subViews/robogotchiCfgEditor.dart';
+import 'subViews/vehicleManager.dart';
 
 import 'widgets/fileSyncViewer.dart';
 
@@ -57,7 +58,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.17.1";
+const String freeSK8ApplicationVersion = "0.18.0";
 const String robogotchiFirmwareExpectedVersion = "0.10.1";
 
 void main() {
@@ -73,6 +74,7 @@ void main() {
         ESCProfileEditor.routeName: (BuildContext context) => ESCProfileEditor(),
         RobogotchiCfgEditor.routeName: (BuildContext context) => RobogotchiCfgEditor(),
         RobogotchiDFU.routeName: (BuildContext context) => RobogotchiDFU(),
+        VehicleManager.routeName: (BuildContext context) => VehicleManager(),
       },
       theme: ThemeData(
         //TODO: Select satisfying colors for the light theme
