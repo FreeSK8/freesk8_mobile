@@ -57,7 +57,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.17.0";
+const String freeSK8ApplicationVersion = "0.17.1";
 const String robogotchiFirmwareExpectedVersion = "0.10.1";
 
 void main() {
@@ -643,6 +643,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
         await setupConnectedDeviceStreamListener();
         Navigator.of(context).pop(); // Remove attempting connection dialog
+
+        initDialogDismissed = false;
 
         _changeConnectedDialogMessage("Communicating with ESC");
       }
@@ -1887,7 +1889,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     // Begin initMessageSequencer to handle all of the desired communication on connection
     //NOTE: be sure to check if null, iOS could create a second timer
     if (_initMsgSequencer == null) {
-      _initMsgSequencer = new Timer.periodic(Duration(milliseconds: 200), (Timer t) => _requestInitMessages());
+      _initMsgSequencer = new Timer.periodic(Duration(milliseconds: 300), (Timer t) => _requestInitMessages());
     }
 
     // Compute logged distance and consumption
@@ -1914,6 +1916,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   int initMsgESCDevicesCANRequested = 0;
   bool initMsgSqeuencerCompleted = false;
 
+  bool initDialogDismissed = false;
   bool initShowESCVersion = false;
   bool initShowMotorConfiguration = false;
   void _requestInitMessages() {
@@ -2035,6 +2038,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     }
   }
   void _changeConnectedDialogMessage(String message) {
+    if (initDialogDismissed) return; // Do nothing if the user has dismissed dialog
+
     if (Navigator.of(context).canPop()) {
       Navigator.of(context).pop(); // Remove previous dialog
     }
@@ -2052,6 +2057,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                       child: GestureDetector(
                         onLongPress: () async {
                           globalLogger.d("_changeConnectedDialogMessage: Long press received. Closing dialog.");
+                          initDialogDismissed = true;
                           Navigator.of(context).pop(); // Remove connection dialog
                         },
                         child: Column(children: [

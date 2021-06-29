@@ -81,8 +81,6 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
   List _escCANIDsSelected;
   List _escCANIDs = [];
 
-  bool _multiESCMode;
-  bool _multiESCModeQuad;
   TextEditingController tecLogAutoStopIdleTime = TextEditingController();
   TextEditingController tecLogAutoStopLowVoltage = TextEditingController();
   bool  _logAutoEraseWhenFull;
@@ -134,13 +132,6 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
     RobogotchiCfgEditorArguments myArguments = ModalRoute.of(context).settings.arguments;
     if(myArguments == null){
       return Container(child:Text("No arguments. BUG BUG. This should not happen. Please fix?"));
-    }
-    if (_multiESCMode == null) {
-      // Assign value received from gotchi
-      _multiESCMode = myArguments.currentConfiguration.multiESCMode == 2 || myArguments.currentConfiguration.multiESCMode == 4 ? true : false;
-    }
-    if (_multiESCModeQuad == null) {
-      _multiESCModeQuad = myArguments.currentConfiguration.multiESCMode == 4;
     }
     if (_logAutoEraseWhenFull == null) {
       _logAutoEraseWhenFull = myArguments.currentConfiguration.logAutoEraseWhenFull;
@@ -296,9 +287,9 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
 
                   Divider(thickness: 3),
                   Text("Log Entries per Second (${myArguments.currentConfiguration.logIntervalHz}Hz)"),
-                  _multiESCMode && !_multiESCModeQuad && myArguments.currentConfiguration.logIntervalHz == 1 ?
+                  myArguments.currentConfiguration.multiESCMode == 2 && myArguments.currentConfiguration.logIntervalHz == 1 ?
                     Text("⚠️ 2Hz or more is recommended with a dual ESC configuration", style: TextStyle(color: Colors.yellow)) : Container(),
-                  _multiESCMode && _multiESCModeQuad && myArguments.currentConfiguration.logIntervalHz != 4 ?
+                  myArguments.currentConfiguration.multiESCMode == 4 && myArguments.currentConfiguration.logIntervalHz != 4 ?
                       Text("⚠️ 4Hz is recommended with a quad ESC configuration", style: TextStyle(color: Colors.yellow)) : Container(),
                   SliderTheme(
                       data: SliderTheme.of(context).copyWith(
@@ -341,26 +332,45 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
 
 
                   Divider(thickness: 3),
-                  SwitchListTile(
-                    title: Text("Multiple ESC Mode"),
-                    value: _multiESCMode,
-                    onChanged: (bool newValue) { setState((){ _multiESCMode = newValue;}); },
-                    secondary: const Icon(Icons.all_out),
+
+                  RadioListTile(
+                    title: const Text("Single ESC Mode"),
+                    value: 0,
+                    groupValue: myArguments.currentConfiguration.multiESCMode,
+                    onChanged: (int value){
+                      setState(() {
+                        myArguments.currentConfiguration.multiESCMode = value;
+                      });
+                    },
                   ),
 
-                  _multiESCMode ? SwitchListTile(
-                    title: Text(_multiESCModeQuad ? "Quad ESC Mode" : "Dual ESC Mode"),
-                    value: _multiESCModeQuad,
-                    onChanged: (bool newValue) { setState((){ _multiESCModeQuad = newValue;}); },
-                    secondary: _multiESCModeQuad ? const Icon(Icons.looks_4) : const Icon(Icons.looks_two),
-                  ) : Container(),
+                  RadioListTile(
+                    title: const Text("Dual ESC Mode"),
+                    value: 2,
+                    groupValue: myArguments.currentConfiguration.multiESCMode,
+                    onChanged: (int value){
+                      setState(() {
+                        myArguments.currentConfiguration.multiESCMode = value;
+                      });
+                    },
+                  ),
+                  RadioListTile(
+                    title: const Text("Quad ESC Mode"),
+                    value: 4,
+                    groupValue: myArguments.currentConfiguration.multiESCMode,
+                    onChanged: (int value){
+                      setState(() {
+                        myArguments.currentConfiguration.multiESCMode = value;
+                      });
+                    },
+                  ),
 
-                  _multiESCMode ? MultiSelectFormField(
+                  myArguments.currentConfiguration.multiESCMode > 1 ? MultiSelectFormField(
                     autovalidate: false,
-                    title: _multiESCModeQuad ? Text("Select CAN IDs") : Text("Select CAN ID"),
+                    title: myArguments.currentConfiguration.multiESCMode == 4 ? Text("Select CAN IDs") : Text("Select CAN ID"),
                     validator: (value) {
-                      if (value == null || value.length != (_multiESCModeQuad ? 3 : 1)) {
-                        if(_multiESCModeQuad) {
+                      if (value == null || value.length != (myArguments.currentConfiguration.multiESCMode == 4 ? 3 : 1)) {
+                        if(myArguments.currentConfiguration.multiESCMode == 4) {
                           return "Please select 3 ESC CAN IDs";
                         } else {
                           return "Please select 1 ESC CAN ID";
@@ -374,7 +384,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                     okButtonLabel: 'OK',
                     cancelButtonLabel: 'CANCEL',
                     // required: true,
-                    hintWidget: _multiESCModeQuad ? Text("Select 3 ESC CAN IDs") : Text("Select 1 ESC CAN ID"),
+                    hintWidget: myArguments.currentConfiguration.multiESCMode == 4 ? Text("Select 3 ESC CAN IDs") : Text("Select 1 ESC CAN ID"),
                     initialValue: _escCANIDsSelected,
                     onSaved: (value) {
                       if (value == null) return;
@@ -442,21 +452,13 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                       Row(mainAxisAlignment: MainAxisAlignment.center , children: <Widget>[Text("Save"),Icon(Icons.save),],),
                           onPressed: () async {
                             // Validate user input
-                            if (_multiESCMode && _multiESCModeQuad && _escCANIDsSelected?.length != 3) {
-                              genericAlert(context, "CAN IDs required", Text("Please select 3 CAN IDs before saving"), "OK");
+                            if (myArguments.currentConfiguration.multiESCMode == 4 && _escCANIDsSelected?.length != 3) {
+                              genericAlert(context, "CAN IDs required", Text("Please select 3 CAN IDs before saving or switch to Single ESC Mode"), "OK");
                               return;
                             }
-                            if (_multiESCMode && !_multiESCModeQuad && _escCANIDsSelected?.length != 1) {
-                              genericAlert(context, "CAN ID required", Text("Please select 1 CAN ID before saving"), "OK");
+                            if (myArguments.currentConfiguration.multiESCMode == 2 && _escCANIDsSelected?.length != 1) {
+                              genericAlert(context, "CAN ID required", Text("Please select 1 CAN ID before saving or switch to Single ESC Mode"), "OK");
                               return;
-                            }
-
-                            // Convert settings to robogotchi command
-                            int multiESCMode = 0;
-                            if (_multiESCMode && _multiESCModeQuad) {
-                              multiESCMode = 4;
-                            } else if (_multiESCMode) {
-                              multiESCMode = 2;
                             }
 
                             // Add GPS TimeZoneOffset
@@ -471,7 +473,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                                 ",${myArguments.currentConfiguration.logAutoStartERPM}"
                                 ",${myArguments.currentConfiguration.logIntervalHz}"
                                 ",${_logAutoEraseWhenFull == true ? "1": "0"}"
-                                ",$multiESCMode"
+                                ",${myArguments.currentConfiguration.multiESCMode}"
                                 ",${_escCANIDsSelected != null && _escCANIDsSelected.length > 0 ? _escCANIDsSelected[0] : 0}"
                                 ",${_escCANIDsSelected != null && _escCANIDsSelected.length > 1 ? _escCANIDsSelected[1] : 0}"
                                 ",${_escCANIDsSelected != null && _escCANIDsSelected.length > 2 ? _escCANIDsSelected[2] : 0}"

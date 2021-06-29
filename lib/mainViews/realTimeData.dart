@@ -181,7 +181,7 @@ class RealTimeDataState extends State<RealTimeData> {
 
                       children: <Widget>[
                         rowIcon,
-                        Text(" Cell $i"),
+                        Text(" Cell ${i + 1}"),
 
                         Expanded(child: Slider(
                           onChanged: (newValue){},
@@ -207,7 +207,8 @@ class RealTimeDataState extends State<RealTimeData> {
               Table(children: [
                 TableRow(children: [
                   Text("Pack Voltage: ", textAlign: TextAlign.right,textScaleFactor: 1.25,),
-                  Text(" ${widget.dieBieMSTelemetry.packVoltage} (${widget.dieBieMSTelemetry.soc}%)", textScaleFactor: 1.25,)
+                  //TODO: Hiding SOC if value is 50% because the FlexiBMS always reports 50
+                  Text(" ${widget.dieBieMSTelemetry.packVoltage} ${widget.dieBieMSTelemetry.soc != 50 ? "(${widget.dieBieMSTelemetry.soc}%)" : ""}", textScaleFactor: 1.25,)
                 ]),
                 TableRow(children: [
                   Text("Pack Current: ", textAlign: TextAlign.right,),
@@ -264,7 +265,7 @@ class RealTimeDataState extends State<RealTimeData> {
                                 child: new LinearProgressIndicator(
                                     backgroundColor: Colors.grey,
                                     valueColor: widget.dieBieMSTelemetry.cellVoltage[index] < 0 ?
-                                    new AlwaysStoppedAnimation<Color>(Colors.redAccent) :
+                                    new AlwaysStoppedAnimation<Color>(Colors.orangeAccent) :
                                     new AlwaysStoppedAnimation<Color>(Colors.lightGreen),
                                     value: sigmoidal(
                                         widget.dieBieMSTelemetry.cellVoltage[index].abs(),
@@ -275,10 +276,10 @@ class RealTimeDataState extends State<RealTimeData> {
                           ),
                           new Positioned(
                               top: 5, child: new Text(
-                            "  ${formatTriple.format(widget.dieBieMSTelemetry.cellVoltage[index])} V",
+                            "  ${formatTriple.format(widget.dieBieMSTelemetry.cellVoltage[index].abs())} V",
                             style: TextStyle(color: Colors.black),
                             textScaleFactor: 1.25,)),
-                          new Positioned(bottom: 2, child: new Text("  Cell $index")),
+                          new Positioned(bottom: 2, child: new Text("  Cell ${index + 1}")),
                           new ClipRRect(
                               borderRadius: new BorderRadius.circular(10),
                               child: new Container(
@@ -311,7 +312,10 @@ class RealTimeDataState extends State<RealTimeData> {
                     ),
                   );
                 },
-              ))
+              )),
+              SizedBox(
+                height: 25, //NOTE: We want empty space below the gridView for the SlidingUpPanel's handle
+              )
             ])
           ),
 

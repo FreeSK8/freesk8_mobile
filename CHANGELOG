@@ -1,3 +1,16 @@
+v0.17.1
+
+* Fix average speed computation in share file summary
+* Do not re-display connection dialog if dismissed
+* Resetting BLE buffer if data alignment is lost
+* Allow more time for initialization messages to be received
+* Widen time & distance column of RideLogging listView
+* Fix FOC wizard's battery amps text controllers
+* Start BMS cell count from 1
+* Display balancing cells with positive value and orange color
+* Hiding BMS SoC when value equals 50% for Flexi users
+* Using radio selection for Single, Dual, Quad ESC modes
+
 v0.17.0
 
 * Allow GPS speed and distance to be displayed in log
