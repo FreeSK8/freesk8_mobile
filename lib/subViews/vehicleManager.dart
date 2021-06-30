@@ -1,12 +1,12 @@
 
 import 'dart:io';
-import 'dart:math'; //TODO: replace with uuid
 
 import 'package:flutter/material.dart';
 import 'package:freesk8_mobile/components/databaseAssistant.dart';
 import 'package:freesk8_mobile/components/userSettings.dart';
 import 'package:freesk8_mobile/globalUtilities.dart';
-import 'package:freesk8_mobile/mainViews/test.dart';
+
+import 'package:uuid/uuid.dart';
 
 class VehicleManagerArguments {
   final String connectedDeviceID;
@@ -46,13 +46,14 @@ class VehicleManagerState extends State<VehicleManager> {
     ), TextButton(
       child: Text("YES"),
       onPressed: () async {
+        var uuid = Uuid();
         Navigator.of(myArguments.navigatorState.context).pop();
-        String newID = "R*${Random().nextInt(65535*2)}"; //TODO: generate UUID with uuid pub package
+        String newID = "R*${uuid.v4().toString()}"; // Generate unique retirement ID
         await DatabaseAssistant.dbAssociateVehicle(deviceID, newID);
         await UserSettings.associateDevice(deviceID, newID);
         _reloadBody();
       },
-    ), "Retire Vehicle", Text("Are you sure you want to retire the selected vehicle? Nothing will be erased"));
+    ), "Retire Vehicle", Text("Are you sure you want to retire the selected vehicle? The connected bluetooth device will no longer be associated with this vehicle. Nothing will be erased."));
   }
 
   void _recruitVehicle(String deviceID) async {
@@ -70,7 +71,7 @@ class VehicleManagerState extends State<VehicleManager> {
         await UserSettings.associateDevice(deviceID, newID);
         _reloadBody();
       },
-    ), "Adopt Vehicle", Text("Assign connected device to selected vehicle?"));
+    ), "Adopt Vehicle", Text("Assign connected bluetooth device to selected vehicle?"));
   }
 
   void _removeVehicle(String deviceID) async {
@@ -97,6 +98,33 @@ class VehicleManagerState extends State<VehicleManager> {
     List<String> knownDevices = await UserSettings.getKnownDevices();
     bool currentDeviceKnown = knownDevices.contains(myArguments.connectedDeviceID);
     globalLogger.w("connected device is in known devices? $currentDeviceKnown Connected device: ${myArguments.connectedDeviceID}");
+
+    listChildren.add(SizedBox(height: 10));
+    listChildren.add(
+        Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image(image: AssetImage("assets/dri_icon.png"),height: 100),
+              Column(children: [
+                Text("Actions available:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+                Row(children: [
+                  Icon(Icons.remove_circle),
+                  Text("Retire"),
+                  SizedBox(width: 3),
+                  Icon(Icons.bedtime_outlined, color: Colors.grey),
+                  Text("Retired"),
+                  SizedBox(width: 4),
+                  Icon(Icons.family_restroom),
+                  Text("Adopt")
+                ],),
+                Row(children: [
+                  Icon(Icons.delete_forever),
+                  Text("Erase"),
+                ])
+              ])
+            ])
+    );
+
     if (!currentDeviceKnown && myArguments.connectedDeviceID != null) {
       listChildren.add(Center(child: Text("Warning, connected device does not belong to a vehicle!", style: TextStyle(color: Colors.yellow),),));
       listChildren.add(Center(child: Text("Please adopt a vehicle below", style: TextStyle(color: Colors.yellow),),));
@@ -110,7 +138,7 @@ class VehicleManagerState extends State<VehicleManager> {
         settings.add(new UserSettingsStructure.fromValues(mySettings.settings));
         distances.add(await  DatabaseAssistant.dbGetOdometer(knownDevices[i]));
         consumptions.add(await  DatabaseAssistant.dbGetConsumption(knownDevices[i],false));
-        //TODO: table
+        // Add a Row for each Vehicle we load
         listChildren.add(Row(
           children: [
             //TODO: Editable board avatar
@@ -119,20 +147,24 @@ class VehicleManagerState extends State<VehicleManager> {
                 builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
                   return CircleAvatar(
                       backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.jpg'),
-                      radius: 25,
+                      radius: 42,
                       backgroundColor: Colors.white);
                 }),
             SizedBox(width: 10),
-            //Text("${settings[i].batterySeriesCount}S"),
-            //SizedBox(width: 10),
-            //TODO: Editable board name
-            Text("${settings[i].boardAlias}"),
-            //Text("${settings[i].deviceID.substring(0,8)}"),
+            Column(children: [
+              Text("${settings[i].boardAlias}"), //TODO: Editable board name
+              Text("${settings[i].batterySeriesCount}S ${settings[i].wheelDiameterMillimeters}mm ${settings[i].gearRatio}:1"),
+              Text("${settings[i].deviceID}", style: TextStyle(fontSize: 4),),
+            ],
+            crossAxisAlignment: CrossAxisAlignment.start),
+
 
             Spacer(),
-            Text("${doublePrecision(distances[i], 2)} km", style: TextStyle(fontSize: 10)),
-            SizedBox(width: 10),
-            Text("${doublePrecision(consumptions[i], 2)} wh/km", style: TextStyle(fontSize: 10)),
+            Column(children: [
+              Text("${doublePrecision(distances[i], 2)} km"),
+              Text("${doublePrecision(consumptions[i], 2)} wh/km"),
+            ],crossAxisAlignment: CrossAxisAlignment.end),
+
             SizedBox(width: 10),
             // Show if the listed device is the one we are connected to
             myArguments.connectedDeviceID == settings[i].deviceID ? Icon(Icons.bluetooth_connected) : Container(),
@@ -142,7 +174,7 @@ class VehicleManagerState extends State<VehicleManager> {
             settings[i].deviceID.startsWith("R*") ? Icon(Icons.bedtime_outlined, color: Colors.grey) : Container(),
 
             // Allow any vehicle to be adopted/recruited if we are not currently connected to a known device
-            currentDeviceKnown == false || myArguments.connectedDeviceID == null ? GestureDetector(child: Icon(Icons.family_restroom), onTap: (){_recruitVehicle(settings[i].deviceID);}) : Container(),
+            !currentDeviceKnown && myArguments.connectedDeviceID != null ? GestureDetector(child: Icon(Icons.family_restroom), onTap: (){_recruitVehicle(settings[i].deviceID);}) : Container(),
 
             // Allow any disconnected vehicle to be removed
             myArguments.connectedDeviceID != settings[i].deviceID ? GestureDetector(child: Icon(Icons.delete_forever), onTap: (){_removeVehicle(settings[i].deviceID);}) : Container(),
@@ -153,7 +185,15 @@ class VehicleManagerState extends State<VehicleManager> {
         globalLogger.e("help!");
       }
     }
-    bodyWidget = ListView(children: listChildren,);
+    bodyWidget = ListView.separated(
+      separatorBuilder: (BuildContext context, int index) {
+        return SizedBox(
+          height: 5,
+        );
+      },
+      itemCount: listChildren.length,
+      itemBuilder: (_, i) => listChildren[i],
+    );
     globalLogger.wtf("hi");
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => VehicleManager(), settings: RouteSettings(arguments: myArguments)));
     return;
@@ -185,7 +225,8 @@ class VehicleManagerState extends State<VehicleManager> {
             size: 35.0,
             color: Colors.blue,
           ),
-          Text("Vehicle Manager"),
+          SizedBox(width: 3),
+          Text("FreeSK8 Garage"),
         ],),
       ),
       body: bodyWidget == null ? Container(child: Text("Loading")) : bodyWidget,
