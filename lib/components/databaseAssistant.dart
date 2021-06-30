@@ -192,6 +192,21 @@ class DatabaseAssistant {
     return Future.value(response);
   }
 
+  static Future<int> dbAssociateVehicle( String deviceID, String newDeviceID ) async {
+    final Database db = await getDatabase();
+    globalLogger.wtf("db moving $deviceID records to $newDeviceID");
+    int response = await db.update('logs', {'board_id': newDeviceID}, where: 'board_id = ?', whereArgs: [deviceID]);
+    await db.close();
+    return Future.value(response);
+  }
+
+  static Future<int> dbRemoveVehicle(String deviceID) async {
+    final Database db = await getDatabase();
+    int response = await db.delete('logs', where: 'board_id = ?', whereArgs: [deviceID]);
+    await db.close();
+    return Future.value(response);
+  }
+
   static Future<double> dbGetOdometer(String boardID) async {
     final Database db = await getDatabase();
     double distance = 0;

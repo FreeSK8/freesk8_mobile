@@ -25,6 +25,22 @@ class UserSettingsStructure {
 
   String deviceID;
 
+  UserSettingsStructure();
+
+  UserSettingsStructure.fromValues(UserSettingsStructure values)
+  {
+    this.boardAlias = values.boardAlias;
+    this.boardAvatarPath = values.boardAvatarPath;
+    this.batterySeriesCount = values.batterySeriesCount;
+    this.batteryCellMinVoltage = values.batteryCellMinVoltage;
+    this.batteryCellMaxVoltage = values.batteryCellMaxVoltage;
+    this.wheelDiameterMillimeters = values.wheelDiameterMillimeters;
+    this.motorPoles = values.motorPoles;
+    this.maxERPM = values.maxERPM;
+    this.gearRatio = values.gearRatio;
+    this.deviceID = values.deviceID;
+  }
+
   @override
   String toString(){
     return jsonEncode(this.toJson());
@@ -177,6 +193,51 @@ class UserSettings {
     prefs.getStringList('knownDevices') != null ? prefs.getStringList(
         'knownDevices') : [];
     return knownDevices;
+  }
+
+  static Future<bool> removeDevice(String deviceID) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.remove('$deviceID boardAlias');
+    await prefs.remove('$deviceID boardAvatarPath');
+    await prefs.remove('$deviceID batterySeriesCount');
+    await prefs.remove('$deviceID batteryCellMinVoltage');
+    await prefs.remove('$deviceID batteryCellMaxVoltage');
+    await prefs.remove('$deviceID wheelDiameterMillimeters');
+    await prefs.remove('$deviceID motorPoles');
+    await prefs.remove('$deviceID maxERPM');
+    await prefs.remove('$deviceID gearRatio');
+
+    List<String> knownDevices = prefs.getStringList('knownDevices') != null ? prefs.getStringList('knownDevices') : [];
+    knownDevices.remove(deviceID);
+    globalLogger.d("Removing $deviceID from known devices $knownDevices");
+    await prefs.setStringList('knownDevices', knownDevices);
+    return Future.value(true);
+  }
+
+  static Future<bool> associateDevice(String deviceID, String newDeviceID) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // Setup new device with old device values
+    await prefs.setString('$newDeviceID boardAlias', prefs.getString('$deviceID boardAlias') ?? "Unnamed");
+    await prefs.setString('$newDeviceID boardAvatarPath', prefs.getString('$deviceID boardAvatarPath') ?? null);
+    await prefs.setInt('$newDeviceID batterySeriesCount', prefs.getInt('$deviceID batterySeriesCount') ?? 12);
+    await prefs.setDouble('$newDeviceID batteryCellMinVoltage', prefs.getDouble('$deviceID batteryCellMinVoltage') ?? 3.2);
+    await prefs.setDouble('$newDeviceID batteryCellMaxVoltage', prefs.getDouble('$deviceID batteryCellMaxVoltage') ?? 4.2);
+    await prefs.setInt('$newDeviceID wheelDiameterMillimeters', prefs.getInt('$deviceID wheelDiameterMillimeters') ?? 110);
+    await prefs.setInt('$newDeviceID motorPoles', prefs.getInt('$deviceID motorPoles') ?? 14);
+    await prefs.setDouble('$newDeviceID maxERPM', prefs.getDouble('$deviceID maxERPM') ?? 100000);
+    await prefs.setDouble('$newDeviceID gearRatio', prefs.getDouble('$deviceID gearRatio') ?? 4.0);
+
+    List<String> knownDevices = prefs.getStringList('knownDevices') != null ? prefs.getStringList('knownDevices') : [];
+    knownDevices.add(newDeviceID);
+    globalLogger.d("Adding $newDeviceID to known devices $knownDevices");
+    await prefs.setStringList('knownDevices', knownDevices);
+
+    //Remove old device
+    await removeDevice(deviceID);
+
+    return Future.value(true);
   }
 
   static Future<UserSettingsStructure> getSettings(String deviceID) async {

@@ -2448,7 +2448,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                 FocusScope.of(context).requestFocus(new FocusNode()); //Hide keyboard
                                 setState(() {
                                   // navigate to the route
-                                  Navigator.of(context).pushNamed(VehicleManager.routeName, arguments: null);
+                                  Navigator.of(context).pushNamed(VehicleManager.routeName, arguments: VehicleManagerArguments(widget.currentDevice == null ? null : widget.currentDevice?.id.toString(), Navigator.of(context)));
                                 });
                               }),
                         ],),
