@@ -111,16 +111,22 @@ class VehicleManagerState extends State<VehicleManager> {
                   Icon(Icons.remove_circle),
                   Text("Retire"),
                   SizedBox(width: 3),
-                  Icon(Icons.bedtime_outlined, color: Colors.grey),
-                  Text("Retired"),
+                  Icon(Icons.delete_forever),
+                  Text("Erase"),
                   SizedBox(width: 4),
                   Icon(Icons.family_restroom),
                   Text("Adopt")
                 ],),
+
+                Text("Status icons:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.grey)),
                 Row(children: [
-                  Icon(Icons.delete_forever),
-                  Text("Erase"),
-                ])
+                  Icon(Icons.bedtime_outlined, color: Colors.grey),
+                  Text("Retired"),
+                  SizedBox(width: 4),
+                  Icon(Icons.bluetooth_connected, color: Colors.grey),
+                  Text("Connected")
+                ],),
+
               ])
             ])
     );
@@ -167,7 +173,7 @@ class VehicleManagerState extends State<VehicleManager> {
 
             SizedBox(width: 10),
             // Show if the listed device is the one we are connected to
-            myArguments.connectedDeviceID == settings[i].deviceID ? Icon(Icons.bluetooth_connected) : Container(),
+            myArguments.connectedDeviceID == settings[i].deviceID ? Icon(Icons.bluetooth_connected, color: Colors.grey) : Container(),
             myArguments.connectedDeviceID == settings[i].deviceID ? GestureDetector(child: Icon(Icons.remove_circle), onTap: (){_retireVehicle(settings[i].deviceID);}) : Container(),
 
             // Show if vehicle has been retired from service
