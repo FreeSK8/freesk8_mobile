@@ -2684,6 +2684,29 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     }
   }
 
+  void reloadUserSettings(bool navigateHome) async {
+    globalLogger.wtf("reloadUserSettings");
+    if (_connectedDevice != null) {
+      await widget.myUserSettings.loadSettings(_connectedDevice.id.toString()).then((value){
+        globalLogger.i("reloadUserSettings::widget.myUserSettings.loadSettings(): isConnectedDeviceKnown = $value");
+        isConnectedDeviceKnown = value;
+      });
+      if (isConnectedDeviceKnown) {
+        cachedBoardAvatar = widget.myUserSettings.settings.boardAvatarPath != null ? MemoryImage(File(
+            "${(await getApplicationDocumentsDirectory()).path}${widget.myUserSettings.settings.boardAvatarPath}").readAsBytesSync()) : null;
+      } else {
+        cachedBoardAvatar = null;
+      }
+      setState(() {
+
+      });
+    }
+    //TODO: I don't want to navigate back to home but I can't get the configuration page to show an updated avatar after adoption in vehicle manager
+    if (navigateHome) {
+      _delayedTabControllerIndexChange(controllerViewConnection);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if(syncInProgress && syncAdvanceProgress){
@@ -2805,6 +2828,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 escFirmwareVersion: escFirmwareVersion,
                 updateComputedVehicleStatistics: updateComputedVehicleStatistics,
                 applicationDocumentsDirectory: applicationDocumentsDirectory,
+                reloadUserSettings: reloadUserSettings,
               )
             ])
           ),

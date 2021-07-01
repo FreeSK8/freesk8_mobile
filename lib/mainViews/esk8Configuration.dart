@@ -54,6 +54,7 @@ class ESK8Configuration extends StatefulWidget {
     this.escFirmwareVersion,
     this.updateComputedVehicleStatistics,
     @required this.applicationDocumentsDirectory,
+    this.reloadUserSettings,
   });
   final UserSettings myUserSettings;
   final BluetoothDevice currentDevice;
@@ -80,6 +81,8 @@ class ESK8Configuration extends StatefulWidget {
   final ValueChanged<bool> updateComputedVehicleStatistics;
 
   final String applicationDocumentsDirectory;
+
+  final ValueChanged<bool> reloadUserSettings;
 
   ESK8ConfigurationState createState() => new ESK8ConfigurationState();
 
@@ -2444,12 +2447,15 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
                           ElevatedButton(
                               child: Text("Open Board Manager"),
-                              onPressed: () {
+                              onPressed: () async {
                                 FocusScope.of(context).requestFocus(new FocusNode()); //Hide keyboard
-                                setState(() {
-                                  // navigate to the route
-                                  Navigator.of(context).pushNamed(VehicleManager.routeName, arguments: VehicleManagerArguments(widget.currentDevice == null ? null : widget.currentDevice?.id.toString(), Navigator.of(context)));
-                                });
+                                // Wait for the navigation to return
+                                final result = await Navigator.of(context).pushNamed(VehicleManager.routeName, arguments: VehicleManagerArguments(widget.currentDevice == null ? null : widget.currentDevice?.id.toString()));
+                                // If changes were made the result of the Navigation will be true and we'll want to reload the user settings
+                                if (result == true) {
+                                  // Request the user settings to be reloaded
+                                  widget.reloadUserSettings(result);
+                                }
                               }),
                         ],),
                       isExpanded: _showAdvanced

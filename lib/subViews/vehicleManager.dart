@@ -10,9 +10,8 @@ import 'package:uuid/uuid.dart';
 
 class VehicleManagerArguments {
   final String connectedDeviceID;
-  final NavigatorState navigatorState;
 
-  VehicleManagerArguments(this.connectedDeviceID, this.navigatorState);
+  VehicleManagerArguments(this.connectedDeviceID);
 }
 
 class VehicleManager extends StatefulWidget {
@@ -23,7 +22,7 @@ class VehicleManager extends StatefulWidget {
 }
 
 class VehicleManagerState extends State<VehicleManager> {
-  static Widget bodyWidget;
+  bool changesMadeToVehicle = false;
   VehicleManagerArguments myArguments;
 
   @override
@@ -33,68 +32,69 @@ class VehicleManagerState extends State<VehicleManager> {
 
   @override
   void dispose() {
-    bodyWidget = null;
     super.dispose();
   }
 
   void _retireVehicle(String deviceID) async {
-    await genericConfirmationDialog(myArguments.navigatorState.context, TextButton(
+    changesMadeToVehicle = true;
+    await genericConfirmationDialog(context, TextButton(
       child: Text("NO"),
       onPressed: () {
-        Navigator.of(myArguments.navigatorState.context).pop();
+        Navigator.of(context).pop();
       },
     ), TextButton(
       child: Text("YES"),
       onPressed: () async {
         var uuid = Uuid();
-        Navigator.of(myArguments.navigatorState.context).pop();
+        Navigator.of(context).pop();
         String newID = "R*${uuid.v4().toString()}"; // Generate unique retirement ID
         await DatabaseAssistant.dbAssociateVehicle(deviceID, newID);
         await UserSettings.associateDevice(deviceID, newID);
-        _reloadBody();
+        setState(() {});
       },
     ), "Retire Vehicle", Text("Are you sure you want to retire the selected vehicle? The connected bluetooth device will no longer be associated with this vehicle. Nothing will be erased."));
   }
 
   void _recruitVehicle(String deviceID) async {
-    await genericConfirmationDialog(myArguments.navigatorState.context, TextButton(
+    changesMadeToVehicle = true;
+    await genericConfirmationDialog(context, TextButton(
       child: Text("NO"),
       onPressed: () {
-        Navigator.of(myArguments.navigatorState.context).pop();
+        Navigator.of(context).pop();
       },
     ), TextButton(
       child: Text("YES"),
       onPressed: () async {
-        Navigator.of(myArguments.navigatorState.context).pop();
+        Navigator.of(context).pop();
         String newID = myArguments.connectedDeviceID;
         await DatabaseAssistant.dbAssociateVehicle(deviceID, newID);
         await UserSettings.associateDevice(deviceID, newID);
-        _reloadBody();
+        setState(() {});
       },
     ), "Adopt Vehicle", Text("Assign connected bluetooth device to selected vehicle?"));
   }
 
   void _removeVehicle(String deviceID) async {
-    await genericConfirmationDialog(myArguments.navigatorState.context, TextButton(
+    await genericConfirmationDialog(context, TextButton(
       child: Text("NO"),
       onPressed: () {
-        Navigator.of(myArguments.navigatorState.context).pop();
+        Navigator.of(context).pop();
       },
     ), TextButton(
       child: Text("YES"),
       onPressed: () async {
-        Navigator.of(myArguments.navigatorState.context).pop();
+        Navigator.of(context).pop();
         await DatabaseAssistant.dbRemoveVehicle(deviceID);
         await UserSettings.removeDevice(deviceID);
-        _reloadBody();
+        setState(() {});
       },
     ), "Remove Vehicle", Text("Remove the selected vehicle and all of it's data?"));
   }
 
-  void _buildBody(BuildContext context) async {
+  Future<Widget> _buildBody(BuildContext context) async {
+    Widget bodyWidget;
+
     List<Widget> listChildren = [];
-
-
     List<String> knownDevices = await UserSettings.getKnownDevices();
     bool currentDeviceKnown = knownDevices.contains(myArguments.connectedDeviceID);
     globalLogger.w("connected device is in known devices? $currentDeviceKnown Connected device: ${myArguments.connectedDeviceID}");
@@ -194,15 +194,8 @@ class VehicleManagerState extends State<VehicleManager> {
       itemCount: listChildren.length,
       itemBuilder: (_, i) => listChildren[i],
     );
-    globalLogger.wtf("hi");
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => VehicleManager(), settings: RouteSettings(arguments: myArguments)));
-    return;
-  }
 
-  void _reloadBody() {
-    bodyWidget = null;
-    // Reload view, tricky eh?
-    myArguments.navigatorState.pushReplacement(MaterialPageRoute(builder: (BuildContext context) => VehicleManager(), settings: RouteSettings(arguments: myArguments)));
+    return bodyWidget;
   }
 
   @override
@@ -215,21 +208,34 @@ class VehicleManagerState extends State<VehicleManager> {
       return Container(child:Text("No Arguments"));
     }
 
-    if (bodyWidget == null) {
-      _buildBody(context);
-    }
-    return Scaffold(
-      appBar: AppBar(
-        title: Row(children: <Widget>[
-          Icon( Icons.list_alt,
-            size: 35.0,
-            color: Colors.blue,
+    return new WillPopScope(
+      onWillPop: () async => false,
+      child: new Scaffold(
+        appBar: AppBar(
+          title: Row(children: <Widget>[
+            Icon( Icons.list_alt,
+              size: 35.0,
+              color: Colors.blue,
+            ),
+            SizedBox(width: 3),
+            Text("FreeSK8 Garage"),
+          ],),
+          leading: new IconButton(
+            icon: new Icon(Icons.arrow_back),
+            onPressed: () => Navigator.of(context).pop(changesMadeToVehicle),
           ),
-          SizedBox(width: 3),
-          Text("FreeSK8 Garage"),
-        ],),
+        ),
+        body: FutureBuilder<Widget>(
+            future: _buildBody(context),
+            builder: (context, AsyncSnapshot<Widget> snapshot) {
+              if (snapshot.hasData) {
+                return snapshot.data;
+              } else {
+                return CircularProgressIndicator();
+              }
+            }
+        ),
       ),
-      body: bodyWidget == null ? Container(child: Text("Loading")) : bodyWidget,
     );
   }
 }
