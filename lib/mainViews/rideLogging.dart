@@ -619,14 +619,20 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                 boardID: statsEarlier.boardID,
                                 boardAlias: statsEarlier.boardAlias,
                                 logFilePath: statsEarlier.logFilePath,
+                                avgMovingSpeed: doublePrecision(statsEarlier.avgMovingSpeed + statsLater.avgMovingSpeed / 2, 2),
+                                avgMovingSpeedGPS: doublePrecision(statsEarlier.avgMovingSpeedGPS + statsLater.avgMovingSpeedGPS / 2, 2),
                                 avgSpeed: doublePrecision(statsEarlier.avgSpeed + statsLater.avgSpeed / 2, 2),
+                                avgSpeedGPS: doublePrecision(statsEarlier.avgSpeedGPS + statsLater.avgSpeedGPS / 2, 2),
                                 maxSpeed: statsEarlier.maxSpeed > statsLater.maxSpeed ? statsEarlier.maxSpeed : statsLater.maxSpeed,
-                                elevationChange: statsEarlier.elevationChange > statsLater.elevationChange ? statsEarlier.elevationChange : statsLater.elevationChange, //TODO: without the min and max we can't calculate the new change
+                                maxSpeedGPS: doublePrecision(statsEarlier.maxSpeedGPS + statsLater.maxSpeedGPS / 2, 2),
+                                altitudeMax: statsEarlier.altitudeMax > statsLater.altitudeMax ? statsEarlier.altitudeMax : statsLater.altitudeMax,
+                                altitudeMin: statsEarlier.altitudeMin < statsLater.altitudeMin ? statsEarlier.altitudeMin : statsLater.altitudeMin,
                                 maxAmpsBattery: statsEarlier.maxAmpsBattery > statsLater.maxAmpsBattery ? statsEarlier.maxAmpsBattery : statsLater.maxAmpsBattery,
                                 maxAmpsMotors: statsEarlier.maxAmpsBattery > statsLater.maxAmpsBattery ? statsEarlier.maxAmpsBattery : statsLater.maxAmpsBattery,
                                 wattHoursTotal: doublePrecision(statsEarlier.wattHoursTotal + statsLater.wattHoursTotal, 2),
                                 wattHoursRegenTotal: doublePrecision(statsEarlier.wattHoursRegenTotal + statsLater.wattHoursRegenTotal, 2),
                                 distance: doublePrecision(statsEarlier.distance + statsLater.distance, 2),
+                                distanceGPS: doublePrecision(statsEarlier.distanceGPS + statsLater.distanceGPS, 2),
                                 durationSeconds: statsLater.dateTime.difference(statsEarlier.dateTime).inSeconds + statsLater.durationSeconds,
                                 faultCount: statsEarlier.faultCount + statsLater.faultCount,
                                 rideName: statsEarlier.rideName,
@@ -833,9 +839,9 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
       Text("${logEntry.wattHoursRegenTotal} wh regen",
           textAlign: TextAlign.center)]));
 
-    if (logEntry.elevationChange != -1.0) tableChildren.add(TableRow(children: [
+    if (logEntry.altitudeMax != -1.0) tableChildren.add(TableRow(children: [
       Icon(Icons.show_chart),
-      Text("${doublePrecision(logEntry.elevationChange, 2)} meters",
+      Text("${doublePrecision(logEntry.altitudeMax - logEntry.altitudeMin, 2)} meters",
           textAlign: TextAlign.center)]));
 
     tableChildren.add(TableRow(children: [
