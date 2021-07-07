@@ -1101,14 +1101,25 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             Map<int, double> wattHoursEndByESC = new Map();
             Map<int, double> wattHoursRegenStartByESC = new Map();
             Map<int, double> wattHoursRegenEndByESC = new Map();
+            int escRecordCount = 0;
+            int gpsRecordCount = 0;
             double maxCurrentBattery = 0.0;
             double maxCurrentMotor = 0.0;
             double maxSpeedKph = 0.0;
-            //double avgSpeedKph = 0.0;
+            double maxSpeedGPS;
+            double avgMovingSpeed;
+            int avgMovingSpeedEntries = 0;
+            double avgMovingSpeedGPS;
+            int avgMovingSpeedGPSEntries = 0;
+            double avgSpeed;
+            int avgSpeedEntries = 0;
+            double avgSpeedGPS;
+            int avgSpeedGPSEntries = 0;
             int firstESCID;
             double distanceStart;
             double distanceEnd;
             double distanceTotal;
+            double distanceTotalGPS;
             int faultCodeCount = 0;
             double minElevation;
             double maxElevation;
@@ -1140,6 +1151,25 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   if (elevation < minElevation) minElevation = elevation;
                   if (elevation > maxElevation) maxElevation = elevation;
 
+
+                  // Track avg speed
+                  double speedNow = double.tryParse(entry[4]);
+                  avgSpeedGPS += speedNow;
+                  ++avgSpeedGPSEntries;
+
+                  // Track avg moving speed (;idle boards won't bring you down;)
+                  if (speedNow > 0.0) {
+                    avgMovingSpeedGPS += speedNow;
+                    ++avgMovingSpeedGPSEntries;
+                  }
+
+                  // Track max speed
+                  if (speedNow > maxSpeedGPS) {
+                    maxSpeedGPS = speedNow;
+                  }
+
+                  // Compute distance traveled
+                  //TODO: this
                 }
                 ///ESC Values
                 else if (entry[1] == "esc" && entry.length >= 14) {
@@ -1165,7 +1195,14 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   if (speed > maxSpeedKph) {
                     maxSpeedKph = speed;
                   }
-                  //TODO: Compute average speed!
+                  // Prepare average speed!
+                  avgSpeed += speed;
+                  ++avgSpeedEntries;
+                  // Prepare average moving speed
+                  if (speed > 0.0) {
+                    avgMovingSpeed += speed;
+                    ++avgMovingSpeedEntries;
+                  }
                   // Capture Distance for first ESC
                   if (escID == firstESCID) {
                     distanceStart ??= eDistanceToKm(eDistance, widget.myUserSettings.settings.gearRatio, widget.myUserSettings.settings.wheelDiameterMillimeters, widget.myUserSettings.settings.motorPoles);
@@ -1178,6 +1215,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   wattHoursEndByESC[escID] = wattHours;
                   wattHoursRegenStartByESC[escID] ??= wattHoursRegen;
                   wattHoursRegenEndByESC[escID] = wattHoursRegen;
+
+                  ++escRecordCount;
                 }
                 ///Fault codes
                 else if (entry[1] == "err") {
@@ -1208,6 +1247,19 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
             globalLogger.d("Consumption calculation: Watt Hours Total $wattHours Regenerated Total $wattHoursRegen");
 
+            /// Compute average speeds
+            if (avgSpeedGPSEntries > 0) {
+              avgSpeedGPS /= avgSpeedGPSEntries;
+            }
+            if (avgMovingSpeedGPSEntries > 0) {
+              avgMovingSpeedGPS /= avgMovingSpeedGPSEntries;
+            }
+            if (avgSpeedEntries > 0) {
+              avgSpeed /= avgSpeedEntries;
+            }
+            if (avgMovingSpeedEntries > 0) {
+              avgMovingSpeed /= avgMovingSpeedEntries;
+            }
             //NOTE: failure checking...
             //int test = null;
             //int fail = test + 420;
@@ -1221,14 +1273,20 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   boardID: widget.myUserSettings.currentDeviceID,
                   boardAlias: widget.myUserSettings.settings.boardAlias,
                   logFilePath: savedFilePath,
-                  avgSpeed: -1.0, //TODO: compute average speed
+                  avgMovingSpeed: avgMovingSpeed != null ? doublePrecision(avgMovingSpeed, 2) : -1.0,
+                  avgMovingSpeedGPS: avgMovingSpeedGPS != null ? doublePrecision(avgMovingSpeedGPS, 2) : -1.0,
+                  avgSpeed: avgSpeed != null ? doublePrecision(avgSpeed, 2) : -1.0,
+                  avgSpeedGPS: avgSpeedGPS != null ? doublePrecision(avgSpeedGPS, 2) : -1.0,
                   maxSpeed: maxSpeedKph,
-                  elevationChange: maxElevation != null ? maxElevation - minElevation : -1.0,
+                  maxSpeedGPS: maxSpeedGPS != null ? doublePrecision(maxSpeedGPS, 2) : -1.0,
+                  altitudeMax: maxElevation != null ? maxElevation : -1.0,
+                  altitudeMin: minElevation != null ? minElevation : -1.0,
                   maxAmpsBattery: maxCurrentBattery,
                   maxAmpsMotors: maxCurrentMotor,
                   wattHoursTotal: doublePrecision(wattHours, 2),
                   wattHoursRegenTotal: doublePrecision(wattHoursRegen, 2),
                   distance: distanceTotal,
+                  distanceGPS: distanceTotalGPS != null ? distanceTotalGPS : -1.0,
                   durationSeconds: lastEntryTime.difference(firstEntryTime).inSeconds,
                   faultCount: faultCodeCount,
                   rideName: "",
