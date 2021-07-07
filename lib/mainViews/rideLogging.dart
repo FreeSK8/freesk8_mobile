@@ -18,6 +18,8 @@ import 'package:table_calendar/table_calendar.dart';
 
 import 'dart:io';
 
+import 'package:flutter_slidable/flutter_slidable.dart';
+
 class Dialogs {
   static Future<void> showLoadingDialog(
       BuildContext context, GlobalKey key) async {
@@ -454,180 +456,180 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
               ListView.builder(
                 itemCount: rideLogsFromDatabase.length,
                 itemBuilder: (BuildContext context, int index){
-                  //TODO: consider https://pub.dev/packages/flutter_slidable for extended functionality
                   //Each item has dismissible wrapper
-                  return Dismissible(
-                    secondaryBackground: Container(
-                        color: Colors.red,
-                        margin: const EdgeInsets.only(bottom: 5.0),
-                        alignment: AlignmentDirectional.centerEnd,
-                        child: Padding(
-                          padding: EdgeInsets.fromLTRB(0.0, 0.0, 10.0, 0.0),
-                          child: Icon(Icons.delete, color: Colors.white,
-                          ),
-                        )
-                    ),
-                    background: Container(
-                        color: Colors.blue,
-                        margin: const EdgeInsets.only(bottom: 5.0),
-                        alignment: AlignmentDirectional.centerStart,
-                        child: Padding(
-                          padding: EdgeInsets.fromLTRB(10.0, 0.0, 0.0, 0.0),
-                          child: Icon(Icons.share, color: Colors.white,
-                          ),
-                        )
-                    ),
-                    // Each Dismissible must contain a Key. Keys allow Flutter to uniquely identify widgets.
-                    // Use filename as key
-                    key: Key(rideLogsFromDatabase[index].logFilePath.substring(rideLogsFromDatabase[index].logFilePath.lastIndexOf("/") + 1, rideLogsFromDatabase[index].logFilePath.lastIndexOf("/") + 20)),
-                    onDismissed: (direction) async {
-                      final documentsDirectory = await getApplicationDocumentsDirectory();
-                      // Remove the item from the data source.
-                      setState(() {
-                        //Remove from Database
-                        DatabaseAssistant.dbRemoveLog(rideLogsFromDatabase[index].logFilePath);
-                        //Remove from Filesystem
-                        File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").delete();
-                        //Remove from itemBuilder's list of entries
-                        rideLogsFromDatabase.removeAt(index);
-                      });
-                    },
-                    confirmDismiss: (DismissDirection direction) async {
-                      globalLogger.d("rideLogging::Dismissible: ${direction.toString()}");
-                      // Swipe Right to Share
-                      if (direction == DismissDirection.startToEnd) {
-                        // Share file dialog
-                        String fileSummary = 'Robogotchi gotchi!';
-                        String fileContents = await FileManager.openLogFile(rideLogsFromDatabase[index].logFilePath);
-                        await Share.file('FreeSK8Log', "${rideLogsFromDatabase[index].logFilePath.substring(rideLogsFromDatabase[index].logFilePath.lastIndexOf("/") + 1)}", utf8.encode(fileContents), 'text/csv', text: fileSummary);
-                        return false;
-                      } else {
-                        // Swipe Left to Erase
-                        return await genericConfirmationDialog(
-                            context,
-                            TextButton(
-                                onPressed: () => Navigator.of(context).pop(true),
-                                child: const Text("Delete")
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(false),
-                              child: const Text("Cancel"),
-                            ),
-                            "Delete file?",
-                            Text("Are you sure you wish to permanently erase this item?")
-                        );
-                      }
-                    },
-                    child: GestureDetector(
-                      onTap: () async {
-                        await _loadLogFile(index);
-                      },
-                      onLongPress: () {
-                        _buildDialog("${rideLogsFromDatabase[index].boardAlias}", rideLogsFromDatabase[index], widget.myUserSettings.settings.useImperial);
-                      },
-                      child: Column(
-                          children: <Widget>[
-                            Container(height: 50,
-                                width: MediaQuery.of(context).size.width - 20,
-                                margin: const EdgeInsets.only(left: 10.0),
-                                color: Theme.of(context).dialogBackgroundColor,
-                                child: Row(
+                  return Slidable(
+                    key: Key(rideLogsFromDatabase[index].logFilePath.substring(rideLogsFromDatabase[index].logFilePath.lastIndexOf("/") + 1)),
+                    actionPane: SlidableDrawerActionPane(),
+                    actionExtentRatio: 0.25,
+                    child: Container(
 
-                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: <Widget>[
-                                    /*
-                                        SizedBox(width: 5,),
-                                        SizedBox(
-                                          width: 80,
-                                          child: Text(rideLogsFromDatabase[index].boardAlias, textAlign: TextAlign.center,),
-                                        ),s
-                                         */
-                                    SizedBox(width: 5,),
-                                    SizedBox(width: 50, child:
-                                    FutureBuilder<String>(
-                                        future: UserSettings.getBoardAvatarPath(rideLogsFromDatabase[index].boardID),
-                                        builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
-                                          return CircleAvatar(
-                                              backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.jpg'),
-                                              radius: 25,
-                                              backgroundColor: Colors.white);
-                                        })
-                                      ,),
-                                    SizedBox(width: 10,),
+                      child: GestureDetector(
+                        onTap: () async {
+                          await _loadLogFile(index);
+                        },
+                        onLongPress: () {
+                          _buildDialog("${rideLogsFromDatabase[index].boardAlias}", rideLogsFromDatabase[index], widget.myUserSettings.settings.useImperial);
+                        },
+                        child: Column(
+                            children: <Widget>[
+                              Container(height: 50,
+                                  width: MediaQuery.of(context).size.width - 20,
+                                  margin: const EdgeInsets.only(left: 10.0, right: 10),
+                                  color: Theme.of(context).dialogBackgroundColor,
+                                  child: Row(
 
-                                    Expanded(
-                                      child: Text(rideLogsFromDatabase[index].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)),
-                                    ),
+                                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: <Widget>[
+                                      SizedBox(width: 5,),
+                                      SizedBox(width: 50, child:
+                                      FutureBuilder<String>(
+                                          future: UserSettings.getBoardAvatarPath(rideLogsFromDatabase[index].boardID),
+                                          builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+                                            if (snapshot.hasData) {
+                                              return CircleAvatar(
+                                                  backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.jpg'),
+                                                  radius: 25,
+                                                  backgroundColor: Colors.white);
+                                            }
+                                            return SizedBox(width:50);
+                                          })
+                                        ,),
+                                      SizedBox(width: 10,),
 
-                                    SizedBox(
-                                      width: 32,
-                                      child: Icon(
-                                          rideLogsFromDatabase[index].faultCount < 1 ? Icons.check_circle_outline : Icons.error_outline,
-                                          color: rideLogsFromDatabase[index].faultCount < 1 ? Colors.green : Colors.red),
-                                    ),
-
-                                    /// Ride Log Note Editor
-                                    SizedBox(
-                                      width: 32,
-                                      child: GestureDetector(
-                                        onTap: (){
-                                          tecRideNotes.text = rideLogsFromDatabase[index].notes;
-
-                                          showDialog(context: context,
-                                              builder: (_) =>  AlertDialog(
-                                                title: const Icon(Icons.chat, size:40),
-                                                content: TextField(
-                                                  controller: tecRideNotes,
-                                                  decoration: new InputDecoration(labelText: "Notes:"),
-                                                  keyboardType: TextInputType.text,
-                                                ),
-                                                actions: <Widget>[
-                                                  TextButton(
-                                                      onPressed: () async {
-                                                        // Update notes field in database
-                                                        await DatabaseAssistant.dbUpdateNote(rideLogsFromDatabase[index].logFilePath, tecRideNotes.text);
-                                                        _listFiles(true);
-                                                        Navigator.of(context).pop(true);
-                                                      },
-                                                      child: const Text("Save")
-                                                  ),
-                                                  TextButton(
-                                                    onPressed: () => Navigator.of(context).pop(false),
-                                                    child: const Text("Cancel"),
-                                                  ),
-                                                ],
-                                              )
-                                          );
-                                        },
-                                        child: Icon( rideLogsFromDatabase[index].notes.length > 0 ? Icons.chat : Icons.chat_bubble_outline, size: 32),
+                                      Expanded(
+                                        child: Text(rideLogsFromDatabase[index].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)),
                                       ),
-                                    ),
 
-                                    SizedBox(width: 10),
-                                    //SizedBox(
-                                    //  width: 32,
-                                    //  child: Icon(Icons.timer),
-                                    //),
-                                    SizedBox(
-                                        width: 69,
-                                        //child: Text("${(File(rideLogsFromDatabase[index].logFilePath).statSync().size / 1024).round()} kb"),
-                                        child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text("${Duration(seconds: rideLogsFromDatabase[index].durationSeconds).toString().substring(0,Duration(seconds: rideLogsFromDatabase[index].durationSeconds).toString().indexOf("."))}"),
-                                            rideLogsFromDatabase[index].distance == -1.0 || widget.myUserSettings.settings.useGPSData ? Container() : Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[index].distance) : rideLogsFromDatabase[index].distance} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}")
-                                          ],
-                                        )
-                                    ),
-                                  ],
-                                )
-                            ),
-                            SizedBox(height: 5,)
-                          ]
+                                      SizedBox(
+                                        width: 32,
+                                        child: Icon(
+                                            rideLogsFromDatabase[index].faultCount < 1 ? Icons.check_circle_outline : Icons.error_outline,
+                                            color: rideLogsFromDatabase[index].faultCount < 1 ? Colors.green : Colors.red),
+                                      ),
+
+                                      /// Ride Log Note Editor
+                                      SizedBox(
+                                        width: 32,
+                                        child: GestureDetector(
+                                          onTap: (){
+                                            tecRideNotes.text = rideLogsFromDatabase[index].notes;
+
+                                            showDialog(context: context,
+                                                builder: (_) =>  AlertDialog(
+                                                  title: const Icon(Icons.chat, size:40),
+                                                  content: TextField(
+                                                    controller: tecRideNotes,
+                                                    decoration: new InputDecoration(labelText: "Notes:"),
+                                                    keyboardType: TextInputType.text,
+                                                  ),
+                                                  actions: <Widget>[
+                                                    TextButton(
+                                                        onPressed: () async {
+                                                          // Update notes field in database
+                                                          await DatabaseAssistant.dbUpdateNote(rideLogsFromDatabase[index].logFilePath, tecRideNotes.text);
+                                                          _listFiles(true);
+                                                          Navigator.of(context).pop(true);
+                                                        },
+                                                        child: const Text("Save")
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () => Navigator.of(context).pop(false),
+                                                      child: const Text("Cancel"),
+                                                    ),
+                                                  ],
+                                                )
+                                            );
+                                          },
+                                          child: Icon( rideLogsFromDatabase[index].notes.length > 0 ? Icons.chat : Icons.chat_bubble_outline, size: 32),
+                                        ),
+                                      ),
+
+                                      SizedBox(width: 10),
+
+                                      SizedBox(
+                                          width: 69,
+                                          //child: Text("${(File(rideLogsFromDatabase[index].logFilePath).statSync().size / 1024).round()} kb"),
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text("${Duration(seconds: rideLogsFromDatabase[index].durationSeconds).toString().substring(0,Duration(seconds: rideLogsFromDatabase[index].durationSeconds).toString().indexOf("."))}"),
+                                              rideLogsFromDatabase[index].distance == -1.0 || widget.myUserSettings.settings.useGPSData ? Container() : Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[index].distance) : rideLogsFromDatabase[index].distance} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}")
+                                            ],
+                                          )
+                                      ),
+                                    ],
+                                  )
+                              ),
+                              SizedBox(height: 5,)
+                            ]
+                        ),
                       ),
                     ),
+                    actions: <Widget>[
+                      IconSlideAction(
+                        caption: 'Merge',
+                        color: Colors.blue,
+                        icon: Icons.archive,
+                        onTap: (){}
+                      ),
+                      IconSlideAction(
+                        caption: 'Share',
+                        color: Colors.indigo,
+                        icon: Icons.share,
+                        onTap: () async {
+                          // Share file dialog
+                          String fileSummary = 'Robogotchi gotchi!';
+                          String fileContents = await FileManager.openLogFile(rideLogsFromDatabase[index].logFilePath);
+                          await Share.file('FreeSK8Log', "${rideLogsFromDatabase[index].logFilePath.substring(rideLogsFromDatabase[index].logFilePath.lastIndexOf("/") + 1)}", utf8.encode(fileContents), 'text/csv', text: fileSummary);
+                        },
+                      ),
+                    ],
+                    secondaryActions: <Widget>[
+                      IconSlideAction(
+                        caption: 'Delete',
+                        color: Colors.red,
+                        icon: Icons.delete,
+                        onTap: () async {
+                          // Swipe Left to Erase
+                          bool doErase = await genericConfirmationDialog(
+                              context,
+                              TextButton(
+                                  onPressed: () => Navigator.of(context).pop(true),
+                                  child: const Text("Delete")
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(false),
+                                child: const Text("Cancel"),
+                              ),
+                              "Delete file?",
+                              Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text("Are you sure you wish to permanently erase this item?"),
+                                  SizedBox(height: 15),
+                                  Text("${rideLogsFromDatabase[index].boardAlias}"),
+                                  Text("${rideLogsFromDatabase[index].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}"),
+                                  Text("${prettyPrintDuration(Duration(seconds: rideLogsFromDatabase[index].durationSeconds))}"),
+                                ],
+                              )
+                          );
+                          if (doErase) {
+                            final documentsDirectory = await getApplicationDocumentsDirectory();
+                            // Remove the item from the data source.
+                            setState(() {
+                              //Remove from Database
+                              DatabaseAssistant.dbRemoveLog(rideLogsFromDatabase[index].logFilePath);
+                              //Remove from Filesystem
+                              File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").delete();
+                              //Remove from itemBuilder's list of entries
+                              rideLogsFromDatabase.removeAt(index);
+                            });
+                          }
+                        },
+                      ),
+                    ],
                   );
                 })),
 
