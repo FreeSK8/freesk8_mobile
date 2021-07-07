@@ -149,6 +149,13 @@ class DatabaseAssistant {
     return Future.value(response);
   }
 
+  static Future<int> dbUpdateLog(LogInfoItem logItem) async {
+    final Database db = await getDatabase();
+    int response = await db.update('logs', logItem.toMap(), where: 'log_file_path = ?', whereArgs: [logItem.logFilePath]);
+    await db.close();
+    return Future.value(response);
+  }
+
   static Future<int> dbRemoveLog(String logFilePath) async {
     final Database db = await getDatabase();
     int response = await db.delete('logs', where: "log_file_path = '$logFilePath'");

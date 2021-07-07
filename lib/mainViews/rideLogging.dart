@@ -572,7 +572,80 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                         caption: 'Merge',
                         color: Colors.blue,
                         icon: Icons.archive,
-                        onTap: (){}
+                        onTap: () async {
+                          if (index+1 == rideLogsFromDatabase.length) return;
+
+                          // Confirm Merge with user
+                          bool doMerge = await genericConfirmationDialog(
+                              context,
+                              TextButton(
+                                  onPressed: () => Navigator.of(context).pop(true),
+                                  child: const Text("Merge")
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(false),
+                                child: const Text("Cancel"),
+                              ),
+                              "Merge with previous file?",
+                              Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text("Select merge to combine this file with the previous"),
+                                  SizedBox(height: 15),
+                                  Text("${rideLogsFromDatabase[index].boardAlias}"),
+                                  Text("${rideLogsFromDatabase[index].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}"),
+                                  Text("${prettyPrintDuration(Duration(seconds: rideLogsFromDatabase[index].durationSeconds))}"),
+
+                                  SizedBox(height: 15),
+                                  Text("Previous File:"),
+                                  Text("${rideLogsFromDatabase[index+1].boardAlias}"),
+                                  Text("${rideLogsFromDatabase[index+1].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}"),
+                                  Text("${prettyPrintDuration(Duration(seconds: rideLogsFromDatabase[index+1].durationSeconds))}"),
+                                ],
+                              )
+                          );
+                          if (doMerge) {
+                            globalLogger.d("Log Merge Confirmed. Files: ${rideLogsFromDatabase[index].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}, ${rideLogsFromDatabase[index+1].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}");
+                            final documentsDirectory = await getApplicationDocumentsDirectory();
+                            // Get later file contents and statistics
+                            String fileContents = File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").readAsStringSync();
+                            LogInfoItem statsLater = rideLogsFromDatabase[index];
+                            // Update earlier file with extra contents
+                            File("${documentsDirectory.path}${rideLogsFromDatabase[index+1].logFilePath}").writeAsStringSync(fileContents,mode: FileMode.append);
+                            LogInfoItem statsEarlier = rideLogsFromDatabase[index+1];
+                            // Update earlier file statistics
+                            LogInfoItem newStatistics = new LogInfoItem(
+                                dateTime: statsEarlier.dateTime,
+                                boardID: statsEarlier.boardID,
+                                boardAlias: statsEarlier.boardAlias,
+                                logFilePath: statsEarlier.logFilePath,
+                                avgSpeed: doublePrecision(statsEarlier.avgSpeed + statsLater.avgSpeed / 2, 2),
+                                maxSpeed: statsEarlier.maxSpeed > statsLater.maxSpeed ? statsEarlier.maxSpeed : statsLater.maxSpeed,
+                                elevationChange: statsEarlier.elevationChange > statsLater.elevationChange ? statsEarlier.elevationChange : statsLater.elevationChange, //TODO: without the min and max we can't calculate the new change
+                                maxAmpsBattery: statsEarlier.maxAmpsBattery > statsLater.maxAmpsBattery ? statsEarlier.maxAmpsBattery : statsLater.maxAmpsBattery,
+                                maxAmpsMotors: statsEarlier.maxAmpsBattery > statsLater.maxAmpsBattery ? statsEarlier.maxAmpsBattery : statsLater.maxAmpsBattery,
+                                wattHoursTotal: doublePrecision(statsEarlier.wattHoursTotal + statsLater.wattHoursTotal, 2),
+                                wattHoursRegenTotal: doublePrecision(statsEarlier.wattHoursRegenTotal + statsLater.wattHoursRegenTotal, 2),
+                                distance: doublePrecision(statsEarlier.distance + statsLater.distance, 2),
+                                durationSeconds: statsLater.dateTime.difference(statsEarlier.dateTime).inSeconds + statsLater.durationSeconds,
+                                faultCount: statsEarlier.faultCount + statsLater.faultCount,
+                                rideName: statsEarlier.rideName,
+                                notes: statsEarlier.notes.length > statsLater.notes.length ? statsEarlier.notes : statsLater.notes
+                            );
+                            DatabaseAssistant.dbUpdateLog(newStatistics); // Update database entry
+                            rideLogsFromDatabase[index+1] = newStatistics; // Update in memory
+
+                            // Remove later file from database and filesystem
+                            setState(() {
+                              //Remove from Database
+                              DatabaseAssistant.dbRemoveLog(rideLogsFromDatabase[index].logFilePath);
+                              //Remove from Filesystem
+                              File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").delete();
+                              //Remove from itemBuilder's list of entries
+                              rideLogsFromDatabase.removeAt(index);
+                            });
+                          }
+                        }
                       ),
                       IconSlideAction(
                         caption: 'Share',
@@ -592,7 +665,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                         color: Colors.red,
                         icon: Icons.delete,
                         onTap: () async {
-                          // Swipe Left to Erase
+                          // Confirm Erase with user
                           bool doErase = await genericConfirmationDialog(
                               context,
                               TextButton(
