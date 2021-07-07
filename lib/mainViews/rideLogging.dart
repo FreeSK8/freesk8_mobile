@@ -803,12 +803,14 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
       Text("${prettyPrintDuration(Duration(seconds: logEntry.durationSeconds))}",
           textAlign: TextAlign.center)]));
 
-    if (logEntry.distance != -1.0) tableChildren.add(TableRow(children: [
+    //TODO: When database is updated we'll want to show GPS distance
+    if (logEntry.distance != -1.0 && !widget.myUserSettings.settings.useGPSData) tableChildren.add(TableRow(children: [
       Icon(Icons.flag),
       Text("${useImperial ? kmToMile(logEntry.distance) : logEntry.distance} ${useImperial ? "mi" : "km"}",
           textAlign: TextAlign.center)]));
 
-    tableChildren.add(TableRow(children: [
+    //TODO: When the database is updated we'll want to show GPS speed
+    if (!widget.myUserSettings.settings.useGPSData) tableChildren.add(TableRow(children: [
       Transform.rotate(angle: 3.14159, child: Icon(Icons.av_timer),),
       Text("${useImperial ? kmToMile(logEntry.maxSpeed) : logEntry.maxSpeed} ${useImperial ? "mph" : "kph"}",
           textAlign: TextAlign.center)]));
