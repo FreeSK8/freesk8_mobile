@@ -96,7 +96,8 @@ class DatabaseAssistant {
       'ALTER TABLE logs ADD COLUMN watt_hours REAL;&&ALTER TABLE logs ADD COLUMN watt_hours_regen REAL;', //Version 5 adds watt_hours and watt_hours_regen
       //Version 6 adds max_speed_gps, avg_speed_gps, distance_km_gps, altitude_min, altitude_max, avg_moving_speed, avg_moving_speed_gps
       //          Removes elevation_change
-      'ALTER TABLE logs DROP COLUMN elevation_change;&&ALTER TABLE logs ADD COLUMN max_speed_gps REAL;&&ALTER TABLE logs ADD COLUMN avg_speed_gps REAL;&&ALTER TABLE logs ADD COLUMN distance_km_gps REAL;ALTER TABLE logs ADD COLUMN altitude_min REAL;&&ALTER TABLE logs ADD COLUMN altitude_max REAL;&&ALTER TABLE logs ADD COLUMN avg_moving_speed REAL;&&ALTER TABLE logs ADD COLUMN avg_moving_speed_gps REAL;',
+      //NOTE: sqflite does not do DROP: `ALTER TABLE logs DROP COLUMN elevation_change;&&` will not execute successfully
+      'ALTER TABLE logs ADD COLUMN max_speed_gps REAL;&&ALTER TABLE logs ADD COLUMN avg_speed_gps REAL;&&ALTER TABLE logs ADD COLUMN distance_km_gps REAL;&&ALTER TABLE logs ADD COLUMN altitude_min REAL;&&ALTER TABLE logs ADD COLUMN altitude_max REAL;&&ALTER TABLE logs ADD COLUMN avg_moving_speed REAL;&&ALTER TABLE logs ADD COLUMN avg_moving_speed_gps REAL;',
     ]; // Migration sql scripts
 
     return openDatabase(
