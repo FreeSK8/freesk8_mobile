@@ -607,51 +607,83 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                               )
                           );
                           if (doMerge) {
-                            globalLogger.d("Log Merge Confirmed. Files: ${rideLogsFromDatabase[index].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}, ${rideLogsFromDatabase[index+1].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}");
-                            final documentsDirectory = await getApplicationDocumentsDirectory();
-                            // Get later file contents and statistics
-                            String fileContents = File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").readAsStringSync();
-                            LogInfoItem statsLater = rideLogsFromDatabase[index];
-                            // Update earlier file with extra contents
-                            File("${documentsDirectory.path}${rideLogsFromDatabase[index+1].logFilePath}").writeAsStringSync(fileContents,mode: FileMode.append);
-                            LogInfoItem statsEarlier = rideLogsFromDatabase[index+1];
-                            // Update earlier file statistics
-                            LogInfoItem newStatistics = new LogInfoItem(
-                                dateTime: statsEarlier.dateTime,
-                                boardID: statsEarlier.boardID,
-                                boardAlias: statsEarlier.boardAlias,
-                                logFilePath: statsEarlier.logFilePath,
-                                avgMovingSpeed: doublePrecision(statsEarlier.avgMovingSpeed + statsLater.avgMovingSpeed / 2, 2),
-                                avgMovingSpeedGPS: doublePrecision(statsEarlier.avgMovingSpeedGPS + statsLater.avgMovingSpeedGPS / 2, 2),
-                                avgSpeed: doublePrecision(statsEarlier.avgSpeed + statsLater.avgSpeed / 2, 2),
-                                avgSpeedGPS: doublePrecision(statsEarlier.avgSpeedGPS + statsLater.avgSpeedGPS / 2, 2),
-                                maxSpeed: statsEarlier.maxSpeed > statsLater.maxSpeed ? statsEarlier.maxSpeed : statsLater.maxSpeed,
-                                maxSpeedGPS: doublePrecision(statsEarlier.maxSpeedGPS + statsLater.maxSpeedGPS / 2, 2),
-                                altitudeMax: statsEarlier.altitudeMax > statsLater.altitudeMax ? statsEarlier.altitudeMax : statsLater.altitudeMax,
-                                altitudeMin: statsEarlier.altitudeMin < statsLater.altitudeMin ? statsEarlier.altitudeMin : statsLater.altitudeMin,
-                                maxAmpsBattery: statsEarlier.maxAmpsBattery > statsLater.maxAmpsBattery ? statsEarlier.maxAmpsBattery : statsLater.maxAmpsBattery,
-                                maxAmpsMotors: statsEarlier.maxAmpsBattery > statsLater.maxAmpsBattery ? statsEarlier.maxAmpsBattery : statsLater.maxAmpsBattery,
-                                wattHoursTotal: doublePrecision(statsEarlier.wattHoursTotal + statsLater.wattHoursTotal, 2),
-                                wattHoursRegenTotal: doublePrecision(statsEarlier.wattHoursRegenTotal + statsLater.wattHoursRegenTotal, 2),
-                                distance: doublePrecision(statsEarlier.distance + statsLater.distance, 2),
-                                distanceGPS: doublePrecision(statsEarlier.distanceGPS + statsLater.distanceGPS, 2),
-                                durationSeconds: statsLater.dateTime.difference(statsEarlier.dateTime).inSeconds + statsLater.durationSeconds,
-                                faultCount: statsEarlier.faultCount + statsLater.faultCount,
-                                rideName: statsEarlier.rideName,
-                                notes: statsEarlier.notes.length > statsLater.notes.length ? statsEarlier.notes : statsLater.notes
-                            );
-                            DatabaseAssistant.dbUpdateLog(newStatistics); // Update database entry
-                            rideLogsFromDatabase[index+1] = newStatistics; // Update in memory
+                            try {
+                              globalLogger.d("Log Merge Confirmed. Files: ${rideLogsFromDatabase[index].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}, ${rideLogsFromDatabase[index+1].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}");
+                              final documentsDirectory = await getApplicationDocumentsDirectory();
+                              // Get later file contents and statistics
+                              String fileContents = File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").readAsStringSync();
+                              LogInfoItem statsLater = rideLogsFromDatabase[index];
+                              // Update earlier file with extra contents
+                              File("${documentsDirectory.path}${rideLogsFromDatabase[index+1].logFilePath}").writeAsStringSync(fileContents,mode: FileMode.append);
+                              LogInfoItem statsEarlier = rideLogsFromDatabase[index+1];
+                              // Update earlier file statistics
+                              double avgMovingSpeedGPS = -1.0;
+                              double avgSpeedGPS = -1.0;
+                              double distanceGPS = -1.0;
+                              // avgMovingSpeedGPS may be -1.0 from either entry
+                              if (statsEarlier.avgMovingSpeedGPS != -1.0 && statsLater.avgMovingSpeedGPS != -1.0) {
+                                avgMovingSpeedGPS = doublePrecision(statsEarlier.avgMovingSpeedGPS + statsLater.avgMovingSpeedGPS / 2, 2);
+                              } else if (statsEarlier.avgMovingSpeedGPS != -1.0) {
+                                avgMovingSpeedGPS = statsEarlier.avgMovingSpeedGPS;
+                              } else if (statsLater.avgMovingSpeedGPS != -1.0) {
+                                avgMovingSpeedGPS = statsLater.avgMovingSpeedGPS;
+                              }
+                              // gpsAvgSpeed may be -1.0 from either entry
+                              if (statsEarlier.avgSpeedGPS != -1.0 && statsLater.avgSpeedGPS != -1.0) {
+                                avgSpeedGPS = doublePrecision(statsEarlier.avgSpeedGPS + statsLater.avgSpeedGPS / 2, 2);
+                              } else if (statsEarlier.avgSpeedGPS != -1.0) {
+                                avgSpeedGPS = statsEarlier.avgSpeedGPS;
+                              } else if (statsLater.avgSpeedGPS != -1.0) {
+                                avgSpeedGPS = statsLater.avgSpeedGPS;
+                              }
+                              // distanceGPS may be -1.0 from either entry
+                              if (statsEarlier.distanceGPS != -1.0 && statsLater.distanceGPS != -1.0) {
+                                distanceGPS = doublePrecision(statsEarlier.distanceGPS + statsLater.distanceGPS, 2);
+                              } else if (statsEarlier.distanceGPS != -1.0) {
+                                distanceGPS = statsEarlier.distanceGPS;
+                              } else if (statsLater.distanceGPS != -1.0) {
+                                distanceGPS = statsLater.distanceGPS;
+                              }
+                              LogInfoItem newStatistics = new LogInfoItem(
+                                  dateTime: statsEarlier.dateTime,
+                                  boardID: statsEarlier.boardID,
+                                  boardAlias: statsEarlier.boardAlias,
+                                  logFilePath: statsEarlier.logFilePath,
+                                  avgMovingSpeed: doublePrecision(statsEarlier.avgMovingSpeed + statsLater.avgMovingSpeed / 2, 2),
+                                  avgMovingSpeedGPS: avgMovingSpeedGPS,
+                                  avgSpeed: doublePrecision(statsEarlier.avgSpeed + statsLater.avgSpeed / 2, 2),
+                                  avgSpeedGPS: avgSpeedGPS,
+                                  maxSpeed: statsEarlier.maxSpeed > statsLater.maxSpeed ? statsEarlier.maxSpeed : statsLater.maxSpeed,
+                                  maxSpeedGPS: statsEarlier.maxSpeedGPS > statsLater.maxSpeedGPS ? statsEarlier.maxSpeedGPS : statsLater.maxSpeedGPS,
+                                  altitudeMax: statsEarlier.altitudeMax > statsLater.altitudeMax ? statsEarlier.altitudeMax : statsLater.altitudeMax,
+                                  altitudeMin: statsEarlier.altitudeMin < statsLater.altitudeMin ? statsEarlier.altitudeMin : statsLater.altitudeMin,
+                                  maxAmpsBattery: statsEarlier.maxAmpsBattery > statsLater.maxAmpsBattery ? statsEarlier.maxAmpsBattery : statsLater.maxAmpsBattery,
+                                  maxAmpsMotors: statsEarlier.maxAmpsBattery > statsLater.maxAmpsBattery ? statsEarlier.maxAmpsBattery : statsLater.maxAmpsBattery,
+                                  wattHoursTotal: doublePrecision(statsEarlier.wattHoursTotal + statsLater.wattHoursTotal, 2),
+                                  wattHoursRegenTotal: doublePrecision(statsEarlier.wattHoursRegenTotal + statsLater.wattHoursRegenTotal, 2),
+                                  distance: doublePrecision(statsEarlier.distance + statsLater.distance, 2),
+                                  distanceGPS: distanceGPS,
+                                  durationSeconds: statsLater.dateTime.difference(statsEarlier.dateTime).inSeconds + statsLater.durationSeconds,
+                                  faultCount: statsEarlier.faultCount + statsLater.faultCount,
+                                  rideName: statsEarlier.rideName,
+                                  notes: statsEarlier.notes.length > statsLater.notes.length ? statsEarlier.notes : statsLater.notes
+                              );
+                              DatabaseAssistant.dbUpdateLog(newStatistics); // Update database entry
+                              rideLogsFromDatabase[index+1] = newStatistics; // Update in memory
 
-                            // Remove later file from database and filesystem
-                            setState(() {
-                              //Remove from Database
-                              DatabaseAssistant.dbRemoveLog(rideLogsFromDatabase[index].logFilePath);
-                              //Remove from Filesystem
-                              File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").delete();
-                              //Remove from itemBuilder's list of entries
-                              rideLogsFromDatabase.removeAt(index);
-                            });
+                              // Remove later file from database and filesystem
+                              setState(() {
+                                //Remove from Database
+                                DatabaseAssistant.dbRemoveLog(rideLogsFromDatabase[index].logFilePath);
+                                //Remove from Filesystem
+                                File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").delete();
+                                //Remove from itemBuilder's list of entries
+                                rideLogsFromDatabase.removeAt(index);
+                              });
+                            } catch (e, stacktrace) {
+                              globalLogger.e("rideLogging:doMerge: exception: ${e.toString()}");
+                              globalLogger.e(stacktrace.toString());
+                            }
                           }
                         }
                       ),
