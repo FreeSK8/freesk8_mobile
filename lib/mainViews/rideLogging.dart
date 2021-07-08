@@ -668,15 +668,14 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                   rideName: statsEarlier.rideName,
                                   notes: statsEarlier.notes.length > statsLater.notes.length ? statsEarlier.notes : statsLater.notes
                               );
-                              DatabaseAssistant.dbUpdateLog(newStatistics); // Update database entry
+                              await DatabaseAssistant.dbUpdateLog(newStatistics); // Update database entry
                               rideLogsFromDatabase[index+1] = newStatistics; // Update in memory
 
                               // Remove later file from database and filesystem
+                              await DatabaseAssistant.dbRemoveLog(rideLogsFromDatabase[index].logFilePath);
+                              //Remove from Filesystem
+                              File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").deleteSync();
                               setState(() {
-                                //Remove from Database
-                                DatabaseAssistant.dbRemoveLog(rideLogsFromDatabase[index].logFilePath);
-                                //Remove from Filesystem
-                                File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").delete();
                                 //Remove from itemBuilder's list of entries
                                 rideLogsFromDatabase.removeAt(index);
                               });
@@ -730,12 +729,11 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                           );
                           if (doErase) {
                             final documentsDirectory = await getApplicationDocumentsDirectory();
-                            // Remove the item from the data source.
+                            // Remove the item from the database and rideLogs array
+                            await DatabaseAssistant.dbRemoveLog(rideLogsFromDatabase[index].logFilePath);
+                            //Remove from Filesystem
+                            File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").deleteSync();
                             setState(() {
-                              //Remove from Database
-                              DatabaseAssistant.dbRemoveLog(rideLogsFromDatabase[index].logFilePath);
-                              //Remove from Filesystem
-                              File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").delete();
                               //Remove from itemBuilder's list of entries
                               rideLogsFromDatabase.removeAt(index);
                             });
