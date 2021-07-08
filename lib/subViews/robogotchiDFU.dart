@@ -89,10 +89,11 @@ class RobogotchiDFUState extends State<RobogotchiDFU> with SingleTickerProviderS
         );
         globalLogger.i("DFU Operation Completed. ($result)");
         dfuRunning = false;
-      } catch (e) {
+      } catch (e, stacktrace) {
         //NOTE: Sometimes we are throwing PlatformException(DFU_Failed, Device address: *****, null, null)
         //TODO: Consider checking rssi, notify user of retry event
         globalLogger.e("DFU Operation Exception: ${e.toString()}");
+        globalLogger.e(stacktrace.toString());
 
         if (++failCount > 2) {
           setState(() {

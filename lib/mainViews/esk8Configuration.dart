@@ -2355,8 +2355,9 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
                                   await Share.file("FreeSK8 Beta Log Archive", "freesk8_beta_backup.zip", await File("${supportDirectory.path}/freesk8_beta_backup.zip").readAsBytes(), 'application/zip', text: "FreeSK8 Beta Logs");
 
-                                } catch (e) {
+                                } catch (e, stacktrace) {
                                   globalLogger.e("Export Data Exception $e");
+                                  globalLogger.e(stacktrace.toString());
                                   ScaffoldMessenger
                                       .of(context)
                                       .showSnackBar(SnackBar(content: Text("Export Exception. Please send debug log")));
@@ -2436,8 +2437,9 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
 
 
-                                } catch (e) {
+                                } catch (e, stacktrace) {
                                   globalLogger.e("Import Data Exception $e");
+                                  globalLogger.e(stacktrace.toString());
                                   ScaffoldMessenger
                                       .of(context)
                                       .showSnackBar(SnackBar(content: Text("Import Exception. Please send debug log")));
