@@ -809,17 +809,35 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
       Text("${prettyPrintDuration(Duration(seconds: logEntry.durationSeconds))}",
           textAlign: TextAlign.center)]));
 
-    //TODO: When database is updated we'll want to show GPS distance
-    if (logEntry.distance != -1.0 && !widget.myUserSettings.settings.useGPSData) tableChildren.add(TableRow(children: [
-      Icon(Icons.flag),
-      Text("${useImperial ? kmToMile(logEntry.distance) : logEntry.distance} ${useImperial ? "mi" : "km"}",
-          textAlign: TextAlign.center)]));
+    // Show GPS distance if requested and available
+    //NOTE: Beta testers with old entries (internal database v5) will have a -1.0 distanceGPS value
+    if (widget.myUserSettings.settings.useGPSData) {
+      if (logEntry.distanceGPS != -1.0) tableChildren.add(TableRow(children: [
+        Icon(Icons.flag),
+        Text("${useImperial ? kmToMile(logEntry.distanceGPS) : logEntry.distanceGPS} ${useImperial ? "mi" : "km"}",
+            textAlign: TextAlign.center)]));
+    } else {
+      if (logEntry.distance != -1.0) tableChildren.add(TableRow(children: [
+        Icon(Icons.flag),
+        Text("${useImperial ? kmToMile(logEntry.distance) : logEntry.distance} ${useImperial ? "mi" : "km"}",
+            textAlign: TextAlign.center)]));
+    }
 
-    //TODO: When the database is updated we'll want to show GPS speed
-    if (!widget.myUserSettings.settings.useGPSData) tableChildren.add(TableRow(children: [
-      Transform.rotate(angle: 3.14159, child: Icon(Icons.av_timer),),
-      Text("${useImperial ? kmToMile(logEntry.maxSpeed) : logEntry.maxSpeed} ${useImperial ? "mph" : "kph"}",
-          textAlign: TextAlign.center)]));
+
+    // Show GPS max speed if requested and available
+    //NOTE: Beta testers with old entries (internal database v5) will have a -1.0 maxSpeedGPS value
+    if (widget.myUserSettings.settings.useGPSData) {
+      if (logEntry.maxSpeedGPS != -1.0) tableChildren.add(TableRow(children: [
+        Transform.rotate(angle: 3.14159, child: Icon(Icons.av_timer),),
+        Text("${useImperial ? kmToMile(logEntry.maxSpeedGPS) : logEntry.maxSpeedGPS} ${useImperial ? "mph" : "kph"}",
+            textAlign: TextAlign.center)]));
+    } else {
+      tableChildren.add(TableRow(children: [
+        Transform.rotate(angle: 3.14159, child: Icon(Icons.av_timer),),
+        Text("${useImperial ? kmToMile(logEntry.maxSpeed) : logEntry.maxSpeed} ${useImperial ? "mph" : "kph"}",
+            textAlign: TextAlign.center)]));
+    }
+
 
     tableChildren.add(TableRow(children: [
       Icon(Icons.battery_charging_full),
