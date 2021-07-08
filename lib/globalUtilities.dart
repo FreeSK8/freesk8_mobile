@@ -13,6 +13,17 @@ import 'hardwareSupport/escHelper/dataTypes.dart';
 import 'dart:io';
 import 'package:path/path.dart' as path;
 
+import 'package:latlong/latlong.dart';
+
+double calculateGPSDistance(LatLng pointA, LatLng pointB){
+  var p = 0.017453292519943295;
+  var c = cos;
+  var a = 0.5 - c((pointB.latitude - pointA.latitude) * p)/2 +
+      c(pointA.latitude * p) * c(pointB.latitude * p) *
+          (1 - c((pointB.longitude - pointA.longitude) * p))/2;
+  return 12742 * asin(sqrt(a));
+}
+
 void copyDirectory(Directory source, Directory destination) =>
     source.listSync(recursive: false)
         .forEach((var entity) {

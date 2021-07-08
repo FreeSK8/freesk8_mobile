@@ -19,8 +19,6 @@ import 'package:sliding_up_panel/sliding_up_panel.dart';
 
 import 'package:esys_flutter_share/esys_flutter_share.dart';
 
-import 'dart:math' show cos, sqrt, asin;
-
 import '../hardwareSupport/escHelper/escHelper.dart';
 import '../hardwareSupport/escHelper/dataTypes.dart';
 
@@ -52,15 +50,6 @@ class RideLogViewerState extends State<RideLogViewer> {
   RideLogChartData currentSelection;
 
   PublishSubject<RideLogChartData> eventObservable = new PublishSubject();
-
-  double calculateDistance(LatLng pointA, LatLng pointB){
-    var p = 0.017453292519943295;
-    var c = cos;
-    var a = 0.5 - c((pointB.latitude - pointA.latitude) * p)/2 +
-        c(pointA.latitude * p) * c(pointB.latitude * p) *
-            (1 - c((pointB.longitude - pointA.longitude) * p))/2;
-    return 12742 * asin(sqrt(a));
-  }
 
   /// Create time series data for chart using ESC values
   static List<charts.Series<TimeSeriesESC, DateTime>> _createChartingData( List<TimeSeriesESC> values, List<int> escIDsInLog, int faultCodeCount, bool imperialDistance ) {
@@ -446,7 +435,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           //dt,gps,satellites,altitude,speed,latitude,longitude
           LatLng thisPosition = new LatLng(double.parse(entry[5]),double.parse(entry[6]));
           if ( _positionEntries.length > 0){
-            gpsDistance += calculateDistance(_positionEntries.last, thisPosition);
+            gpsDistance += calculateGPSDistance(_positionEntries.last, thisPosition);
           }
           _positionEntries.add(thisPosition);
           DateTime thisGPSTime = DateTime.tryParse(entry[0]).add((DateTime.now().timeZoneOffset));
@@ -635,7 +624,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           //DateTime, 'position', lat, lon, accuracy, altitude, speed, speedAccuracy
           LatLng thisPosition = new LatLng(double.parse(entry[2]),double.parse(entry[3]));
           if ( _positionEntries.length > 0){
-            gpsDistance += calculateDistance(_positionEntries.last, thisPosition);
+            gpsDistance += calculateGPSDistance(_positionEntries.last, thisPosition);
           }
           _positionEntries.add(thisPosition);
           DateTime thisGPSTime = DateTime.tryParse(entry[0]).add((DateTime.now().timeZoneOffset));
@@ -970,7 +959,7 @@ class RideLogViewerState extends State<RideLogViewer> {
         var key = element;
         Color thisColor = Colors.blue;
         //TODO: Reduce number of GPS points to keep things moving on phones
-        if (calculateDistance(lastPoint, value) > 0.01) {
+        if (calculateGPSDistance(lastPoint, value) > 0.01) {
           // Compute color for this section of the route
           if (escTimeSeriesMap[key] != null && escTimeSeriesMap[key].speed != null && _maxSpeed > 0.0) {
             thisColor = Color.lerp(Colors.yellow, Colors.redAccent[700], escTimeSeriesMap[key].speed.abs() / _maxSpeed);
@@ -992,7 +981,7 @@ class RideLogViewerState extends State<RideLogViewer> {
         var key = element;
         Color thisColor = Colors.blue;
         //TODO: Reduce number of GPS points to keep things moving on phones
-        if (calculateDistance(lastPoint, value) > 0.01) {
+        if (calculateGPSDistance(lastPoint, value) > 0.01) {
           // Compute color for this section of the route
           if (escTimeSeriesMap[key] != null && escTimeSeriesMap[key].speed != null && _maxSpeed > 0.0) {
             thisColor = Color.lerp(Colors.yellow, Colors.redAccent[700], escTimeSeriesMap[key].speed.abs() / _maxSpeed);
