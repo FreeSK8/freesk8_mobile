@@ -1120,6 +1120,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             double distanceEnd;
             double distanceTotal;
             double distanceTotalGPS;
+            LatLng gpsPositionPrevious;
             int faultCodeCount = 0;
             double minElevation;
             double maxElevation;
@@ -1154,22 +1155,29 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
                   // Track avg speed
                   double speedNow = double.tryParse(entry[4]);
+                  avgSpeedGPS ??= 0;
                   avgSpeedGPS += speedNow;
                   ++avgSpeedGPSEntries;
 
                   // Track avg moving speed (;idle boards won't bring you down;)
                   if (speedNow > 0.0) {
+                    avgMovingSpeedGPS ??= 0;
                     avgMovingSpeedGPS += speedNow;
                     ++avgMovingSpeedGPSEntries;
                   }
 
                   // Track max speed
+                  maxSpeedGPS ??= speedNow;
                   if (speedNow > maxSpeedGPS) {
                     maxSpeedGPS = speedNow;
                   }
 
                   // Compute distance traveled
-                  //TODO: this
+                  LatLng gpsPositionNow = new LatLng(double.parse(entry[5]), double.parse(entry[6]));
+                  gpsPositionPrevious ??= gpsPositionNow;
+                  distanceTotalGPS ??= 0;
+                  distanceTotalGPS += calculateGPSDistance(gpsPositionNow, gpsPositionPrevious);
+                  gpsPositionPrevious = gpsPositionNow;
                 }
                 ///ESC Values
                 else if (entry[1] == "esc" && entry.length >= 14) {
@@ -1196,10 +1204,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                     maxSpeedKph = speed;
                   }
                   // Prepare average speed!
+                  avgSpeed ??= 0;
                   avgSpeed += speed;
                   ++avgSpeedEntries;
                   // Prepare average moving speed
                   if (speed > 0.0) {
+                    avgMovingSpeed ??= 0;
                     avgMovingSpeed += speed;
                     ++avgMovingSpeedEntries;
                   }
@@ -1286,7 +1296,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   wattHoursTotal: doublePrecision(wattHours, 2),
                   wattHoursRegenTotal: doublePrecision(wattHoursRegen, 2),
                   distance: distanceTotal,
-                  distanceGPS: distanceTotalGPS != null ? distanceTotalGPS : -1.0,
+                  distanceGPS: distanceTotalGPS != null ? doublePrecision(distanceTotalGPS, 2) : -1.0,
                   durationSeconds: lastEntryTime.difference(firstEntryTime).inSeconds,
                   faultCount: faultCodeCount,
                   rideName: "",
@@ -1311,8 +1321,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             ///Save file operation complete
             return;
 
-          } catch (e) {
+          } catch (e, stacktrace) {
             globalLogger.e("cat,complete threw an exception: ${e.toString()}");
+            globalLogger.e("Stacktrace: ${stacktrace.toString()}");
 
             // Alert user something went wrong with the parsing
             genericConfirmationDialog(context, TextButton(
