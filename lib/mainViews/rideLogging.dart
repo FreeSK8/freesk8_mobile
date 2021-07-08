@@ -264,7 +264,8 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text("${Duration(seconds: rideLogsFromDatabase[int.parse(event)].durationSeconds).toString().substring(0,Duration(seconds: rideLogsFromDatabase[int.parse(event)].durationSeconds).toString().indexOf("."))}"),
-                                rideLogsFromDatabase[int.parse(event)].distance == -1.0 || widget.myUserSettings.settings.useGPSData ? Container() : Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[int.parse(event)].distance) : rideLogsFromDatabase[int.parse(event)].distance} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}")
+                                rideLogsFromDatabase[int.parse(event)].distance == -1.0 || widget.myUserSettings.settings.useGPSData ? Container() : Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[int.parse(event)].distance) : rideLogsFromDatabase[int.parse(event)].distance} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}"),
+                                widget.myUserSettings.settings.useGPSData && rideLogsFromDatabase[int.parse(event)].distanceGPS != -1.0 ? Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[int.parse(event)].distanceGPS) : rideLogsFromDatabase[int.parse(event)].distanceGPS} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}") : Container(),
                               ],
                             )
                         ),
@@ -555,7 +556,8 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               Text("${Duration(seconds: rideLogsFromDatabase[index].durationSeconds).toString().substring(0,Duration(seconds: rideLogsFromDatabase[index].durationSeconds).toString().indexOf("."))}"),
-                                              rideLogsFromDatabase[index].distance == -1.0 || widget.myUserSettings.settings.useGPSData ? Container() : Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[index].distance) : rideLogsFromDatabase[index].distance} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}")
+                                              rideLogsFromDatabase[index].distance == -1.0 || widget.myUserSettings.settings.useGPSData ? Container() : Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[index].distance) : rideLogsFromDatabase[index].distance} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}"),
+                                              widget.myUserSettings.settings.useGPSData && rideLogsFromDatabase[index].distanceGPS != -1.0 ? Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[index].distanceGPS) : rideLogsFromDatabase[index].distanceGPS} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}") : Container(),
                                             ],
                                           )
                                       ),
@@ -818,7 +820,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
             textAlign: TextAlign.center)]));
     } else {
       if (logEntry.distance != -1.0) tableChildren.add(TableRow(children: [
-        Icon(Icons.flag),
+        Icon(Icons.flag_outlined),
         Text("${useImperial ? kmToMile(logEntry.distance) : logEntry.distance} ${useImperial ? "mi" : "km"}",
             textAlign: TextAlign.center)]));
     }
