@@ -429,6 +429,7 @@ class RideLogViewerState extends State<RideLogViewer> {
     for(int i=0; i<thisRideLogEntries.length; ++i) {
       final entry = thisRideLogEntries[i].split(",");
 
+      //TODO: Parse out header entries. We now have good information here so we don't have to leverage userSettings
       if(entry.length > 1 && entry[0] != "header"){ // entry[0] = Time, entry[1] = Data type
         ///GPS position entry
         if(entry[1] == "gps" && entry.length >= 6) {
@@ -439,6 +440,11 @@ class RideLogViewerState extends State<RideLogViewer> {
           }
           _positionEntries.add(thisPosition);
           DateTime thisGPSTime = DateTime.tryParse(entry[0]).add((DateTime.now().timeZoneOffset));
+          // Sanity check on GPS time please
+          if (thisGPSTime.isBefore(DateTime(2000))) {
+            globalLogger.w("rideLogViewer:thisRideLogEntry: GPS DateTime was out of bounds! ${entry[0]} -> ${thisGPSTime.toString()}");
+            continue;
+          }
           // Set the GPS start time if null
           gpsStartTime ??= thisGPSTime;
           // Set the GPS end time to the last message parsed
@@ -744,7 +750,7 @@ class RideLogViewerState extends State<RideLogViewer> {
     double _maxAmpsBattery = 0.0;
     double _maxAmpsMotor = 0.0;
     TimeSeriesESC _tsESCMaxSpeed;
-    double _maxESCTempObserved;
+    double _maxESCTempObserved = -1.0;
     TimeSeriesESC _tsESCMaxESCTemp;
     TimeSeriesESC _tsESCMaxBatteryAmps;
     TimeSeriesESC _tsESCMaxMotorAmps;
@@ -790,27 +796,27 @@ class RideLogViewerState extends State<RideLogViewer> {
       }
 
       // Monitor Max ESC Temp
-      if(_tsESCMaxESCTemp == null || escTimeSeriesList[i].tempMosfet != null && escTimeSeriesList[i].tempMosfet > _maxESCTempObserved){
+      if(escTimeSeriesList[i].tempMosfet != null && escTimeSeriesList[i].tempMosfet > _maxESCTempObserved){
         // Store time series moment for map point generation and data popup
         _tsESCMaxESCTemp = escTimeSeriesList[i];
         _maxESCTempObserved = escTimeSeriesList[i].tempMosfet;
       }
-      if(_tsESCMaxESCTemp == null || escTimeSeriesList[i].tempMosfet2 != null && escTimeSeriesList[i].tempMosfet2 > _maxESCTempObserved){
+      if(escTimeSeriesList[i].tempMosfet2 != null && escTimeSeriesList[i].tempMosfet2 > _maxESCTempObserved){
         // Store time series moment for map point generation and data popup
         _tsESCMaxESCTemp = escTimeSeriesList[i];
         _maxESCTempObserved = escTimeSeriesList[i].tempMosfet2;
       }
-      if(_tsESCMaxESCTemp == null || escTimeSeriesList[i].tempMosfet3 != null && escTimeSeriesList[i].tempMosfet3 > _maxESCTempObserved){
+      if(escTimeSeriesList[i].tempMosfet3 != null && escTimeSeriesList[i].tempMosfet3 > _maxESCTempObserved){
         // Store time series moment for map point generation and data popup
         _tsESCMaxESCTemp = escTimeSeriesList[i];
         _maxESCTempObserved = escTimeSeriesList[i].tempMosfet3;
       }
-      if(_tsESCMaxESCTemp == null || escTimeSeriesList[i].tempMosfet4 != null && escTimeSeriesList[i].tempMosfet4 > _maxESCTempObserved){
+      if(escTimeSeriesList[i].tempMosfet4 != null && escTimeSeriesList[i].tempMosfet4 > _maxESCTempObserved){
         // Store time series moment for map point generation and data popup
         _tsESCMaxESCTemp = escTimeSeriesList[i];
         _maxESCTempObserved = escTimeSeriesList[i].tempMosfet4;
       }
-    }
+    } //iterate escTimeSeriesList
 
     //TODO: Reduce number of ESC points to keep things moving on phones
     //TODO: We will need to know the logging rate in the file
