@@ -376,17 +376,14 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     } else {
       byteData.setFloat32(35, widget.escMotorConfiguration.l_watt_max);
     }
-
     int checksum = CRC16.crc16(byteData.buffer.asUint8List(), 2, 37);
     byteData.setUint16(39, checksum);
     byteData.setUint8(41, 0x03); //End of packet
 
-    widget.theTXCharacteristic.write(byteData.buffer.asUint8List()).then((value){
-      globalLogger.d('COMM_SET_MCCONF_TEMP_SETUP published');
-    }).catchError((e){
-      globalLogger.e("COMM_SET_MCCONF_TEMP_SETUP: Exception: $e");
+    sendBLEData(widget.theTXCharacteristic, byteData.buffer.asUint8List(), true).then((sendResult){
+      if (sendResult) globalLogger.d('COMM_SET_MCCONF_TEMP_SETUP sent');
+      else globalLogger.d('COMM_SET_MCCONF_TEMP_SETUP failed to send');
     });
-
   }
 
   void requestMCCONFCAN(int canID) async {

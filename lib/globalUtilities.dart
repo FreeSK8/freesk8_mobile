@@ -112,18 +112,25 @@ List<DropdownMenuItem<ListItem>> buildDropDownMenuItems(List listItems) {
 /// Returns true on success
 Future<bool> sendBLEData(BluetoothCharacteristic txCharacteristic, Uint8List data, bool withoutResponse) async
 {
-  dynamic errorCheck = 0;
   int errorLimiter = 10;
-  while (errorCheck != null && --errorLimiter > 0) {
-    errorCheck = null;
-    await txCharacteristic.write(data, withoutResponse: withoutResponse).catchError((error){
-      errorCheck = error;
-      globalLogger.w("sendBLEData: Exception: $errorCheck");
-    });
-  }
-  if(errorLimiter<0) {
-    globalLogger.e("sendBLEData: Write to characteristic exhausted all attempts. Data not sent. ${txCharacteristic.toString()}");
-    return Future.value(false);
+  int packetLength = data.length;
+  int bytesSent = 0;
+  while (bytesSent < packetLength) {
+    int endByte = bytesSent + 20;
+    if (endByte > packetLength) {
+      endByte = packetLength;
+    }
+    try {
+      await txCharacteristic.write(data.buffer.asUint8List().sublist(bytesSent,endByte), withoutResponse: withoutResponse);
+    } catch (e) {
+      globalLogger.w("sendBLEData: Exception ${e.toString()}");
+      if (--errorLimiter == 0) {
+        globalLogger.e("sendBLEData: Write to characteristic exhausted all attempts. Data not sent. ${txCharacteristic.toString()}");
+        return Future.value(false);
+      }
+    }
+    bytesSent += 20;
+    await Future.delayed(const Duration(milliseconds: 30), () {});
   }
   return Future.value(true);
 }

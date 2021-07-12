@@ -1632,16 +1632,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               byteData.setUint16(5, checksum);
               byteData.setUint8(7, 0x03); // End of packet
 
-              theTXCharacteristic.write(byteData.buffer.asUint8List(), withoutResponse: true).
-              catchError((e) {
-                globalLogger.w("Exception while requesting COMM_GET_BMS_CELLS $e");
+              sendBLEData(theTXCharacteristic, byteData.buffer.asUint8List(), true).then((sendResult){
+                if (!sendResult) {
+                  globalLogger.w("Smart BMS cell data request failed");
+                }
               });
             }
           }
-
-          //TODO: Old Telemetry packet
-          //telemetryPacket = escHelper.processTelemetry(bleHelper.getPayload());
-          //print("goodValues ${telemetryPacket.vesc_id} ${telemetryPacket.tachometer} ${telemetryPacket.tachometer_abs} ${telemetryPacket.amp_hours} ${telemetryPacket.amp_hours_charged} ${telemetryPacket.watt_hours}");
 
           // Prepare for the next packet
           bleHelper.resetPacket();
