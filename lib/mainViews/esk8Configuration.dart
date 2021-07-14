@@ -242,7 +242,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       } catch (e) {}
     });
     tecMotorPoles.addListener(() { widget.escMotorConfiguration.si_motor_poles = int.tryParse(tecMotorPoles.text); });
-    tecGearRatio.addListener(() { widget.escMotorConfiguration.si_gear_ratio = doublePrecision(double.tryParse(tecGearRatio.text.replaceFirst(',', '.')), 2); });
+    tecGearRatio.addListener(() { widget.escMotorConfiguration.si_gear_ratio = doublePrecision(double.tryParse(tecGearRatio.text.replaceFirst(',', '.')), 3); });
     tecCurrentMax.addListener(() { widget.escMotorConfiguration.l_current_max = doublePrecision(double.tryParse(tecCurrentMax.text.replaceFirst(',', '.')), 1); });
     tecCurrentMin.addListener(() {
       double newValue = double.tryParse(tecCurrentMin.text.replaceFirst(',', '.'));
@@ -1528,7 +1528,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       tecWheelDiameterMillimeters.selection = TextSelection.fromPosition(TextPosition(offset: tecWheelDiameterMillimeters.text.length));
       tecMotorPoles.text = widget.escMotorConfiguration.si_motor_poles.toString();
       tecMotorPoles.selection = TextSelection.fromPosition(TextPosition(offset: tecMotorPoles.text.length));
-      tecGearRatio.text = widget.escMotorConfiguration.si_gear_ratio.toString();
+      tecGearRatio.text = doublePrecision(widget.escMotorConfiguration.si_gear_ratio, 3).toString();
       tecGearRatio.selection = TextSelection.fromPosition(TextPosition(offset: tecGearRatio.text.length));
 
       // Populate text editing controllers
