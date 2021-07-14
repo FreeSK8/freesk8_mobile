@@ -619,7 +619,6 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                               // Update earlier file statistics
                               double avgMovingSpeedGPS = -1.0;
                               double avgSpeedGPS = -1.0;
-                              double distanceGPS = -1.0;
                               // avgMovingSpeedGPS may be -1.0 from either entry
                               if (statsEarlier.avgMovingSpeedGPS != -1.0 && statsLater.avgMovingSpeedGPS != -1.0) {
                                 avgMovingSpeedGPS = doublePrecision(statsEarlier.avgMovingSpeedGPS + statsLater.avgMovingSpeedGPS / 2, 2);
@@ -636,14 +635,6 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                               } else if (statsLater.avgSpeedGPS != -1.0) {
                                 avgSpeedGPS = statsLater.avgSpeedGPS;
                               }
-                              // distanceGPS may be -1.0 from either entry
-                              if (statsEarlier.distanceGPS != -1.0 && statsLater.distanceGPS != -1.0) {
-                                distanceGPS = doublePrecision(statsEarlier.distanceGPS + statsLater.distanceGPS, 2);
-                              } else if (statsEarlier.distanceGPS != -1.0) {
-                                distanceGPS = statsEarlier.distanceGPS;
-                              } else if (statsLater.distanceGPS != -1.0) {
-                                distanceGPS = statsLater.distanceGPS;
-                              }
                               LogInfoItem newStatistics = new LogInfoItem(
                                   dateTime: statsEarlier.dateTime,
                                   boardID: statsEarlier.boardID,
@@ -659,10 +650,10 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                   altitudeMin: statsEarlier.altitudeMin < statsLater.altitudeMin ? statsEarlier.altitudeMin : statsLater.altitudeMin,
                                   maxAmpsBattery: statsEarlier.maxAmpsBattery > statsLater.maxAmpsBattery ? statsEarlier.maxAmpsBattery : statsLater.maxAmpsBattery,
                                   maxAmpsMotors: statsEarlier.maxAmpsBattery > statsLater.maxAmpsBattery ? statsEarlier.maxAmpsBattery : statsLater.maxAmpsBattery,
-                                  wattHoursTotal: doublePrecision(statsEarlier.wattHoursTotal + statsLater.wattHoursTotal, 2),
-                                  wattHoursRegenTotal: doublePrecision(statsEarlier.wattHoursRegenTotal + statsLater.wattHoursRegenTotal, 2),
-                                  distance: doublePrecision(statsEarlier.distance + statsLater.distance, 2),
-                                  distanceGPS: distanceGPS,
+                                  wattHoursTotal: _addDoubleUnlessNegativeOne(statsEarlier.wattHoursTotal, statsLater.wattHoursTotal),
+                                  wattHoursRegenTotal: _addDoubleUnlessNegativeOne(statsEarlier.wattHoursRegenTotal, statsLater.wattHoursRegenTotal),
+                                  distance: _addDoubleUnlessNegativeOne(statsEarlier.distance, statsLater.distance),
+                                  distanceGPS: _addDoubleUnlessNegativeOne(statsEarlier.distanceGPS, statsLater.distanceGPS),
                                   durationSeconds: statsLater.dateTime.difference(statsEarlier.dateTime).inSeconds + statsLater.durationSeconds,
                                   faultCount: statsEarlier.faultCount + statsLater.faultCount,
                                   rideName: statsEarlier.rideName,
@@ -827,6 +818,17 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
         ),
       ),
     );
+  }
+
+  double _addDoubleUnlessNegativeOne(double valA, double valB, {int precision=2}) {
+    if (valA != -1.0 && valB != -1.0) {
+      return doublePrecision(valA + valB, precision);
+    } else if (valA != -1.0) {
+      return valA;
+    } else if (valB != -1.0) {
+      return valB;
+    }
+    return -1.0;
   }
 
   Future<void> _alertLimitedFunctionality(BuildContext context) async {
