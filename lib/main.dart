@@ -230,6 +230,18 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     DeviceInfo.init();
   }
 
+  Future<bool> _isBLEOn(bool alertUser) async {
+    if (await widget.flutterBlue.isOn) {
+      return Future.value(true);
+    } else {
+      globalLogger.i("Bluetooth is not turned ON");
+      if (alertUser) {
+        genericAlert(context, "Bluetooth is OFF", Text("Please enable Bluetooth on your device"), "OK");
+      }
+      return Future.value(false);
+    }
+  }
+
   void _monitorGotchiTimer() {
     if (_gotchiStatusTimer == null && theTXLoggerCharacteristic != null && initMsgSqeuencerCompleted && (controller.index == controllerViewConnection || controller.index == controllerViewLogging) && !syncInProgress) {
       globalLogger.d("_monitorGotchiTimer: Starting gotchiStatusTimer");
@@ -393,19 +405,22 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   }
 
   bool _scanActive = false;
-  void _handleBLEScanState(bool startScan) {
+  Future<void> _handleBLEScanState(bool startScan) async {
     if (_connectedDevice != null) {
       globalLogger.d("_handleBLEScanState: disconnecting");
     }
     else if (startScan == true) {
       globalLogger.d("_handleBLEScanState: startScan was true");
       widget.devicesList.clear();
-      widget.flutterBlue.startScan(withServices: new List<Guid>.from([uartServiceUUID])).catchError((onError){
-        if (onError.toString().contains("Is the Adapter on?")) {
-          genericAlert(context, "Bluetooth off?", Text("Unable to start scanning. Please check that bluetooth is enabled and try again"), "OK");
-        }
-        return;
-      });
+      if (await _isBLEOn(true)) {
+        widget.flutterBlue.startScan(withServices: new List<Guid>.from([uartServiceUUID])).catchError((onError){
+          genericAlert(context, "BLE Scan Error", Text("Unable to start scanning: ${onError.toString()}"), "OK");
+          globalLogger.e("flutter_blue.startScan threw: ${onError.toString()}");
+          return;
+        });
+      } else {
+        startScan = false;
+      }
     } else {
       globalLogger.d("_handleBLEScanState: startScan was false");
       widget.flutterBlue.stopScan();
