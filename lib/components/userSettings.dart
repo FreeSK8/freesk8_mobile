@@ -29,6 +29,9 @@ class UserSettingsStructure {
 
   UserSettingsStructure.fromValues(UserSettingsStructure values)
   {
+    this.useImperial = values.useImperial;
+    this.useFahrenheit = values.useFahrenheit;
+    this.useGPSData = this.useGPSData;
     this.boardAlias = values.boardAlias;
     this.boardAvatarPath = values.boardAvatarPath;
     this.batterySeriesCount = values.batterySeriesCount;
