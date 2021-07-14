@@ -143,7 +143,7 @@ class VehicleManagerState extends State<VehicleManager> {
       if (await mySettings.loadSettings(knownDevices[i])) {
         settings.add(new UserSettingsStructure.fromValues(mySettings.settings));
         distances.add(await  DatabaseAssistant.dbGetOdometer(knownDevices[i]));
-        consumptions.add(await  DatabaseAssistant.dbGetConsumption(knownDevices[i],false));
+        consumptions.add(await  DatabaseAssistant.dbGetConsumption(knownDevices[i],settings[i].useImperial));
         // Add a Row for each Vehicle we load
         listChildren.add(Row(
           children: [
@@ -167,8 +167,8 @@ class VehicleManagerState extends State<VehicleManager> {
 
             Spacer(),
             Column(children: [
-              Text("${doublePrecision(distances[i], 2)} km"),
-              Text("${doublePrecision(consumptions[i], 2)} wh/km"),
+              Text("${settings[i].useImperial ? kmToMile(distances[i]) : doublePrecision(distances[i], 2)} ${settings[i].useImperial ? "mi" : "km"}"),
+              Text("${doublePrecision(consumptions[i], 2)} ${settings[i].useImperial ? "wh/mi" : "wh/km"}"),
             ],crossAxisAlignment: CrossAxisAlignment.end),
 
             SizedBox(width: 10),
