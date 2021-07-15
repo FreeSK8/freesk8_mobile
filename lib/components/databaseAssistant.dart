@@ -253,15 +253,16 @@ class DatabaseAssistant {
     return Future.value(response);
   }
 
-  static Future<double> dbGetOdometer(String boardID) async {
+  static Future<double> dbGetOdometer(String boardID, bool preferGPS) async {
     final Database db = await getDatabase();
     double distance = 0;
     try {
-      final List<Map<String, dynamic>> rideLogEntries = await db.query('logs', columns: ["distance_km"], where: "board_id = ?", whereArgs: [boardID]);
+      final String columnName = preferGPS ? "distance_km_gps" : "distance_km";
+      final List<Map<String, dynamic>> rideLogEntries = await db.query('logs', columns: [columnName], where: "board_id = ?", whereArgs: [boardID]);
 
       rideLogEntries.forEach((element) {
-        if (element['distance_km'] != -1.0) {
-          distance += element['distance_km'];
+        if (element[columnName] != -1.0) {
+          distance += element[columnName];
         }
       });
       await db.close();
@@ -272,15 +273,16 @@ class DatabaseAssistant {
     return distance;
   }
 
-  static Future<double> dbGetConsumption(String boardID, bool useImperial) async {
+  static Future<double> dbGetConsumption(String boardID, bool useImperial, bool preferGPS) async {
+    final String columnName = preferGPS ? "distance_km_gps" : "distance_km";
     final Database db = await getDatabase();
-    final List<Map<String, dynamic>> rideLogEntries = await db.query('logs', columns: ["distance_km", "watt_hours", "watt_hours_regen"], where: "board_id = ?", whereArgs: [boardID]);
+    final List<Map<String, dynamic>> rideLogEntries = await db.query('logs', columns: [columnName, "watt_hours", "watt_hours_regen"], where: "board_id = ?", whereArgs: [boardID]);
     double distance = 0;
     double wattHours = 0;
 
     rideLogEntries.forEach((element) {
-      if (element['distance_km'] != -1.0 && element['watt_hours'] != -1.0) {
-        distance += element['distance_km'];
+      if (element[columnName] != -1.0 && element['watt_hours'] != -1.0) {
+        distance += element[columnName];
 
         wattHours += element['watt_hours'] - element['watt_hours_regen'];
       }

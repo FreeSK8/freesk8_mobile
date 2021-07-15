@@ -2198,7 +2198,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                   secondary: const Icon(Icons.wb_sunny),
                 ),
                 SwitchListTile(
-                  title: Text("Prefer GPS speed/distance in logs"),
+                  title: Text("Prefer GPS speed/distance"),
                   value: widget.myUserSettings.settings.useGPSData,
                   onChanged: (bool newValue) {
                     setState((){
@@ -2445,7 +2445,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               }),
 
                           ElevatedButton(
-                              child: Text("Open Board Manager"),
+                              child: Text("Open Vehicle Manager"),
                               onPressed: () async {
                                 FocusScope.of(context).requestFocus(new FocusNode()); //Hide keyboard
                                 // Wait for the navigation to return

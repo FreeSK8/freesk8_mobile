@@ -956,8 +956,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
   // Compute logged distance and consumption
   void updateComputedVehicleStatistics(bool doSetState) async {
-    connectedVehicleOdometer = await DatabaseAssistant.dbGetOdometer(widget.myUserSettings.currentDeviceID);
-    connectedVehicleConsumption = await DatabaseAssistant.dbGetConsumption(widget.myUserSettings.currentDeviceID, widget.myUserSettings.settings.useImperial);
+    connectedVehicleOdometer = await DatabaseAssistant.dbGetOdometer(widget.myUserSettings.currentDeviceID, widget.myUserSettings.settings.useGPSData);
+    connectedVehicleConsumption = await DatabaseAssistant.dbGetConsumption(widget.myUserSettings.currentDeviceID, widget.myUserSettings.settings.useImperial, widget.myUserSettings.settings.useGPSData);
     if (doSetState) {
       setState(() {});
     }

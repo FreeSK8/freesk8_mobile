@@ -142,8 +142,8 @@ class VehicleManagerState extends State<VehicleManager> {
     for (int i=0; i<knownDevices.length; ++i) {
       if (await mySettings.loadSettings(knownDevices[i])) {
         settings.add(new UserSettingsStructure.fromValues(mySettings.settings));
-        distances.add(await  DatabaseAssistant.dbGetOdometer(knownDevices[i]));
-        consumptions.add(await  DatabaseAssistant.dbGetConsumption(knownDevices[i],settings[i].useImperial));
+        distances.add(await DatabaseAssistant.dbGetOdometer(knownDevices[i], mySettings.settings.useGPSData));
+        consumptions.add(await DatabaseAssistant.dbGetConsumption(knownDevices[i], mySettings.settings.useImperial, mySettings.settings.useGPSData));
         // Add a Row for each Vehicle we load
         Widget listChild = Row(
           children: [
