@@ -570,99 +570,167 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                       ),
                     ),
                     actions: <Widget>[
-                      IconSlideAction(
-                        caption: 'Merge',
-                        color: Colors.blue,
-                        icon: Icons.archive,
-                        onTap: () async {
-                          if (index+1 == rideLogsFromDatabase.length) return;
+                      Padding(
+                        padding: EdgeInsets.only(bottom:5),
+                        child: IconSlideAction(
+                            caption: 'Merge',
+                            color: Colors.blue,
+                            icon: Icons.merge_type,
+                            onTap: () async {
+                              if (index+1 == rideLogsFromDatabase.length) return;
 
-                          // Confirm Merge with user
-                          bool doMerge = await genericConfirmationDialog(
-                              context,
-                              TextButton(
-                                  onPressed: () => Navigator.of(context).pop(true),
-                                  child: const Text("Merge")
-                              ),
-                              TextButton(
-                                onPressed: () => Navigator.of(context).pop(false),
-                                child: const Text("Cancel"),
-                              ),
-                              "Merge with previous file?",
-                              Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text("Select merge to combine this file with the previous"),
-                                  SizedBox(height: 15),
-                                  Text("${rideLogsFromDatabase[index].boardAlias}"),
-                                  Text("${rideLogsFromDatabase[index].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}"),
-                                  Text("${prettyPrintDuration(Duration(seconds: rideLogsFromDatabase[index].durationSeconds))}"),
+                              // Confirm Merge with user
+                              bool doMerge = await genericConfirmationDialog(
+                                  context,
+                                  TextButton(
+                                      onPressed: () => Navigator.of(context).pop(true),
+                                      child: const Text("Merge")
+                                  ),
+                                  TextButton(
+                                    onPressed: () => Navigator.of(context).pop(false),
+                                    child: const Text("Cancel"),
+                                  ),
+                                  "Merge with previous file?",
+                                  Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text("Select merge to combine this file with the previous"),
+                                      SizedBox(height: 15),
+                                      Text("${rideLogsFromDatabase[index].boardAlias}"),
+                                      Text("${rideLogsFromDatabase[index].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}"),
+                                      Text("${prettyPrintDuration(Duration(seconds: rideLogsFromDatabase[index].durationSeconds))}"),
 
-                                  SizedBox(height: 15),
-                                  Text("Previous File:"),
-                                  Text("${rideLogsFromDatabase[index+1].boardAlias}"),
-                                  Text("${rideLogsFromDatabase[index+1].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}"),
-                                  Text("${prettyPrintDuration(Duration(seconds: rideLogsFromDatabase[index+1].durationSeconds))}"),
-                                ],
-                              )
-                          );
-                          if (doMerge) {
-                            try {
-                              globalLogger.d("Log Merge Confirmed. Files: ${rideLogsFromDatabase[index].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}, ${rideLogsFromDatabase[index+1].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}");
-                              final documentsDirectory = await getApplicationDocumentsDirectory();
-                              // Get later file contents and statistics
-                              String fileContents = File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").readAsStringSync();
-                              LogInfoItem statsLater = rideLogsFromDatabase[index];
-                              // Update earlier file with extra contents
-                              File("${documentsDirectory.path}${rideLogsFromDatabase[index+1].logFilePath}").writeAsStringSync(fileContents,mode: FileMode.append);
-                              LogInfoItem statsEarlier = rideLogsFromDatabase[index+1];
-                              // Update earlier file statistics
-                              double avgMovingSpeedGPS = -1.0;
-                              double avgSpeedGPS = -1.0;
-                              // avgMovingSpeedGPS may be -1.0 from either entry
-                              if (statsEarlier.avgMovingSpeedGPS != -1.0 && statsLater.avgMovingSpeedGPS != -1.0) {
-                                avgMovingSpeedGPS = doublePrecision(statsEarlier.avgMovingSpeedGPS + statsLater.avgMovingSpeedGPS / 2, 2);
-                              } else if (statsEarlier.avgMovingSpeedGPS != -1.0) {
-                                avgMovingSpeedGPS = statsEarlier.avgMovingSpeedGPS;
-                              } else if (statsLater.avgMovingSpeedGPS != -1.0) {
-                                avgMovingSpeedGPS = statsLater.avgMovingSpeedGPS;
-                              }
-                              // gpsAvgSpeed may be -1.0 from either entry
-                              if (statsEarlier.avgSpeedGPS != -1.0 && statsLater.avgSpeedGPS != -1.0) {
-                                avgSpeedGPS = doublePrecision(statsEarlier.avgSpeedGPS + statsLater.avgSpeedGPS / 2, 2);
-                              } else if (statsEarlier.avgSpeedGPS != -1.0) {
-                                avgSpeedGPS = statsEarlier.avgSpeedGPS;
-                              } else if (statsLater.avgSpeedGPS != -1.0) {
-                                avgSpeedGPS = statsLater.avgSpeedGPS;
-                              }
-                              LogInfoItem newStatistics = new LogInfoItem(
-                                  dateTime: statsEarlier.dateTime,
-                                  boardID: statsEarlier.boardID,
-                                  boardAlias: statsEarlier.boardAlias,
-                                  logFilePath: statsEarlier.logFilePath,
-                                  avgMovingSpeed: doublePrecision(statsEarlier.avgMovingSpeed + statsLater.avgMovingSpeed / 2, 2),
-                                  avgMovingSpeedGPS: avgMovingSpeedGPS,
-                                  avgSpeed: doublePrecision(statsEarlier.avgSpeed + statsLater.avgSpeed / 2, 2),
-                                  avgSpeedGPS: avgSpeedGPS,
-                                  maxSpeed: statsEarlier.maxSpeed > statsLater.maxSpeed ? statsEarlier.maxSpeed : statsLater.maxSpeed,
-                                  maxSpeedGPS: statsEarlier.maxSpeedGPS > statsLater.maxSpeedGPS ? statsEarlier.maxSpeedGPS : statsLater.maxSpeedGPS,
-                                  altitudeMax: statsEarlier.altitudeMax > statsLater.altitudeMax ? statsEarlier.altitudeMax : statsLater.altitudeMax,
-                                  altitudeMin: statsEarlier.altitudeMin < statsLater.altitudeMin ? statsEarlier.altitudeMin : statsLater.altitudeMin,
-                                  maxAmpsBattery: statsEarlier.maxAmpsBattery > statsLater.maxAmpsBattery ? statsEarlier.maxAmpsBattery : statsLater.maxAmpsBattery,
-                                  maxAmpsMotors: statsEarlier.maxAmpsBattery > statsLater.maxAmpsBattery ? statsEarlier.maxAmpsBattery : statsLater.maxAmpsBattery,
-                                  wattHoursTotal: _addDoubleUnlessNegativeOne(statsEarlier.wattHoursTotal, statsLater.wattHoursTotal),
-                                  wattHoursRegenTotal: _addDoubleUnlessNegativeOne(statsEarlier.wattHoursRegenTotal, statsLater.wattHoursRegenTotal),
-                                  distance: _addDoubleUnlessNegativeOne(statsEarlier.distance, statsLater.distance),
-                                  distanceGPS: _addDoubleUnlessNegativeOne(statsEarlier.distanceGPS, statsLater.distanceGPS),
-                                  durationSeconds: statsLater.dateTime.difference(statsEarlier.dateTime).inSeconds + statsLater.durationSeconds,
-                                  faultCount: statsEarlier.faultCount + statsLater.faultCount,
-                                  rideName: statsEarlier.rideName,
-                                  notes: statsEarlier.notes.length > statsLater.notes.length ? statsEarlier.notes : statsLater.notes
+                                      SizedBox(height: 15),
+                                      Text("Previous File:"),
+                                      Text("${rideLogsFromDatabase[index+1].boardAlias}"),
+                                      Text("${rideLogsFromDatabase[index+1].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}"),
+                                      Text("${prettyPrintDuration(Duration(seconds: rideLogsFromDatabase[index+1].durationSeconds))}"),
+                                    ],
+                                  )
                               );
-                              await DatabaseAssistant.dbUpdateLog(newStatistics); // Update database entry
-                              rideLogsFromDatabase[index+1] = newStatistics; // Update in memory
+                              if (doMerge) {
+                                try {
+                                  globalLogger.d("Log Merge Confirmed. Files: ${rideLogsFromDatabase[index].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}, ${rideLogsFromDatabase[index+1].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}");
+                                  final documentsDirectory = await getApplicationDocumentsDirectory();
+                                  // Get later file contents and statistics
+                                  String fileContents = File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").readAsStringSync();
+                                  LogInfoItem statsLater = rideLogsFromDatabase[index];
+                                  // Update earlier file with extra contents
+                                  File("${documentsDirectory.path}${rideLogsFromDatabase[index+1].logFilePath}").writeAsStringSync(fileContents,mode: FileMode.append);
+                                  LogInfoItem statsEarlier = rideLogsFromDatabase[index+1];
+                                  // Update earlier file statistics
+                                  double avgMovingSpeedGPS = -1.0;
+                                  double avgSpeedGPS = -1.0;
+                                  // avgMovingSpeedGPS may be -1.0 from either entry
+                                  if (statsEarlier.avgMovingSpeedGPS != -1.0 && statsLater.avgMovingSpeedGPS != -1.0) {
+                                    avgMovingSpeedGPS = doublePrecision(statsEarlier.avgMovingSpeedGPS + statsLater.avgMovingSpeedGPS / 2, 2);
+                                  } else if (statsEarlier.avgMovingSpeedGPS != -1.0) {
+                                    avgMovingSpeedGPS = statsEarlier.avgMovingSpeedGPS;
+                                  } else if (statsLater.avgMovingSpeedGPS != -1.0) {
+                                    avgMovingSpeedGPS = statsLater.avgMovingSpeedGPS;
+                                  }
+                                  // gpsAvgSpeed may be -1.0 from either entry
+                                  if (statsEarlier.avgSpeedGPS != -1.0 && statsLater.avgSpeedGPS != -1.0) {
+                                    avgSpeedGPS = doublePrecision(statsEarlier.avgSpeedGPS + statsLater.avgSpeedGPS / 2, 2);
+                                  } else if (statsEarlier.avgSpeedGPS != -1.0) {
+                                    avgSpeedGPS = statsEarlier.avgSpeedGPS;
+                                  } else if (statsLater.avgSpeedGPS != -1.0) {
+                                    avgSpeedGPS = statsLater.avgSpeedGPS;
+                                  }
+                                  LogInfoItem newStatistics = new LogInfoItem(
+                                      dateTime: statsEarlier.dateTime,
+                                      boardID: statsEarlier.boardID,
+                                      boardAlias: statsEarlier.boardAlias,
+                                      logFilePath: statsEarlier.logFilePath,
+                                      avgMovingSpeed: doublePrecision(statsEarlier.avgMovingSpeed + statsLater.avgMovingSpeed / 2, 2),
+                                      avgMovingSpeedGPS: avgMovingSpeedGPS,
+                                      avgSpeed: doublePrecision(statsEarlier.avgSpeed + statsLater.avgSpeed / 2, 2),
+                                      avgSpeedGPS: avgSpeedGPS,
+                                      maxSpeed: statsEarlier.maxSpeed > statsLater.maxSpeed ? statsEarlier.maxSpeed : statsLater.maxSpeed,
+                                      maxSpeedGPS: statsEarlier.maxSpeedGPS > statsLater.maxSpeedGPS ? statsEarlier.maxSpeedGPS : statsLater.maxSpeedGPS,
+                                      altitudeMax: statsEarlier.altitudeMax > statsLater.altitudeMax ? statsEarlier.altitudeMax : statsLater.altitudeMax,
+                                      altitudeMin: statsEarlier.altitudeMin < statsLater.altitudeMin ? statsEarlier.altitudeMin : statsLater.altitudeMin,
+                                      maxAmpsBattery: statsEarlier.maxAmpsBattery > statsLater.maxAmpsBattery ? statsEarlier.maxAmpsBattery : statsLater.maxAmpsBattery,
+                                      maxAmpsMotors: statsEarlier.maxAmpsBattery > statsLater.maxAmpsBattery ? statsEarlier.maxAmpsBattery : statsLater.maxAmpsBattery,
+                                      wattHoursTotal: _addDoubleUnlessNegativeOne(statsEarlier.wattHoursTotal, statsLater.wattHoursTotal),
+                                      wattHoursRegenTotal: _addDoubleUnlessNegativeOne(statsEarlier.wattHoursRegenTotal, statsLater.wattHoursRegenTotal),
+                                      distance: _addDoubleUnlessNegativeOne(statsEarlier.distance, statsLater.distance),
+                                      distanceGPS: _addDoubleUnlessNegativeOne(statsEarlier.distanceGPS, statsLater.distanceGPS),
+                                      durationSeconds: statsLater.dateTime.difference(statsEarlier.dateTime).inSeconds + statsLater.durationSeconds,
+                                      faultCount: statsEarlier.faultCount + statsLater.faultCount,
+                                      rideName: statsEarlier.rideName,
+                                      notes: statsEarlier.notes.length > statsLater.notes.length ? statsEarlier.notes : statsLater.notes
+                                  );
+                                  await DatabaseAssistant.dbUpdateLog(newStatistics); // Update database entry
+                                  rideLogsFromDatabase[index+1] = newStatistics; // Update in memory
 
-                              // Remove later file from database and filesystem
+                                  // Remove later file from database and filesystem
+                                  await DatabaseAssistant.dbRemoveLog(rideLogsFromDatabase[index].logFilePath);
+                                  //Remove from Filesystem
+                                  File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").deleteSync();
+                                  setState(() {
+                                    //Remove from itemBuilder's list of entries
+                                    rideLogsFromDatabase.removeAt(index);
+                                  });
+                                } catch (e, stacktrace) {
+                                  globalLogger.e("rideLogging:doMerge: exception: ${e.toString()}");
+                                  globalLogger.e(stacktrace.toString());
+                                }
+                              } // doMerge
+                            } // Merge onTap
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.only(bottom:5),
+                        child: IconSlideAction(
+                          caption: 'Share',
+                          color: Colors.indigo,
+                          icon: Icons.share,
+                          onTap: () async {
+                            // Share file dialog
+                            String fileSummary = 'Robogotchi gotchi!';
+                            String fileContents = await FileManager.openLogFile(rideLogsFromDatabase[index].logFilePath);
+                            await Share.file('FreeSK8Log', "${rideLogsFromDatabase[index].logFilePath.substring(rideLogsFromDatabase[index].logFilePath.lastIndexOf("/") + 1)}", utf8.encode(fileContents), 'text/csv', text: fileSummary);
+                          },
+                        ),
+                      ),
+
+
+                    ],
+                    secondaryActions: <Widget>[
+                      Padding(
+                        padding: EdgeInsets.only(bottom:5),
+                        child: IconSlideAction(
+                          caption: 'Delete',
+                          color: Colors.red,
+                          icon: Icons.delete,
+                          onTap: () async {
+                            // Confirm Erase with user
+                            bool doErase = await genericConfirmationDialog(
+                                context,
+                                TextButton(
+                                    onPressed: () => Navigator.of(context).pop(true),
+                                    child: const Text("Delete")
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(false),
+                                  child: const Text("Cancel"),
+                                ),
+                                "Delete file?",
+                                Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text("Are you sure you wish to permanently erase this item?"),
+                                    SizedBox(height: 15),
+                                    Text("${rideLogsFromDatabase[index].boardAlias}"),
+                                    Text("${rideLogsFromDatabase[index].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}"),
+                                    Text("${prettyPrintDuration(Duration(seconds: rideLogsFromDatabase[index].durationSeconds))}"),
+                                  ],
+                                )
+                            );
+                            if (doErase) {
+                              final documentsDirectory = await getApplicationDocumentsDirectory();
+                              // Remove the item from the database and rideLogs array
                               await DatabaseAssistant.dbRemoveLog(rideLogsFromDatabase[index].logFilePath);
                               //Remove from Filesystem
                               File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").deleteSync();
@@ -670,66 +738,9 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                 //Remove from itemBuilder's list of entries
                                 rideLogsFromDatabase.removeAt(index);
                               });
-                            } catch (e, stacktrace) {
-                              globalLogger.e("rideLogging:doMerge: exception: ${e.toString()}");
-                              globalLogger.e(stacktrace.toString());
                             }
-                          }
-                        }
-                      ),
-                      IconSlideAction(
-                        caption: 'Share',
-                        color: Colors.indigo,
-                        icon: Icons.share,
-                        onTap: () async {
-                          // Share file dialog
-                          String fileSummary = 'Robogotchi gotchi!';
-                          String fileContents = await FileManager.openLogFile(rideLogsFromDatabase[index].logFilePath);
-                          await Share.file('FreeSK8Log', "${rideLogsFromDatabase[index].logFilePath.substring(rideLogsFromDatabase[index].logFilePath.lastIndexOf("/") + 1)}", utf8.encode(fileContents), 'text/csv', text: fileSummary);
-                        },
-                      ),
-                    ],
-                    secondaryActions: <Widget>[
-                      IconSlideAction(
-                        caption: 'Delete',
-                        color: Colors.red,
-                        icon: Icons.delete,
-                        onTap: () async {
-                          // Confirm Erase with user
-                          bool doErase = await genericConfirmationDialog(
-                              context,
-                              TextButton(
-                                  onPressed: () => Navigator.of(context).pop(true),
-                                  child: const Text("Delete")
-                              ),
-                              TextButton(
-                                onPressed: () => Navigator.of(context).pop(false),
-                                child: const Text("Cancel"),
-                              ),
-                              "Delete file?",
-                              Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text("Are you sure you wish to permanently erase this item?"),
-                                  SizedBox(height: 15),
-                                  Text("${rideLogsFromDatabase[index].boardAlias}"),
-                                  Text("${rideLogsFromDatabase[index].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}"),
-                                  Text("${prettyPrintDuration(Duration(seconds: rideLogsFromDatabase[index].durationSeconds))}"),
-                                ],
-                              )
-                          );
-                          if (doErase) {
-                            final documentsDirectory = await getApplicationDocumentsDirectory();
-                            // Remove the item from the database and rideLogs array
-                            await DatabaseAssistant.dbRemoveLog(rideLogsFromDatabase[index].logFilePath);
-                            //Remove from Filesystem
-                            File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").deleteSync();
-                            setState(() {
-                              //Remove from itemBuilder's list of entries
-                              rideLogsFromDatabase.removeAt(index);
-                            });
-                          }
-                        },
+                          },
+                        ),
                       ),
                     ],
                   );
