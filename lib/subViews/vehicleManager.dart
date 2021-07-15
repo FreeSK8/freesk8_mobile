@@ -145,7 +145,7 @@ class VehicleManagerState extends State<VehicleManager> {
         distances.add(await  DatabaseAssistant.dbGetOdometer(knownDevices[i]));
         consumptions.add(await  DatabaseAssistant.dbGetConsumption(knownDevices[i],settings[i].useImperial));
         // Add a Row for each Vehicle we load
-        listChildren.add(Row(
+        Widget listChild = Row(
           children: [
             //TODO: Editable board avatar
             FutureBuilder<String>(
@@ -186,7 +186,16 @@ class VehicleManagerState extends State<VehicleManager> {
             myArguments.connectedDeviceID != settings[i].deviceID ? GestureDetector(child: Icon(Icons.delete_forever), onTap: (){_removeVehicle(settings[i].deviceID);}) : Container(),
             SizedBox(width: 10),
           ],
-        ));
+        );
+
+        if (myArguments.connectedDeviceID == settings[i].deviceID) {
+          // This item is the connected device
+          // Add it to the top
+          listChildren.insert(2, listChild);
+        } else if (knownDevices[i] != "defaults"){
+          // Add any device that isn't our built in "defaults" profile
+          listChildren.add(listChild);
+        }
       } else {
         globalLogger.e("help!");
       }
