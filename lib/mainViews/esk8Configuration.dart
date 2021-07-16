@@ -171,6 +171,17 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
   final tecDutyStart = TextEditingController();
 
+  /// Balance stuff
+  final tecIMUHz = TextEditingController();
+  final tecBalanceHz = TextEditingController();
+  final tecHalfSwitchFaultDelay = TextEditingController();
+  final tecFullSwitchFaultDelay = TextEditingController();
+  final tecHalfStateFaultERPM = TextEditingController();
+  final tecKP = TextEditingController();
+  final tecKI = TextEditingController();
+  final tecKD = TextEditingController();
+  final tecTiltbackConstantERPM = TextEditingController();
+
 
   /// APP Conf
   List<ListItem> _appModeItems = [
@@ -307,6 +318,33 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     _appModeDropdownItems = buildDropDownMenuItems(_appModeItems);
     _ppmCtrlTypeDropdownItems = buildDropDownMenuItems(_ppmCtrlTypeItems);
     _thrExpModeDropdownItems = buildDropDownMenuItems(_thrExpModeItems);
+
+    /// Balance Configuration
+    tecIMUHz.addListener(() { widget.escAppConfiguration.imu_conf.sample_rate_hz = int.tryParse(tecIMUHz.text); });
+    tecBalanceHz.addListener(() { widget.escAppConfiguration.app_balance_conf.hertz = int.tryParse(tecBalanceHz.text); });
+    tecHalfSwitchFaultDelay.addListener(() { widget.escAppConfiguration.app_balance_conf.fault_delay_switch_half = int.tryParse(tecHalfSwitchFaultDelay.text); });
+    tecFullSwitchFaultDelay.addListener(() { widget.escAppConfiguration.app_balance_conf.fault_delay_switch_full = int.tryParse(tecFullSwitchFaultDelay.text); });
+    tecHalfStateFaultERPM.addListener(() { widget.escAppConfiguration.app_balance_conf.fault_adc_half_erpm = int.tryParse(tecHalfStateFaultERPM.text); });
+    tecKP.addListener(() {
+      double newValue = double.tryParse(tecKP.text.replaceFirst(',', '.'));
+      if(newValue==null) newValue = 0.0; //Ensure not null
+      if(newValue<0.0) newValue = 0.0; //Ensure greater than 0.0
+      widget.escAppConfiguration.app_balance_conf.kp = doublePrecision(newValue, 4);
+    });
+    tecKI.addListener(() {
+      double newValue = double.tryParse(tecKI.text.replaceFirst(',', '.'));
+      if(newValue==null) newValue = 0.0; //Ensure not null
+      if(newValue<0.0) newValue = 0.0; //Ensure greater than 0.0
+      widget.escAppConfiguration.app_balance_conf.ki = doublePrecision(newValue, 4);
+    });
+    tecKD.addListener(() {
+      double newValue = double.tryParse(tecKD.text.replaceFirst(',', '.'));
+      if(newValue==null) newValue = 0.0; //Ensure not null
+      if(newValue<0.0) newValue = 0.0; //Ensure greater than 0.0
+      widget.escAppConfiguration.app_balance_conf.kd = doublePrecision(newValue, 4);
+    });
+
+    tecTiltbackConstantERPM.addListener(() { widget.escAppConfiguration.app_balance_conf.tiltback_constant_erpm = int.tryParse(tecTiltbackConstantERPM.text); });
   }
 
 
@@ -342,6 +380,16 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     tecCurrentMinScale.dispose();
     tecCurrentMaxScale.dispose();
     tecDutyStart.dispose();
+
+    tecIMUHz.dispose();
+    tecBalanceHz.dispose();
+    tecHalfSwitchFaultDelay.dispose();
+    tecFullSwitchFaultDelay.dispose();
+    tecHalfStateFaultERPM.dispose();
+    tecKP.dispose();
+    tecKI.dispose();
+    tecKD.dispose();
+    tecTiltbackConstantERPM.dispose();
 
     // Stop ppm calibration timer if it's somehow left behind
     if (ppmCalibrateTimer != null) {
@@ -859,16 +907,37 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       widget.escAppConfiguration.app_ppm_conf.throttle_exp_brake = doublePrecision(widget.escAppConfiguration.app_ppm_conf.throttle_exp_brake, 2);
       widget.escAppConfiguration.app_ppm_conf.throttle_exp = doublePrecision(widget.escAppConfiguration.app_ppm_conf.throttle_exp, 2);
 
+      widget.escAppConfiguration.app_balance_conf.fault_adc1 = doublePrecision(widget.escAppConfiguration.app_balance_conf.fault_adc1, 2);
+      widget.escAppConfiguration.app_balance_conf.fault_adc2 = doublePrecision(widget.escAppConfiguration.app_balance_conf.fault_adc2, 2);
+      widget.escAppConfiguration.app_balance_conf.kp = doublePrecision(widget.escAppConfiguration.app_balance_conf.kp, 4);
+      widget.escAppConfiguration.app_balance_conf.ki = doublePrecision(widget.escAppConfiguration.app_balance_conf.ki, 4);
+      widget.escAppConfiguration.app_balance_conf.kd = doublePrecision(widget.escAppConfiguration.app_balance_conf.kd, 4);
+      widget.escAppConfiguration.app_balance_conf.tiltback_constant = doublePrecision(widget.escAppConfiguration.app_balance_conf.tiltback_constant, 1);
+      widget.escAppConfiguration.app_balance_conf.brake_current = doublePrecision(widget.escAppConfiguration.app_balance_conf.brake_current, 2);
+      widget.escAppConfiguration.app_balance_conf.tiltback_duty = doublePrecision(widget.escAppConfiguration.app_balance_conf.tiltback_duty, 2);
 
-      widget.escAppConfiguration.imu_conf.sample_rate_hz = widget.escAppConfiguration.imu_conf.sample_rate_hz;
-      widget.escAppConfiguration.app_balance_conf.hertz = widget.escAppConfiguration.app_balance_conf.hertz;
-      widget.escAppConfiguration.app_balance_conf.fault_adc1 = widget.escAppConfiguration.app_balance_conf.fault_adc1;
-      widget.escAppConfiguration.app_balance_conf.fault_adc2 = widget.escAppConfiguration.app_balance_conf.fault_adc2;
-      widget.escAppConfiguration.app_balance_conf.fault_delay_switch_half = widget.escAppConfiguration.app_balance_conf.fault_delay_switch_half;
-      widget.escAppConfiguration.app_balance_conf.fault_delay_switch_full = widget.escAppConfiguration.app_balance_conf.fault_delay_switch_full;
-      widget.escAppConfiguration.app_balance_conf.kp = widget.escAppConfiguration.app_balance_conf.kp;
-      widget.escAppConfiguration.app_balance_conf.ki = widget.escAppConfiguration.app_balance_conf.ki;
-      widget.escAppConfiguration.app_balance_conf.kd = widget.escAppConfiguration.app_balance_conf.kd;
+      // Prepare TECs
+      tecIMUHz.text = widget.escAppConfiguration.imu_conf.sample_rate_hz.toString();
+      tecIMUHz.selection = TextSelection.fromPosition(TextPosition(offset: tecIMUHz.text.length));
+      tecBalanceHz.text = widget.escAppConfiguration.app_balance_conf.hertz.toString();
+      tecBalanceHz.selection = TextSelection.fromPosition(TextPosition(offset: tecBalanceHz.text.length));
+
+      tecHalfSwitchFaultDelay.text = widget.escAppConfiguration.app_balance_conf.fault_delay_switch_half.toString();
+      tecHalfSwitchFaultDelay.selection = TextSelection.fromPosition(TextPosition(offset: tecHalfSwitchFaultDelay.text.length));
+      tecFullSwitchFaultDelay.text = widget.escAppConfiguration.app_balance_conf.fault_delay_switch_full.toString();
+      tecFullSwitchFaultDelay.selection = TextSelection.fromPosition(TextPosition(offset: tecFullSwitchFaultDelay.text.length));
+      tecHalfStateFaultERPM.text = widget.escAppConfiguration.app_balance_conf.fault_adc_half_erpm.toString();
+      tecHalfStateFaultERPM.selection = TextSelection.fromPosition(TextPosition(offset: tecHalfStateFaultERPM.text.length));
+
+      tecKP.text = widget.escAppConfiguration.app_balance_conf.kp.toString();
+      tecKP.selection = TextSelection.fromPosition(TextPosition(offset: tecKP.text.length));
+      tecKI.text = widget.escAppConfiguration.app_balance_conf.ki.toString();
+      tecKI.selection = TextSelection.fromPosition(TextPosition(offset: tecKI.text.length));
+      tecKD.text = widget.escAppConfiguration.app_balance_conf.kd.toString();
+      tecKD.selection = TextSelection.fromPosition(TextPosition(offset: tecKD.text.length));
+
+      tecTiltbackConstantERPM.text = widget.escAppConfiguration.app_balance_conf.tiltback_constant_erpm.toString();
+      tecTiltbackConstantERPM.selection = TextSelection.fromPosition(TextPosition(offset: tecTiltbackConstantERPM.text.length));
 
       return Container(
           child: Stack(children: <Widget>[
@@ -1043,32 +1112,165 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
                           showBalanceConfiguration ? Column(
                             children: [
+                              Divider(thickness: 3),
                               Text("${widget.escAppConfiguration.imu_conf.mode}"),
-                              Text("IMU Hz ${widget.escAppConfiguration.imu_conf.sample_rate_hz}"),
-                              Text("Balance Hz ${widget.escAppConfiguration.app_balance_conf.hertz}"),
+                              TextField(
+                                  controller: tecIMUHz,
+                                  decoration: new InputDecoration(labelText: "IMU Hz"),
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: <TextInputFormatter>[
+                                    FilteringTextInputFormatter.digitsOnly
+                                  ]
+                              ),
+                              TextField(
+                                  controller: tecBalanceHz,
+                                  decoration: new InputDecoration(labelText: "Main Loop Hz"),
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: <TextInputFormatter>[
+                                    FilteringTextInputFormatter.digitsOnly
+                                  ]
+                              ),
 
+                              SizedBox(height:10),
                               Text("ADC1 Fault ${widget.escAppConfiguration.app_balance_conf.fault_adc1}"),
+                              Slider(
+                                value: widget.escAppConfiguration.app_balance_conf.fault_adc1,
+                                min: 0.0,
+                                max: 3.3,
+                                label: "${widget.escAppConfiguration.app_balance_conf.fault_adc1}",
+                                onChanged: (value) {
+                                  setState(() {
+                                    widget.escAppConfiguration.app_balance_conf.fault_adc1 = doublePrecision(value, 1);
+                                  });
+                                },
+                              ),
+
                               Text("ADC2 Fault ${widget.escAppConfiguration.app_balance_conf.fault_adc2}"),
-                              Text("Fault delay switch half ${widget.escAppConfiguration.app_balance_conf.fault_delay_switch_half}"), //TODO: FW5.2 only
-                              Text("Fault delay switch full ${widget.escAppConfiguration.app_balance_conf.fault_delay_switch_full}"), //TODO: FW5.2 only
-                              Text("kP ${widget.escAppConfiguration.app_balance_conf.kp}"),
-                              Text("kI ${widget.escAppConfiguration.app_balance_conf.ki}"),
-                              Text("kD ${widget.escAppConfiguration.app_balance_conf.kd}"),
+                              Slider(
+                                value: widget.escAppConfiguration.app_balance_conf.fault_adc2,
+                                min: 0.0,
+                                max: 3.3,
+                                label: "${widget.escAppConfiguration.app_balance_conf.fault_adc2}",
+                                onChanged: (value) {
+                                  setState(() {
+                                    widget.escAppConfiguration.app_balance_conf.fault_adc2 = doublePrecision(value, 1);
+                                  });
+                                },
+                              ),
+
+                              // NOTE: Not in FW5.1
+                              widget.escAppConfiguration.app_balance_conf.fault_delay_switch_half != null ? TextField(
+                                  controller: tecHalfSwitchFaultDelay,
+                                  decoration: new InputDecoration(labelText: "Half Switch Fault Delay (ms)"),
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: <TextInputFormatter>[
+                                    FilteringTextInputFormatter.digitsOnly
+                                  ]
+                              ) : Container(),
+                              // NOTE: Not in FW5.1
+                              widget.escAppConfiguration.app_balance_conf.fault_delay_switch_full != null ? TextField(
+                                  controller: tecFullSwitchFaultDelay,
+                                  decoration: new InputDecoration(labelText: "Full Switch Fault Delay (ms)"),
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: <TextInputFormatter>[
+                                    FilteringTextInputFormatter.digitsOnly
+                                  ]
+                              ) : Container(),
+                              TextField(
+                                  controller: tecHalfStateFaultERPM,
+                                  decoration: new InputDecoration(labelText: "Half State Fault ERPM"),
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: <TextInputFormatter>[
+                                    FilteringTextInputFormatter.digitsOnly
+                                  ]
+                              ),
 
 
-                              Text("brake_current ${widget.escAppConfiguration.app_balance_conf.brake_current}"),
-                              Text("current_boost ${widget.escAppConfiguration.app_balance_conf.current_boost}"),
-                              Text("deadzone ${widget.escAppConfiguration.app_balance_conf.deadzone}"),
+                              TextField(
+                                  controller: tecKP,
+                                  decoration: new InputDecoration(labelText: "PID (P gain)"),
+                                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                                  inputFormatters: <TextInputFormatter>[
+                                    FilteringTextInputFormatter.allow(formatPositiveDouble)
+                                  ]
+                              ),
+                              TextField(
+                                  controller: tecKI,
+                                  decoration: new InputDecoration(labelText: "PID (I gain)"),
+                                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                                  inputFormatters: <TextInputFormatter>[
+                                    FilteringTextInputFormatter.allow(formatPositiveDouble)
+                                  ]
+                              ),
+                              TextField(
+                                  controller: tecKD,
+                                  decoration: new InputDecoration(labelText: "PID (D gain)"),
+                                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                                  inputFormatters: <TextInputFormatter>[
+                                    FilteringTextInputFormatter.allow(formatPositiveDouble)
+                                  ]
+                              ),
 
 
-                              Text("fault_duty ${widget.escAppConfiguration.app_balance_conf.fault_duty}"),
-                              Text("tiltback_constant ${widget.escAppConfiguration.app_balance_conf.tiltback_constant}"),
+                              SizedBox(height: 10),
+                              Text("Constant Tiltback ${widget.escAppConfiguration.app_balance_conf.tiltback_constant}°"),
+                              Slider(
+                                value: widget.escAppConfiguration.app_balance_conf.tiltback_constant,
+                                min: -20,
+                                max: 20,
+                                label: "${widget.escAppConfiguration.app_balance_conf.tiltback_constant.toInt()}",
+                                onChanged: (value) {
+                                  setState(() {
+                                    widget.escAppConfiguration.app_balance_conf.tiltback_constant = value.toInt().toDouble();
+                                  });
+                                },
+                              ),
+
+                              TextField(
+                                  controller: tecTiltbackConstantERPM,
+                                  decoration: new InputDecoration(labelText: "Constant Tiltback ERPM"),
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: <TextInputFormatter>[
+                                    FilteringTextInputFormatter.digitsOnly
+                                  ]
+                              ),
+
+                              SizedBox(height:10),
+                              Text("Duty Cycle Tiltback ${widget.escAppConfiguration.app_balance_conf.tiltback_duty}"),
+                              Slider(
+                                value: widget.escAppConfiguration.app_balance_conf.tiltback_duty,
+                                min: 0.0,
+                                max: 1.0,
+                                label: "${widget.escAppConfiguration.app_balance_conf.tiltback_duty}",
+                                onChanged: (value) {
+                                  setState(() {
+                                    widget.escAppConfiguration.app_balance_conf.tiltback_duty = doublePrecision(value, 2);
+                                  });
+                                },
+                              ),
+
+                              SizedBox(height:10),
+                              Text("Brake Current ${widget.escAppConfiguration.app_balance_conf.brake_current} Amps"),
+                              Slider(
+                                value: widget.escAppConfiguration.app_balance_conf.brake_current,
+                                min: 0.0,
+                                max: 20.0,
+                                label: "${widget.escAppConfiguration.app_balance_conf.brake_current}",
+                                onChanged: (value) {
+                                  setState(() {
+                                    widget.escAppConfiguration.app_balance_conf.brake_current = doublePrecision(value, 1);
+                                  });
+                                },
+                              ),
+
+                              //Text("current_boost ${widget.escAppConfiguration.app_balance_conf.current_boost}"),
+                              //Text("deadzone ${widget.escAppConfiguration.app_balance_conf.deadzone}"),
+                              //Text("fault_duty ${widget.escAppConfiguration.app_balance_conf.fault_duty}"),
                               //NOTE: Secondary tuning
-                              Text("accel_confidence_decay ${widget.escAppConfiguration.imu_conf.accel_confidence_decay}"),
-                              Text("imu_conf.mahony_kp ${widget.escAppConfiguration.imu_conf.mahony_kp}"),
-                              Text("imu_conf.mahony_ki ${widget.escAppConfiguration.imu_conf.mahony_ki}"),
-                              Text("imu_conf.madgwick_beta ${widget.escAppConfiguration.imu_conf.madgwick_beta}"),
-
+                              //Text("accel_confidence_decay ${widget.escAppConfiguration.imu_conf.accel_confidence_decay}"),
+                              //Text("imu_conf.mahony_kp ${widget.escAppConfiguration.imu_conf.mahony_kp}"),
+                              //Text("imu_conf.mahony_ki ${widget.escAppConfiguration.imu_conf.mahony_ki}"),
+                              //Text("imu_conf.madgwick_beta ${widget.escAppConfiguration.imu_conf.madgwick_beta}"),
                             ],
                           ) : Container(),
 
@@ -1465,7 +1667,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                 }
                               }),
 
-                          ElevatedButton(
+                          showBalanceConfiguration ? Container() : ElevatedButton(
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
