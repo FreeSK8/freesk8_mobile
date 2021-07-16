@@ -127,6 +127,8 @@ Future<bool> sendBLEData(BluetoothCharacteristic txCharacteristic, Uint8List dat
       if (--errorLimiter == 0) {
         globalLogger.e("sendBLEData: Write to characteristic exhausted all attempts. Data not sent. ${txCharacteristic.toString()}");
         return Future.value(false);
+      } else {
+        continue; // Try again without incrementing bytesSent
       }
     }
     bytesSent += 20;
