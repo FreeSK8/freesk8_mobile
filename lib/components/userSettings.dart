@@ -31,7 +31,7 @@ class UserSettingsStructure {
   {
     this.useImperial = values.useImperial;
     this.useFahrenheit = values.useFahrenheit;
-    this.useGPSData = this.useGPSData;
+    this.useGPSData = values.useGPSData;
     this.boardAlias = values.boardAlias;
     this.boardAvatarPath = values.boardAvatarPath;
     this.batterySeriesCount = values.batterySeriesCount;
