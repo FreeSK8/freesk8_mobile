@@ -246,7 +246,7 @@ class VehicleManagerState extends State<VehicleManager> {
               if (snapshot.hasData) {
                 return snapshot.data;
               } else {
-                return CircularProgressIndicator();
+                return Center(child: CircularProgressIndicator());
               }
             }
         ),
