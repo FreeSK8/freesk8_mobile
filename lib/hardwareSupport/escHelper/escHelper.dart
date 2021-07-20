@@ -153,8 +153,8 @@ class ESCHelper {
       fault.faultCount = buffer_get_uint16(payload, index); index += 2;
       fault.escID = buffer_get_uint16(payload, index); index += 2;
       index += 3; //NOTE: Alignment
-      fault.firstSeen = new DateTime.fromMillisecondsSinceEpoch(buffer_get_uint64(payload, index, Endian.little) * 1000, isUtc: true); index += 8;
-      fault.lastSeen = new DateTime.fromMillisecondsSinceEpoch(buffer_get_uint64(payload, index, Endian.little) * 1000, isUtc: true); index += 8;
+      fault.firstSeen = new DateTime.fromMillisecondsSinceEpoch(buffer_get_uint64(payload, index, Endian.little) * 1000, isUtc: true).add((DateTime.now().timeZoneOffset)); index += 8;
+      fault.lastSeen = new DateTime.fromMillisecondsSinceEpoch(buffer_get_uint64(payload, index, Endian.little) * 1000, isUtc: true).add((DateTime.now().timeZoneOffset)); index += 8;
       globalLogger.d("processFaults: Adding ${fault.toString()}");
       response.add(fault);
     }

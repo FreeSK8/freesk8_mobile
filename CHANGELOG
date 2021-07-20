@@ -1,3 +1,13 @@
+v0.18.0
+
+* Added Vehicle Manager
+* Added Ride Merging
+* Support for Balance Input Configuration
+* Display signal strength with BLE scan results
+* Prefer GPS option is applied outside log viewer
+* Improve BLE connectivity
+* Other fixes
+
 v0.17.1
 
 * Fix average speed computation in share file summary

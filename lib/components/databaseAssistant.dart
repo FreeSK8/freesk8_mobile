@@ -10,14 +10,20 @@ class LogInfoItem {
   final String boardID;
   final String boardAlias;
   final String logFilePath;
+  final double avgMovingSpeed;
+  final double avgMovingSpeedGPS;
   final double avgSpeed;
+  final double avgSpeedGPS;
   final double maxSpeed;
-  final double elevationChange;
+  final double maxSpeedGPS;
+  final double altitudeMax;
+  final double altitudeMin;
   final double maxAmpsBattery;
   final double maxAmpsMotors;
   final double wattHoursTotal;
   final double wattHoursRegenTotal;
   final double distance;
+  final double distanceGPS;
   final int    durationSeconds;
   final int    faultCount;
   final String rideName;
@@ -28,14 +34,20 @@ class LogInfoItem {
     this.boardID,
     this.boardAlias,
     this.logFilePath,
+    this.avgMovingSpeed,
+    this.avgMovingSpeedGPS,
     this.avgSpeed,
+    this.avgSpeedGPS,
     this.maxSpeed,
-    this.elevationChange,
+    this.maxSpeedGPS,
+    this.altitudeMax,
+    this.altitudeMin,
     this.maxAmpsBattery,
     this.maxAmpsMotors,
     this.wattHoursTotal,
     this.wattHoursRegenTotal,
     this.distance,
+    this.distanceGPS,
     this.durationSeconds,
     this.faultCount,
     this.rideName,
@@ -50,14 +62,20 @@ class LogInfoItem {
       'board_id' : boardID,
       'board_alias' : boardAlias,
       'log_file_path' : logFilePath, //NOTE: relative path as iOS updates will create new container UUIDs
+      'avg_moving_speed' : avgMovingSpeed,
+      'avg_moving_speed_gps' : avgMovingSpeedGPS,
       'avg_speed' : avgSpeed,
+      'avg_speed_gps' : avgSpeedGPS,
       'max_speed' : maxSpeed,
-      'elevation_change' : elevationChange,
+      'max_speed_gps' : maxSpeedGPS,
+      'altitude_max' : altitudeMax,
+      'altitude_min' : altitudeMin,
       'max_amps_battery' : maxAmpsBattery,
       'max_amps_motors' : maxAmpsMotors,
       'watt_hours' : wattHoursTotal,
       'watt_hours_regen' : wattHoursRegenTotal,
       'distance_km' : distance,
+      'distance_km_gps' : distanceGPS,
       'duration_seconds' : durationSeconds,
       'fault_count' : faultCount,
       'ride_name' : rideName,
@@ -75,7 +93,11 @@ class DatabaseAssistant {
       '', //Version 2 not released
       '', //Version 3 initial beta release with onCreate
       'ALTER TABLE logs ADD COLUMN date_time INTEGER;', //Version 4 adds the ride time to schema for calendar view
-      'ALTER TABLE logs ADD COLUMN watt_hours REAL;&&ALTER TABLE logs ADD COLUMN watt_hours_regen REAL;' //Version 5 adds watt_hours and watt_hours_regen
+      'ALTER TABLE logs ADD COLUMN watt_hours REAL;&&ALTER TABLE logs ADD COLUMN watt_hours_regen REAL;', //Version 5 adds watt_hours and watt_hours_regen
+      //Version 6 adds max_speed_gps, avg_speed_gps, distance_km_gps, altitude_min, altitude_max, avg_moving_speed, avg_moving_speed_gps
+      //          Removes elevation_change
+      //NOTE: sqflite does not do DROP: `ALTER TABLE logs DROP COLUMN elevation_change;&&` will not execute successfully
+      'ALTER TABLE logs ADD COLUMN max_speed_gps REAL;&&ALTER TABLE logs ADD COLUMN avg_speed_gps REAL;&&ALTER TABLE logs ADD COLUMN distance_km_gps REAL;&&ALTER TABLE logs ADD COLUMN altitude_min REAL;&&ALTER TABLE logs ADD COLUMN altitude_max REAL;&&ALTER TABLE logs ADD COLUMN avg_moving_speed REAL;&&ALTER TABLE logs ADD COLUMN avg_moving_speed_gps REAL;',
     ]; // Migration sql scripts
 
     return openDatabase(
@@ -92,14 +114,20 @@ class DatabaseAssistant {
               "board_id TEXT, "
               "board_alias TEXT, "
               "log_file_path TEXT UNIQUE, "
+              "avg_moving_speed REAL, "
+              "avg_moving_speed_gps REAL, "
               "avg_speed REAL, "
+              "avg_speed_gps REAL, "
               "max_speed REAL, "
-              "elevation_change REAL, "
+              "max_speed_gps REAL, "
+              "altitude_min REAL, "
+              "altitude_max REAL, "
               "max_amps_battery REAL, "
               "max_amps_motors REAL, "
               "watt_hours REAL, "
               "watt_hours_regen REAL, "
               "distance_km REAL, "
+              "distance_km_gps REAL, "
               "duration_seconds REAL, "
               "fault_count INTEGER, "
               "ride_name TEXT, "
@@ -116,6 +144,7 @@ class DatabaseAssistant {
           // Split migration script because you cannot execute multiple commands in one line =(
           List<String> migrationScriptCommands = migrationScripts[i].split("&&");
           migrationScriptCommands.forEach((element) async {
+            globalLogger.d("Executing $element");
             await db.execute(element);
           });
 
@@ -134,17 +163,28 @@ class DatabaseAssistant {
               globalLogger.d("onUpgrade adding watt_hours, watt_hours_regen default values to existing records");
               await db.execute('UPDATE logs SET watt_hours = -1.0, watt_hours_regen = -1.0;');
               break;
+            case 5:
+              globalLogger.d("onUpgrade adding max_speed_gps, avg_speed_gps, distance_km_gps, altitude_min, altitude_max, avg_moving_speed, avg_moving_speed_gps");
+              await db.execute("UPDATE logs SET max_speed_gps = -1.0, avg_speed_gps = -1.0, distance_km_gps = -1.0, altitude_min = -1.0, altitude_max = -1.0, avg_moving_speed = -1.0, avg_moving_speed_gps = -1.0;");
+              break;
           }
         }
       },
       // Set the version. This executes the onCreate function and provides a path to perform database upgrades and downgrades.
-      version: 5,
+      version: 6,
     );
   }
 
   static Future<int> dbInsertLog(LogInfoItem logItem) async {
     final Database db = await getDatabase();
     int response = await db.insert('logs', logItem.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+    await db.close();
+    return Future.value(response);
+  }
+
+  static Future<int> dbUpdateLog(LogInfoItem logItem) async {
+    final Database db = await getDatabase();
+    int response = await db.update('logs', logItem.toMap(), where: 'log_file_path = ?', whereArgs: [logItem.logFilePath]);
     await db.close();
     return Future.value(response);
   }
@@ -166,14 +206,20 @@ class DatabaseAssistant {
           boardID:         rideLogEntries[i]['board_id'],
           boardAlias:      rideLogEntries[i]['board_alias'],
           logFilePath:     rideLogEntries[i]['log_file_path'],
+          avgMovingSpeed:  rideLogEntries[i]['avg_moving_speed'],
+          avgMovingSpeedGPS: rideLogEntries[i]['avg_moving_speed_gps'],
           avgSpeed:        rideLogEntries[i]['avg_speed'],
+          avgSpeedGPS:     rideLogEntries[i]['avg_speed_gps'],
           maxSpeed:        rideLogEntries[i]['max_speed'],
-          elevationChange: rideLogEntries[i]['elevation_change'],
+          maxSpeedGPS:     rideLogEntries[i]['max_speed_gps'],
+          altitudeMax:     rideLogEntries[i]['altitude_max'],
+          altitudeMin:     rideLogEntries[i]['altitude_min'],
           maxAmpsBattery:  rideLogEntries[i]['max_amps_battery'],
           maxAmpsMotors:   rideLogEntries[i]['max_amps_motors'],
           wattHoursTotal:  rideLogEntries[i]['watt_hours'],
           wattHoursRegenTotal: rideLogEntries[i]['watt_hours_regen'],
           distance:        rideLogEntries[i]['distance_km'],
+          distanceGPS:        rideLogEntries[i]['distance_km_gps'],
           durationSeconds: rideLogEntries[i]['duration_seconds'].toInt(),
           faultCount:      rideLogEntries[i]['fault_count'],
           rideName:        rideLogEntries[i]['ride_name'],
@@ -192,28 +238,51 @@ class DatabaseAssistant {
     return Future.value(response);
   }
 
-  static Future<double> dbGetOdometer(String boardID) async {
+  static Future<int> dbAssociateVehicle( String deviceID, String newDeviceID ) async {
     final Database db = await getDatabase();
-    final List<Map<String, dynamic>> rideLogEntries = await db.query('logs', columns: ["distance_km"], where: "board_id = ?", whereArgs: [boardID]);
-    double distance = 0;
-    rideLogEntries.forEach((element) {
-      if (element['distance_km'] != -1.0) {
-        distance += element['distance_km'];
-      }
-    });
+    globalLogger.wtf("db moving $deviceID records to $newDeviceID");
+    int response = await db.update('logs', {'board_id': newDeviceID}, where: 'board_id = ?', whereArgs: [deviceID]);
     await db.close();
+    return Future.value(response);
+  }
+
+  static Future<int> dbRemoveVehicle(String deviceID) async {
+    final Database db = await getDatabase();
+    int response = await db.delete('logs', where: 'board_id = ?', whereArgs: [deviceID]);
+    await db.close();
+    return Future.value(response);
+  }
+
+  static Future<double> dbGetOdometer(String boardID, bool preferGPS) async {
+    final Database db = await getDatabase();
+    double distance = 0;
+    try {
+      final String columnName = preferGPS ? "distance_km_gps" : "distance_km";
+      final List<Map<String, dynamic>> rideLogEntries = await db.query('logs', columns: [columnName], where: "board_id = ?", whereArgs: [boardID]);
+
+      rideLogEntries.forEach((element) {
+        if (element[columnName] != -1.0) {
+          distance += element[columnName];
+        }
+      });
+      await db.close();
+    } catch (e) {
+      globalLogger.e(e);
+    }
+
     return distance;
   }
 
-  static Future<double> dbGetConsumption(String boardID, bool useImperial) async {
+  static Future<double> dbGetConsumption(String boardID, bool useImperial, bool preferGPS) async {
+    final String columnName = preferGPS ? "distance_km_gps" : "distance_km";
     final Database db = await getDatabase();
-    final List<Map<String, dynamic>> rideLogEntries = await db.query('logs', columns: ["distance_km", "watt_hours", "watt_hours_regen"], where: "board_id = ?", whereArgs: [boardID]);
+    final List<Map<String, dynamic>> rideLogEntries = await db.query('logs', columns: [columnName, "watt_hours", "watt_hours_regen"], where: "board_id = ?", whereArgs: [boardID]);
     double distance = 0;
     double wattHours = 0;
 
     rideLogEntries.forEach((element) {
-      if (element['distance_km'] != -1.0 && element['watt_hours'] != -1.0) {
-        distance += element['distance_km'];
+      if (element[columnName] != -1.0 && element['watt_hours'] != -1.0) {
+        distance += element[columnName];
 
         wattHours += element['watt_hours'] - element['watt_hours_regen'];
       }

@@ -249,8 +249,9 @@ class ConfigureESCState extends State<ConfigureESC> {
 
               //globalLogger.wtf("FOC Detection packet: ${byteData.buffer.asUint8List()}");
 
-              myArguments.txCharacteristic.write(byteData.buffer.asUint8List()).then((value){
-                globalLogger.i("FOC Detection packet is off off and away...");
+              sendBLEData(myArguments.txCharacteristic, byteData.buffer.asUint8List(), true).then((sendResult){
+                if (sendResult) globalLogger.i("FOC Detection packet is off off and away...");
+                else globalLogger.e("FOC Detection packet failed to send");
               });
             } else {
               // Increment the step counter

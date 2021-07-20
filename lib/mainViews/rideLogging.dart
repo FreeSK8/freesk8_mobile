@@ -18,6 +18,8 @@ import 'package:table_calendar/table_calendar.dart';
 
 import 'dart:io';
 
+import 'package:flutter_slidable/flutter_slidable.dart';
+
 class Dialogs {
   static Future<void> showLoadingDialog(
       BuildContext context, GlobalKey key) async {
@@ -262,7 +264,8 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text("${Duration(seconds: rideLogsFromDatabase[int.parse(event)].durationSeconds).toString().substring(0,Duration(seconds: rideLogsFromDatabase[int.parse(event)].durationSeconds).toString().indexOf("."))}"),
-                                rideLogsFromDatabase[int.parse(event)].distance == -1.0 || widget.myUserSettings.settings.useGPSData ? Container() : Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[int.parse(event)].distance) : rideLogsFromDatabase[int.parse(event)].distance} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}")
+                                rideLogsFromDatabase[int.parse(event)].distance == -1.0 || widget.myUserSettings.settings.useGPSData ? Container() : Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[int.parse(event)].distance) : rideLogsFromDatabase[int.parse(event)].distance} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}"),
+                                widget.myUserSettings.settings.useGPSData && rideLogsFromDatabase[int.parse(event)].distanceGPS != -1.0 ? Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[int.parse(event)].distanceGPS) : rideLogsFromDatabase[int.parse(event)].distanceGPS} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}") : Container(),
                               ],
                             )
                         ),
@@ -454,180 +457,292 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
               ListView.builder(
                 itemCount: rideLogsFromDatabase.length,
                 itemBuilder: (BuildContext context, int index){
-                  //TODO: consider https://pub.dev/packages/flutter_slidable for extended functionality
                   //Each item has dismissible wrapper
-                  return Dismissible(
-                    secondaryBackground: Container(
-                        color: Colors.red,
-                        margin: const EdgeInsets.only(bottom: 5.0),
-                        alignment: AlignmentDirectional.centerEnd,
-                        child: Padding(
-                          padding: EdgeInsets.fromLTRB(0.0, 0.0, 10.0, 0.0),
-                          child: Icon(Icons.delete, color: Colors.white,
-                          ),
-                        )
-                    ),
-                    background: Container(
-                        color: Colors.blue,
-                        margin: const EdgeInsets.only(bottom: 5.0),
-                        alignment: AlignmentDirectional.centerStart,
-                        child: Padding(
-                          padding: EdgeInsets.fromLTRB(10.0, 0.0, 0.0, 0.0),
-                          child: Icon(Icons.share, color: Colors.white,
-                          ),
-                        )
-                    ),
-                    // Each Dismissible must contain a Key. Keys allow Flutter to uniquely identify widgets.
-                    // Use filename as key
-                    key: Key(rideLogsFromDatabase[index].logFilePath.substring(rideLogsFromDatabase[index].logFilePath.lastIndexOf("/") + 1, rideLogsFromDatabase[index].logFilePath.lastIndexOf("/") + 20)),
-                    onDismissed: (direction) async {
-                      final documentsDirectory = await getApplicationDocumentsDirectory();
-                      // Remove the item from the data source.
-                      setState(() {
-                        //Remove from Database
-                        DatabaseAssistant.dbRemoveLog(rideLogsFromDatabase[index].logFilePath);
-                        //Remove from Filesystem
-                        File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").delete();
-                        //Remove from itemBuilder's list of entries
-                        rideLogsFromDatabase.removeAt(index);
-                      });
-                    },
-                    confirmDismiss: (DismissDirection direction) async {
-                      globalLogger.d("rideLogging::Dismissible: ${direction.toString()}");
-                      // Swipe Right to Share
-                      if (direction == DismissDirection.startToEnd) {
-                        // Share file dialog
-                        String fileSummary = 'Robogotchi gotchi!';
-                        String fileContents = await FileManager.openLogFile(rideLogsFromDatabase[index].logFilePath);
-                        await Share.file('FreeSK8Log', "${rideLogsFromDatabase[index].logFilePath.substring(rideLogsFromDatabase[index].logFilePath.lastIndexOf("/") + 1)}", utf8.encode(fileContents), 'text/csv', text: fileSummary);
-                        return false;
-                      } else {
-                        // Swipe Left to Erase
-                        return await genericConfirmationDialog(
-                            context,
-                            TextButton(
-                                onPressed: () => Navigator.of(context).pop(true),
-                                child: const Text("Delete")
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(false),
-                              child: const Text("Cancel"),
-                            ),
-                            "Delete file?",
-                            Text("Are you sure you wish to permanently erase this item?")
-                        );
-                      }
-                    },
-                    child: GestureDetector(
-                      onTap: () async {
-                        await _loadLogFile(index);
-                      },
-                      onLongPress: () {
-                        _buildDialog("${rideLogsFromDatabase[index].boardAlias}", rideLogsFromDatabase[index], widget.myUserSettings.settings.useImperial);
-                      },
-                      child: Column(
-                          children: <Widget>[
-                            Container(height: 50,
-                                width: MediaQuery.of(context).size.width - 20,
-                                margin: const EdgeInsets.only(left: 10.0),
-                                color: Theme.of(context).dialogBackgroundColor,
-                                child: Row(
+                  return Slidable(
+                    key: Key(rideLogsFromDatabase[index].logFilePath.substring(rideLogsFromDatabase[index].logFilePath.lastIndexOf("/") + 1)),
+                    actionPane: SlidableDrawerActionPane(),
+                    actionExtentRatio: 0.25,
+                    child: Container(
 
-                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: <Widget>[
-                                    /*
-                                        SizedBox(width: 5,),
-                                        SizedBox(
-                                          width: 80,
-                                          child: Text(rideLogsFromDatabase[index].boardAlias, textAlign: TextAlign.center,),
-                                        ),s
-                                         */
-                                    SizedBox(width: 5,),
-                                    SizedBox(width: 50, child:
-                                    FutureBuilder<String>(
-                                        future: UserSettings.getBoardAvatarPath(rideLogsFromDatabase[index].boardID),
-                                        builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
-                                          return CircleAvatar(
-                                              backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.jpg'),
-                                              radius: 25,
-                                              backgroundColor: Colors.white);
-                                        })
-                                      ,),
-                                    SizedBox(width: 10,),
+                      child: GestureDetector(
+                        onTap: () async {
+                          await _loadLogFile(index);
+                        },
+                        onLongPress: () {
+                          _buildDialog("${rideLogsFromDatabase[index].boardAlias}", rideLogsFromDatabase[index], widget.myUserSettings.settings.useImperial);
+                        },
+                        child: Column(
+                            children: <Widget>[
+                              Container(height: 50,
+                                  width: MediaQuery.of(context).size.width - 20,
+                                  margin: const EdgeInsets.only(left: 10.0, right: 10),
+                                  color: Theme.of(context).dialogBackgroundColor,
+                                  child: Row(
 
-                                    Expanded(
-                                      child: Text(rideLogsFromDatabase[index].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)),
-                                    ),
+                                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: <Widget>[
+                                      SizedBox(width: 5,),
+                                      SizedBox(width: 50, child:
+                                      FutureBuilder<String>(
+                                          future: UserSettings.getBoardAvatarPath(rideLogsFromDatabase[index].boardID),
+                                          builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+                                            if (snapshot.hasData) {
+                                              return CircleAvatar(
+                                                  backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.jpg'),
+                                                  radius: 25,
+                                                  backgroundColor: Colors.white);
+                                            }
+                                            return SizedBox(width:50);
+                                          })
+                                        ,),
+                                      SizedBox(width: 10,),
 
-                                    SizedBox(
-                                      width: 32,
-                                      child: Icon(
-                                          rideLogsFromDatabase[index].faultCount < 1 ? Icons.check_circle_outline : Icons.error_outline,
-                                          color: rideLogsFromDatabase[index].faultCount < 1 ? Colors.green : Colors.red),
-                                    ),
-
-                                    /// Ride Log Note Editor
-                                    SizedBox(
-                                      width: 32,
-                                      child: GestureDetector(
-                                        onTap: (){
-                                          tecRideNotes.text = rideLogsFromDatabase[index].notes;
-
-                                          showDialog(context: context,
-                                              builder: (_) =>  AlertDialog(
-                                                title: const Icon(Icons.chat, size:40),
-                                                content: TextField(
-                                                  controller: tecRideNotes,
-                                                  decoration: new InputDecoration(labelText: "Notes:"),
-                                                  keyboardType: TextInputType.text,
-                                                ),
-                                                actions: <Widget>[
-                                                  TextButton(
-                                                      onPressed: () async {
-                                                        // Update notes field in database
-                                                        await DatabaseAssistant.dbUpdateNote(rideLogsFromDatabase[index].logFilePath, tecRideNotes.text);
-                                                        _listFiles(true);
-                                                        Navigator.of(context).pop(true);
-                                                      },
-                                                      child: const Text("Save")
-                                                  ),
-                                                  TextButton(
-                                                    onPressed: () => Navigator.of(context).pop(false),
-                                                    child: const Text("Cancel"),
-                                                  ),
-                                                ],
-                                              )
-                                          );
-                                        },
-                                        child: Icon( rideLogsFromDatabase[index].notes.length > 0 ? Icons.chat : Icons.chat_bubble_outline, size: 32),
+                                      Expanded(
+                                        child: Text(rideLogsFromDatabase[index].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)),
                                       ),
-                                    ),
 
-                                    SizedBox(width: 10),
-                                    //SizedBox(
-                                    //  width: 32,
-                                    //  child: Icon(Icons.timer),
-                                    //),
-                                    SizedBox(
-                                        width: 69,
-                                        //child: Text("${(File(rideLogsFromDatabase[index].logFilePath).statSync().size / 1024).round()} kb"),
-                                        child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text("${Duration(seconds: rideLogsFromDatabase[index].durationSeconds).toString().substring(0,Duration(seconds: rideLogsFromDatabase[index].durationSeconds).toString().indexOf("."))}"),
-                                            rideLogsFromDatabase[index].distance == -1.0 || widget.myUserSettings.settings.useGPSData ? Container() : Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[index].distance) : rideLogsFromDatabase[index].distance} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}")
-                                          ],
-                                        )
-                                    ),
-                                  ],
-                                )
-                            ),
-                            SizedBox(height: 5,)
-                          ]
+                                      SizedBox(
+                                        width: 32,
+                                        child: Icon(
+                                            rideLogsFromDatabase[index].faultCount < 1 ? Icons.check_circle_outline : Icons.error_outline,
+                                            color: rideLogsFromDatabase[index].faultCount < 1 ? Colors.green : Colors.red),
+                                      ),
+
+                                      /// Ride Log Note Editor
+                                      SizedBox(
+                                        width: 32,
+                                        child: GestureDetector(
+                                          onTap: (){
+                                            tecRideNotes.text = rideLogsFromDatabase[index].notes;
+
+                                            showDialog(context: context,
+                                                builder: (_) =>  AlertDialog(
+                                                  title: const Icon(Icons.chat, size:40),
+                                                  content: TextField(
+                                                    controller: tecRideNotes,
+                                                    decoration: new InputDecoration(labelText: "Notes:"),
+                                                    keyboardType: TextInputType.text,
+                                                  ),
+                                                  actions: <Widget>[
+                                                    TextButton(
+                                                        onPressed: () async {
+                                                          // Update notes field in database
+                                                          await DatabaseAssistant.dbUpdateNote(rideLogsFromDatabase[index].logFilePath, tecRideNotes.text);
+                                                          _listFiles(true);
+                                                          Navigator.of(context).pop(true);
+                                                        },
+                                                        child: const Text("Save")
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () => Navigator.of(context).pop(false),
+                                                      child: const Text("Cancel"),
+                                                    ),
+                                                  ],
+                                                )
+                                            );
+                                          },
+                                          child: Icon( rideLogsFromDatabase[index].notes.length > 0 ? Icons.chat : Icons.chat_bubble_outline, size: 32),
+                                        ),
+                                      ),
+
+                                      SizedBox(width: 10),
+
+                                      SizedBox(
+                                          width: 69,
+                                          //child: Text("${(File(rideLogsFromDatabase[index].logFilePath).statSync().size / 1024).round()} kb"),
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text("${Duration(seconds: rideLogsFromDatabase[index].durationSeconds).toString().substring(0,Duration(seconds: rideLogsFromDatabase[index].durationSeconds).toString().indexOf("."))}"),
+                                              rideLogsFromDatabase[index].distance == -1.0 || widget.myUserSettings.settings.useGPSData ? Container() : Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[index].distance) : rideLogsFromDatabase[index].distance} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}"),
+                                              widget.myUserSettings.settings.useGPSData && rideLogsFromDatabase[index].distanceGPS != -1.0 ? Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[index].distanceGPS) : rideLogsFromDatabase[index].distanceGPS} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}") : Container(),
+                                            ],
+                                          )
+                                      ),
+                                    ],
+                                  )
+                              ),
+                              SizedBox(height: 5,)
+                            ]
+                        ),
                       ),
                     ),
+                    actions: <Widget>[
+                      Padding(
+                        padding: EdgeInsets.only(bottom:5),
+                        child: IconSlideAction(
+                            caption: 'Merge',
+                            color: Colors.blue,
+                            icon: Icons.merge_type,
+                            onTap: () async {
+                              if (index+1 == rideLogsFromDatabase.length) return;
+
+                              // Confirm Merge with user
+                              bool doMerge = await genericConfirmationDialog(
+                                  context,
+                                  TextButton(
+                                      onPressed: () => Navigator.of(context).pop(true),
+                                      child: const Text("Merge")
+                                  ),
+                                  TextButton(
+                                    onPressed: () => Navigator.of(context).pop(false),
+                                    child: const Text("Cancel"),
+                                  ),
+                                  "Merge with previous file?",
+                                  Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text("Select merge to combine this file with the previous"),
+                                      SizedBox(height: 15),
+                                      Text("${rideLogsFromDatabase[index].boardAlias}"),
+                                      Text("${rideLogsFromDatabase[index].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}"),
+                                      Text("${prettyPrintDuration(Duration(seconds: rideLogsFromDatabase[index].durationSeconds))}"),
+
+                                      SizedBox(height: 15),
+                                      Text("Previous File:"),
+                                      Text("${rideLogsFromDatabase[index+1].boardAlias}"),
+                                      Text("${rideLogsFromDatabase[index+1].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}"),
+                                      Text("${prettyPrintDuration(Duration(seconds: rideLogsFromDatabase[index+1].durationSeconds))}"),
+                                    ],
+                                  )
+                              );
+                              if (doMerge) {
+                                try {
+                                  globalLogger.d("Log Merge Confirmed. Files: ${rideLogsFromDatabase[index].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}, ${rideLogsFromDatabase[index+1].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}");
+                                  final documentsDirectory = await getApplicationDocumentsDirectory();
+                                  // Get later file contents and statistics
+                                  String fileContents = File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").readAsStringSync();
+                                  LogInfoItem statsLater = rideLogsFromDatabase[index];
+                                  // Update earlier file with extra contents
+                                  File("${documentsDirectory.path}${rideLogsFromDatabase[index+1].logFilePath}").writeAsStringSync(fileContents,mode: FileMode.append);
+                                  LogInfoItem statsEarlier = rideLogsFromDatabase[index+1];
+                                  // Update earlier file statistics
+                                  double avgMovingSpeedGPS = -1.0;
+                                  double avgSpeedGPS = -1.0;
+                                  // avgMovingSpeedGPS may be -1.0 from either entry
+                                  if (statsEarlier.avgMovingSpeedGPS != -1.0 && statsLater.avgMovingSpeedGPS != -1.0) {
+                                    avgMovingSpeedGPS = doublePrecision(statsEarlier.avgMovingSpeedGPS + statsLater.avgMovingSpeedGPS / 2, 2);
+                                  } else if (statsEarlier.avgMovingSpeedGPS != -1.0) {
+                                    avgMovingSpeedGPS = statsEarlier.avgMovingSpeedGPS;
+                                  } else if (statsLater.avgMovingSpeedGPS != -1.0) {
+                                    avgMovingSpeedGPS = statsLater.avgMovingSpeedGPS;
+                                  }
+                                  // gpsAvgSpeed may be -1.0 from either entry
+                                  if (statsEarlier.avgSpeedGPS != -1.0 && statsLater.avgSpeedGPS != -1.0) {
+                                    avgSpeedGPS = doublePrecision(statsEarlier.avgSpeedGPS + statsLater.avgSpeedGPS / 2, 2);
+                                  } else if (statsEarlier.avgSpeedGPS != -1.0) {
+                                    avgSpeedGPS = statsEarlier.avgSpeedGPS;
+                                  } else if (statsLater.avgSpeedGPS != -1.0) {
+                                    avgSpeedGPS = statsLater.avgSpeedGPS;
+                                  }
+                                  LogInfoItem newStatistics = new LogInfoItem(
+                                      dateTime: statsEarlier.dateTime,
+                                      boardID: statsEarlier.boardID,
+                                      boardAlias: statsEarlier.boardAlias,
+                                      logFilePath: statsEarlier.logFilePath,
+                                      avgMovingSpeed: doublePrecision(statsEarlier.avgMovingSpeed + statsLater.avgMovingSpeed / 2, 2),
+                                      avgMovingSpeedGPS: avgMovingSpeedGPS,
+                                      avgSpeed: doublePrecision(statsEarlier.avgSpeed + statsLater.avgSpeed / 2, 2),
+                                      avgSpeedGPS: avgSpeedGPS,
+                                      maxSpeed: statsEarlier.maxSpeed > statsLater.maxSpeed ? statsEarlier.maxSpeed : statsLater.maxSpeed,
+                                      maxSpeedGPS: statsEarlier.maxSpeedGPS > statsLater.maxSpeedGPS ? statsEarlier.maxSpeedGPS : statsLater.maxSpeedGPS,
+                                      altitudeMax: statsEarlier.altitudeMax > statsLater.altitudeMax ? statsEarlier.altitudeMax : statsLater.altitudeMax,
+                                      altitudeMin: statsEarlier.altitudeMin < statsLater.altitudeMin ? statsEarlier.altitudeMin : statsLater.altitudeMin,
+                                      maxAmpsBattery: statsEarlier.maxAmpsBattery > statsLater.maxAmpsBattery ? statsEarlier.maxAmpsBattery : statsLater.maxAmpsBattery,
+                                      maxAmpsMotors: statsEarlier.maxAmpsBattery > statsLater.maxAmpsBattery ? statsEarlier.maxAmpsBattery : statsLater.maxAmpsBattery,
+                                      wattHoursTotal: _addDoubleUnlessNegativeOne(statsEarlier.wattHoursTotal, statsLater.wattHoursTotal),
+                                      wattHoursRegenTotal: _addDoubleUnlessNegativeOne(statsEarlier.wattHoursRegenTotal, statsLater.wattHoursRegenTotal),
+                                      distance: _addDoubleUnlessNegativeOne(statsEarlier.distance, statsLater.distance),
+                                      distanceGPS: _addDoubleUnlessNegativeOne(statsEarlier.distanceGPS, statsLater.distanceGPS),
+                                      durationSeconds: statsLater.dateTime.difference(statsEarlier.dateTime).inSeconds + statsLater.durationSeconds,
+                                      faultCount: statsEarlier.faultCount + statsLater.faultCount,
+                                      rideName: statsEarlier.rideName,
+                                      notes: statsEarlier.notes.length > statsLater.notes.length ? statsEarlier.notes : statsLater.notes
+                                  );
+                                  await DatabaseAssistant.dbUpdateLog(newStatistics); // Update database entry
+                                  rideLogsFromDatabase[index+1] = newStatistics; // Update in memory
+
+                                  // Remove later file from database and filesystem
+                                  await DatabaseAssistant.dbRemoveLog(rideLogsFromDatabase[index].logFilePath);
+                                  //Remove from Filesystem
+                                  File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").deleteSync();
+                                  setState(() {
+                                    //Remove from itemBuilder's list of entries
+                                    rideLogsFromDatabase.removeAt(index);
+                                  });
+                                } catch (e, stacktrace) {
+                                  globalLogger.e("rideLogging:doMerge: exception: ${e.toString()}");
+                                  globalLogger.e(stacktrace.toString());
+                                }
+                              } // doMerge
+                            } // Merge onTap
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.only(bottom:5),
+                        child: IconSlideAction(
+                          caption: 'Share',
+                          color: Colors.indigo,
+                          icon: Icons.share,
+                          onTap: () async {
+                            // Share file dialog
+                            String fileSummary = 'Robogotchi gotchi!';
+                            String fileContents = await FileManager.openLogFile(rideLogsFromDatabase[index].logFilePath);
+                            await Share.file('FreeSK8Log', "${rideLogsFromDatabase[index].logFilePath.substring(rideLogsFromDatabase[index].logFilePath.lastIndexOf("/") + 1)}", utf8.encode(fileContents), 'text/csv', text: fileSummary);
+                          },
+                        ),
+                      ),
+
+
+                    ],
+                    secondaryActions: <Widget>[
+                      Padding(
+                        padding: EdgeInsets.only(bottom:5),
+                        child: IconSlideAction(
+                          caption: 'Delete',
+                          color: Colors.red,
+                          icon: Icons.delete,
+                          onTap: () async {
+                            // Confirm Erase with user
+                            bool doErase = await genericConfirmationDialog(
+                                context,
+                                TextButton(
+                                    onPressed: () => Navigator.of(context).pop(true),
+                                    child: const Text("Delete")
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(false),
+                                  child: const Text("Cancel"),
+                                ),
+                                "Delete file?",
+                                Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text("Are you sure you wish to permanently erase this item?"),
+                                    SizedBox(height: 15),
+                                    Text("${rideLogsFromDatabase[index].boardAlias}"),
+                                    Text("${rideLogsFromDatabase[index].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}"),
+                                    Text("${prettyPrintDuration(Duration(seconds: rideLogsFromDatabase[index].durationSeconds))}"),
+                                  ],
+                                )
+                            );
+                            if (doErase) {
+                              final documentsDirectory = await getApplicationDocumentsDirectory();
+                              // Remove the item from the database and rideLogs array
+                              await DatabaseAssistant.dbRemoveLog(rideLogsFromDatabase[index].logFilePath);
+                              //Remove from Filesystem
+                              File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").deleteSync();
+                              setState(() {
+                                //Remove from itemBuilder's list of entries
+                                rideLogsFromDatabase.removeAt(index);
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    ],
                   );
                 })),
 
@@ -716,6 +831,17 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
     );
   }
 
+  double _addDoubleUnlessNegativeOne(double valA, double valB, {int precision=2}) {
+    if (valA != -1.0 && valB != -1.0) {
+      return doublePrecision(valA + valB, precision);
+    } else if (valA != -1.0) {
+      return valA;
+    } else if (valB != -1.0) {
+      return valB;
+    }
+    return -1.0;
+  }
+
   Future<void> _alertLimitedFunctionality(BuildContext context) async {
     return genericAlert(context, "Not a Robogotchi", Text('This feature only works with the FreeSK8 Robogotchi\n\nPlease connect to a Robogotchi device'), "Shucks");
   }
@@ -728,15 +854,35 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
       Text("${prettyPrintDuration(Duration(seconds: logEntry.durationSeconds))}",
           textAlign: TextAlign.center)]));
 
-    if (logEntry.distance != -1.0) tableChildren.add(TableRow(children: [
-      Icon(Icons.flag),
-      Text("${useImperial ? kmToMile(logEntry.distance) : logEntry.distance} ${useImperial ? "mi" : "km"}",
-          textAlign: TextAlign.center)]));
+    // Show GPS distance if requested and available
+    //NOTE: Beta testers with old entries (internal database v5) will have a -1.0 distanceGPS value
+    if (widget.myUserSettings.settings.useGPSData) {
+      if (logEntry.distanceGPS != -1.0) tableChildren.add(TableRow(children: [
+        Icon(Icons.flag),
+        Text("${useImperial ? kmToMile(logEntry.distanceGPS) : logEntry.distanceGPS} ${useImperial ? "mi" : "km"}",
+            textAlign: TextAlign.center)]));
+    } else {
+      if (logEntry.distance != -1.0) tableChildren.add(TableRow(children: [
+        Icon(Icons.flag_outlined),
+        Text("${useImperial ? kmToMile(logEntry.distance) : logEntry.distance} ${useImperial ? "mi" : "km"}",
+            textAlign: TextAlign.center)]));
+    }
 
-    tableChildren.add(TableRow(children: [
-      Transform.rotate(angle: 3.14159, child: Icon(Icons.av_timer),),
-      Text("${useImperial ? kmToMile(logEntry.maxSpeed) : logEntry.maxSpeed} ${useImperial ? "mph" : "kph"}",
-          textAlign: TextAlign.center)]));
+
+    // Show GPS max speed if requested and available
+    //NOTE: Beta testers with old entries (internal database v5) will have a -1.0 maxSpeedGPS value
+    if (widget.myUserSettings.settings.useGPSData) {
+      if (logEntry.maxSpeedGPS != -1.0) tableChildren.add(TableRow(children: [
+        Transform.rotate(angle: 3.14159, child: Icon(Icons.av_timer),),
+        Text("${useImperial ? kmToMile(logEntry.maxSpeedGPS) : logEntry.maxSpeedGPS} ${useImperial ? "mph" : "kph"}",
+            textAlign: TextAlign.center)]));
+    } else {
+      tableChildren.add(TableRow(children: [
+        Transform.rotate(angle: 3.14159, child: Icon(Icons.av_timer),),
+        Text("${useImperial ? kmToMile(logEntry.maxSpeed) : logEntry.maxSpeed} ${useImperial ? "mph" : "kph"}",
+            textAlign: TextAlign.center)]));
+    }
+
 
     tableChildren.add(TableRow(children: [
       Icon(Icons.battery_charging_full),
@@ -756,9 +902,9 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
       Text("${logEntry.wattHoursRegenTotal} wh regen",
           textAlign: TextAlign.center)]));
 
-    if (logEntry.elevationChange != -1.0) tableChildren.add(TableRow(children: [
+    if (logEntry.altitudeMax != -1.0) tableChildren.add(TableRow(children: [
       Icon(Icons.show_chart),
-      Text("${doublePrecision(logEntry.elevationChange, 2)} meters",
+      Text("${doublePrecision(logEntry.altitudeMax - logEntry.altitudeMin, 2)} meters",
           textAlign: TextAlign.center)]));
 
     tableChildren.add(TableRow(children: [

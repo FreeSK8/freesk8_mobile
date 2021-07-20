@@ -21,6 +21,7 @@ import 'subViews/rideLogViewer.dart';
 import 'subViews/focWizard.dart';
 import 'subViews/escProfileEditor.dart';
 import 'subViews/robogotchiCfgEditor.dart';
+import 'subViews/vehicleManager.dart';
 
 import 'widgets/fileSyncViewer.dart';
 
@@ -54,10 +55,12 @@ import 'package:logger_flutter/logger_flutter.dart';
 
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:signal_strength_indicator/signal_strength_indicator.dart';
+
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.17.1";
+const String freeSK8ApplicationVersion = "0.18.0";
 const String robogotchiFirmwareExpectedVersion = "0.10.1";
 
 void main() {
@@ -73,6 +76,7 @@ void main() {
         ESCProfileEditor.routeName: (BuildContext context) => ESCProfileEditor(),
         RobogotchiCfgEditor.routeName: (BuildContext context) => RobogotchiCfgEditor(),
         RobogotchiDFU.routeName: (BuildContext context) => RobogotchiDFU(),
+        VehicleManager.routeName: (BuildContext context) => VehicleManager(),
       },
       theme: ThemeData(
         //TODO: Select satisfying colors for the light theme
@@ -92,7 +96,7 @@ void main() {
 class MyHome extends StatefulWidget {
 
   final FlutterBlue flutterBlue = FlutterBlue.instance;
-  final List<BluetoothDevice> devicesList = [];
+  final List<ScanResult> bleScanResults = [];
 
   final UserSettings myUserSettings = new UserSettings();
 
@@ -195,18 +199,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       }
     });
 
-    // Setup BLE event listeners
-    widget.flutterBlue.connectedDevices
-        .asStream()
-        .listen((List<BluetoothDevice> devices) {
-      for (BluetoothDevice device in devices) {
-        _addDeviceToList(device);
-      }
-    });
-    widget.flutterBlue.scanResults.listen((List<ScanResult> results) {
-      for (ScanResult result in results) {
-        _addDeviceToList(result.device);
-      }
+    // Setup BLE scan results event listener
+    widget.flutterBlue.scanResults.listen((List<ScanResult> results) async {
+      setState(() {
+        widget.bleScanResults.clear();
+        widget.bleScanResults.addAll(results);
+      });
     });
     widget.flutterBlue.setLogLevel(LogLevel.warning);
 
@@ -226,6 +224,18 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     _timerMonitor = new Timer.periodic(Duration(seconds: 1), (Timer t) => _monitorGotchiTimer());
 
     DeviceInfo.init();
+  }
+
+  Future<bool> _isBLEOn(bool alertUser) async {
+    if (await widget.flutterBlue.isOn) {
+      return Future.value(true);
+    } else {
+      globalLogger.i("Bluetooth is not turned ON");
+      if (alertUser) {
+        genericAlert(context, "Bluetooth is OFF", Text("Please enable Bluetooth on your device"), "OK");
+      }
+      return Future.value(false);
+    }
   }
 
   void _monitorGotchiTimer() {
@@ -382,28 +392,26 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     }
   }
 
-  _addDeviceToList(final BluetoothDevice device) {
-    if (!widget.devicesList.contains(device)) {
-      setState(() {
-        widget.devicesList.add(device);
-      });
-    }
-  }
-
   bool _scanActive = false;
-  void _handleBLEScanState(bool startScan) {
+  Future<void> _handleBLEScanState(bool startScan) async {
     if (_connectedDevice != null) {
       globalLogger.d("_handleBLEScanState: disconnecting");
     }
     else if (startScan == true) {
       globalLogger.d("_handleBLEScanState: startScan was true");
-      widget.devicesList.clear();
-      widget.flutterBlue.startScan(withServices: new List<Guid>.from([uartServiceUUID])).catchError((onError){
-        if (onError.toString().contains("Is the Adapter on?")) {
-          genericAlert(context, "Bluetooth off?", Text("Unable to start scanning. Please check that bluetooth is enabled and try again"), "OK");
-        }
-        return;
-      });
+      unexpectedDisconnect = false; // If we start scanning again we are no longer unexpectedly disconnected
+      widget.bleScanResults.clear(); // Clear potential previous results
+      // Check if BLE is on before scanning
+      if (await _isBLEOn(true)) {
+        widget.flutterBlue.startScan(withServices: new List<Guid>.from([uartServiceUUID])).catchError((onError){
+          // Catch errors from starting scan
+          genericAlert(context, "BLE Scan Error", Text("Unable to start scanning: ${onError.toString()}"), "OK");
+          globalLogger.e("flutter_blue.startScan threw: ${onError.toString()}");
+          return;
+        });
+      } else {
+        startScan = false;
+      }
     } else {
       globalLogger.d("_handleBLEScanState: startScan was false");
       widget.flutterBlue.stopScan();
@@ -421,7 +429,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       setState(() {
         // Clear BLE Scan state
-        widget.devicesList.clear(); //NOTE: clearing list on disconnect so build() does not attempt to pass images of knownDevices that have not yet been loaded
+        widget.bleScanResults.clear(); //NOTE: clearing list on disconnect so build() does not attempt to pass images of knownDevices that have not yet been loaded
         _scanActive = false;
 
         // Reset device is connected flag
@@ -702,18 +710,19 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       ),
     );
 
-    for (BluetoothDevice device in widget.devicesList) {
+    for (ScanResult result in widget.bleScanResults) {
       //If there is no name for the device we are going to ignore it
-      if (device.name == '') continue;
+      if (result.device.name == '') continue;
 
       //If this device is known give it a special row in the list of devices
-      if (widget.myUserSettings.isDeviceKnown(device.id.toString())) {
+      if (widget.myUserSettings.isDeviceKnown(result.device.id.toString())) {
         Container element = Container(
             padding: EdgeInsets.all(5.0),
             width: MediaQuery.of(context).size.width / crossAxisCount,
             child: GestureDetector(
               onTap: () async {
-                await _attemptDeviceConnection(device);
+                globalLogger.d("Attempting connection to ${result.device.name} (${result.device.id}) with ${result.rssi}dB");
+                await _attemptDeviceConnection(result.device);
               },
               child:
 
@@ -722,19 +731,23 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                  // Text(device.id.toString()),
 
                   FutureBuilder<String>(
-                      future: UserSettings.getBoardAlias(device.id.toString()),
+                      future: UserSettings.getBoardAlias(result.device.id.toString()),
                       builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
                         return Text(snapshot.data != null ? snapshot.data : "unnamed", textAlign: TextAlign.center,);
                       }),
-                  FutureBuilder<String>(
-                      future: UserSettings.getBoardAvatarPath(device.id.toString()),
-                      builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
-                        return CircleAvatar(
-                            backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.jpg'),
-                            radius: 60,
-                            backgroundColor: Colors.white);
-                      }),
-                  Text(device.name),
+                  Stack(children: [
+                    FutureBuilder<String>(
+                        future: UserSettings.getBoardAvatarPath(result.device.id.toString()),
+                        builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+                          return CircleAvatar(
+                              backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.jpg'),
+                              radius: 60,
+                              backgroundColor: Colors.white);
+                        }),
+                    Positioned(right: 0, bottom: 0, child: SignalStrengthIndicator.bars(value: result.rssi, minValue: -90, maxValue: -45, barCount: 5, radius: Radius.circular(1.5)),),
+                  ],),
+
+                  Text(result.device.name),
                 ],
               ),
             )
@@ -749,13 +762,18 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           width: MediaQuery.of(context).size.width / crossAxisCount,
           child: GestureDetector(
             onTap: () async {
-              await _attemptDeviceConnection(device);
+              globalLogger.d("Attempting connection to ${result.device} with ${result.rssi}dB");
+              await _attemptDeviceConnection(result.device);
             },
             child: Column(
               children: <Widget>[
-                Padding(padding: EdgeInsets.only(top:32.0),
-                    child: Icon(Icons.device_unknown, size: 75)),
-                Text(device.name == '' ? '(unknown device)' : device.name),
+                Stack(children: [
+                  Padding(padding: EdgeInsets.only(top:32.0, bottom: 10.0),
+                    child: Icon(Icons.device_unknown, size: 75),
+                  ),
+                  Positioned(right: 0, bottom: 0, child: SignalStrengthIndicator.bars(value: result.rssi, minValue: -90, maxValue: -45, barCount: 5, radius: Radius.circular(1.5),),),
+                ]),
+                Text(result.device.name == '' ? '(unknown device)' : result.device.name),
                 //NOTE: this is not MAC on iOS: Text(device.id.toString()),
               ],
             )
@@ -938,8 +956,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
   // Compute logged distance and consumption
   void updateComputedVehicleStatistics(bool doSetState) async {
-    connectedVehicleOdometer = await DatabaseAssistant.dbGetOdometer(widget.myUserSettings.currentDeviceID);
-    connectedVehicleConsumption = await DatabaseAssistant.dbGetConsumption(widget.myUserSettings.currentDeviceID, widget.myUserSettings.settings.useImperial);
+    connectedVehicleOdometer = await DatabaseAssistant.dbGetOdometer(widget.myUserSettings.currentDeviceID, widget.myUserSettings.settings.useGPSData);
+    connectedVehicleConsumption = await DatabaseAssistant.dbGetConsumption(widget.myUserSettings.currentDeviceID, widget.myUserSettings.settings.useImperial, widget.myUserSettings.settings.useGPSData);
     if (doSetState) {
       setState(() {});
     }
@@ -1099,14 +1117,26 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             Map<int, double> wattHoursEndByESC = new Map();
             Map<int, double> wattHoursRegenStartByESC = new Map();
             Map<int, double> wattHoursRegenEndByESC = new Map();
+            int escRecordCount = 0;
+            int gpsRecordCount = 0;
             double maxCurrentBattery = 0.0;
             double maxCurrentMotor = 0.0;
             double maxSpeedKph = 0.0;
-            //double avgSpeedKph = 0.0;
+            double maxSpeedGPS;
+            double avgMovingSpeed;
+            int avgMovingSpeedEntries = 0;
+            double avgMovingSpeedGPS;
+            int avgMovingSpeedGPSEntries = 0;
+            double avgSpeed;
+            int avgSpeedEntries = 0;
+            double avgSpeedGPS;
+            int avgSpeedGPSEntries = 0;
             int firstESCID;
             double distanceStart;
             double distanceEnd;
             double distanceTotal;
+            double distanceTotalGPS;
+            LatLng gpsPositionPrevious;
             int faultCodeCount = 0;
             double minElevation;
             double maxElevation;
@@ -1138,6 +1168,32 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   if (elevation < minElevation) minElevation = elevation;
                   if (elevation > maxElevation) maxElevation = elevation;
 
+
+                  // Track avg speed
+                  double speedNow = double.tryParse(entry[4]);
+                  avgSpeedGPS ??= 0;
+                  avgSpeedGPS += speedNow;
+                  ++avgSpeedGPSEntries;
+
+                  // Track avg moving speed (;idle boards won't bring you down;)
+                  if (speedNow > 0.0) {
+                    avgMovingSpeedGPS ??= 0;
+                    avgMovingSpeedGPS += speedNow;
+                    ++avgMovingSpeedGPSEntries;
+                  }
+
+                  // Track max speed
+                  maxSpeedGPS ??= speedNow;
+                  if (speedNow > maxSpeedGPS) {
+                    maxSpeedGPS = speedNow;
+                  }
+
+                  // Compute distance traveled
+                  LatLng gpsPositionNow = new LatLng(double.parse(entry[5]), double.parse(entry[6]));
+                  gpsPositionPrevious ??= gpsPositionNow;
+                  distanceTotalGPS ??= 0;
+                  distanceTotalGPS += calculateGPSDistance(gpsPositionNow, gpsPositionPrevious);
+                  gpsPositionPrevious = gpsPositionNow;
                 }
                 ///ESC Values
                 else if (entry[1] == "esc" && entry.length >= 14) {
@@ -1163,7 +1219,16 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   if (speed > maxSpeedKph) {
                     maxSpeedKph = speed;
                   }
-                  //TODO: Compute average speed!
+                  // Prepare average speed!
+                  avgSpeed ??= 0;
+                  avgSpeed += speed;
+                  ++avgSpeedEntries;
+                  // Prepare average moving speed
+                  if (speed > 0.0) {
+                    avgMovingSpeed ??= 0;
+                    avgMovingSpeed += speed;
+                    ++avgMovingSpeedEntries;
+                  }
                   // Capture Distance for first ESC
                   if (escID == firstESCID) {
                     distanceStart ??= eDistanceToKm(eDistance, widget.myUserSettings.settings.gearRatio, widget.myUserSettings.settings.wheelDiameterMillimeters, widget.myUserSettings.settings.motorPoles);
@@ -1176,6 +1241,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   wattHoursEndByESC[escID] = wattHours;
                   wattHoursRegenStartByESC[escID] ??= wattHoursRegen;
                   wattHoursRegenEndByESC[escID] = wattHoursRegen;
+
+                  ++escRecordCount;
                 }
                 ///Fault codes
                 else if (entry[1] == "err") {
@@ -1206,6 +1273,19 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
             globalLogger.d("Consumption calculation: Watt Hours Total $wattHours Regenerated Total $wattHoursRegen");
 
+            /// Compute average speeds
+            if (avgSpeedGPSEntries > 0) {
+              avgSpeedGPS /= avgSpeedGPSEntries;
+            }
+            if (avgMovingSpeedGPSEntries > 0) {
+              avgMovingSpeedGPS /= avgMovingSpeedGPSEntries;
+            }
+            if (avgSpeedEntries > 0) {
+              avgSpeed /= avgSpeedEntries;
+            }
+            if (avgMovingSpeedEntries > 0) {
+              avgMovingSpeed /= avgMovingSpeedEntries;
+            }
             //NOTE: failure checking...
             //int test = null;
             //int fail = test + 420;
@@ -1219,14 +1299,20 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   boardID: widget.myUserSettings.currentDeviceID,
                   boardAlias: widget.myUserSettings.settings.boardAlias,
                   logFilePath: savedFilePath,
-                  avgSpeed: -1.0, //TODO: compute average speed
+                  avgMovingSpeed: avgMovingSpeed != null ? doublePrecision(avgMovingSpeed, 2) : -1.0,
+                  avgMovingSpeedGPS: avgMovingSpeedGPS != null ? doublePrecision(avgMovingSpeedGPS, 2) : -1.0,
+                  avgSpeed: avgSpeed != null ? doublePrecision(avgSpeed, 2) : -1.0,
+                  avgSpeedGPS: avgSpeedGPS != null ? doublePrecision(avgSpeedGPS, 2) : -1.0,
                   maxSpeed: maxSpeedKph,
-                  elevationChange: maxElevation != null ? maxElevation - minElevation : -1.0,
+                  maxSpeedGPS: maxSpeedGPS != null ? doublePrecision(maxSpeedGPS, 2) : -1.0,
+                  altitudeMax: maxElevation != null ? maxElevation : -1.0,
+                  altitudeMin: minElevation != null ? minElevation : -1.0,
                   maxAmpsBattery: maxCurrentBattery,
                   maxAmpsMotors: maxCurrentMotor,
                   wattHoursTotal: doublePrecision(wattHours, 2),
                   wattHoursRegenTotal: doublePrecision(wattHoursRegen, 2),
                   distance: distanceTotal,
+                  distanceGPS: distanceTotalGPS != null ? doublePrecision(distanceTotalGPS, 2) : -1.0,
                   durationSeconds: lastEntryTime.difference(firstEntryTime).inSeconds,
                   faultCount: faultCodeCount,
                   rideName: "",
@@ -1251,8 +1337,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             ///Save file operation complete
             return;
 
-          } catch (e) {
+          } catch (e, stacktrace) {
             globalLogger.e("cat,complete threw an exception: ${e.toString()}");
+            globalLogger.e("Stacktrace: ${stacktrace.toString()}");
 
             // Alert user something went wrong with the parsing
             genericConfirmationDialog(context, TextButton(
@@ -1561,16 +1648,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               byteData.setUint16(5, checksum);
               byteData.setUint8(7, 0x03); // End of packet
 
-              theTXCharacteristic.write(byteData.buffer.asUint8List(), withoutResponse: true).
-              catchError((e) {
-                globalLogger.w("Exception while requesting COMM_GET_BMS_CELLS $e");
+              sendBLEData(theTXCharacteristic, byteData.buffer.asUint8List(), true).then((sendResult){
+                if (!sendResult) {
+                  globalLogger.w("Smart BMS cell data request failed");
+                }
               });
             }
           }
-
-          //TODO: Old Telemetry packet
-          //telemetryPacket = escHelper.processTelemetry(bleHelper.getPayload());
-          //print("goodValues ${telemetryPacket.vesc_id} ${telemetryPacket.tachometer} ${telemetryPacket.tachometer_abs} ${telemetryPacket.amp_hours} ${telemetryPacket.amp_hours_charged} ${telemetryPacket.watt_hours}");
 
           // Prepare for the next packet
           bleHelper.resetPacket();
@@ -2682,6 +2766,29 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     }
   }
 
+  void reloadUserSettings(bool navigateHome) async {
+    globalLogger.wtf("reloadUserSettings");
+    if (_connectedDevice != null) {
+      await widget.myUserSettings.loadSettings(_connectedDevice.id.toString()).then((value){
+        globalLogger.i("reloadUserSettings::widget.myUserSettings.loadSettings(): isConnectedDeviceKnown = $value");
+        isConnectedDeviceKnown = value;
+      });
+      if (isConnectedDeviceKnown) {
+        cachedBoardAvatar = widget.myUserSettings.settings.boardAvatarPath != null ? MemoryImage(File(
+            "${(await getApplicationDocumentsDirectory()).path}${widget.myUserSettings.settings.boardAvatarPath}").readAsBytesSync()) : null;
+      } else {
+        cachedBoardAvatar = null;
+      }
+      setState(() {
+
+      });
+    }
+    //TODO: I don't want to navigate back to home but I can't get the configuration page to show an updated avatar after adoption in vehicle manager
+    if (navigateHome) {
+      _delayedTabControllerIndexChange(controllerViewConnection);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if(syncInProgress && syncAdvanceProgress){
@@ -2803,6 +2910,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 escFirmwareVersion: escFirmwareVersion,
                 updateComputedVehicleStatistics: updateComputedVehicleStatistics,
                 applicationDocumentsDirectory: applicationDocumentsDirectory,
+                reloadUserSettings: reloadUserSettings,
               )
             ])
           ),

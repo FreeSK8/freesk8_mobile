@@ -76,6 +76,12 @@ dependencies:
 
   url_launcher: ^6.0.3 #https://pub.dev/packages/url_launcher/changelog
 
+  uuid: 3.0.4 #https://pub.dev/packages/uuid/changelog
+
+  flutter_slidable: ^0.6.0 #https://pub.dev/packages/flutter_slidable/changelog
+
+  signal_strength_indicator: ^0.4.0 #https://pub.dev/packages/signal_strength_indicator/changelog
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^0.1.2

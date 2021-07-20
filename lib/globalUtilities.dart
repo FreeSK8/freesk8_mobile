@@ -13,6 +13,17 @@ import 'hardwareSupport/escHelper/dataTypes.dart';
 import 'dart:io';
 import 'package:path/path.dart' as path;
 
+import 'package:latlong/latlong.dart';
+
+double calculateGPSDistance(LatLng pointA, LatLng pointB){
+  var p = 0.017453292519943295;
+  var c = cos;
+  var a = 0.5 - c((pointB.latitude - pointA.latitude) * p)/2 +
+      c(pointA.latitude * p) * c(pointB.latitude * p) *
+          (1 - c((pointB.longitude - pointA.longitude) * p))/2;
+  return 12742 * asin(sqrt(a));
+}
+
 void copyDirectory(Directory source, Directory destination) =>
     source.listSync(recursive: false)
         .forEach((var entity) {
@@ -101,18 +112,27 @@ List<DropdownMenuItem<ListItem>> buildDropDownMenuItems(List listItems) {
 /// Returns true on success
 Future<bool> sendBLEData(BluetoothCharacteristic txCharacteristic, Uint8List data, bool withoutResponse) async
 {
-  dynamic errorCheck = 0;
   int errorLimiter = 10;
-  while (errorCheck != null && --errorLimiter > 0) {
-    errorCheck = null;
-    await txCharacteristic.write(data, withoutResponse: withoutResponse).catchError((error){
-      errorCheck = error;
-      globalLogger.w("sendBLEData: Exception: $errorCheck");
-    });
-  }
-  if(errorLimiter<0) {
-    globalLogger.e("sendBLEData: Write to characteristic exhausted all attempts. Data not sent. ${txCharacteristic.toString()}");
-    return Future.value(false);
+  int packetLength = data.length;
+  int bytesSent = 0;
+  while (bytesSent < packetLength) {
+    int endByte = bytesSent + 20;
+    if (endByte > packetLength) {
+      endByte = packetLength;
+    }
+    try {
+      await txCharacteristic.write(data.buffer.asUint8List().sublist(bytesSent,endByte), withoutResponse: withoutResponse);
+    } catch (e) {
+      globalLogger.w("sendBLEData: Exception ${e.toString()}");
+      if (--errorLimiter == 0) {
+        globalLogger.e("sendBLEData: Write to characteristic exhausted all attempts. Data not sent. ${txCharacteristic.toString()}");
+        return Future.value(false);
+      } else {
+        continue; // Try again without incrementing bytesSent
+      }
+    }
+    bytesSent += 20;
+    await Future.delayed(const Duration(milliseconds: 30), () {});
   }
   return Future.value(true);
 }
