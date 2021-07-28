@@ -198,7 +198,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                             future: UserSettings.getBoardAvatarPath(rideLogsFromDatabase[int.parse(event)].boardID),
                             builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
                               return CircleAvatar(
-                                  backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.jpg'),
+                                  backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.png'),
                                   radius: 25,
                                   backgroundColor: Colors.white);
                             })
@@ -489,7 +489,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                           builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
                                             if (snapshot.hasData) {
                                               return CircleAvatar(
-                                                  backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.jpg'),
+                                                  backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.png'),
                                                   radius: 25,
                                                   backgroundColor: Colors.white);
                                             }

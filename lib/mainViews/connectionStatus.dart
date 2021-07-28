@@ -176,7 +176,7 @@ class ConnectionStatus extends StatelessWidget {
               Text(userSettings.settings.boardAlias != null ? userSettings.settings.boardAlias : "unnamed",style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold), textAlign: TextAlign.center,),
 
               Flexible(child: CircleAvatar(
-                backgroundImage: imageBoardAvatar != null ? imageBoardAvatar : AssetImage('assets/FreeSK8_Mobile.jpg'),
+                backgroundImage: imageBoardAvatar != null ? imageBoardAvatar : AssetImage('assets/FreeSK8_Mobile.png'),
                 maxRadius: 125,
                 backgroundColor: Colors.white,
               )),

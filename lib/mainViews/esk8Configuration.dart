@@ -2491,7 +2491,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
                   SizedBox(width: 15),
                   CircleAvatar(
-                      backgroundImage: _boardAvatar != null ? _boardAvatar : AssetImage('assets/FreeSK8_Mobile.jpg'),
+                      backgroundImage: _boardAvatar != null ? _boardAvatar : AssetImage('assets/FreeSK8_Mobile.png'),
                       radius: 100,
                       backgroundColor: Colors.white)
 

@@ -1088,7 +1088,12 @@ class RideLogViewerState extends State<RideLogViewer> {
         title: Row(children: <Widget>[
           Text(myArguments.logFileInfo.dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)),
           Spacer(),
-          Image(width: 40, height: 40, image: AssetImage('assets/FreeSK8_Icon.png')),
+          ClipRRect(
+            borderRadius: new BorderRadius.circular(10),
+            child: Image(width: 40, height: 40, image: AssetImage('assets/FreeSK8_Icon_Dark.png'),
+              color: Color(0xffffffff).withOpacity(0.1),
+              colorBlendMode: BlendMode.softLight,),
+          ),
         ],),
       ),
       body: SafeArea(
@@ -1358,7 +1363,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                                     new Container(
                                       margin: EdgeInsets.fromLTRB(0, 0, 0, 10),
                                       child: CircleAvatar(
-                                        backgroundImage: myArguments.userSettings.settings.boardAvatarPath != null ? myArguments.imageBoardAvatar : AssetImage('assets/FreeSK8_Mobile.jpg'),
+                                        backgroundImage: myArguments.userSettings.settings.boardAvatarPath != null ? myArguments.imageBoardAvatar : AssetImage('assets/FreeSK8_Mobile.png'),
                                         radius: 10,
                                         backgroundColor: Colors.white
                                       )

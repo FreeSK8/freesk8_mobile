@@ -152,7 +152,7 @@ class VehicleManagerState extends State<VehicleManager> {
                 future: UserSettings.getBoardAvatarPath(knownDevices[i]),
                 builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
                   return CircleAvatar(
-                      backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.jpg'),
+                      backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.png'),
                       radius: 42,
                       backgroundColor: Colors.white);
                 }),
