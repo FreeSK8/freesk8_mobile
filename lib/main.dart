@@ -60,7 +60,7 @@ import 'package:signal_strength_indicator/signal_strength_indicator.dart';
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.18.0";
+const String freeSK8ApplicationVersion = "0.18.1";
 const String robogotchiFirmwareExpectedVersion = "0.10.1";
 
 void main() {
@@ -740,7 +740,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                         future: UserSettings.getBoardAvatarPath(result.device.id.toString()),
                         builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
                           return CircleAvatar(
-                              backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.jpg'),
+                              backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.png'),
                               radius: 60,
                               backgroundColor: Colors.white);
                         }),
@@ -2556,16 +2556,17 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         leading: Icon(Icons.contact_support_outlined),
         title: Text("Help & Support"),
         onTap: () {
-          String url = "https://t.me/FreeSK8Beta";
-          String url2 = "https://github.com/FreeSK8/FreeSK8-Robogotchi-Hardware/wiki";
-          String url3 = "https://derelictrobot.com/";
+          String url = "https://codex.freesk8.org";
+          String url2 = "https://forum.freesk8.org";
+          String url3 = "https://t.me/FreeSK8Beta";
+          String url4 = "https://derelictrobot.com";
           genericAlert(
               context,
               "🆘 Need some assistance?",
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Contact us on Telegram:"),
+                  Text("FreeSK8 Documentation:"),
                   SizedBox(height: 5),
                   GestureDetector(
                     child: Text(url, style: TextStyle(color: Colors.blue),),
@@ -2580,7 +2581,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                     },
                   ),
                   SizedBox(height: 10),
-                  Text("Learn more about Robogotchi:"),
+                  Text("FreeSK8 Forum:"),
                   SizedBox(height: 5),
                   GestureDetector(
                     child: Text(url2, style: TextStyle(color: Colors.blue)),
@@ -2595,7 +2596,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                     },
                   ),
                   SizedBox(height: 10),
-                  Text("Visit DRI Shop:"),
+                  Text("Telegram Beta Support Channel:"),
                   SizedBox(height: 5),
                   GestureDetector(
                     child: Text(url3, style: TextStyle(color: Colors.blue)),
@@ -2603,6 +2604,21 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                       if (await canLaunch(url3)) {
                         await launch(
                           url3,
+                          forceSafariVC: false,
+                          forceWebView: false,
+                        );
+                      }
+                    },
+                  ),
+                  SizedBox(height: 10),
+                  Text("DRI Shop:"),
+                  SizedBox(height: 5),
+                  GestureDetector(
+                    child: Text(url4, style: TextStyle(color: Colors.blue)),
+                    onTap: () async {
+                      if (await canLaunch(url4)) {
+                        await launch(
+                          url4,
                           forceSafariVC: false,
                           forceWebView: false,
                         );
