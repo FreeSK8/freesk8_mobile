@@ -963,12 +963,14 @@ class RideLogViewerState extends State<RideLogViewer> {
       sortedGPSMapKeysTEST.forEach((element) {
         var value = gpsLatLngMap[element];
         var key = element;
-        Color thisColor = Colors.blue;
+        Color thisColor = Colors.black;
         //TODO: Reduce number of GPS points to keep things moving on phones
         if (calculateGPSDistance(lastPoint, value) > 0.01) {
           // Compute color for this section of the route
           if (escTimeSeriesMap[key] != null && escTimeSeriesMap[key].speed != null && _maxSpeed > 0.0) {
-            thisColor = Color.lerp(Colors.yellow, Colors.redAccent[700], escTimeSeriesMap[key].speed.abs() / _maxSpeed);
+            double normalizedSpeed = escTimeSeriesMap[key].speed.abs() / _maxSpeed;
+            if (normalizedSpeed < 0.5) thisColor = Color.lerp(Colors.blue[700], Colors.yellowAccent, normalizedSpeed);
+            else thisColor = Color.lerp(Colors.yellowAccent, Colors.redAccent[700], normalizedSpeed);
           }
           // Add colored polyline from last section to this one
           polylineList.add(Polyline(points: [lastPoint, value], strokeWidth: 4, color: thisColor));
@@ -985,12 +987,14 @@ class RideLogViewerState extends State<RideLogViewer> {
       sortedGPSMapKeysTEST.forEach((element) {
         var value = gpsLatLngRejectMap[element];
         var key = element;
-        Color thisColor = Colors.blue;
-        //TODO: Reduce number of GPS points to keep things moving on phones
+        Color thisColor = Colors.black;
+        //TODO: Reduce number of GPS points to keep things moving on phoness
         if (calculateGPSDistance(lastPoint, value) > 0.01) {
           // Compute color for this section of the route
           if (escTimeSeriesMap[key] != null && escTimeSeriesMap[key].speed != null && _maxSpeed > 0.0) {
-            thisColor = Color.lerp(Colors.yellow, Colors.redAccent[700], escTimeSeriesMap[key].speed.abs() / _maxSpeed);
+            double normalizedSpeed = escTimeSeriesMap[key].speed.abs() / _maxSpeed;
+            if (normalizedSpeed < 0.5) thisColor = Color.lerp(Colors.blue[700], Colors.yellowAccent, normalizedSpeed);
+            else thisColor = Color.lerp(Colors.yellowAccent, Colors.redAccent[700], normalizedSpeed);
           }
           // Add colored polyline from last section to this one
           polylineList.add(Polyline(points: [lastPoint, value], strokeWidth: 4, color: thisColor));
