@@ -2447,11 +2447,40 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                   secondary: const Icon(Icons.wb_sunny),
                 ),
                 SwitchListTile(
-                  title: Text("Prefer GPS speed/distance"),
+                  title: Text("Override speed/distance with GPS metrics"),
+                  subtitle: Text("For use with eFoil, eBike"),
                   value: widget.myUserSettings.settings.useGPSData,
-                  onChanged: (bool newValue) {
+                  onChanged: (bool newValue) async {
+                    bool valueToSet = newValue;
+
+                    // Confirm with user if we are enabling this option
+                    if (valueToSet == true) {
+                      // Confirm setting with user
+                      valueToSet = await genericConfirmationDialog(
+                          context,
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: const Text("No Thank You"),
+                          ),
+                          TextButton(
+                              onPressed: () => Navigator.of(context).pop(true),
+                              child: const Text("Yes Please")
+                          ),
+                          "Quick check!",
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text("Oh, hey.. Usually ESC data is preferred for speed and distance. Are you sure you want to see GPS metrics?"),
+                              Icon(Icons.gps_fixed),
+                              SizedBox(height: 15),
+
+                            ],
+                          )
+                      );
+                    }
+
                     setState((){
-                      widget.myUserSettings.settings.useGPSData = newValue;
+                      widget.myUserSettings.settings.useGPSData = valueToSet;
                     });
                   },
                   secondary: Icon(widget.myUserSettings.settings.useGPSData ? Icons.gps_fixed : Icons.gps_not_fixed),
