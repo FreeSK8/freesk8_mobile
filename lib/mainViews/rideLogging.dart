@@ -578,7 +578,14 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                             color: Colors.blue,
                             icon: Icons.merge_type,
                             onTap: () async {
-                              if (index+1 == rideLogsFromDatabase.length) return;
+                              if (index+1 == rideLogsFromDatabase.length) {
+                                globalLogger.d("Merge aborted: File is last in list");
+                                return;
+                              }
+                              if (widget.syncInProgress) {
+                                globalLogger.d("Merge aborted: syncInProgress");
+                                return;
+                              }
 
                               // Confirm Merge with user
                               bool doMerge = await genericConfirmationDialog(
@@ -676,6 +683,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                 } catch (e, stacktrace) {
                                   globalLogger.e("rideLogging:doMerge: exception: ${e.toString()}");
                                   globalLogger.e(stacktrace.toString());
+                                  genericAlert(context, "Merge exception", Text("Uh oh. Something went wrong. Please share the debug log with the developers"), "Shake 3 times");
                                 }
                               } // doMerge
                             } // Merge onTap
