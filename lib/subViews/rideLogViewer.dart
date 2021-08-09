@@ -418,6 +418,9 @@ class RideLogViewerState extends State<RideLogViewer> {
         setState(() {
           thisRideLog = value;
         });
+      }).onError((error, stackTrace){
+        globalLogger.e("rideLogViewer: openLogFile Exception: ${error.toString()}");
+        print(stackTrace);
       });
       return Container(); //NOTE: after setState with file contents we'll show the widget tree
     }

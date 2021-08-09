@@ -308,13 +308,14 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
   }
 
   Future<void> _loadLogFile(int index) async {
+    globalLogger.d("rideLogging::_loadLogFile: opening RideLogViewer with ${rideLogsFromDatabase[index].logFilePath}");
     // Show indication of loading
     await Dialogs.showLoadingDialog(context, _keyLoader).timeout(Duration(milliseconds: 500)).catchError((error){});
 
     // Fetch user settings for selected board, fallback to current settings if not found
     UserSettings selectedBoardSettings = new UserSettings();
     if (await selectedBoardSettings.loadSettings(rideLogsFromDatabase[index].boardID) == false) {
-      globalLogger.wtf("WARNING: Board ID ${rideLogsFromDatabase[index].boardID} has no settings on this device!");
+      globalLogger.w("WARNING: Board ID ${rideLogsFromDatabase[index].boardID} has no settings on this device!");
       selectedBoardSettings = widget.myUserSettings;
     }
 
@@ -687,10 +688,16 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                           color: Colors.indigo,
                           icon: Icons.share,
                           onTap: () async {
-                            // Share file dialog
-                            String fileSummary = 'Robogotchi gotchi!';
-                            String fileContents = await FileManager.openLogFile(rideLogsFromDatabase[index].logFilePath);
-                            await Share.file('FreeSK8Log', "${rideLogsFromDatabase[index].logFilePath.substring(rideLogsFromDatabase[index].logFilePath.lastIndexOf("/") + 1)}", utf8.encode(fileContents), 'text/csv', text: fileSummary);
+                            try {
+                              // Share file dialog
+                              String fileSummary = 'Robogotchi gotchi!';
+                              String fileContents = await FileManager.openLogFile(rideLogsFromDatabase[index].logFilePath);
+                              await Share.file('FreeSK8Log', "${rideLogsFromDatabase[index].logFilePath.substring(rideLogsFromDatabase[index].logFilePath.lastIndexOf("/") + 1)}", utf8.encode(fileContents), 'text/csv', text: fileSummary);
+                            } catch (e, stacktrace) {
+                              globalLogger.e("Share exception: ${e.toString()}");
+                              print(stacktrace);
+                              genericAlert(context, "Share exception", Text("Uh oh. Something went wrong. Please share the debug log with the developers"), "Shake 3 times");
+                            }
                           },
                         ),
                       ),
@@ -729,11 +736,17 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                 )
                             );
                             if (doErase) {
-                              final documentsDirectory = await getApplicationDocumentsDirectory();
-                              // Remove the item from the database and rideLogs array
-                              await DatabaseAssistant.dbRemoveLog(rideLogsFromDatabase[index].logFilePath);
-                              //Remove from Filesystem
-                              File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").deleteSync();
+                              try {
+                                final documentsDirectory = await getApplicationDocumentsDirectory();
+                                // Remove the item from the database and rideLogs array
+                                await DatabaseAssistant.dbRemoveLog(rideLogsFromDatabase[index].logFilePath);
+                                //Remove from Filesystem
+                                File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").deleteSync();
+                              } catch (e, stacktrace) {
+                                globalLogger.e("Erase exception: ${e.toString()}");
+                                print(stacktrace);
+                                genericAlert(context, "Erase exception", Text("Uh oh. Something went wrong. Please share the debug log with the developers"), "Shake 3 times");
+                              }
                               setState(() {
                                 //Remove from itemBuilder's list of entries
                                 rideLogsFromDatabase.removeAt(index);
