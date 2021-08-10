@@ -617,6 +617,8 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                   )
                               );
                               if (doMerge) {
+                                // Show dialog to prevent user input
+                                await Dialogs.showLoadingDialog(context, _keyLoader).timeout(Duration(milliseconds: 500)).catchError((error){});
                                 try {
                                   globalLogger.d("Log Merge Confirmed. Files: ${rideLogsFromDatabase[index].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}, ${rideLogsFromDatabase[index+1].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}");
                                   final documentsDirectory = await getApplicationDocumentsDirectory();
@@ -680,7 +682,9 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                     //Remove from itemBuilder's list of entries
                                     rideLogsFromDatabase.removeAt(index);
                                   });
+                                  Navigator.of(context).pop(); // Remove dialog
                                 } catch (e, stacktrace) {
+                                  Navigator.of(context).pop(); // Remove dialog
                                   globalLogger.e("rideLogging:doMerge: exception: ${e.toString()}");
                                   globalLogger.e(stacktrace.toString());
                                   genericAlert(context, "Merge exception", Text("Uh oh. Something went wrong. Please share the debug log with the developers"), "Shake 3 times");
