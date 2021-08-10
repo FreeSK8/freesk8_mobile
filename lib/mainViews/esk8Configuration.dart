@@ -222,6 +222,23 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
   List<DropdownMenuItem<ListItem>> _thrExpModeDropdownItems;
   ListItem _selectedThrExpMode;
 
+  List<ListItem> _nunchukCtrlTypeItems = [
+    ListItem(chuk_control_type.CHUK_CTRL_TYPE_NONE.index, "Off"),
+    ListItem(chuk_control_type.CHUK_CTRL_TYPE_CURRENT.index, "Current"),
+    ListItem(chuk_control_type.CHUK_CTRL_TYPE_CURRENT_NOREV.index, "Current No Reverse"),
+    ListItem(chuk_control_type.CHUK_CTRL_TYPE_CURRENT_BIDIRECTIONAL.index, "Current Bidirectional"),
+  ];
+  List<DropdownMenuItem<ListItem>> _nunchuckCtrlTypeDropdownItems;
+  ListItem _selectedNunchukCtrlType;
+
+  List<ListItem> _thrExpModeNunchukItems = [
+    ListItem(thr_exp_mode.THR_EXP_EXPO.index, "Exponential"),
+    ListItem(thr_exp_mode.THR_EXP_NATURAL.index, "Natural"),
+    ListItem(thr_exp_mode.THR_EXP_POLY.index, "Polynomial"),
+  ];
+  List<DropdownMenuItem<ListItem>> _thrExpModeNunchukDropdownItems;
+  ListItem _selectedThrExpModeNunchuk;
+
   static Timer ppmCalibrateTimer;
   bool ppmCalibrate = false;
   ppm_control_type ppmCalibrateControlTypeToRestore;
@@ -229,6 +246,8 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
   int ppmMaxMS;
   RangeValues _rangeSliderDiscreteValues = const RangeValues(1.5, 1.6);
   bool showAdvancedOptions = false;
+  bool showPPMConfiguration = false;
+  bool showNunchukConfiguration = false;
   bool showBalanceConfiguration = false;
 
   @override
@@ -318,6 +337,8 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     _appModeDropdownItems = buildDropDownMenuItems(_appModeItems);
     _ppmCtrlTypeDropdownItems = buildDropDownMenuItems(_ppmCtrlTypeItems);
     _thrExpModeDropdownItems = buildDropDownMenuItems(_thrExpModeItems);
+    _nunchuckCtrlTypeDropdownItems = buildDropDownMenuItems(_nunchukCtrlTypeItems);
+    _thrExpModeNunchukDropdownItems = buildDropDownMenuItems(_thrExpModeNunchukItems);
 
     /// Balance Configuration
     tecIMUHz.addListener(() { widget.escAppConfiguration.imu_conf.sample_rate_hz = int.tryParse(tecIMUHz.text); });
@@ -867,6 +888,8 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
         widget.escAppConfiguration.app_to_use = app_use.APP_NONE;
         _selectedAppMode = _appModeItems.first;
       }
+      showPPMConfiguration = widget.escAppConfiguration.app_to_use == app_use.APP_PPM_UART;
+      showNunchukConfiguration = widget.escAppConfiguration.app_to_use == app_use.APP_UART;
       showBalanceConfiguration = widget.escAppConfiguration.app_to_use == app_use.APP_BALANCE;
 
 
@@ -884,6 +907,24 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
         _thrExpModeItems.forEach((element) {
           if (element.value == widget.escAppConfiguration.app_ppm_conf.throttle_exp_mode.index) {
             _selectedThrExpMode = element;
+          }
+        });
+      }
+
+      // Select nunchuk control type
+      if (_selectedNunchukCtrlType == null) {
+        _nunchukCtrlTypeItems.forEach((element) {
+          if (element.value == widget.escAppConfiguration.app_chuk_conf.ctrl_type.index) {
+            _selectedNunchukCtrlType = element;
+          }
+        });
+      }
+
+      // Select nunchuk throttle exponent mode
+      if (_selectedThrExpModeNunchuk == null) {
+        _thrExpModeNunchukItems.forEach((element) {
+          if (element.value == widget.escAppConfiguration.app_chuk_conf.throttle_exp_mode.index) {
+            _selectedThrExpModeNunchuk = element;
           }
         });
       }
@@ -915,6 +956,13 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       widget.escAppConfiguration.app_balance_conf.tiltback_constant = doublePrecision(widget.escAppConfiguration.app_balance_conf.tiltback_constant, 1);
       widget.escAppConfiguration.app_balance_conf.brake_current = doublePrecision(widget.escAppConfiguration.app_balance_conf.brake_current, 2);
       widget.escAppConfiguration.app_balance_conf.tiltback_duty = doublePrecision(widget.escAppConfiguration.app_balance_conf.tiltback_duty, 2);
+
+      widget.escAppConfiguration.app_chuk_conf.hyst = doublePrecision(widget.escAppConfiguration.app_chuk_conf.hyst, 2);
+      widget.escAppConfiguration.app_chuk_conf.ramp_time_pos = doublePrecision(widget.escAppConfiguration.app_chuk_conf.ramp_time_pos, 2);
+      widget.escAppConfiguration.app_chuk_conf.ramp_time_neg = doublePrecision(widget.escAppConfiguration.app_chuk_conf.ramp_time_neg, 2);
+      widget.escAppConfiguration.app_chuk_conf.smart_rev_ramp_time = doublePrecision( widget.escAppConfiguration.app_chuk_conf.smart_rev_ramp_time, 2);
+      widget.escAppConfiguration.app_chuk_conf.throttle_exp_brake = doublePrecision(widget.escAppConfiguration.app_chuk_conf.throttle_exp_brake, 2);
+      widget.escAppConfiguration.app_chuk_conf.throttle_exp = doublePrecision(widget.escAppConfiguration.app_chuk_conf.throttle_exp, 2);
 
       // Prepare TECs
       tecIMUHz.text = widget.escAppConfiguration.imu_conf.sample_rate_hz.toString();
@@ -1103,6 +1151,8 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               setState(() {
                                 _selectedAppMode = newValue;
                                 widget.escAppConfiguration.app_to_use = app_use.values[newValue.value];
+                                showPPMConfiguration = widget.escAppConfiguration.app_to_use == app_use.APP_PPM_UART;
+                                showNunchukConfiguration = widget.escAppConfiguration.app_to_use == app_use.APP_UART;
                                 showBalanceConfiguration = widget.escAppConfiguration.app_to_use == app_use.APP_BALANCE;
                               });
                             },
@@ -1110,6 +1160,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                           ),
                           //TODO: User control needed? Text("app can ${widget.escAppConfiguration.can_mode}"),
 
+                          // Show Balance Options
                           showBalanceConfiguration ? Column(
                             children: [
                               Divider(thickness: 3),
@@ -1274,7 +1325,8 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                             ],
                           ) : Container(),
 
-                          showBalanceConfiguration ? Container() : Column(
+                          // Show PPM Options
+                          showPPMConfiguration ? Column(
                             children: [
                             Divider(thickness: 3),
                             Text("Calibrate PPM"),
@@ -1644,18 +1696,216 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
                               ],) : Container(),
 
-                            //Divider(thickness: 3),
-                            //Text("ADC Configuration:"),
-                            //Text("app adc ctrl type ${widget.escAppConfiguration.app_adc_conf.ctrl_type}"),
-
-
                             showAdvancedOptions ? ElevatedButton(onPressed: (){
                               setState(() {
                                 showAdvancedOptions = false;
                               });
                             }, child: Text("Hide Advanced Options"),) : Container(),
-                          ],),
 
+                          ],) : Container(),
+
+                          showNunchukConfiguration ? Column(
+                              children: [
+                                Divider(thickness: 3),
+                                Text("UART Config"),
+
+                                Center(child:
+                                DropdownButton<ListItem>(
+                                  value: _selectedNunchukCtrlType,
+                                  items: _nunchuckCtrlTypeDropdownItems,
+                                  onChanged: (newValue) {
+                                    setState(() {
+                                      _selectedNunchukCtrlType = newValue;
+                                      widget.escAppConfiguration.app_chuk_conf.ctrl_type = chuk_control_type.values[newValue.value];
+                                    });
+                                  },
+                                )
+                                ),
+
+                                //TODO: We don't want this disabled: Text("${widget.escAppConfiguration.app_chuk_conf.multi_esc}"),
+
+
+                                Text("Input deadband: ${(widget.escAppConfiguration.app_chuk_conf.hyst * 100).toInt()}% (15% = default)"),
+                                Slider(
+                                  value: widget.escAppConfiguration.app_chuk_conf.hyst,
+                                  min: 0.01,
+                                  max: 0.35,
+                                  divisions: 100,
+                                  label: "${(widget.escAppConfiguration.app_chuk_conf.hyst * 100).toInt()}%",
+                                  onChanged: (value) {
+                                    setState(() {
+                                      widget.escAppConfiguration.app_chuk_conf.hyst = value;
+                                    });
+                                  },
+                                ),
+
+                                // Smart reverse doesn't work in Current Bidirectional mode
+                                widget.escAppConfiguration.app_chuk_conf.ctrl_type != chuk_control_type.CHUK_CTRL_TYPE_CURRENT_BIDIRECTIONAL ?
+                                    Column(children: [
+                                      SwitchListTile(
+                                        title: Text("Smart Reverse (default = on)"),
+                                        value: widget.escAppConfiguration.app_chuk_conf.use_smart_rev,
+                                        onChanged: (bool newValue) { setState((){ widget.escAppConfiguration.app_chuk_conf.use_smart_rev = newValue;}); },
+                                        secondary: const Icon(Icons.filter_tilt_shift),
+                                      ),
+
+                                      Text("Smart Reverse Max Duty Cycle ${(widget.escAppConfiguration.app_chuk_conf.smart_rev_max_duty * 100).toInt()}% (7% = default)"),
+                                      Slider(
+                                        value: widget.escAppConfiguration.app_chuk_conf.smart_rev_max_duty,
+                                        min: 0,
+                                        max: 1,
+                                        divisions: 100,
+                                        label: "${(widget.escAppConfiguration.app_chuk_conf.smart_rev_max_duty * 100).toInt()}%",
+                                        onChanged: (value) {
+                                          setState(() {
+                                            widget.escAppConfiguration.app_chuk_conf.smart_rev_max_duty = value;
+                                          });
+                                        },
+                                      ),
+
+                                      Text("Smart Reverse Ramp Time ${widget.escAppConfiguration.app_chuk_conf.smart_rev_ramp_time} seconds (3.0 = default)"),
+                                      Slider(
+                                        value: widget.escAppConfiguration.app_chuk_conf.smart_rev_ramp_time,
+                                        min: 1,
+                                        max: 10,
+                                        divisions: 90,
+                                        label: "${widget.escAppConfiguration.app_chuk_conf.smart_rev_ramp_time}",
+                                        onChanged: (value) {
+                                          setState(() {
+                                            widget.escAppConfiguration.app_chuk_conf.smart_rev_ramp_time = value;
+                                          });
+                                        },
+                                      ),
+                                    ]) : Container(),
+
+
+                                ElevatedButton(onPressed: (){
+                                  setState(() {
+                                    showAdvancedOptions = !showAdvancedOptions;
+                                  });
+                                },
+                                  child: Text("${showAdvancedOptions?"Hide":"Show"} Advanced Options"),),
+
+                                showAdvancedOptions ? Column(crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+
+                                    Text("Positive Ramping Time: ${doublePrecision(widget.escAppConfiguration.app_chuk_conf.ramp_time_pos,2)} seconds (0.4 = default)"),
+                                    Slider(
+                                      value: widget.escAppConfiguration.app_chuk_conf.ramp_time_pos,
+                                      min: 0.01,
+                                      max: 0.5,
+                                      divisions: 100,
+                                      label: "${widget.escAppConfiguration.app_chuk_conf.ramp_time_pos} seconds",
+                                      onChanged: (value) {
+                                        setState(() {
+                                          widget.escAppConfiguration.app_chuk_conf.ramp_time_pos = value;
+                                        });
+                                      },
+                                    ),
+
+                                    Text("Negative Ramping Time: ${widget.escAppConfiguration.app_chuk_conf.ramp_time_neg} seconds (0.2 = default)"),
+                                    Slider(
+                                      value: widget.escAppConfiguration.app_chuk_conf.ramp_time_neg,
+                                      min: 0.01,
+                                      max: 0.5,
+                                      divisions: 100,
+                                      label: "${widget.escAppConfiguration.app_chuk_conf.ramp_time_neg} seconds",
+                                      onChanged: (value) {
+                                        setState(() {
+                                          widget.escAppConfiguration.app_chuk_conf.ramp_time_neg = value;
+                                        });
+                                      },
+                                    ),
+
+                                    //TODO: Text("eRPM/s w/CruiseControl (3000 = default) ${widget.escAppConfiguration.app_chuk_conf.stick_erpm_per_s_in_cc}"),
+
+                                    Text("Select Throttle Exponential Mode"),
+                                    Center(child:
+                                    DropdownButton<ListItem>(
+                                      value: _selectedThrExpModeNunchuk,
+                                      items: _thrExpModeNunchukDropdownItems,
+                                      onChanged: (newValue) {
+                                        setState(() {
+                                          _selectedThrExpModeNunchuk = newValue;
+                                          widget.escAppConfiguration.app_chuk_conf.throttle_exp_mode = thr_exp_mode.values[newValue.value];
+                                        });
+                                      },
+                                    )
+                                    ),
+
+                                    Center(child: Container(
+                                      height: 100,
+                                      child: CustomPaint(
+                                        painter: CurvePainter(
+                                          width: 100,
+                                          exp: widget.escAppConfiguration.app_chuk_conf.throttle_exp,
+                                          expNegative: widget.escAppConfiguration.app_chuk_conf.throttle_exp_brake,
+                                          expMode: widget.escAppConfiguration.app_chuk_conf.throttle_exp_mode,
+                                        ),
+                                      ),
+                                    )
+                                    ),
+                                    Text("Throttle Exponent ${widget.escAppConfiguration.app_chuk_conf.throttle_exp}"),
+                                    Slider(
+                                      value: widget.escAppConfiguration.app_chuk_conf.throttle_exp,
+                                      min: -5,
+                                      max: 5,
+                                      divisions: 100,
+                                      label: "${widget.escAppConfiguration.app_chuk_conf.throttle_exp}",
+                                      onChanged: (value) {
+                                        setState(() {
+                                          widget.escAppConfiguration.app_chuk_conf.throttle_exp = value;
+                                        });
+                                      },
+                                    ),
+
+                                    Text("Throttle Exponent Brake ${widget.escAppConfiguration.app_chuk_conf.throttle_exp_brake}"),
+                                    Slider(
+                                      value: widget.escAppConfiguration.app_chuk_conf.throttle_exp_brake,
+                                      min: -5,
+                                      max: 5,
+                                      divisions: 100,
+                                      label: "${widget.escAppConfiguration.app_chuk_conf.throttle_exp_brake}",
+                                      onChanged: (value) {
+                                        setState(() {
+                                          widget.escAppConfiguration.app_chuk_conf.throttle_exp_brake = value;
+                                        });
+                                      },
+                                    ),
+
+
+                                    SwitchListTile(
+                                      title: Text("Enable Traction Control"),
+                                      value: widget.escAppConfiguration.app_chuk_conf.tc,
+                                      onChanged: (bool newValue) { setState((){ widget.escAppConfiguration.app_chuk_conf.tc = newValue;}); },
+                                      secondary: const Icon(Icons.compare_arrows),
+                                    ),
+
+                                    Text("Traction Control ERPM ${widget.escAppConfiguration.app_chuk_conf.tc_max_diff} (3000 = default)"),
+                                    Slider(
+                                      value: widget.escAppConfiguration.app_chuk_conf.tc_max_diff,
+                                      min: 1000.0,
+                                      max: 5000.0,
+                                      divisions: 1000,
+                                      label: "${widget.escAppConfiguration.app_chuk_conf.tc_max_diff}",
+                                      onChanged: (value) {
+                                        setState(() {
+                                          widget.escAppConfiguration.app_chuk_conf.tc_max_diff = value.toInt().toDouble();
+                                        });
+                                      },
+                                    ),
+
+                                  ],) : Container(),
+
+                                showAdvancedOptions ? ElevatedButton(onPressed: (){
+                                  setState(() {
+                                    showAdvancedOptions = false;
+                                  });
+                                }, child: Text("Hide Advanced Options"),) : Container(),
+
+
+                              ]
+                          ) : Container(),
 
                           ElevatedButton(
                               child: Text("Save to ESC${_selectedCANFwdID != null ? "/CAN $_selectedCANFwdID" : ""}"),
@@ -1667,7 +1917,8 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                 }
                               }),
 
-                          showBalanceConfiguration ? Container() : ElevatedButton(
+                          // PPM Default All
+                          showPPMConfiguration ? ElevatedButton(
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -1699,7 +1950,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                   widget.escAppConfiguration.app_ppm_conf.tc_max_diff = 3000.0;
                                   widget.escAppConfiguration.app_ppm_conf.hyst = 0.15;
                                 });
-                              }),
+                              }) : Container(),
                         ],
                       ),
                     )
