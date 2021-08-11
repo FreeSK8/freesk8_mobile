@@ -666,7 +666,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                       altitudeMax: statsEarlier.altitudeMax > statsLater.altitudeMax ? statsEarlier.altitudeMax : statsLater.altitudeMax,
                                       altitudeMin: statsEarlier.altitudeMin < statsLater.altitudeMin ? statsEarlier.altitudeMin : statsLater.altitudeMin,
                                       maxAmpsBattery: statsEarlier.maxAmpsBattery > statsLater.maxAmpsBattery ? statsEarlier.maxAmpsBattery : statsLater.maxAmpsBattery,
-                                      maxAmpsMotors: statsEarlier.maxAmpsBattery > statsLater.maxAmpsBattery ? statsEarlier.maxAmpsBattery : statsLater.maxAmpsBattery,
+                                      maxAmpsMotors: statsEarlier.maxAmpsMotors > statsLater.maxAmpsMotors ? statsEarlier.maxAmpsMotors : statsLater.maxAmpsMotors,
                                       wattHoursTotal: _addDoubleUnlessNegativeOne(statsEarlier.wattHoursTotal, statsLater.wattHoursTotal),
                                       wattHoursRegenTotal: _addDoubleUnlessNegativeOne(statsEarlier.wattHoursRegenTotal, statsLater.wattHoursRegenTotal),
                                       distance: _addDoubleUnlessNegativeOne(statsEarlier.distance, statsLater.distance),
