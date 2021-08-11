@@ -588,6 +588,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                               }
 
                               // Confirm Merge with user
+                              int mergedDurationSeconds = rideLogsFromDatabase[index].dateTime.difference(rideLogsFromDatabase[index+1].dateTime).inSeconds + rideLogsFromDatabase[index].durationSeconds;
                               bool doMerge = await genericConfirmationDialog(
                                   context,
                                   TextButton(
@@ -609,10 +610,14 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                       Text("${prettyPrintDuration(Duration(seconds: rideLogsFromDatabase[index].durationSeconds))}"),
 
                                       SizedBox(height: 15),
-                                      Text("Previous File:"),
+                                      Text("Previous File:", style: TextStyle(fontWeight: FontWeight.bold)),
                                       Text("${rideLogsFromDatabase[index+1].boardAlias}"),
                                       Text("${rideLogsFromDatabase[index+1].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}"),
                                       Text("${prettyPrintDuration(Duration(seconds: rideLogsFromDatabase[index+1].durationSeconds))}"),
+
+                                      SizedBox(height: 15),
+                                      mergedDurationSeconds > 7200 ? Icon(Icons.warning_amber_outlined, color: Colors.yellowAccent,) : Container(),
+                                      Text("Merged Duration: ${prettyPrintDuration(Duration(seconds: mergedDurationSeconds))}"),
                                     ],
                                   )
                               );
