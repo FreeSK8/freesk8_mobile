@@ -20,30 +20,6 @@ import 'dart:io';
 
 import 'package:flutter_slidable/flutter_slidable.dart';
 
-class Dialogs {
-  static Future<void> showLoadingDialog(
-      BuildContext context, GlobalKey key) async {
-    return showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          return new WillPopScope(
-              onWillPop: () async => false,
-              child: SimpleDialog(
-                  key: key,
-                  backgroundColor: Colors.black54,
-                  children: <Widget>[
-                    Center(
-                      child: Column(children: [
-                        Icon(Icons.watch_later, size: 80,),
-                        SizedBox(height: 10,),
-                        Text("Please Wait....")
-                      ]),
-                    )
-                  ]));
-        });
-  }
-}
 
 class RideLogging extends StatefulWidget {
   RideLogging({
@@ -310,7 +286,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
   Future<void> _loadLogFile(int index) async {
     globalLogger.d("rideLogging::_loadLogFile: opening RideLogViewer with ${rideLogsFromDatabase[index].logFilePath}");
     // Show indication of loading
-    await Dialogs.showLoadingDialog(context, _keyLoader).timeout(Duration(milliseconds: 500)).catchError((error){});
+    await Dialogs.showPleaseWaitDialog(context, _keyLoader).timeout(Duration(milliseconds: 500)).catchError((error){});
 
     // Fetch user settings for selected board, fallback to current settings if not found
     UserSettings selectedBoardSettings = new UserSettings();
@@ -623,7 +599,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                               );
                               if (doMerge) {
                                 // Show dialog to prevent user input
-                                await Dialogs.showLoadingDialog(context, _keyLoader).timeout(Duration(milliseconds: 500)).catchError((error){});
+                                await Dialogs.showPleaseWaitDialog(context, _keyLoader).timeout(Duration(milliseconds: 500)).catchError((error){});
                                 try {
                                   globalLogger.d("Log Merge Confirmed. Files: ${rideLogsFromDatabase[index].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}, ${rideLogsFromDatabase[index+1].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}");
                                   final documentsDirectory = await getApplicationDocumentsDirectory();
