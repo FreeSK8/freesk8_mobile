@@ -2734,7 +2734,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                     }
 
                     setState((){
-                      widget.myUserSettings.settings.useGPSData = valueToSet;
+                      widget.myUserSettings.settings.useGPSData = valueToSet != null ? valueToSet : false;
                     });
                   },
                   secondary: Icon(widget.myUserSettings.settings.useGPSData ? Icons.gps_fixed : Icons.gps_not_fixed),
