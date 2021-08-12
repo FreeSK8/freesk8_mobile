@@ -2917,6 +2917,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                   globalLogger.d("Import Data: User imported file: $result");
 
                                   if (result == null) {
+                                    Navigator.of(context).pop(); // Remove PleaseWait dialog
                                     return ScaffoldMessenger
                                         .of(context)
                                         .showSnackBar(SnackBar(content: Text("Import Aborted: No File Specified")));
