@@ -872,6 +872,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       }
     } else {
       globalLogger.i("_handleBLESyncState: Stopping Sync Process");
+      //TODO: Consider setting fileList to [] and advance the sync process so the files get deleted
       setState(() {
         syncInProgress = false;
         syncAdvanceProgress = false;
@@ -1099,6 +1100,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
             globalLogger.d("Concatenate file operation complete on $catCurrentFilename with $catBytesReceived bytes");
 
+            // Make sure we aren't processing cat,complete in another async task
+            if (catUnpackingFile) {
+              globalLogger.e("catUnpackingFile was true before attempting to unpack a file >:[");
+              throw Exception("cat,complete called while catUnpackingFile was true");
+            }
+
             // Write raw bytes from cat operation to the filesystem
             await FileManager.writeBytesToLogFile(catBytesRaw);
             catBytesRaw.clear();
@@ -1109,8 +1116,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             // Then rebuild state and continue sync process
             catUnpackingFile = true; // Pause the gotchiTimer from NACKing while this expensive task completes
             String savedFilePath = await FileManager.saveLogToDocuments(filename: catCurrentFilename, userSettings: widget.myUserSettings);
-            syncLastACK = DateTime.now(); // Lie about the last ACK time before unpausing the gotchiTimer
-            catUnpackingFile = false; // Un-pause gotchiTimer
 
             /// Analyze log to generate database statistics
             Map<int, double> wattHoursStartByESC = new Map();
@@ -1255,7 +1260,14 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             if (distanceEnd != null) {
               distanceTotal = doublePrecision(distanceEnd - distanceStart, 2);
             } else {
-              distanceTotal = -1.0;
+              globalLogger.e("distanceEnd was null. Distance total could not be computed");
+              if (distanceTotalGPS != null) {
+                distanceTotal = distanceTotalGPS;
+                globalLogger.w("Using GPS distance of $distanceTotalGPS");
+              } else {
+                distanceTotal = -1.0;
+                globalLogger.w("distanceTotal not available from ESC or GPS. Setting to -1.0");
+              }
             }
             globalLogger.d("ESC ID $firstESCID traveled $distanceTotal km");
 
@@ -1321,6 +1333,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             }
 
             /// Advance the sync process after success
+            // Resume the gotchiTimer
+            syncLastACK = DateTime.now(); // Lie about the last ACK time before unpausing the gotchiTimer
+            catUnpackingFile = false; // Un-pause gotchiTimer
+            // Once finished add this file to fileListToDelete
             fileListToDelete.add(catCurrentFilename); // Add this file to fileListToDelete
             loggerTestBuffer = receiveStr;
             if(!syncInProgress) _alertLoggerTest();
@@ -1356,6 +1372,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
             /// Advance the sync process after failure
             {
+              // Resume the gotchiTimer
+              syncLastACK = DateTime.now(); // Lie about the last ACK time before unpausing the gotchiTimer
+              catUnpackingFile = false; // Un-pause gotchiTimer
+
               setState(() {
                 catInProgress = false;
                 syncAdvanceProgress = true;
