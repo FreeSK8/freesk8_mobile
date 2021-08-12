@@ -537,7 +537,6 @@ class RideLogViewerState extends State<RideLogViewer> {
               while(escTimeSeriesMap[thisDt] != null) {
                 thisDt = thisDt.add(Duration(milliseconds: 1000~/fileLoggingRateHz < 1000 ? 1000~/fileLoggingRateHz : 20));
                 if (escTimeSeriesMap[thisDt] == null) {
-                  print("incrementing time slot $incrementTimeSlot $thisDt $thisESCID");
                   escTimeSeriesMap[thisDt] = TimeSeriesESC(time: thisDt, dutyCycle: 0);
                   break;
                 }
@@ -925,10 +924,23 @@ class RideLogViewerState extends State<RideLogViewer> {
     });
 
     if(_positionEntries.length > 1) {
-      // Calculate GPS statistics
-      gpsAverageSpeed /= _positionEntries.length;
-      gpsAverageSpeed = doublePrecision(gpsAverageSpeed, 2);
-      gpsDistanceStr = myArguments.userSettings.settings.useImperial ? "${doublePrecision(kmToMile(gpsDistance), 2)} miles" : "${doublePrecision(gpsDistance, 2)} km";
+      //NOTE: If a ride was merged but the end->start GPS positions differ the re-calculated values will be wrong
+      //NOTE: Some old database entries did not have GPS avg speed, max speed and distance entries and will be -1
+      /// Average Speed
+      if (myArguments.logFileInfo.avgSpeedGPS != -1.0) {
+        // Use database statistics
+        gpsAverageSpeed = myArguments.logFileInfo.avgSpeedGPS;
+      } else {
+        // Calculate GPS statistics
+        gpsAverageSpeed /= _positionEntries.length;
+        gpsAverageSpeed = doublePrecision(gpsAverageSpeed, 2);
+      }
+      /// Distance
+      if (myArguments.logFileInfo.distanceGPS != -1.0) {
+        gpsDistanceStr = myArguments.userSettings.settings.useImperial ? "${doublePrecision(kmToMile(myArguments.logFileInfo.distanceGPS), 2)} miles" : "${doublePrecision(myArguments.logFileInfo.distanceGPS, 2)} km";
+      } else {
+        gpsDistanceStr = myArguments.userSettings.settings.useImperial ? "${doublePrecision(kmToMile(gpsDistance), 2)} miles" : "${doublePrecision(gpsDistance, 2)} km";
+      }
     }
 
 
