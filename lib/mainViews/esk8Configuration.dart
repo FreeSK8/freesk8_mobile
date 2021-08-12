@@ -92,6 +92,8 @@ class ESK8Configuration extends StatefulWidget {
 
 class ESK8ConfigurationState extends State<ESK8Configuration> {
 
+  final GlobalKey<State> _keyLoader = new GlobalKey<State>();
+
   bool _applyESCProfilePermanently;
 
   int _selectedCANFwdID;
@@ -2849,6 +2851,9 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               child: Text("Export Data Backup"),
                               onPressed: () async {
                                 FocusScope.of(context).requestFocus(new FocusNode()); //Hide keyboard
+                                // Show dialog to prevent user input
+                                await Dialogs.showPleaseWaitDialog(context, _keyLoader).timeout(Duration(milliseconds: 500)).catchError((error){});
+
                                 try {
                                   final documentsDirectory = await getApplicationDocumentsDirectory();
                                   final supportDirectory = await getApplicationSupportDirectory();
@@ -2880,9 +2885,11 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                   // Finish out zip file
                                   encoder.close();
 
+                                  Navigator.of(context).pop(); // Remove PleaseWait dialog
                                   await Share.file("FreeSK8 Beta Log Archive", "freesk8_beta_backup.zip", await File("${supportDirectory.path}/freesk8_beta_backup.zip").readAsBytes(), 'application/zip', text: "FreeSK8 Beta Logs");
 
                                 } catch (e, stacktrace) {
+                                  Navigator.of(context).pop(); // Remove PleaseWait dialog
                                   globalLogger.e("Export Data Exception $e");
                                   globalLogger.e(stacktrace.toString());
                                   ScaffoldMessenger
@@ -2895,6 +2902,9 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               child: Text("Import Data Backup (Caution!)"),
                               onPressed: () async {
                                 FocusScope.of(context).requestFocus(new FocusNode()); //Hide keyboard
+                                // Show dialog to prevent user input
+                                await Dialogs.showPleaseWaitDialog(context, _keyLoader).timeout(Duration(milliseconds: 500)).catchError((error){});
+
                                 try {
                                   final documentsDirectory = await getApplicationDocumentsDirectory();
 
@@ -2947,6 +2957,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                     String dbPath = await getDatabasesPath();
                                     File("${documentsDirectory.path}/logDatabase.db").copy("$dbPath/logDatabase.db");
 
+                                    Navigator.of(context).pop(); // Remove PleaseWait dialog
                                     globalLogger.d("Import Data Completed Successfully");
                                     ScaffoldMessenger
                                         .of(context)
@@ -2965,6 +2976,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
 
                                 } catch (e, stacktrace) {
+                                  Navigator.of(context).pop(); // Remove PleaseWait dialog
                                   globalLogger.e("Import Data Exception $e");
                                   globalLogger.e(stacktrace.toString());
                                   ScaffoldMessenger
