@@ -2947,6 +2947,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                   // Make sure we've extracted the a userSettings file for importing
                                   final String importSettingsFilePath = "${documentsDirectory.path}/freesk8_beta_userSettings.json";
                                   if (!File(importSettingsFilePath).existsSync()) {
+                                    Navigator.of(context).pop(); // Remove PleaseWait dialog
                                     return ScaffoldMessenger
                                         .of(context)
                                         .showSnackBar(SnackBar(content: Text("Invalid Import File Selected")));
