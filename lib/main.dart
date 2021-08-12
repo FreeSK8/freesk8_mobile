@@ -2616,7 +2616,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                     },
                   ),
                   SizedBox(height: 10),
-                  Text("Telegram Beta Support Channel:"),
+                  Text("Telegram Support Channel:"),
                   SizedBox(height: 5),
                   GestureDetector(
                     child: Text(url3, style: TextStyle(color: Colors.blue)),

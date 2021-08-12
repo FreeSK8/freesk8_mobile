@@ -865,9 +865,8 @@ class RideLogViewerState extends State<RideLogViewer> {
       }
     } //iterate escTimeSeriesList
 
-    globalLogger.wtf("${_tsESCMaxSpeed.speed}, ${_tsESCMaxMotorAmps.currentMotor}, ${_tsESCMaxBatteryAmps.currentInput}, ${_tsESCMaxESCTemp.tempMosfet}, ");
     //TODO: Reduce number of ESC points to keep things moving on phones
-    //TODO: We will need to know the logging rate in the file
+    //TODO: We will need to know the logging rate in the file (use fileLoggingRateHz)
     int escTimeSeriesListOriginalLength = escTimeSeriesList.length; // Capture unmodified length for average computation
     while(escTimeSeriesList.length > 1200) {
       int pos = 0;
