@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:freesk8_mobile/components/smartSlider.dart';
 
 import '../components/crc16.dart';
 import '../widgets/throttleCurvePainter.dart';
@@ -1265,10 +1266,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
                               SizedBox(height: 10),
                               Text("Constant Tiltback ${widget.escAppConfiguration.app_balance_conf.tiltback_constant}°"),
-                              Slider(
+                              SmartSlider(
                                 value: widget.escAppConfiguration.app_balance_conf.tiltback_constant,
-                                min: -20,
-                                max: 20,
+                                mini: -20,
+                                maxi: 20,
                                 label: "${widget.escAppConfiguration.app_balance_conf.tiltback_constant.toInt()}",
                                 onChanged: (value) {
                                   setState(() {
@@ -1288,10 +1289,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
                               SizedBox(height:10),
                               Text("Duty Cycle Tiltback ${widget.escAppConfiguration.app_balance_conf.tiltback_duty}"),
-                              Slider(
+                              SmartSlider(
                                 value: widget.escAppConfiguration.app_balance_conf.tiltback_duty,
-                                min: 0.0,
-                                max: 1.0,
+                                mini: 0.0,
+                                maxi: 1.0,
                                 label: "${widget.escAppConfiguration.app_balance_conf.tiltback_duty}",
                                 onChanged: (value) {
                                   setState(() {
@@ -1302,10 +1303,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
                               SizedBox(height:10),
                               Text("Brake Current ${widget.escAppConfiguration.app_balance_conf.brake_current} Amps"),
-                              Slider(
+                              SmartSlider(
                                 value: widget.escAppConfiguration.app_balance_conf.brake_current,
-                                min: 0.0,
-                                max: 20.0,
+                                mini: 0.0,
+                                maxi: 20.0,
                                 label: "${widget.escAppConfiguration.app_balance_conf.brake_current}",
                                 onChanged: (value) {
                                   setState(() {
@@ -1503,10 +1504,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                             ),
 
                             Text("Input deadband: ${(widget.escAppConfiguration.app_ppm_conf.hyst * 100.0).toInt()}% (15% = default)"),
-                            Slider(
+                            SmartSlider(
                               value: widget.escAppConfiguration.app_ppm_conf.hyst,
-                              min: 0.01,
-                              max: 0.35,
+                              mini: 0.01,
+                              maxi: 0.35,
                               divisions: 100,
                               label: "${(widget.escAppConfiguration.app_ppm_conf.hyst * 100.0).toInt()}%",
                               onChanged: (value) {
@@ -1538,10 +1539,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                   secondary: const Icon(Icons.not_started),
                                 ),
                                 Text("Positive Ramping Time: ${doublePrecision(widget.escAppConfiguration.app_ppm_conf.ramp_time_pos,2)} seconds (0.4 = default)"),
-                                Slider(
+                                SmartSlider(
                                   value: widget.escAppConfiguration.app_ppm_conf.ramp_time_pos,
-                                  min: 0.01,
-                                  max: 0.5,
+                                  mini: 0.01,
+                                  maxi: 0.5,
                                   divisions: 100,
                                   label: "${widget.escAppConfiguration.app_ppm_conf.ramp_time_pos} seconds",
                                   onChanged: (value) {
@@ -1551,10 +1552,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                   },
                                 ),
                                 Text("Negative Ramping Time: ${widget.escAppConfiguration.app_ppm_conf.ramp_time_neg} seconds (0.2 = default)"),
-                                Slider(
+                                SmartSlider(
                                   value: widget.escAppConfiguration.app_ppm_conf.ramp_time_neg,
-                                  min: 0.01,
-                                  max: 0.5,
+                                  mini: 0.01,
+                                  maxi: 0.5,
                                   divisions: 100,
                                   label: "${widget.escAppConfiguration.app_ppm_conf.ramp_time_neg} seconds",
                                   onChanged: (value) {
@@ -1564,10 +1565,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                   },
                                 ),
                                 Text("PID Max ERPM ${widget.escAppConfiguration.app_ppm_conf.pid_max_erpm} (15000 = default)"),
-                                Slider(
+                                SmartSlider(
                                   value: widget.escAppConfiguration.app_ppm_conf.pid_max_erpm,
-                                  min: 10000.0,
-                                  max: 30000.0,
+                                  mini: 10000.0,
+                                  maxi: 30000.0,
                                   divisions: 100,
                                   label: "${widget.escAppConfiguration.app_ppm_conf.pid_max_erpm}",
                                   onChanged: (value) {
@@ -1577,10 +1578,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                   },
                                 ),
                                 Text("Max ERPM for direction switch ${widget.escAppConfiguration.app_ppm_conf.max_erpm_for_dir} (4000 = default)"),
-                                Slider(
+                                SmartSlider(
                                   value: widget.escAppConfiguration.app_ppm_conf.max_erpm_for_dir,
-                                  min: 1000.0,
-                                  max: 8000.0,
+                                  mini: 1000.0,
+                                  maxi: 8000.0,
                                   divisions: 700,
                                   label: "${widget.escAppConfiguration.app_ppm_conf.max_erpm_for_dir}",
                                   onChanged: (value) {
@@ -1603,10 +1604,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                   },
                                 ),
                                 Text("Smart Reverse Ramp Time ${widget.escAppConfiguration.app_ppm_conf.smart_rev_ramp_time} seconds (3.0 = default)"),
-                                Slider(
+                                SmartSlider(
                                   value: widget.escAppConfiguration.app_ppm_conf.smart_rev_ramp_time,
-                                  min: 1,
-                                  max: 10,
+                                  mini: 1,
+                                  maxi: 10,
                                   divisions: 1000,
                                   label: "${widget.escAppConfiguration.app_ppm_conf.smart_rev_ramp_time}",
                                   onChanged: (value) {
@@ -1642,10 +1643,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                 )
                                 ),
                                 Text("Throttle Exponent ${widget.escAppConfiguration.app_ppm_conf.throttle_exp}"),
-                                Slider(
+                                SmartSlider(
                                   value: widget.escAppConfiguration.app_ppm_conf.throttle_exp,
-                                  min: -5,
-                                  max: 5,
+                                  mini: -5,
+                                  maxi: 5,
                                   divisions: 100,
                                   label: "${widget.escAppConfiguration.app_ppm_conf.throttle_exp}",
                                   onChanged: (value) {
@@ -1656,10 +1657,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                 ),
 
                                 Text("Throttle Exponent Brake ${widget.escAppConfiguration.app_ppm_conf.throttle_exp_brake}"),
-                                Slider(
+                                SmartSlider(
                                   value: widget.escAppConfiguration.app_ppm_conf.throttle_exp_brake,
-                                  min: -5,
-                                  max: 5,
+                                  mini: -5,
+                                  maxi: 5,
                                   divisions: 100,
                                   label: "${widget.escAppConfiguration.app_ppm_conf.throttle_exp_brake}",
                                   onChanged: (value) {
@@ -1678,10 +1679,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                 ),
                                 //Text("traction control ${widget.escAppConfiguration.app_ppm_conf.tc}"),
                                 Text("Traction Control ERPM ${widget.escAppConfiguration.app_ppm_conf.tc_max_diff} (3000 = default)"),
-                                Slider(
+                                SmartSlider(
                                   value: widget.escAppConfiguration.app_ppm_conf.tc_max_diff,
-                                  min: 1000.0,
-                                  max: 5000.0,
+                                  mini: 1000.0,
+                                  maxi: 5000.0,
                                   divisions: 1000,
                                   label: "${widget.escAppConfiguration.app_ppm_conf.tc_max_diff}",
                                   onChanged: (value) {
@@ -1726,10 +1727,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
 
                                 Text("Input deadband: ${(widget.escAppConfiguration.app_chuk_conf.hyst * 100).toInt()}% (15% = default)"),
-                                Slider(
+                                SmartSlider(
                                   value: widget.escAppConfiguration.app_chuk_conf.hyst,
-                                  min: 0.01,
-                                  max: 0.35,
+                                  mini: 0.01,
+                                  maxi: 0.35,
                                   divisions: 100,
                                   label: "${(widget.escAppConfiguration.app_chuk_conf.hyst * 100).toInt()}%",
                                   onChanged: (value) {
@@ -1764,10 +1765,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                       ),
 
                                       Text("Smart Reverse Ramp Time ${widget.escAppConfiguration.app_chuk_conf.smart_rev_ramp_time} seconds (3.0 = default)"),
-                                      Slider(
+                                      SmartSlider(
                                         value: widget.escAppConfiguration.app_chuk_conf.smart_rev_ramp_time,
-                                        min: 1,
-                                        max: 10,
+                                        mini: 1,
+                                        maxi: 10,
                                         divisions: 90,
                                         label: "${widget.escAppConfiguration.app_chuk_conf.smart_rev_ramp_time}",
                                         onChanged: (value) {
@@ -1790,10 +1791,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                   children: [
 
                                     Text("Positive Ramping Time: ${doublePrecision(widget.escAppConfiguration.app_chuk_conf.ramp_time_pos,2)} seconds (0.4 = default)"),
-                                    Slider(
+                                    SmartSlider(
                                       value: widget.escAppConfiguration.app_chuk_conf.ramp_time_pos,
-                                      min: 0.01,
-                                      max: 0.5,
+                                      mini: 0.01,
+                                      maxi: 0.5,
                                       divisions: 100,
                                       label: "${widget.escAppConfiguration.app_chuk_conf.ramp_time_pos} seconds",
                                       onChanged: (value) {
@@ -1804,10 +1805,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                     ),
 
                                     Text("Negative Ramping Time: ${widget.escAppConfiguration.app_chuk_conf.ramp_time_neg} seconds (0.2 = default)"),
-                                    Slider(
+                                    SmartSlider(
                                       value: widget.escAppConfiguration.app_chuk_conf.ramp_time_neg,
-                                      min: 0.01,
-                                      max: 0.5,
+                                      mini: 0.01,
+                                      maxi: 0.5,
                                       divisions: 100,
                                       label: "${widget.escAppConfiguration.app_chuk_conf.ramp_time_neg} seconds",
                                       onChanged: (value) {
@@ -1846,10 +1847,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                     )
                                     ),
                                     Text("Throttle Exponent ${widget.escAppConfiguration.app_chuk_conf.throttle_exp}"),
-                                    Slider(
+                                    SmartSlider(
                                       value: widget.escAppConfiguration.app_chuk_conf.throttle_exp,
-                                      min: -5,
-                                      max: 5,
+                                      mini: -5,
+                                      maxi: 5,
                                       divisions: 100,
                                       label: "${widget.escAppConfiguration.app_chuk_conf.throttle_exp}",
                                       onChanged: (value) {
@@ -1860,10 +1861,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                     ),
 
                                     Text("Throttle Exponent Brake ${widget.escAppConfiguration.app_chuk_conf.throttle_exp_brake}"),
-                                    Slider(
+                                    SmartSlider(
                                       value: widget.escAppConfiguration.app_chuk_conf.throttle_exp_brake,
-                                      min: -5,
-                                      max: 5,
+                                      mini: -5,
+                                      maxi: 5,
                                       divisions: 100,
                                       label: "${widget.escAppConfiguration.app_chuk_conf.throttle_exp_brake}",
                                       onChanged: (value) {
@@ -1882,10 +1883,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                     ),
 
                                     Text("Traction Control ERPM ${widget.escAppConfiguration.app_chuk_conf.tc_max_diff} (3000 = default)"),
-                                    Slider(
+                                    SmartSlider(
                                       value: widget.escAppConfiguration.app_chuk_conf.tc_max_diff,
-                                      min: 1000.0,
-                                      max: 5000.0,
+                                      mini: 1000.0,
+                                      maxi: 5000.0,
                                       divisions: 1000,
                                       label: "${widget.escAppConfiguration.app_chuk_conf.tc_max_diff}",
                                       onChanged: (value) {
