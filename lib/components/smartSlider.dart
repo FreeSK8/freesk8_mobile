@@ -11,7 +11,7 @@ class SmartSlider extends Slider {
     @required this.onChanged,
     @required this.mini, //TODO: super().assert(value >= min && value <= max) will fail without renaming
     @required this.maxi, //TODO: Discover a way to use min/max without failing super()'s assert
-    @required this.divisions,
+    this.divisions,
     @required this.label,
   })
       : assert(value != null),
