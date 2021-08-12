@@ -373,7 +373,6 @@ class RideLogViewerState extends State<RideLogViewer> {
     double gpsMaxSpeed = 0;
     DateTime gpsStartTime;
     DateTime gpsEndTime;
-    Duration gpsDuration = Duration(seconds:0);
     String gpsDistanceStr = "N/A";
 
     //Charting and data
@@ -429,13 +428,25 @@ class RideLogViewerState extends State<RideLogViewer> {
     List<int> escIDsInLog = [];
     thisRideLogEntries = thisRideLog.split("\n");
     globalLogger.d("rideLogViewer rideLogEntry count: ${thisRideLog.length}");
+    int fileLoggingRateHz = 1;
+    int fileMultiESCMode = 0;
     for(int i=0; i<thisRideLogEntries.length; ++i) {
       final entry = thisRideLogEntries[i].split(",");
 
       //TODO: Parse out header entries. We now have good information here so we don't have to leverage userSettings
-      if(entry.length > 1 && entry[0] != "header"){ // entry[0] = Time, entry[1] = Data type
+      if(entry.length > 1){ // entry[0] = Time, entry[1] = Data type
+        if (entry[0] == "header") {
+          if (entry[1] == "esc_hz") {
+            fileLoggingRateHz = int.parse(entry[2]);
+            globalLogger.d("Parsed: ${thisRideLogEntries[i]}");
+          }
+          if (entry[1] == "multi_esc_mode") {
+            fileMultiESCMode = int.parse(entry[2]);
+            globalLogger.d("Parsed: ${thisRideLogEntries[i]}");
+          }
+        }
         ///GPS position entry
-        if(entry[1] == "gps" && entry.length >= 6) {
+        else if(entry[1] == "gps" && entry.length >= 6) {
           //dt,gps,satellites,altitude,speed,latitude,longitude
           LatLng thisPosition = new LatLng(double.parse(entry[5]),double.parse(entry[6]));
           if ( _positionEntries.length > 0){
@@ -485,11 +496,11 @@ class RideLogViewerState extends State<RideLogViewer> {
           DateTime thisDt = DateTime.parse(entry[0]).add((DateTime.now().timeZoneOffset));
           int thisESCID = int.parse(entry[2]);
 
-          // Watch for OoO records
-          if (escTimeSeriesMap.isNotEmpty && escTimeSeriesMap.keys.last.isAfter(thisDt)) {
+          // Watch for OoO records, Validating by the second (subtract milliseconds)
+          if (escTimeSeriesMap.isNotEmpty && escTimeSeriesMap.keys.last.subtract(Duration(milliseconds: escTimeSeriesMap.keys.last.millisecond)).isAfter(thisDt)) {
             ++outOfOrderESCRecords;
-            outOfOrderESCFirstMessage ??= "ESC out of order:  $thisDt Previous ${escTimeSeriesMap.keys.last}";
-            //globalLogger.wtf("ESC out of order: Now $thisDt Previous ${escTimeSeriesMap.keys.last}; Skipping record");
+            outOfOrderESCFirstMessage ??= "ESC out of order: $thisDt Previous ${escTimeSeriesMap.keys.last}";
+            //globalLogger.wtf("ESC out of order: Now $thisDt Previous ${escTimeSeriesMap.keys.last}");
           }
 
           if (!escIDsInLog.contains(thisESCID)) {
@@ -497,10 +508,42 @@ class RideLogViewerState extends State<RideLogViewer> {
             escIDsInLog.add(thisESCID);
           }
 
-          // Create TimeSeriesESC object if needed
-          if (escTimeSeriesMap[thisDt] == null){
+          // Create TimeSeriesESC object at thisDt if needed
+          if (escTimeSeriesMap[thisDt] == null) {
             escTimeSeriesMap[thisDt] = TimeSeriesESC(time: thisDt, dutyCycle: 0);
           }
+          // If TimeSeriesESC exists at thisDt we (((((might be))))) looking at multiple samples per second
+          else {
+            // Check if this is ESC2,3,4 and if ESC has data at time slot already
+            bool incrementTimeSlot = true; // Assume we are to increment the time slot
+            // If thisESCID's data has not been populated for thisDt set incrementTimeSlot to false
+            switch(escIDsInLog.indexOf(thisESCID)) {
+              case 0:
+                if (escTimeSeriesMap[thisDt].tempMosfet == null) incrementTimeSlot = false;
+                break;
+              case 1:
+                if (escTimeSeriesMap[thisDt].tempMosfet2 == null) incrementTimeSlot = false;
+                break;
+              case 2:
+                if (escTimeSeriesMap[thisDt].tempMosfet3 == null) incrementTimeSlot = false;
+                break;
+              case 3:
+                if (escTimeSeriesMap[thisDt].tempMosfet4 == null) incrementTimeSlot = false;
+                break;
+            }
+            // Increment the sub second timestamp by the logging rate
+            if (incrementTimeSlot == true) {
+              // Add milliseconds to >1Hz ESC data
+              while(escTimeSeriesMap[thisDt] != null) {
+                thisDt = thisDt.add(Duration(milliseconds: 1000~/fileLoggingRateHz < 1000 ? 1000~/fileLoggingRateHz : 20));
+                if (escTimeSeriesMap[thisDt] == null) {
+                  print("incrementing time slot $incrementTimeSlot $thisDt $thisESCID");
+                  escTimeSeriesMap[thisDt] = TimeSeriesESC(time: thisDt, dutyCycle: 0);
+                  break;
+                }
+              }
+            }
+          } // TimeSeriesESC ready at thisDt
 
           // Populate TimeSeriesESC
           switch(escIDsInLog.indexOf(thisESCID)) {
@@ -531,11 +574,12 @@ class RideLogViewerState extends State<RideLogViewer> {
               double wattHours = (wattHoursNow - wattHoursStartPrimary) - (wattHoursRegenNow - wattHoursRegenStartPrimary);
               double totalDistance = distanceEndPrimary - distanceStartPrimary;
               double consumption = wattHours / totalDistance;
-              if (consumption.isNaN || consumption.isInfinite) {
-                consumption = 0;
-              }
-              //print("whNow $wattHoursNow whStart $wattHoursStartPrimary whRegenNow $wattHoursRegenNow whRegenStart $wattHoursRegenStartPrimary wh $wattHours td $totalDistance consumption $consumption");
-              escTimeSeriesMap[thisDt].consumption = doublePrecision(consumption, 2);
+              if (consumption.isNaN || consumption.isInfinite || totalDistance < 0.25) {
+                escTimeSeriesMap[thisDt].consumption = null;
+              } else escTimeSeriesMap[thisDt].consumption = doublePrecision(consumption, 2);
+              //if (totalDistance < 0.9)
+                //print("whNow $wattHoursNow whStart $wattHoursStartPrimary whRegenNow $wattHoursRegenNow whRegenStart $wattHoursRegenStartPrimary wh $wattHours td $totalDistance consumption $consumption");
+
               break;
             case 1:
             // Second ESC in multiESC configuration
@@ -718,7 +762,7 @@ class RideLogViewerState extends State<RideLogViewer> {
 
         }
       }
-    }
+    } // escTimeSeriesMap created from thisRideLogEntries
     globalLogger.d("rideLogViewer rideLogEntry iteration complete");
 
     // Notify debugger if OoO records were observed in this file
@@ -821,6 +865,7 @@ class RideLogViewerState extends State<RideLogViewer> {
       }
     } //iterate escTimeSeriesList
 
+    globalLogger.wtf("${_tsESCMaxSpeed.speed}, ${_tsESCMaxMotorAmps.currentMotor}, ${_tsESCMaxBatteryAmps.currentInput}, ${_tsESCMaxESCTemp.tempMosfet}, ");
     //TODO: Reduce number of ESC points to keep things moving on phones
     //TODO: We will need to know the logging rate in the file
     int escTimeSeriesListOriginalLength = escTimeSeriesList.length; // Capture unmodified length for average computation
@@ -882,7 +927,6 @@ class RideLogViewerState extends State<RideLogViewer> {
 
     if(_positionEntries.length > 1) {
       // Calculate GPS statistics
-      gpsDuration = gpsEndTime.difference(gpsStartTime);
       gpsAverageSpeed /= _positionEntries.length;
       gpsAverageSpeed = doublePrecision(gpsAverageSpeed, 2);
       gpsDistanceStr = myArguments.userSettings.settings.useImperial ? "${doublePrecision(kmToMile(gpsDistance), 2)} miles" : "${doublePrecision(gpsDistance, 2)} km";
@@ -1010,7 +1054,7 @@ class RideLogViewerState extends State<RideLogViewer> {
     String distance = "N/A";
     Duration duration = Duration(seconds:0);
     if(escTimeSeriesList.length > 0) {
-      double totalDistance = doublePrecision(distanceEndPrimary - distanceStartPrimary, 2);
+      double totalDistance = myArguments.userSettings.settings.useImperial ? kmToMile(myArguments.logFileInfo.distance) : myArguments.logFileInfo.distance;
       distance = myArguments.userSettings.settings.useImperial ? "$totalDistance miles" : "$totalDistance km";
       duration = escTimeSeriesList.last.time.difference(escTimeSeriesList.first.time);
 
@@ -1069,7 +1113,7 @@ class RideLogViewerState extends State<RideLogViewer> {
       if (_useGPSData) {
         consumptionDistance = myArguments.userSettings.settings.useImperial ? kmToMile(gpsDistance) : gpsDistance;
       } else {
-        consumptionDistance = distanceEndPrimary - distanceStartPrimary; //NOTE: these values are already scaled to user's units
+        consumptionDistance = myArguments.userSettings.settings.useImperial ? kmToMile(myArguments.logFileInfo.distance) : myArguments.logFileInfo.distance;
       }
       consumption = (myArguments.logFileInfo.wattHoursTotal - myArguments.logFileInfo.wattHoursRegenTotal) / consumptionDistance;
     }
@@ -1164,10 +1208,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                   Column(children: <Widget>[
                     Text("Duration"),
                     Icon(Icons.watch_later),
-                    escTimeSeriesList.length > 0 ?
-                    Text(duration.toString().substring(0,duration.toString().lastIndexOf(".")))
-                        :
-                    Text(gpsDuration.toString().substring(0,gpsDuration.toString().lastIndexOf(".")))
+                    Text("${prettyPrintDuration(Duration(seconds: myArguments.logFileInfo.durationSeconds))}")
                   ],),
 
 
