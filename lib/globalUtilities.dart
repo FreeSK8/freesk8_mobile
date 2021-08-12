@@ -15,6 +15,55 @@ import 'package:path/path.dart' as path;
 
 import 'package:latlong/latlong.dart';
 
+class Dialogs {
+  static Future<void> showPleaseWaitDialog(
+      BuildContext context, GlobalKey key) async {
+    return showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return new WillPopScope(
+              onWillPop: () async => false,
+              child: SimpleDialog(
+                  key: key,
+                  backgroundColor: Colors.black54,
+                  children: <Widget>[
+                    Center(
+                      child: Column(children: [
+                        Icon(Icons.watch_later, size: 80,),
+                        SizedBox(height: 10,),
+                        Text("Please Wait....")
+                      ]),
+                    )
+                  ]));
+        });
+  }
+
+  static Future<void> showFOCDialog(
+      BuildContext context, GlobalKey key) async {
+    return showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return new WillPopScope(
+              onWillPop: () async => false,
+              child: SimpleDialog(
+                  key: key,
+                  backgroundColor: Colors.black54,
+                  children: <Widget>[
+                    Center(
+                      child: Column(children: [
+                        Icon(Icons.watch_later, size: 80,),
+                        SizedBox(height: 10,),
+                        Text("Please Wait...."),
+                        Text("Be sure the wheels are off the ground!")
+                      ]),
+                    )
+                  ]));
+        });
+  }
+}
+
 double calculateGPSDistance(LatLng pointA, LatLng pointB){
   var p = 0.017453292519943295;
   var c = cos;

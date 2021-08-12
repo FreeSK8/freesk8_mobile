@@ -117,9 +117,10 @@ flutter:
 
   assets:
     - assets/FreeSK8_Icon.png
+    - assets/FreeSK8_Icon_Dark.png
     - assets/firmware/Robogotchi_0.10.1.zip
     - assets/robogotchi_render.png
-    - assets/FreeSK8_Mobile.jpg
+    - assets/FreeSK8_Mobile.png
     - assets/FreeSK8_MobileLogo.png
     - assets/map_fault.png
     - assets/map_start.png

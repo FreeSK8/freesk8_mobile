@@ -438,8 +438,8 @@ class RealTimeDataState extends State<RealTimeData> {
       backgroundColor: Colors.transparent,
       traceColor: Theme.of(context).accentColor,
       showYAxis: true,
-      yAxisMax: 5.0,
-      yAxisMin: -5.0,
+      yAxisMax: 25.0,
+      yAxisMin: -25.0,
       dataSet: motorCurrentGraphPoints,
     );
 

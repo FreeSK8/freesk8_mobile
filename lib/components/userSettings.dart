@@ -281,7 +281,7 @@ Future<File> exportSettings(String filePath) async {
   List<String> knownDevices = prefs.getStringList('knownDevices');
   for (int i=0; i<knownDevices.length; ++i) {
     await settings.loadSettings(knownDevices[i]);
-    globalLogger.wtf(settings.settings.toString());
+    //globalLogger.wtf(settings.settings.toString());
     exportFile.writeAsBytesSync(utf8.encode(settings.settings.toString()), mode: FileMode.append);
     if (i!=knownDevices.length-1) {
       exportFile.writeAsStringSync(",", mode: FileMode.append);
@@ -307,7 +307,7 @@ Future<bool> importSettings(String filePath) async {
       globalLogger.e("importSettings: version mismatch: expected 0 received: ${value['version']}");
       return false;
     }
-    globalLogger.wtf(value);
+    //globalLogger.wtf(value);
     UserSettings importSettings = UserSettings();
     await importSettings.loadSettings(value['deviceID']);
     importSettings.settings.motorPoles = value['motorPoles'];

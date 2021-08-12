@@ -60,7 +60,7 @@ import 'package:signal_strength_indicator/signal_strength_indicator.dart';
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.18.0";
+const String freeSK8ApplicationVersion = "0.18.1";
 const String robogotchiFirmwareExpectedVersion = "0.10.1";
 
 void main() {
@@ -740,7 +740,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                         future: UserSettings.getBoardAvatarPath(result.device.id.toString()),
                         builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
                           return CircleAvatar(
-                              backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.jpg'),
+                              backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.png'),
                               radius: 60,
                               backgroundColor: Colors.white);
                         }),
@@ -872,6 +872,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       }
     } else {
       globalLogger.i("_handleBLESyncState: Stopping Sync Process");
+      //TODO: Consider setting fileList to [] and advance the sync process so the files get deleted
       setState(() {
         syncInProgress = false;
         syncAdvanceProgress = false;
@@ -1099,6 +1100,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
             globalLogger.d("Concatenate file operation complete on $catCurrentFilename with $catBytesReceived bytes");
 
+            // Make sure we aren't processing cat,complete in another async task
+            if (catUnpackingFile) {
+              globalLogger.e("catUnpackingFile was true before attempting to unpack a file >:[");
+              throw Exception("cat,complete called while catUnpackingFile was true");
+            }
+
             // Write raw bytes from cat operation to the filesystem
             await FileManager.writeBytesToLogFile(catBytesRaw);
             catBytesRaw.clear();
@@ -1109,8 +1116,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             // Then rebuild state and continue sync process
             catUnpackingFile = true; // Pause the gotchiTimer from NACKing while this expensive task completes
             String savedFilePath = await FileManager.saveLogToDocuments(filename: catCurrentFilename, userSettings: widget.myUserSettings);
-            syncLastACK = DateTime.now(); // Lie about the last ACK time before unpausing the gotchiTimer
-            catUnpackingFile = false; // Un-pause gotchiTimer
 
             /// Analyze log to generate database statistics
             Map<int, double> wattHoursStartByESC = new Map();
@@ -1255,7 +1260,14 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             if (distanceEnd != null) {
               distanceTotal = doublePrecision(distanceEnd - distanceStart, 2);
             } else {
-              distanceTotal = -1.0;
+              globalLogger.e("distanceEnd was null. Distance total could not be computed");
+              if (distanceTotalGPS != null) {
+                distanceTotal = distanceTotalGPS;
+                globalLogger.w("Using GPS distance of $distanceTotalGPS");
+              } else {
+                distanceTotal = -1.0;
+                globalLogger.w("distanceTotal not available from ESC or GPS. Setting to -1.0");
+              }
             }
             globalLogger.d("ESC ID $firstESCID traveled $distanceTotal km");
 
@@ -1321,6 +1333,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             }
 
             /// Advance the sync process after success
+            // Resume the gotchiTimer
+            syncLastACK = DateTime.now(); // Lie about the last ACK time before unpausing the gotchiTimer
+            catUnpackingFile = false; // Un-pause gotchiTimer
+            // Once finished add this file to fileListToDelete
             fileListToDelete.add(catCurrentFilename); // Add this file to fileListToDelete
             loggerTestBuffer = receiveStr;
             if(!syncInProgress) _alertLoggerTest();
@@ -1356,6 +1372,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
             /// Advance the sync process after failure
             {
+              // Resume the gotchiTimer
+              syncLastACK = DateTime.now(); // Lie about the last ACK time before unpausing the gotchiTimer
+              catUnpackingFile = false; // Un-pause gotchiTimer
+
               setState(() {
                 catInProgress = false;
                 syncAdvanceProgress = true;
@@ -2556,16 +2576,17 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         leading: Icon(Icons.contact_support_outlined),
         title: Text("Help & Support"),
         onTap: () {
-          String url = "https://t.me/FreeSK8Beta";
-          String url2 = "https://github.com/FreeSK8/FreeSK8-Robogotchi-Hardware/wiki";
-          String url3 = "https://derelictrobot.com/";
+          String url = "https://codex.freesk8.org";
+          String url2 = "https://forum.freesk8.org";
+          String url3 = "https://t.me/FreeSK8Beta";
+          String url4 = "https://derelictrobot.com";
           genericAlert(
               context,
               "🆘 Need some assistance?",
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Contact us on Telegram:"),
+                  Text("FreeSK8 Documentation:"),
                   SizedBox(height: 5),
                   GestureDetector(
                     child: Text(url, style: TextStyle(color: Colors.blue),),
@@ -2580,7 +2601,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                     },
                   ),
                   SizedBox(height: 10),
-                  Text("Learn more about Robogotchi:"),
+                  Text("FreeSK8 Forum:"),
                   SizedBox(height: 5),
                   GestureDetector(
                     child: Text(url2, style: TextStyle(color: Colors.blue)),
@@ -2595,7 +2616,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                     },
                   ),
                   SizedBox(height: 10),
-                  Text("Visit DRI Shop:"),
+                  Text("Telegram Support Channel:"),
                   SizedBox(height: 5),
                   GestureDetector(
                     child: Text(url3, style: TextStyle(color: Colors.blue)),
@@ -2603,6 +2624,21 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                       if (await canLaunch(url3)) {
                         await launch(
                           url3,
+                          forceSafariVC: false,
+                          forceWebView: false,
+                        );
+                      }
+                    },
+                  ),
+                  SizedBox(height: 10),
+                  Text("DRI Shop:"),
+                  SizedBox(height: 5),
+                  GestureDetector(
+                    child: Text(url4, style: TextStyle(color: Colors.blue)),
+                    onTap: () async {
+                      if (await canLaunch(url4)) {
+                        await launch(
+                          url4,
                           forceSafariVC: false,
                           forceWebView: false,
                         );

@@ -20,30 +20,6 @@ import 'dart:io';
 
 import 'package:flutter_slidable/flutter_slidable.dart';
 
-class Dialogs {
-  static Future<void> showLoadingDialog(
-      BuildContext context, GlobalKey key) async {
-    return showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          return new WillPopScope(
-              onWillPop: () async => false,
-              child: SimpleDialog(
-                  key: key,
-                  backgroundColor: Colors.black54,
-                  children: <Widget>[
-                    Center(
-                      child: Column(children: [
-                        Icon(Icons.watch_later, size: 80,),
-                        SizedBox(height: 10,),
-                        Text("Please Wait....")
-                      ]),
-                    )
-                  ]));
-        });
-  }
-}
 
 class RideLogging extends StatefulWidget {
   RideLogging({
@@ -198,7 +174,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                             future: UserSettings.getBoardAvatarPath(rideLogsFromDatabase[int.parse(event)].boardID),
                             builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
                               return CircleAvatar(
-                                  backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.jpg'),
+                                  backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.png'),
                                   radius: 25,
                                   backgroundColor: Colors.white);
                             })
@@ -308,13 +284,14 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
   }
 
   Future<void> _loadLogFile(int index) async {
+    globalLogger.d("rideLogging::_loadLogFile: opening RideLogViewer with ${rideLogsFromDatabase[index].logFilePath}");
     // Show indication of loading
-    await Dialogs.showLoadingDialog(context, _keyLoader).timeout(Duration(milliseconds: 500)).catchError((error){});
+    await Dialogs.showPleaseWaitDialog(context, _keyLoader).timeout(Duration(milliseconds: 500)).catchError((error){});
 
     // Fetch user settings for selected board, fallback to current settings if not found
     UserSettings selectedBoardSettings = new UserSettings();
     if (await selectedBoardSettings.loadSettings(rideLogsFromDatabase[index].boardID) == false) {
-      globalLogger.wtf("WARNING: Board ID ${rideLogsFromDatabase[index].boardID} has no settings on this device!");
+      globalLogger.w("WARNING: Board ID ${rideLogsFromDatabase[index].boardID} has no settings on this device!");
       selectedBoardSettings = widget.myUserSettings;
     }
 
@@ -489,7 +466,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                           builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
                                             if (snapshot.hasData) {
                                               return CircleAvatar(
-                                                  backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.jpg'),
+                                                  backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.png'),
                                                   radius: 25,
                                                   backgroundColor: Colors.white);
                                             }
@@ -577,9 +554,17 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                             color: Colors.blue,
                             icon: Icons.merge_type,
                             onTap: () async {
-                              if (index+1 == rideLogsFromDatabase.length) return;
+                              if (index+1 == rideLogsFromDatabase.length) {
+                                globalLogger.d("Merge aborted: File is last in list");
+                                return;
+                              }
+                              if (widget.syncInProgress) {
+                                globalLogger.d("Merge aborted: syncInProgress");
+                                return;
+                              }
 
                               // Confirm Merge with user
+                              int mergedDurationSeconds = rideLogsFromDatabase[index].dateTime.difference(rideLogsFromDatabase[index+1].dateTime).inSeconds + rideLogsFromDatabase[index].durationSeconds;
                               bool doMerge = await genericConfirmationDialog(
                                   context,
                                   TextButton(
@@ -601,14 +586,20 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                       Text("${prettyPrintDuration(Duration(seconds: rideLogsFromDatabase[index].durationSeconds))}"),
 
                                       SizedBox(height: 15),
-                                      Text("Previous File:"),
+                                      Text("Previous File:", style: TextStyle(fontWeight: FontWeight.bold)),
                                       Text("${rideLogsFromDatabase[index+1].boardAlias}"),
                                       Text("${rideLogsFromDatabase[index+1].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}"),
                                       Text("${prettyPrintDuration(Duration(seconds: rideLogsFromDatabase[index+1].durationSeconds))}"),
+
+                                      SizedBox(height: 15),
+                                      mergedDurationSeconds > 7200 ? Icon(Icons.warning_amber_outlined, color: Colors.yellowAccent,) : Container(),
+                                      Text("Merged Duration: ${prettyPrintDuration(Duration(seconds: mergedDurationSeconds))}"),
                                     ],
                                   )
                               );
                               if (doMerge) {
+                                // Show dialog to prevent user input
+                                await Dialogs.showPleaseWaitDialog(context, _keyLoader).timeout(Duration(milliseconds: 500)).catchError((error){});
                                 try {
                                   globalLogger.d("Log Merge Confirmed. Files: ${rideLogsFromDatabase[index].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}, ${rideLogsFromDatabase[index+1].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}");
                                   final documentsDirectory = await getApplicationDocumentsDirectory();
@@ -651,7 +642,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                       altitudeMax: statsEarlier.altitudeMax > statsLater.altitudeMax ? statsEarlier.altitudeMax : statsLater.altitudeMax,
                                       altitudeMin: statsEarlier.altitudeMin < statsLater.altitudeMin ? statsEarlier.altitudeMin : statsLater.altitudeMin,
                                       maxAmpsBattery: statsEarlier.maxAmpsBattery > statsLater.maxAmpsBattery ? statsEarlier.maxAmpsBattery : statsLater.maxAmpsBattery,
-                                      maxAmpsMotors: statsEarlier.maxAmpsBattery > statsLater.maxAmpsBattery ? statsEarlier.maxAmpsBattery : statsLater.maxAmpsBattery,
+                                      maxAmpsMotors: statsEarlier.maxAmpsMotors > statsLater.maxAmpsMotors ? statsEarlier.maxAmpsMotors : statsLater.maxAmpsMotors,
                                       wattHoursTotal: _addDoubleUnlessNegativeOne(statsEarlier.wattHoursTotal, statsLater.wattHoursTotal),
                                       wattHoursRegenTotal: _addDoubleUnlessNegativeOne(statsEarlier.wattHoursRegenTotal, statsLater.wattHoursRegenTotal),
                                       distance: _addDoubleUnlessNegativeOne(statsEarlier.distance, statsLater.distance),
@@ -672,9 +663,12 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                     //Remove from itemBuilder's list of entries
                                     rideLogsFromDatabase.removeAt(index);
                                   });
+                                  Navigator.of(context).pop(); // Remove dialog
                                 } catch (e, stacktrace) {
+                                  Navigator.of(context).pop(); // Remove dialog
                                   globalLogger.e("rideLogging:doMerge: exception: ${e.toString()}");
                                   globalLogger.e(stacktrace.toString());
+                                  genericAlert(context, "Merge exception", Text("Uh oh. Something went wrong. Please share the debug log with the developers"), "Shake 3 times");
                                 }
                               } // doMerge
                             } // Merge onTap
@@ -687,10 +681,16 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                           color: Colors.indigo,
                           icon: Icons.share,
                           onTap: () async {
-                            // Share file dialog
-                            String fileSummary = 'Robogotchi gotchi!';
-                            String fileContents = await FileManager.openLogFile(rideLogsFromDatabase[index].logFilePath);
-                            await Share.file('FreeSK8Log', "${rideLogsFromDatabase[index].logFilePath.substring(rideLogsFromDatabase[index].logFilePath.lastIndexOf("/") + 1)}", utf8.encode(fileContents), 'text/csv', text: fileSummary);
+                            try {
+                              // Share file dialog
+                              String fileSummary = 'Robogotchi gotchi!';
+                              String fileContents = await FileManager.openLogFile(rideLogsFromDatabase[index].logFilePath);
+                              await Share.file('FreeSK8Log', "${rideLogsFromDatabase[index].logFilePath.substring(rideLogsFromDatabase[index].logFilePath.lastIndexOf("/") + 1)}", utf8.encode(fileContents), 'text/csv', text: fileSummary);
+                            } catch (e, stacktrace) {
+                              globalLogger.e("Share exception: ${e.toString()}");
+                              print(stacktrace);
+                              genericAlert(context, "Share exception", Text("Uh oh. Something went wrong. Please share the debug log with the developers"), "Shake 3 times");
+                            }
                           },
                         ),
                       ),
@@ -729,11 +729,17 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                 )
                             );
                             if (doErase) {
-                              final documentsDirectory = await getApplicationDocumentsDirectory();
-                              // Remove the item from the database and rideLogs array
-                              await DatabaseAssistant.dbRemoveLog(rideLogsFromDatabase[index].logFilePath);
-                              //Remove from Filesystem
-                              File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").deleteSync();
+                              try {
+                                final documentsDirectory = await getApplicationDocumentsDirectory();
+                                // Remove the item from the database and rideLogs array
+                                await DatabaseAssistant.dbRemoveLog(rideLogsFromDatabase[index].logFilePath);
+                                //Remove from Filesystem
+                                File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").deleteSync();
+                              } catch (e, stacktrace) {
+                                globalLogger.e("Erase exception: ${e.toString()}");
+                                print(stacktrace);
+                                genericAlert(context, "Erase exception", Text("Uh oh. Something went wrong. Please share the debug log with the developers"), "Shake 3 times");
+                              }
                               setState(() {
                                 //Remove from itemBuilder's list of entries
                                 rideLogsFromDatabase.removeAt(index);

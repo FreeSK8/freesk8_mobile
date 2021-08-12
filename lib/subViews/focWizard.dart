@@ -16,32 +16,6 @@ class FOCWizardArguments {
   FOCWizardArguments(this.txCharacteristic, this.escMotorConfigurationDefaults);
 }
 
-class Dialogs {
-  static Future<void> showLoadingDialog(
-      BuildContext context, GlobalKey key) async {
-    return showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          return new WillPopScope(
-              onWillPop: () async => false,
-              child: SimpleDialog(
-                  key: key,
-                  backgroundColor: Colors.black54,
-                  children: <Widget>[
-                    Center(
-                      child: Column(children: [
-                        Icon(Icons.watch_later, size: 80,),
-                        SizedBox(height: 10,),
-                        Text("Please Wait...."),
-                        Text("Be sure the wheels are off the ground!")
-                      ]),
-                    )
-                  ]));
-        });
-  }
-}
-
 class ConfigureESC extends StatefulWidget {
   @override
   ConfigureESCState createState() => ConfigureESCState();
@@ -202,7 +176,7 @@ class ConfigureESCState extends State<ConfigureESC> {
           setState(() {
             // On the last step
             if (currentStepIndex == numberOfSteps - 1) {
-              Dialogs.showLoadingDialog(context, _keyLoader);
+              Dialogs.showFOCDialog(context, _keyLoader);
               //TODO: implement reception and
               if(loadESCDefaults) {
                 //TODO: request MCCONF DEFAULT and wait for response

@@ -373,7 +373,6 @@ class RideLogViewerState extends State<RideLogViewer> {
     double gpsMaxSpeed = 0;
     DateTime gpsStartTime;
     DateTime gpsEndTime;
-    Duration gpsDuration = Duration(seconds:0);
     String gpsDistanceStr = "N/A";
 
     //Charting and data
@@ -418,6 +417,9 @@ class RideLogViewerState extends State<RideLogViewer> {
         setState(() {
           thisRideLog = value;
         });
+      }).onError((error, stackTrace){
+        globalLogger.e("rideLogViewer: openLogFile Exception: ${error.toString()}");
+        print(stackTrace);
       });
       return Container(); //NOTE: after setState with file contents we'll show the widget tree
     }
@@ -426,13 +428,25 @@ class RideLogViewerState extends State<RideLogViewer> {
     List<int> escIDsInLog = [];
     thisRideLogEntries = thisRideLog.split("\n");
     globalLogger.d("rideLogViewer rideLogEntry count: ${thisRideLog.length}");
+    int fileLoggingRateHz = 1;
+    int fileMultiESCMode = 0;
     for(int i=0; i<thisRideLogEntries.length; ++i) {
       final entry = thisRideLogEntries[i].split(",");
 
       //TODO: Parse out header entries. We now have good information here so we don't have to leverage userSettings
-      if(entry.length > 1 && entry[0] != "header"){ // entry[0] = Time, entry[1] = Data type
+      if(entry.length > 1){ // entry[0] = Time, entry[1] = Data type
+        if (entry[0] == "header") {
+          if (entry[1] == "esc_hz") {
+            fileLoggingRateHz = int.parse(entry[2]);
+            globalLogger.d("Parsed: ${thisRideLogEntries[i]}");
+          }
+          if (entry[1] == "multi_esc_mode") {
+            fileMultiESCMode = int.parse(entry[2]);
+            globalLogger.d("Parsed: ${thisRideLogEntries[i]}");
+          }
+        }
         ///GPS position entry
-        if(entry[1] == "gps" && entry.length >= 6) {
+        else if(entry[1] == "gps" && entry.length >= 6) {
           //dt,gps,satellites,altitude,speed,latitude,longitude
           LatLng thisPosition = new LatLng(double.parse(entry[5]),double.parse(entry[6]));
           if ( _positionEntries.length > 0){
@@ -482,11 +496,11 @@ class RideLogViewerState extends State<RideLogViewer> {
           DateTime thisDt = DateTime.parse(entry[0]).add((DateTime.now().timeZoneOffset));
           int thisESCID = int.parse(entry[2]);
 
-          // Watch for OoO records
-          if (escTimeSeriesMap.isNotEmpty && escTimeSeriesMap.keys.last.isAfter(thisDt)) {
+          // Watch for OoO records, Validating by the second (subtract milliseconds)
+          if (escTimeSeriesMap.isNotEmpty && escTimeSeriesMap.keys.last.subtract(Duration(milliseconds: escTimeSeriesMap.keys.last.millisecond)).isAfter(thisDt)) {
             ++outOfOrderESCRecords;
-            outOfOrderESCFirstMessage ??= "ESC out of order:  $thisDt Previous ${escTimeSeriesMap.keys.last}";
-            //globalLogger.wtf("ESC out of order: Now $thisDt Previous ${escTimeSeriesMap.keys.last}; Skipping record");
+            outOfOrderESCFirstMessage ??= "ESC out of order: $thisDt Previous ${escTimeSeriesMap.keys.last}";
+            //globalLogger.wtf("ESC out of order: Now $thisDt Previous ${escTimeSeriesMap.keys.last}");
           }
 
           if (!escIDsInLog.contains(thisESCID)) {
@@ -494,10 +508,41 @@ class RideLogViewerState extends State<RideLogViewer> {
             escIDsInLog.add(thisESCID);
           }
 
-          // Create TimeSeriesESC object if needed
-          if (escTimeSeriesMap[thisDt] == null){
+          // Create TimeSeriesESC object at thisDt if needed
+          if (escTimeSeriesMap[thisDt] == null) {
             escTimeSeriesMap[thisDt] = TimeSeriesESC(time: thisDt, dutyCycle: 0);
           }
+          // If TimeSeriesESC exists at thisDt we (((((might be))))) looking at multiple samples per second
+          else {
+            // Check if this is ESC2,3,4 and if ESC has data at time slot already
+            bool incrementTimeSlot = true; // Assume we are to increment the time slot
+            // If thisESCID's data has not been populated for thisDt set incrementTimeSlot to false
+            switch(escIDsInLog.indexOf(thisESCID)) {
+              case 0:
+                if (escTimeSeriesMap[thisDt].tempMosfet == null) incrementTimeSlot = false;
+                break;
+              case 1:
+                if (escTimeSeriesMap[thisDt].tempMosfet2 == null) incrementTimeSlot = false;
+                break;
+              case 2:
+                if (escTimeSeriesMap[thisDt].tempMosfet3 == null) incrementTimeSlot = false;
+                break;
+              case 3:
+                if (escTimeSeriesMap[thisDt].tempMosfet4 == null) incrementTimeSlot = false;
+                break;
+            }
+            // Increment the sub second timestamp by the logging rate
+            if (incrementTimeSlot == true) {
+              // Add milliseconds to >1Hz ESC data
+              while(escTimeSeriesMap[thisDt] != null) {
+                thisDt = thisDt.add(Duration(milliseconds: 1000~/fileLoggingRateHz < 1000 ? 1000~/fileLoggingRateHz : 20));
+                if (escTimeSeriesMap[thisDt] == null) {
+                  escTimeSeriesMap[thisDt] = TimeSeriesESC(time: thisDt, dutyCycle: 0);
+                  break;
+                }
+              }
+            }
+          } // TimeSeriesESC ready at thisDt
 
           // Populate TimeSeriesESC
           switch(escIDsInLog.indexOf(thisESCID)) {
@@ -528,11 +573,12 @@ class RideLogViewerState extends State<RideLogViewer> {
               double wattHours = (wattHoursNow - wattHoursStartPrimary) - (wattHoursRegenNow - wattHoursRegenStartPrimary);
               double totalDistance = distanceEndPrimary - distanceStartPrimary;
               double consumption = wattHours / totalDistance;
-              if (consumption.isNaN || consumption.isInfinite) {
-                consumption = 0;
-              }
-              //print("whNow $wattHoursNow whStart $wattHoursStartPrimary whRegenNow $wattHoursRegenNow whRegenStart $wattHoursRegenStartPrimary wh $wattHours td $totalDistance consumption $consumption");
-              escTimeSeriesMap[thisDt].consumption = doublePrecision(consumption, 2);
+              if (consumption.isNaN || consumption.isInfinite || totalDistance < 0.25) {
+                escTimeSeriesMap[thisDt].consumption = null;
+              } else escTimeSeriesMap[thisDt].consumption = doublePrecision(consumption, 2);
+              //if (totalDistance < 0.9)
+                //print("whNow $wattHoursNow whStart $wattHoursStartPrimary whRegenNow $wattHoursRegenNow whRegenStart $wattHoursRegenStartPrimary wh $wattHours td $totalDistance consumption $consumption");
+
               break;
             case 1:
             // Second ESC in multiESC configuration
@@ -715,7 +761,7 @@ class RideLogViewerState extends State<RideLogViewer> {
 
         }
       }
-    }
+    } // escTimeSeriesMap created from thisRideLogEntries
     globalLogger.d("rideLogViewer rideLogEntry iteration complete");
 
     // Notify debugger if OoO records were observed in this file
@@ -819,7 +865,7 @@ class RideLogViewerState extends State<RideLogViewer> {
     } //iterate escTimeSeriesList
 
     //TODO: Reduce number of ESC points to keep things moving on phones
-    //TODO: We will need to know the logging rate in the file
+    //TODO: We will need to know the logging rate in the file (use fileLoggingRateHz)
     int escTimeSeriesListOriginalLength = escTimeSeriesList.length; // Capture unmodified length for average computation
     while(escTimeSeriesList.length > 1200) {
       int pos = 0;
@@ -878,11 +924,23 @@ class RideLogViewerState extends State<RideLogViewer> {
     });
 
     if(_positionEntries.length > 1) {
-      // Calculate GPS statistics
-      gpsDuration = gpsEndTime.difference(gpsStartTime);
-      gpsAverageSpeed /= _positionEntries.length;
-      gpsAverageSpeed = doublePrecision(gpsAverageSpeed, 2);
-      gpsDistanceStr = myArguments.userSettings.settings.useImperial ? "${doublePrecision(kmToMile(gpsDistance), 2)} miles" : "${doublePrecision(gpsDistance, 2)} km";
+      //NOTE: If a ride was merged but the end->start GPS positions differ the re-calculated values will be wrong
+      //NOTE: Some old database entries did not have GPS avg speed, max speed and distance entries and will be -1
+      /// Average Speed
+      if (myArguments.logFileInfo.avgSpeedGPS != -1.0) {
+        // Use database statistics
+        gpsAverageSpeed = myArguments.logFileInfo.avgSpeedGPS;
+      } else {
+        // Calculate GPS statistics
+        gpsAverageSpeed /= _positionEntries.length;
+        gpsAverageSpeed = doublePrecision(gpsAverageSpeed, 2);
+      }
+      /// Distance
+      if (myArguments.logFileInfo.distanceGPS != -1.0) {
+        gpsDistanceStr = myArguments.userSettings.settings.useImperial ? "${doublePrecision(kmToMile(myArguments.logFileInfo.distanceGPS), 2)} miles" : "${doublePrecision(myArguments.logFileInfo.distanceGPS, 2)} km";
+      } else {
+        gpsDistanceStr = myArguments.userSettings.settings.useImperial ? "${doublePrecision(kmToMile(gpsDistance), 2)} miles" : "${doublePrecision(gpsDistance, 2)} km";
+      }
     }
 
 
@@ -963,12 +1021,14 @@ class RideLogViewerState extends State<RideLogViewer> {
       sortedGPSMapKeysTEST.forEach((element) {
         var value = gpsLatLngMap[element];
         var key = element;
-        Color thisColor = Colors.blue;
+        Color thisColor = Colors.black;
         //TODO: Reduce number of GPS points to keep things moving on phones
         if (calculateGPSDistance(lastPoint, value) > 0.01) {
           // Compute color for this section of the route
           if (escTimeSeriesMap[key] != null && escTimeSeriesMap[key].speed != null && _maxSpeed > 0.0) {
-            thisColor = Color.lerp(Colors.yellow, Colors.redAccent[700], escTimeSeriesMap[key].speed.abs() / _maxSpeed);
+            double normalizedSpeed = escTimeSeriesMap[key].speed.abs() / _maxSpeed;
+            if (normalizedSpeed < 0.5) thisColor = Color.lerp(Colors.blue[700], Colors.yellowAccent, normalizedSpeed);
+            else thisColor = Color.lerp(Colors.yellowAccent, Colors.redAccent[700], normalizedSpeed);
           }
           // Add colored polyline from last section to this one
           polylineList.add(Polyline(points: [lastPoint, value], strokeWidth: 4, color: thisColor));
@@ -985,12 +1045,14 @@ class RideLogViewerState extends State<RideLogViewer> {
       sortedGPSMapKeysTEST.forEach((element) {
         var value = gpsLatLngRejectMap[element];
         var key = element;
-        Color thisColor = Colors.blue;
-        //TODO: Reduce number of GPS points to keep things moving on phones
+        Color thisColor = Colors.black;
+        //TODO: Reduce number of GPS points to keep things moving on phoness
         if (calculateGPSDistance(lastPoint, value) > 0.01) {
           // Compute color for this section of the route
           if (escTimeSeriesMap[key] != null && escTimeSeriesMap[key].speed != null && _maxSpeed > 0.0) {
-            thisColor = Color.lerp(Colors.yellow, Colors.redAccent[700], escTimeSeriesMap[key].speed.abs() / _maxSpeed);
+            double normalizedSpeed = escTimeSeriesMap[key].speed.abs() / _maxSpeed;
+            if (normalizedSpeed < 0.5) thisColor = Color.lerp(Colors.blue[700], Colors.yellowAccent, normalizedSpeed);
+            else thisColor = Color.lerp(Colors.yellowAccent, Colors.redAccent[700], normalizedSpeed);
           }
           // Add colored polyline from last section to this one
           polylineList.add(Polyline(points: [lastPoint, value], strokeWidth: 4, color: thisColor));
@@ -1003,7 +1065,7 @@ class RideLogViewerState extends State<RideLogViewer> {
     String distance = "N/A";
     Duration duration = Duration(seconds:0);
     if(escTimeSeriesList.length > 0) {
-      double totalDistance = doublePrecision(distanceEndPrimary - distanceStartPrimary, 2);
+      double totalDistance = myArguments.userSettings.settings.useImperial ? kmToMile(myArguments.logFileInfo.distance) : myArguments.logFileInfo.distance;
       distance = myArguments.userSettings.settings.useImperial ? "$totalDistance miles" : "$totalDistance km";
       duration = escTimeSeriesList.last.time.difference(escTimeSeriesList.first.time);
 
@@ -1062,7 +1124,7 @@ class RideLogViewerState extends State<RideLogViewer> {
       if (_useGPSData) {
         consumptionDistance = myArguments.userSettings.settings.useImperial ? kmToMile(gpsDistance) : gpsDistance;
       } else {
-        consumptionDistance = distanceEndPrimary - distanceStartPrimary; //NOTE: these values are already scaled to user's units
+        consumptionDistance = myArguments.userSettings.settings.useImperial ? kmToMile(myArguments.logFileInfo.distance) : myArguments.logFileInfo.distance;
       }
       consumption = (myArguments.logFileInfo.wattHoursTotal - myArguments.logFileInfo.wattHoursRegenTotal) / consumptionDistance;
     }
@@ -1088,7 +1150,12 @@ class RideLogViewerState extends State<RideLogViewer> {
         title: Row(children: <Widget>[
           Text(myArguments.logFileInfo.dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)),
           Spacer(),
-          Image(width: 40, height: 40, image: AssetImage('assets/FreeSK8_Icon.png')),
+          ClipRRect(
+            borderRadius: new BorderRadius.circular(10),
+            child: Image(width: 40, height: 40, image: AssetImage('assets/FreeSK8_Icon_Dark.png'),
+              color: Color(0xffffffff).withOpacity(0.1),
+              colorBlendMode: BlendMode.softLight,),
+          ),
         ],),
       ),
       body: SafeArea(
@@ -1152,10 +1219,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                   Column(children: <Widget>[
                     Text("Duration"),
                     Icon(Icons.watch_later),
-                    escTimeSeriesList.length > 0 ?
-                    Text(duration.toString().substring(0,duration.toString().lastIndexOf(".")))
-                        :
-                    Text(gpsDuration.toString().substring(0,gpsDuration.toString().lastIndexOf(".")))
+                    Text("${prettyPrintDuration(Duration(seconds: myArguments.logFileInfo.durationSeconds))}")
                   ],),
 
 
@@ -1358,7 +1422,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                                     new Container(
                                       margin: EdgeInsets.fromLTRB(0, 0, 0, 10),
                                       child: CircleAvatar(
-                                        backgroundImage: myArguments.userSettings.settings.boardAvatarPath != null ? myArguments.imageBoardAvatar : AssetImage('assets/FreeSK8_Mobile.jpg'),
+                                        backgroundImage: myArguments.userSettings.settings.boardAvatarPath != null ? myArguments.imageBoardAvatar : AssetImage('assets/FreeSK8_Mobile.png'),
                                         radius: 10,
                                         backgroundColor: Colors.white
                                       )

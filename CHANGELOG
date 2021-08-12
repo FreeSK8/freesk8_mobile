@@ -1,3 +1,15 @@
+v0.18.1
+
+* Fixed UART Input Configuration
+* Updated Help & Support links
+* Updated FreeSK8 Mobile graphics
+* Updated GPS route colors
+* Improved Ride Merge process
+* Improved exception handling
+* Display dialog with Data Import/Export processes
+* Confirm switch to GPS metrics
+* Other fixes and improvements
+
 v0.18.0
 
 * Added Vehicle Manager
