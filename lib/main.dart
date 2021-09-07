@@ -257,9 +257,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       }
     } else {
       //TODO: Testing fix for backgrounded iOS app disconnecting but not showing disconnected state
-      if (unexpectedDisconnect && Platform.isIOS) {
+      //NOTE: Sept 7, 2021: Android platform may experience same issue: https://forum.freesk8.org/t/freesk8-mobile-app-android-ios/327/111
+      if (unexpectedDisconnect) {
         setState(() {
-          // Just refresh bc on iOS we might display a stale state after being backgrounded for extended period of time
+          // Just refresh bc on some devices we might display a stale state after being backgrounded for extended period of time
         });
       }
       //logger.wtf("_monitorGotchiTimer is alive");
