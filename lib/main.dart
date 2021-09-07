@@ -1405,11 +1405,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         }
       }
       else if(receiveStr.startsWith("cat,/FreeSK8Logs")){
-        globalLogger.d("Starting cat Command: $receiveStr");
+        globalLogger.d("Starting cat, InProgress($catInProgress), Command: $receiveStr");
         loggerTestBuffer = "";
         catInProgress = true;
         lsInProgress = false;
         catBytesReceived = 0;
+        catBytesRaw.clear();
         FileManager.clearLogFile();
 
         syncLastACK = DateTime.now();
