@@ -1956,8 +1956,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
           int stringLength = bleHelper.getMessage()[1] - 1;
           String messageFromESC = new String.fromCharCodes(bleHelper.getMessage().sublist(3, 3 + stringLength));
-          globalLogger.wtf("ESC Custom Message: $messageFromESC");
-          genericAlert(context, "Excuse me", Text("The ESC responded with a custom message:\n\n$messageFromESC"), "OK");
+          globalLogger.i("ESC::COMM_PRINT: $messageFromESC");
           bleHelper.resetPacket();
 
         } else if (packetID == COMM_PACKET_ID.COMM_SET_APPCONF.index) {
