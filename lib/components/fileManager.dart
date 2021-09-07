@@ -14,7 +14,7 @@ class FileManager {
 
   static Future<void> writeBytesToLogFile(List<int> bytes) async {
     final file = await _getTempLogFile();
-    file.writeAsBytesSync(bytes, mode: FileMode.append);
+    file.writeAsBytesSync(bytes, mode: FileMode.append, flush: true);
   }
 
   static Future<void> writeToLogFile(String log) async {
