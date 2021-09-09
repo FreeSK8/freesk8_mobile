@@ -358,7 +358,7 @@ class LogFileParser {
       }
     }
     // Write parsed CSV to filesystem
-    convertedFile.writeAsStringSync(parsedResults,mode: FileMode.append);
+    convertedFile.writeAsStringSync(parsedResults, mode: FileMode.append, flush: true);
 
     return Pair<String, File>(fileNameOut, convertedFile);
   }

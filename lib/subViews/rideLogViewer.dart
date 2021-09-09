@@ -659,7 +659,8 @@ class RideLogViewerState extends State<RideLogViewer> {
                 margin: EdgeInsets.fromLTRB(0, 0, 0, 0),
                 child: GestureDetector(
                   onTap: (){
-                    genericAlert(context, "Fault", Text("${mc_fault_code.values[thisFaultCode].toString().substring(14)} on ESC $escID at ${entry[0]}"), "It's ok?");
+                    TimeSeriesESC _tsFault = escTimeSeriesMap[thisDt];
+                    _buildDialog("Fault", _tsFault, escTimeSeriesMap.values.first.time, myArguments.userSettings.settings.useFahrenheit);
                   },
                   child: Image(image: AssetImage("assets/map_fault.png")),
                 ),

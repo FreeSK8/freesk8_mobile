@@ -60,7 +60,7 @@ import 'package:signal_strength_indicator/signal_strength_indicator.dart';
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.18.1";
+const String freeSK8ApplicationVersion = "0.18.2";
 const String robogotchiFirmwareExpectedVersion = "0.10.1";
 
 void main() {
@@ -257,9 +257,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       }
     } else {
       //TODO: Testing fix for backgrounded iOS app disconnecting but not showing disconnected state
-      if (unexpectedDisconnect && Platform.isIOS) {
+      //NOTE: Sept 7, 2021: Android platform may experience same issue: https://forum.freesk8.org/t/freesk8-mobile-app-android-ios/327/111
+      if (unexpectedDisconnect) {
         setState(() {
-          // Just refresh bc on iOS we might display a stale state after being backgrounded for extended period of time
+          // Just refresh bc on some devices we might display a stale state after being backgrounded for extended period of time
         });
       }
       //logger.wtf("_monitorGotchiTimer is alive");
@@ -1404,11 +1405,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         }
       }
       else if(receiveStr.startsWith("cat,/FreeSK8Logs")){
-        globalLogger.d("Starting cat Command: $receiveStr");
+        globalLogger.d("Starting cat, InProgress($catInProgress), Command: $receiveStr");
         loggerTestBuffer = "";
         catInProgress = true;
         lsInProgress = false;
         catBytesReceived = 0;
+        catBytesRaw.clear();
         FileManager.clearLogFile();
 
         syncLastACK = DateTime.now();
@@ -1955,8 +1957,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
           int stringLength = bleHelper.getMessage()[1] - 1;
           String messageFromESC = new String.fromCharCodes(bleHelper.getMessage().sublist(3, 3 + stringLength));
-          globalLogger.wtf("ESC Custom Message: $messageFromESC");
-          genericAlert(context, "Excuse me", Text("The ESC responded with a custom message:\n\n$messageFromESC"), "OK");
+          globalLogger.i("ESC::COMM_PRINT: $messageFromESC");
           bleHelper.resetPacket();
 
         } else if (packetID == COMM_PACKET_ID.COMM_SET_APPCONF.index) {
@@ -2057,16 +2058,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       if (initMsgESCDevicesCANRequested == 0) {
         globalLogger.d("_requestInitMessages: Requesting initMsgESCDevicesCAN");
         // Request CAN Devices scan
-        Uint8List packetScanCAN = new Uint8List(6);
-        packetScanCAN[0] = 0x02; //Start packet
-        packetScanCAN[1] = 0x01; //Payload length
-        packetScanCAN[2] = COMM_PACKET_ID.COMM_PING_CAN.index; //Payload data
-        //3,4 are CRC computed below
-        packetScanCAN[5] = 0x03; //End packet
-        int checksum = CRC16.crc16(packetScanCAN, 2, 1);
-        packetScanCAN[3] = (checksum >> 8) & 0xff;
-        packetScanCAN[4] = checksum & 0xff;
-        theTXCharacteristic.write(packetScanCAN);
+        theTXCharacteristic.write(simpleVESCRequest(COMM_PACKET_ID.COMM_PING_CAN.index));
         initMsgESCDevicesCANRequested = 1;
 
         _changeConnectedDialogMessage("Requesting CAN IDs");
@@ -2080,6 +2072,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       } else {
         if (++initMsgESCDevicesCANRequested == 25) {
           globalLogger.e("_requestInitMessages: initMsgESCDevicesCAN did not get a response. Retrying");
+          // Re-request CAN Devices scan
+          theTXCharacteristic.write(simpleVESCRequest(COMM_PACKET_ID.COMM_PING_CAN.index));
           initMsgESCDevicesCANRequested = 1;
           _changeConnectedDialogMessage("Requesting CAN IDs (again)");
         }

@@ -1,3 +1,11 @@
+v0.18.2
+
+* Improved fault dialog in log viewer
+* Fix re-requesting CAN_PING message
+* Re-drawing UI when unexpectedly disconnected
+* Removed ESC custom message dialog
+* Chasing sync gremlin
+
 v0.18.1
 
 * Fixed UART Input Configuration
