@@ -1904,47 +1904,51 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           Navigator.of(context).pop(); //Pop away the FOC wizard Loading Overlay
           if (controller.index == controllerViewRealTime) startStopTelemetryTimer(false); //Resume the telemetry timer
 
+          String resultText = "";
+          switch(resultFOCDetection) {
+            case 2:
+              resultText = "AS5147 encoder detected successfully";
+              break;
+            case 1:
+              resultText = "Hall sensors detected successfully";
+              break;
+            case 0:
+              resultText = "No sensors detected, sensorless mode applied successfully";
+              break;
+            case -1:
+              resultText = "Detection failed";
+              break;
+            case -10:
+              resultText = "Flux linkage detection failed";
+              break;
+            case -50:
+              resultText = "CAN detection timed out";
+              break;
+            case -51:
+              resultText = "CAN detection failed";
+              break;
+            default:
+              if (resultFOCDetection > 0) {
+                resultText = "Success ($resultFOCDetection)";
+              }
+              else {
+                resultText = "Unknown response from ESC ($resultFOCDetection)";
+              }
+          }
+          globalLogger.d("COMM_DETECT_APPLY_ALL_FOC: $resultText");
           if (resultFOCDetection >= 0) {
             Navigator.of(context).pop(); //Pop away the FOC wizard on success
-
-            // Show dialog
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text("FOC Detection"),
-                  content: Text("Successful detection. Result: $resultFOCDetection"),
-                );
-              },
-            );
-          } else {
-            switch(resultFOCDetection) {
-              case -1:
-                globalLogger.d("COMM_DETECT_APPLY_ALL_FOC: Detection failed");
-                break;
-              case -10:
-                globalLogger.d("COMM_DETECT_APPLY_ALL_FOC: Flux linkage detection failed");
-                break;
-              case -50:
-                globalLogger.d("COMM_DETECT_APPLY_ALL_FOC: CAN detection timed out");
-                break;
-              case -51:
-                globalLogger.d("COMM_DETECT_APPLY_ALL_FOC: CAN detection failed");
-                break;
-              default:
-                globalLogger.d("COMM_DETECT_APPLY_ALL_FOC: ERROR: result of FOC detection was unknown: $resultFOCDetection");
-            }
-            // Show dialog
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text("FOC Detection"),
-                  content: Text("Detection failed. Result: $resultFOCDetection"),
-                );
-              },
-            );
           }
+          // Show dialog
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text("FOC Wizard"),
+                content: Text("${resultFOCDetection >= 0 ? "Successful detection!" : "Detection failed."}\n\n$resultText"),
+              );
+            },
+          );
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_GET_DECODED_PPM.index) {
 
@@ -1985,6 +1989,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
           bleHelper.resetPacket();
 
+        } else if (packetID == COMM_PACKET_ID.COMM_GET_VALUES_SELECTIVE.index) {
+          //NOTE: Useful data could be parsed from these packets but is not necessary
+          bleHelper.resetPacket();
         } else {
           globalLogger.e("Unsupported packet ID: $packetID");
           globalLogger.e("Unsupported packet Message: ${bleHelper.getMessage().sublist(0,bleHelper.endMessage)}");
