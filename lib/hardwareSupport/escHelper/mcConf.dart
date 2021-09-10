@@ -10,7 +10,8 @@ enum temp_sensor_type {
   TEMP_SENSOR_NTC_10K_25C,
   TEMP_SENSOR_PTC_1K_100C,
   TEMP_SENSOR_KTY83_122,
-  TEMP_SENSOR_NTC_100K_25C // Firmware 5.2 added
+  TEMP_SENSOR_NTC_100K_25C, // Firmware 5.2 added
+  TEMP_SENSOR_KTY84_130, // Firmware 5.3 added
 }
 
 enum out_aux_mode {
@@ -18,7 +19,15 @@ enum out_aux_mode {
   OUT_AUX_MODE_ON_AFTER_2S,
   OUT_AUX_MODE_ON_AFTER_5S,
   OUT_AUX_MODE_ON_AFTER_10S,
-  OUT_AUX_MODE_UNUSED
+  OUT_AUX_MODE_UNUSED,
+  OUT_AUX_MODE_ON_WHEN_RUNNING, // Firmware 5.3 added
+  OUT_AUX_MODE_ON_WHEN_NOT_RUNNING, // Firmware 5.3 added
+  OUT_AUX_MODE_MOTOR_50, // Firmware 5.3 added
+  OUT_AUX_MODE_MOSFET_50, // Firmware 5.3 added
+  OUT_AUX_MODE_MOTOR_70, // Firmware 5.3 added
+  OUT_AUX_MODE_MOSFET_70, // Firmware 5.3 added
+  OUT_AUX_MODE_MOTOR_MOSFET_50, // Firmware 5.3 added
+  OUT_AUX_MODE_MOTOR_MOSFET_70, // Firmware 5.3 added
 }
 
 enum drv8301_oc_mode{
@@ -61,7 +70,8 @@ enum mc_foc_sensor_mode {
   FOC_SENSOR_MODE_SENSORLESS,
   FOC_SENSOR_MODE_ENCODER,
   FOC_SENSOR_MODE_HALL,
-  FOC_SENSOR_MODE_HFI
+  FOC_SENSOR_MODE_HFI,
+  FOC_SENSOR_MODE_HFI_START, // Firmware 5.3 added
 }
 
 enum mc_sensor_mode {
@@ -93,12 +103,31 @@ enum BMS_TYPE {
   BMS_TYPE_VESC
 }
 
+enum BMS_FWD_CAN_MODE {
+  BMS_FWD_CAN_MODE_DISABLED, // Firmware 5.3 added
+  BMS_FWD_CAN_MODE_USB_ONLY, // Firmware 5.3 added
+  BMS_FWD_CAN_MODE_ANY, // Firmware 5.3 added
+}
+
 class bms_config {
   BMS_TYPE type;
   double t_limit_start;
   double t_limit_end;
   double soc_limit_start;
   double soc_limit_end;
+  BMS_FWD_CAN_MODE fwd_can_mode; // Firmware 5.3 added
+}
+
+enum PID_RATE {
+  PID_RATE_25_HZ, // Firmware 5.3 added
+  PID_RATE_50_HZ, // Firmware 5.3 added
+  PID_RATE_100_HZ, // Firmware 5.3 added
+  PID_RATE_250_HZ, // Firmware 5.3 added
+  PID_RATE_500_HZ, // Firmware 5.3 added
+  PID_RATE_1000_HZ, // Firmware 5.3 added
+  PID_RATE_2500_HZ, // Firmware 5.3 added
+  PID_RATE_5000_HZ, // Firmware 5.3 added
+  PID_RATE_10000_HZ, // Firmware 5.3 added
 }
 
 class MCCONF {
@@ -106,6 +135,9 @@ class MCCONF {
     hall_table = List.filled(8, 0);
     foc_hall_table = List.filled(8, 0);
     bms = new bms_config();
+    foc_offsets_current = List.filled(3, 0); // Firmware 5.3 added
+    foc_offsets_voltage = List.filled(3, 0); // Firmware 5.3 added
+    foc_offsets_voltage_undriven = List.filled(3, 0); // Firmware 5.3 added
   }
   // Switching and drive
   mc_pwm_mode pwm_mode;
@@ -208,12 +240,26 @@ class MCCONF {
   int foc_hfi_start_samples;
   double foc_hfi_obs_ovr_sec;
   mc_foc_hfi_samples foc_hfi_samples;
+  bool foc_offsets_cal_on_boot;
+  List<double> foc_offsets_current; // Firmware 5.3 added
+  List<double> foc_offsets_voltage; // Firmware 5.3 added
+  List<double> foc_offsets_voltage_undriven; // Firmware 5.3 added
+  bool foc_phase_filter_enable; // Firmware 5.3 added
+  double foc_phase_filter_max_erpm; // Firmware 5.3 added
+  // Field Weakening
+  double foc_fw_current_max; // Firmware 5.3 added
+  double foc_fw_duty_start; // Firmware 5.3 added
+  double foc_fw_ramp_time; // Firmware 5.3 added
+  double foc_fw_q_current_factor; // Firmware 5.3 added
   // GPDrive
   int gpd_buffer_notify_left;
   int gpd_buffer_interpol;
   double gpd_current_filter_const;
   double gpd_current_kp;
   double gpd_current_ki;
+
+  PID_RATE sp_pid_loop_rate; // Firmware 5.3 added
+
   // Speed PID
   double s_pid_kp;
   double s_pid_ki;
@@ -226,8 +272,11 @@ class MCCONF {
   double p_pid_kp;
   double p_pid_ki;
   double p_pid_kd;
+  double p_pid_kd_proc; // Firmware 5.3 added
   double p_pid_kd_filter;
   double p_pid_ang_div;
+  double p_pid_gain_dec_angle; // Firmware 5.3 added
+  double p_pid_offset; // Firmware 5.3 added
   // Current controller
   double cc_startup_boost_duty;
   double cc_min_current;
