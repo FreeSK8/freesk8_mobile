@@ -41,7 +41,7 @@ class SerializeFirmware52 {
     appconfData.app_ppm_conf.pulse_end = buffer_get_float32_auto(buffer, index); index += 4;
     appconfData.app_ppm_conf.pulse_center = buffer_get_float32_auto(buffer, index); index += 4;
     appconfData.app_ppm_conf.median_filter = buffer[index++] > 0 ? true : false;
-    appconfData.app_ppm_conf.safe_start = buffer[index++] > 0 ? true : false;
+    appconfData.app_ppm_conf.safe_start = SAFE_START_MODE.values[buffer[index++]];
     appconfData.app_ppm_conf.throttle_exp = buffer_get_float32_auto(buffer, index); index += 4;
     appconfData.app_ppm_conf.throttle_exp_brake = buffer_get_float32_auto(buffer, index); index += 4;
     appconfData.app_ppm_conf.throttle_exp_mode = thr_exp_mode.values[buffer[index++]];
@@ -61,7 +61,7 @@ class SerializeFirmware52 {
     appconfData.app_adc_conf.voltage2_start = buffer_get_float32_auto(buffer, index); index += 4;
     appconfData.app_adc_conf.voltage2_end = buffer_get_float32_auto(buffer, index); index += 4;
     appconfData.app_adc_conf.use_filter = buffer[index++] > 0 ? true : false;
-    appconfData.app_adc_conf.safe_start = buffer[index++] > 0 ? true : false;
+    appconfData.app_adc_conf.safe_start = SAFE_START_MODE.values[buffer[index++]];
     appconfData.app_adc_conf.cc_button_inverted = buffer[index++] > 0 ? true : false;
     appconfData.app_adc_conf.rev_button_inverted = buffer[index++] > 0 ? true : false;
     appconfData.app_adc_conf.voltage_inverted = buffer[index++] > 0 ? true : false;
@@ -115,11 +115,11 @@ class SerializeFirmware52 {
     appconfData.app_balance_conf.fault_delay_switch_half = buffer_get_uint16(buffer, index); index += 2;
     appconfData.app_balance_conf.fault_delay_switch_full = buffer_get_uint16(buffer, index); index += 2;
     appconfData.app_balance_conf.fault_adc_half_erpm = buffer_get_uint16(buffer, index); index += 2;
-    appconfData.app_balance_conf.tiltback_angle = buffer_get_float32_auto(buffer, index); index += 4;
-    appconfData.app_balance_conf.tiltback_speed = buffer_get_float32_auto(buffer, index); index += 4;
+    appconfData.app_balance_conf.tiltback_duty_angle = buffer_get_float32_auto(buffer, index); index += 4;
+    appconfData.app_balance_conf.tiltback_duty_speed = buffer_get_float32_auto(buffer, index); index += 4;
     appconfData.app_balance_conf.tiltback_duty = buffer_get_float32_auto(buffer, index); index += 4;
-    appconfData.app_balance_conf.tiltback_high_voltage = buffer_get_float32_auto(buffer, index); index += 4;
-    appconfData.app_balance_conf.tiltback_low_voltage = buffer_get_float32_auto(buffer, index); index += 4;
+    appconfData.app_balance_conf.tiltback_hv = buffer_get_float32_auto(buffer, index); index += 4;
+    appconfData.app_balance_conf.tiltback_lv = buffer_get_float32_auto(buffer, index); index += 4;
     appconfData.app_balance_conf.tiltback_constant = buffer_get_float32_auto(buffer, index); index += 4;
     appconfData.app_balance_conf.tiltback_constant_erpm = buffer_get_uint16(buffer, index); index += 2;
     appconfData.app_balance_conf.startup_pitch_tolerance = buffer_get_float32_auto(buffer, index); index += 4;
@@ -138,7 +138,7 @@ class SerializeFirmware52 {
     appconfData.app_balance_conf.setpoint_pitch_filter = buffer_get_float32_auto(buffer, index); index += 4;
     appconfData.app_balance_conf.setpoint_target_filter = buffer_get_float32_auto(buffer, index); index += 4;
     appconfData.app_balance_conf.setpoint_filter_clamp = buffer_get_float32_auto(buffer, index); index += 4;
-    appconfData.app_balance_conf.kd_pt1_frequency = buffer_get_uint16(buffer, index); index += 2;
+    appconfData.app_balance_conf.kd_pt1_lowpass_frequency = buffer_get_uint16(buffer, index); index += 2;
     appconfData.app_pas_conf.ctrl_type = pas_control_type.values[buffer[index++]];
     appconfData.app_pas_conf.sensor_type = pas_sensor_type.values[buffer[index++]];
     appconfData.app_pas_conf.current_scaling = buffer_get_float16(buffer, index, 1000); index += 2;
@@ -200,7 +200,7 @@ class SerializeFirmware52 {
     response.setFloat32(index, conf.app_ppm_conf.pulse_end); index += 4;
     response.setFloat32(index, conf.app_ppm_conf.pulse_center); index += 4;
     response.setUint8(index++, conf.app_ppm_conf.median_filter ? 1 : 0);
-    response.setUint8(index++, conf.app_ppm_conf.safe_start ? 1 : 0);
+    response.setUint8(index++, conf.app_ppm_conf.safe_start.index);
     response.setFloat32(index, conf.app_ppm_conf.throttle_exp); index += 4;
     response.setFloat32(index, conf.app_ppm_conf.throttle_exp_brake); index += 4;
     response.setUint8(index++, conf.app_ppm_conf.throttle_exp_mode.index);
@@ -220,7 +220,7 @@ class SerializeFirmware52 {
     response.setFloat32(index, conf.app_adc_conf.voltage2_start); index += 4;
     response.setFloat32(index, conf.app_adc_conf.voltage2_end); index += 4;
     response.setUint8(index++, conf.app_adc_conf.use_filter ? 1 : 0);
-    response.setUint8(index++, conf.app_adc_conf.safe_start ? 1 : 0);
+    response.setUint8(index++, conf.app_adc_conf.safe_start.index);
     response.setUint8(index++, conf.app_adc_conf.cc_button_inverted ? 1 : 0);
     response.setUint8(index++, conf.app_adc_conf.rev_button_inverted ? 1 : 0);
     response.setUint8(index++, conf.app_adc_conf.voltage_inverted ? 1 : 0);
@@ -274,11 +274,11 @@ class SerializeFirmware52 {
     response.setUint16(index, conf.app_balance_conf.fault_delay_switch_half); index += 2;
     response.setUint16(index, conf.app_balance_conf.fault_delay_switch_full); index += 2;
     response.setUint16(index, conf.app_balance_conf.fault_adc_half_erpm); index += 2;
-    response.setFloat32(index, conf.app_balance_conf.tiltback_angle); index += 4;
-    response.setFloat32(index, conf.app_balance_conf.tiltback_speed); index += 4;
+    response.setFloat32(index, conf.app_balance_conf.tiltback_duty_angle); index += 4;
+    response.setFloat32(index, conf.app_balance_conf.tiltback_duty_speed); index += 4;
     response.setFloat32(index, conf.app_balance_conf.tiltback_duty); index += 4;
-    response.setFloat32(index, conf.app_balance_conf.tiltback_high_voltage); index += 4;
-    response.setFloat32(index, conf.app_balance_conf.tiltback_low_voltage); index += 4;
+    response.setFloat32(index, conf.app_balance_conf.tiltback_hv); index += 4;
+    response.setFloat32(index, conf.app_balance_conf.tiltback_lv); index += 4;
     response.setFloat32(index, conf.app_balance_conf.tiltback_constant); index += 4;
     response.setUint16(index, conf.app_balance_conf.tiltback_constant_erpm); index += 2;
     response.setFloat32(index, conf.app_balance_conf.startup_pitch_tolerance); index += 4;
@@ -297,7 +297,7 @@ class SerializeFirmware52 {
     response.setFloat32(index, conf.app_balance_conf.setpoint_pitch_filter); index += 4;
     response.setFloat32(index, conf.app_balance_conf.setpoint_target_filter); index += 4;
     response.setFloat32(index, conf.app_balance_conf.setpoint_filter_clamp); index += 4;
-    response.setUint16(index, conf.app_balance_conf.kd_pt1_frequency); index += 2;
+    response.setUint16(index, conf.app_balance_conf.kd_pt1_lowpass_frequency); index += 2;
     response.setUint8(index++, conf.app_pas_conf.ctrl_type.index);
     response.setUint8(index++, conf.app_pas_conf.sensor_type.index);
     response.setInt16(index, (conf.app_pas_conf.current_scaling * 1000).toInt()); index += 2;
