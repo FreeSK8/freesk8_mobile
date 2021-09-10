@@ -850,7 +850,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
     if (widget.showESCAppConfig) {
       // Check if we are building with an invalid motor configuration (signature mismatch)
-      if (widget.escAppConfiguration == null || widget.escAppConfiguration.imu_conf.gyro_offset_comp_clamp == null) {
+      if (widget.escAppConfiguration == null || widget.escAppConfiguration.imu_conf.sample_rate_hz == null) {
         // Invalid APPCONF received
         _invalidCANID = _selectedCANFwdID; // Store invalid ID
         _selectedCANFwdID = null; // Clear selected CAN device
@@ -1536,8 +1536,8 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                 ),
                                 SwitchListTile(
                                   title: Text("Safe Start (default = on)"),
-                                  value: widget.escAppConfiguration.app_ppm_conf.safe_start,
-                                  onChanged: (bool newValue) { setState((){ widget.escAppConfiguration.app_ppm_conf.safe_start = newValue;}); },
+                                  value: widget.escAppConfiguration.app_ppm_conf.safe_start.index > 0 ? true : false,
+                                  onChanged: (bool newValue) { setState((){ widget.escAppConfiguration.app_ppm_conf.safe_start = SAFE_START_MODE.values[newValue ? 1 : 0];}); },
                                   secondary: const Icon(Icons.not_started),
                                 ),
                                 Text("Positive Ramping Time: ${doublePrecision(widget.escAppConfiguration.app_ppm_conf.ramp_time_pos,2)} seconds (0.4 = default)"),
@@ -1938,7 +1938,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                   widget.escAppConfiguration.app_ppm_conf.ctrl_type = ppm_control_type.PPM_CTRL_TYPE_NONE;
                                   _selectedPPMCtrlType = null;
                                   widget.escAppConfiguration.app_ppm_conf.median_filter = true;
-                                  widget.escAppConfiguration.app_ppm_conf.safe_start = true;
+                                  widget.escAppConfiguration.app_ppm_conf.safe_start = SAFE_START_MODE.SAFE_START_REGULAR;
                                   widget.escAppConfiguration.app_ppm_conf.ramp_time_pos = 0.4;
                                   widget.escAppConfiguration.app_ppm_conf.ramp_time_neg = 0.2;
                                   widget.escAppConfiguration.app_ppm_conf.pid_max_erpm = 15000.0;

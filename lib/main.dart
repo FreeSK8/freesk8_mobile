@@ -60,7 +60,7 @@ import 'package:signal_strength_indicator/signal_strength_indicator.dart';
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.18.2";
+const String freeSK8ApplicationVersion = "0.19.0";
 const String robogotchiFirmwareExpectedVersion = "0.10.1";
 
 void main() {
@@ -1602,6 +1602,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             escFirmwareVersion = ESC_FIRMWARE.FW5_1;
           } else if (major == 5 && minor == 2) {
             escFirmwareVersion = ESC_FIRMWARE.FW5_2;
+          } else if (major == 5 && minor == 3) {
+            escFirmwareVersion = ESC_FIRMWARE.FW5_3;
           } else {
             escFirmwareVersion = ESC_FIRMWARE.UNSUPPORTED;
           }
