@@ -33,6 +33,7 @@ dependencies:
 
   flutter_thermometer: ^1.0.0
   flutter_gauge:
+    #path: ../forked_packages/flutter_gauge
     git:
       url: git@github.com:FreeSK8/flutter_gauge.git
       ref: freesk8_mobile

@@ -97,12 +97,12 @@ class RealTimeDataState extends State<RealTimeData> {
     return double.parse((distance).toStringAsFixed(2));
   }
 
-  double calculateEfficiencyKm(double kmTraveled) {
-    double whKm = (escTelemetry.watt_hours - escTelemetry.watt_hours_charged) / kmTraveled;
-    if (whKm.isNaN || whKm.isInfinite) {
-      whKm = 0;
+  double calculateEfficiency(double distance) {
+    double wh = (escTelemetry.watt_hours - escTelemetry.watt_hours_charged) / distance;
+    if (wh.isNaN || wh.isInfinite) {
+      wh = 0;
     }
-    return double.parse((whKm).toStringAsFixed(2));
+    return double.parse((wh).toStringAsFixed(2));
 
   }
 
@@ -378,15 +378,12 @@ class RealTimeDataState extends State<RealTimeData> {
     double speedNow = widget.currentSettings.settings.useImperial ? kphToMph(calculateSpeedKph(escTelemetry.rpm)) : calculateSpeedKph(escTelemetry.rpm);
     //String speed = widget.currentSettings.settings.useImperial ? "$speedNow mph" : "$speedNow kph";
 
-    //String distance = widget.currentSettings.settings.useImperial ? "${kmToMile(escTelemetry.tachometer_abs / 1000.0)} miles" : "${escTelemetry.tachometer_abs / 1000.0} km";
-    double distanceTraveled = doublePrecision(escTelemetry.tachometer_abs / 1000.0, 2);
-    String distance = widget.currentSettings.settings.useImperial ? "${kmToMile(distanceTraveled)} miles" : "$distanceTraveled km";
+    double distanceTraveled = escTelemetry.tachometer_abs / 1000.0;
+    if (widget.currentSettings.settings.useImperial) distanceTraveled = kmToMile(distanceTraveled);
+    String distance = widget.currentSettings.settings.useImperial ? "$distanceTraveled miles" : "$distanceTraveled km";
 
-
-    double efficiencyKm = calculateEfficiencyKm(distanceTraveled);
-    double efficiencyGauge = widget.currentSettings.settings.useImperial ? kmToMile(efficiencyKm) : efficiencyKm;
+    double efficiency = calculateEfficiency(distanceTraveled);
     String efficiencyGaugeLabel = widget.currentSettings.settings.useImperial ? "Efficiency Wh/Mi" : "Efficiency Wh/Km";
-    //String efficiency = widget.currentSettings.settings.useImperial ? "${kmToMile(efficiencyKm)} Wh/Mi" : "$efficiencyKm Wh/Km";
 
     double powerMax = widget.currentSettings.settings.batterySeriesCount * widget.currentSettings.settings.batteryCellMaxVoltage;
     double powerMinimum = widget.currentSettings.settings.batterySeriesCount * widget.currentSettings.settings.batteryCellMinVoltage;
@@ -439,10 +436,10 @@ class RealTimeDataState extends State<RealTimeData> {
         reverseDial: true,
         reverseDigits: true,
         hand: Hand.short,
-        index: efficiencyGauge,
+        index: efficiency,
         fontFamily: "Courier",
         start: 0,
-        end: 100,
+        end: widget.currentSettings.settings.useImperial ? 200 : 100,
         number: Number.endAndStart,
         secondsMarker: SecondsMarker.secondsAndMinute,
         counterStyle: TextStyle(color: Theme.of(context).textTheme.bodyText1.color,fontSize: 25,)
