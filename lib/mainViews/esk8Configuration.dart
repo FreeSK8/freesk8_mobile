@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:freesk8_mobile/components/smartSlider.dart';
@@ -56,6 +57,10 @@ class ESK8Configuration extends StatefulWidget {
     this.updateComputedVehicleStatistics,
     @required this.applicationDocumentsDirectory,
     this.reloadUserSettings,
+    this.adcLastVoltage,
+    this.adcLastVoltage2,
+    this.notifyStartStopADCCalibrate,
+    this.adcCalibrateReady,
   });
   final UserSettings myUserSettings;
   final BluetoothDevice currentDevice;
@@ -84,6 +89,11 @@ class ESK8Configuration extends StatefulWidget {
   final String applicationDocumentsDirectory;
 
   final ValueChanged<bool> reloadUserSettings;
+
+  final double adcLastVoltage;
+  final double adcLastVoltage2;
+  final ValueChanged<bool> notifyStartStopADCCalibrate;
+  final bool adcCalibrateReady;
 
   ESK8ConfigurationState createState() => new ESK8ConfigurationState();
 
@@ -193,7 +203,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     //ListItem(app_use.APP_ADC.index, "ADC"),
     ListItem(app_use.APP_UART.index, "UART"),
     ListItem(app_use.APP_PPM_UART.index, "PPM + UART"),
-    //ListItem(app_use.APP_ADC_UART.index, "ADC UART"),
+    ListItem(app_use.APP_ADC_UART.index, "ADC + UART"),
     //ListItem(app_use.APP_NUNCHUK.index, "NUNCHUK"),
     //ListItem(app_use.APP_NRF.index, "NRF"),
     //ListItem(app_use.APP_CUSTOM.index, "CUSTOM"),
@@ -242,16 +252,46 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
   List<DropdownMenuItem<ListItem>> _thrExpModeNunchukDropdownItems;
   ListItem _selectedThrExpModeNunchuk;
 
+  List<ListItem> _adcCtrlTypeItems = [
+    ListItem(adc_control_type.ADC_CTRL_TYPE_NONE.index, "None"),
+    ListItem(adc_control_type.ADC_CTRL_TYPE_CURRENT.index, "Current"),
+    ListItem(adc_control_type.ADC_CTRL_TYPE_CURRENT_REV_CENTER.index, "Current Reverse Center"),
+    ListItem(adc_control_type.ADC_CTRL_TYPE_CURRENT_REV_BUTTON.index, "Current Reverse Button"),
+    ListItem(adc_control_type.ADC_CTRL_TYPE_CURRENT_REV_BUTTON_BRAKE_ADC.index, "Current Reverse ADC2 Brake Button"),
+    ListItem(adc_control_type.ADC_CTRL_TYPE_CURRENT_REV_BUTTON_BRAKE_CENTER.index, "Current Reverse Button Brake Center"),
+    ListItem(adc_control_type.ADC_CTRL_TYPE_CURRENT_NOREV_BRAKE_CENTER.index, "Current No Reverse Brake Center"),
+    ListItem(adc_control_type.ADC_CTRL_TYPE_CURRENT_NOREV_BRAKE_BUTTON.index, "Current No Reverse Brake Button"),
+    ListItem(adc_control_type.ADC_CTRL_TYPE_CURRENT_NOREV_BRAKE_ADC.index, "Current No Reverse Brake ADC2"),
+    ListItem(adc_control_type.ADC_CTRL_TYPE_DUTY.index, "Duty Cycle"),
+    ListItem(adc_control_type.ADC_CTRL_TYPE_DUTY_REV_CENTER.index, "Duty Cycle Reverse Center"),
+    ListItem(adc_control_type.ADC_CTRL_TYPE_DUTY_REV_BUTTON.index, "Duty Cycle Reverse Button"),
+    ListItem(adc_control_type.ADC_CTRL_TYPE_PID.index, "PID Speed"),
+    ListItem(adc_control_type.ADC_CTRL_TYPE_PID_REV_CENTER.index, "PID Speed Reverse Center"),
+    ListItem(adc_control_type.ADC_CTRL_TYPE_PID_REV_BUTTON.index, "PID Speed Reverse Button"),
+  ];
+  List<DropdownMenuItem<ListItem>> _adcCtrlTypeDropdownItems;
+  ListItem _selectedADCCtrlType;
+
   static Timer ppmCalibrateTimer;
   bool ppmCalibrate = false;
   ppm_control_type ppmCalibrateControlTypeToRestore;
   int ppmMinMS;
   int ppmMaxMS;
   RangeValues _rangeSliderDiscreteValues = const RangeValues(1.5, 1.6);
+
   bool showAdvancedOptions = false;
   bool showPPMConfiguration = false;
   bool showNunchukConfiguration = false;
   bool showBalanceConfiguration = false;
+
+  static Timer adcCalibrateTimer;
+  bool adcCalibrate = false;
+  bool showADCConfiguration = false;
+  adc_control_type adcCalibrateControlTypeToRestore;
+  double adcMinV;
+  double adcMaxV;
+  double adcMinV2;
+  double adcMaxV2;
 
   @override
   void initState() {
@@ -369,6 +409,9 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     });
 
     tecTiltbackConstantERPM.addListener(() { widget.escAppConfiguration.app_balance_conf.tiltback_constant_erpm = int.tryParse(tecTiltbackConstantERPM.text); });
+
+    /// ADC Application Configuration
+    _adcCtrlTypeDropdownItems = buildDropDownMenuItems(_adcCtrlTypeItems);
   }
 
 
@@ -417,9 +460,15 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
     // Stop ppm calibration timer if it's somehow left behind
     if (ppmCalibrateTimer != null) {
-      //TODO: should we alert a user when this happens? maaayyyybe
+      globalLogger.w("esk8Configuration::dispose: ppmCalibrateTimer was not null!");
       ppmCalibrateTimer?.cancel();
       ppmCalibrateTimer = null;
+    }
+    // Stop ADC calibration timer if it's somehow left behind
+    if (adcCalibrateTimer != null) {
+      globalLogger.w("esk8Configuration::dispose: adcCalibrateTimer was not null!");
+      adcCalibrateTimer?.cancel();
+      adcCalibrateTimer = null;
     }
   }
 
@@ -629,6 +678,20 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     });
   }
 
+  void requestDecodedADC(int optionalCANID) {
+    // Do nothing if we are busy writing to the ESC
+    if (_writeESCInProgress || !widget.adcCalibrateReady) {
+      return;
+    }
+
+    sendBLEData(
+        widget.theTXCharacteristic,
+        simpleVESCRequest(
+            COMM_PACKET_ID.COMM_GET_DECODED_ADC.index,
+            optionalCANID: optionalCANID
+        ), false );
+  }
+
   // Start and stop PPM streaming timer
   void startStopPPMTimer(bool disableTimer) {
     if (!disableTimer){
@@ -640,6 +703,21 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       if (ppmCalibrateTimer != null) {
         ppmCalibrateTimer?.cancel();
         ppmCalibrateTimer = null;
+      }
+    }
+  }
+
+  // Start and stop ADC streaming timer
+  void startStopADCTimer(bool disableTimer) {
+    if (!disableTimer){
+      globalLogger.d("Starting ADC calibration timer");
+      const duration = const Duration(milliseconds:250);
+      adcCalibrateTimer = new Timer.periodic(duration, (Timer t) => requestDecodedADC(_selectedCANFwdID));
+    } else {
+      globalLogger.d("Cancel ADC timer");
+      if (adcCalibrateTimer != null) {
+        adcCalibrateTimer?.cancel();
+        adcCalibrateTimer = null;
       }
     }
   }
@@ -894,6 +972,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       showPPMConfiguration = widget.escAppConfiguration.app_to_use == app_use.APP_PPM_UART;
       showNunchukConfiguration = widget.escAppConfiguration.app_to_use == app_use.APP_UART;
       showBalanceConfiguration = widget.escAppConfiguration.app_to_use == app_use.APP_BALANCE;
+      showADCConfiguration = widget.escAppConfiguration.app_to_use == app_use.APP_ADC_UART;
 
 
       // Select PPM control type
@@ -932,6 +1011,15 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
         });
       }
 
+      // Select ADC control type
+      if (_selectedADCCtrlType == null) {
+        _adcCtrlTypeItems.forEach((item) {
+          if (item.value == widget.escAppConfiguration.app_adc_conf.ctrl_type.index) {
+            _selectedADCCtrlType = item;
+          }
+        });
+      }
+
       // Monitor PPM min and max
       ppmMinMS ??= widget.ppmLastDuration;
       ppmMaxMS ??= widget.ppmLastDuration;
@@ -941,6 +1029,16 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       if (ppmMinMS != null && ppmMaxMS != null) {
         _rangeSliderDiscreteValues = RangeValues(ppmMinMS / 1000000, ppmMaxMS / 1000000);
       }
+
+      // Monitor ADC min and max
+      adcMinV ??= doublePrecision(widget.adcLastVoltage, 2);
+      adcMaxV ??= doublePrecision(widget.adcLastVoltage, 2);
+      adcMinV2 ??= doublePrecision(widget.adcLastVoltage2, 2);
+      adcMaxV2 ??= doublePrecision(widget.adcLastVoltage2, 2);
+      if (widget.adcLastVoltage != null && widget.adcLastVoltage != 0.0 && widget.adcLastVoltage < adcMinV) adcMinV = doublePrecision(widget.adcLastVoltage, 2);
+      if (widget.adcLastVoltage != null && widget.adcLastVoltage != 0.0 && widget.adcLastVoltage > adcMaxV) adcMaxV = doublePrecision(widget.adcLastVoltage, 2);
+      if (widget.adcLastVoltage2 != null && widget.adcLastVoltage2 != 0.0 && widget.adcLastVoltage2 < adcMinV2) adcMinV2 = doublePrecision(widget.adcLastVoltage2, 2);
+      if (widget.adcLastVoltage2 != null && widget.adcLastVoltage2 != 0.0 && widget.adcLastVoltage2 > adcMaxV2) adcMaxV2 = doublePrecision(widget.adcLastVoltage2, 2);
 
       // Perform rounding to make doubles pretty
       widget.escAppConfiguration.app_ppm_conf.hyst = doublePrecision(widget.escAppConfiguration.app_ppm_conf.hyst, 2);
@@ -966,6 +1064,14 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       widget.escAppConfiguration.app_chuk_conf.smart_rev_ramp_time = doublePrecision( widget.escAppConfiguration.app_chuk_conf.smart_rev_ramp_time, 2);
       widget.escAppConfiguration.app_chuk_conf.throttle_exp_brake = doublePrecision(widget.escAppConfiguration.app_chuk_conf.throttle_exp_brake, 2);
       widget.escAppConfiguration.app_chuk_conf.throttle_exp = doublePrecision(widget.escAppConfiguration.app_chuk_conf.throttle_exp, 2);
+
+      widget.escAppConfiguration.app_adc_conf.voltage_start = doublePrecision(widget.escAppConfiguration.app_adc_conf.voltage_start, 2);
+      widget.escAppConfiguration.app_adc_conf.voltage_center = doublePrecision(widget.escAppConfiguration.app_adc_conf.voltage_center, 2);
+      widget.escAppConfiguration.app_adc_conf.voltage_end = doublePrecision(widget.escAppConfiguration.app_adc_conf.voltage_end, 2);
+      widget.escAppConfiguration.app_adc_conf.voltage2_start = doublePrecision(widget.escAppConfiguration.app_adc_conf.voltage2_start, 2);
+      widget.escAppConfiguration.app_adc_conf.voltage2_end = doublePrecision(widget.escAppConfiguration.app_adc_conf.voltage2_end, 2);
+      widget.escAppConfiguration.app_adc_conf.ramp_time_pos = doublePrecision(widget.escAppConfiguration.app_adc_conf.ramp_time_pos, 2);
+      widget.escAppConfiguration.app_adc_conf.ramp_time_neg = doublePrecision(widget.escAppConfiguration.app_adc_conf.ramp_time_neg, 2);
 
       // Prepare TECs
       tecIMUHz.text = widget.escAppConfiguration.imu_conf.sample_rate_hz.toString();
@@ -1327,6 +1433,379 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               //Text("imu_conf.madgwick_beta ${widget.escAppConfiguration.imu_conf.madgwick_beta}"),
                             ],
                           ) : Container(),
+
+                          // Show ADC Options
+                          showADCConfiguration ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Divider(thickness: 3),
+                                Text("Calibrate ADC"),
+
+                                ElevatedButton(onPressed: (){
+                                  // If we are not currently calibrating...
+                                  if (!adcCalibrate) {
+                                    // Clear the captured values when starting calibration
+                                    adcMinV = null;
+                                    adcMaxV = null;
+                                    adcMinV2 = null;
+                                    adcMaxV2 = null;
+                                    // Capture the current ADC control type to restore when finished
+                                    adcCalibrateControlTypeToRestore = widget.escAppConfiguration.app_adc_conf.ctrl_type;
+                                    // Set the control type to none or the ESC will go WILD
+                                    widget.escAppConfiguration.app_adc_conf.ctrl_type = adc_control_type.ADC_CTRL_TYPE_NONE;
+                                    _selectedADCCtrlType = null; // Clear selection
+                                    // Apply the configuration to the ESC
+                                    if (widget.currentDevice != null) {
+                                      // Save application configuration; CAN FWD ID can be null
+                                      Future.delayed(Duration(milliseconds: 250), (){
+                                        saveAPPCONF(_selectedCANFwdID);
+                                      });
+                                    }
+                                    // Start calibration routine
+                                    setState(() {
+                                      widget.notifyStartStopADCCalibrate(true);
+                                      adcCalibrate = true;
+                                      startStopADCTimer(false);
+                                    });
+                                  } else {
+                                    // Stop calibration routine
+                                    setState(() {
+                                      widget.notifyStartStopADCCalibrate(false);
+                                      adcCalibrate = false;
+                                      startStopADCTimer(true);
+                                    });
+
+                                    // If we did not receive any ADC information we cannot save the changes
+                                    if (widget.adcLastVoltage == null) {
+                                      setState(() {
+                                        // Restore the user's ADC control type
+                                        widget.escAppConfiguration.app_adc_conf.ctrl_type = adcCalibrateControlTypeToRestore;
+                                        _selectedADCCtrlType = null; // Clear selection
+                                        Future.delayed(Duration(milliseconds: 250), (){
+                                          saveAPPCONF(_selectedCANFwdID); // CAN FWD ID can be null
+                                        });
+                                      });
+                                      return;
+                                    }
+
+                                    // Ask user if they are satisfied with the calibration results
+                                    showDialog(
+                                      context: context,
+                                      barrierDismissible: false,
+                                      builder: (BuildContext context) {
+                                        return AlertDialog(
+                                          title: Text('Accept Calibration?'),
+                                          content: SingleChildScrollView(
+                                            child: ListBody(
+                                              children: <Widget>[
+                                                Text('ADC values captured:'),
+                                                SizedBox(height:10),
+                                                Text("ADC1 Min $adcMinV"),
+                                                Text("ADC1 Center ${doublePrecision(widget.adcLastVoltage, 2)}"),
+                                                Text("ADC1 Max $adcMaxV"),
+                                                Text("ADC2 Min $adcMinV2"),
+                                                Text("ADC2 Max $adcMaxV2"),
+                                                SizedBox(height:10),
+                                                Text('If you are satisfied with the results select Accept to write values to the ESC')
+                                              ],
+                                            ),
+                                          ),
+                                          actions: <Widget>[
+                                            TextButton(
+                                              child: Text('Reject'),
+                                              onPressed: () {
+                                                setState(() {
+                                                  adcMinV = null;
+                                                  adcMaxV = null;
+                                                  adcMinV2 = null;
+                                                  adcMaxV2 = null;
+                                                  // Restore the user's ADC control type
+                                                  widget.escAppConfiguration.app_adc_conf.ctrl_type = adcCalibrateControlTypeToRestore;
+                                                  _selectedADCCtrlType = null; // Clear selection
+                                                  Future.delayed(Duration(milliseconds: 250), (){
+                                                    saveAPPCONF(_selectedCANFwdID); // CAN FWD ID can be null
+                                                  });
+                                                });
+                                                Navigator.of(context).pop();
+                                              },
+                                            ),
+                                            TextButton(
+                                              child: Text('Accept'),
+                                              onPressed: () {
+                                                setState(() {
+                                                  // Restore the user's ADC control type
+                                                  widget.escAppConfiguration.app_adc_conf.ctrl_type = adcCalibrateControlTypeToRestore;
+                                                  _selectedADCCtrlType = null; // Clear selection
+                                                  // Set values from calibration
+                                                  widget.escAppConfiguration.app_adc_conf.voltage_start = adcMinV;
+                                                  widget.escAppConfiguration.app_adc_conf.voltage_center = widget.adcLastVoltage;
+                                                  widget.escAppConfiguration.app_adc_conf.voltage_end = adcMaxV;
+                                                  widget.escAppConfiguration.app_adc_conf.voltage2_start = adcMinV2;
+                                                  widget.escAppConfiguration.app_adc_conf.voltage2_end = adcMaxV2;
+                                                  // Apply the configuration to the ESC
+                                                  Future.delayed(Duration(milliseconds: 250), (){
+                                                    saveAPPCONF(_selectedCANFwdID); // CAN FWD ID can be null
+                                                  });
+                                                });
+                                                Navigator.of(context).pop();
+                                              },
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  }
+
+                                }, child: Text(adcCalibrate ? widget.adcCalibrateReady ? "Stop Calibration": "Starting Calibration..." : "Calibrate ADC"),),
+
+                                adcCalibrate ? Column(
+                                  children: [
+                                    Table(children: [
+                                      TableRow(children: [
+                                        Text(""),
+                                        Text("Calibrate ADC"),
+                                        Text("ESC Config")
+                                      ]),
+                                      TableRow(children: [
+                                        Text("ADC1 Min"),
+                                        Text("${adcMinV != null ? adcMinV : ""}"),
+                                        Text("${widget.escAppConfiguration.app_adc_conf.voltage_start}")
+                                      ]),
+                                      TableRow(children: [
+                                        Text("ADC1 Center"),
+                                        Text("${widget.adcLastVoltage != null ? doublePrecision(widget.adcLastVoltage, 2) : ""}"),
+                                        Text("${widget.escAppConfiguration.app_adc_conf.voltage_center}")
+                                      ]),
+                                      TableRow(children: [
+                                        Text("ADC1 Max"),
+                                        Text("${adcMaxV != null ? adcMaxV : ""}"),
+                                        Text("${widget.escAppConfiguration.app_adc_conf.voltage_end}")
+                                      ]),
+
+                                      TableRow(children: [
+                                        Text("ADC2 Min"),
+                                        Text("${adcMinV2 != null ? adcMinV2 : ""}"),
+                                        Text("${widget.escAppConfiguration.app_adc_conf.voltage2_start}")
+                                      ]),
+                                      TableRow(children: [
+                                        Text("ADC2 Max"),
+                                        Text("${adcMaxV2 != null ? adcMaxV2 : ""}"),
+                                        Text("${widget.escAppConfiguration.app_adc_conf.voltage2_end}")
+                                      ]),
+                                    ],),
+                                  ],
+                                ) : Container(),
+
+                                ElevatedButton(onPressed: (){
+                                  setState(() {
+                                    showAdvancedOptions = !showAdvancedOptions;
+                                  });
+                                },
+                                  child: Text("${showAdvancedOptions?"Hide":"Show"} Advanced Options"),),
+
+                                showAdvancedOptions ? Padding(
+                                    padding: const EdgeInsets.only(left: 13, right: 13),
+                                    child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.center,
+                                        children: [
+                                          Divider(thickness: 3),
+                                          Text("ADC1 Min Voltage ${widget.escAppConfiguration.app_adc_conf.voltage_start}"),
+                                          SmartSlider(
+                                            value: widget.escAppConfiguration.app_adc_conf.voltage_start,
+                                            mini: 0,
+                                            maxi: 3.3,
+                                            divisions: 100,
+                                            label: "${widget.escAppConfiguration.app_adc_conf.voltage_start}",
+                                            onChanged: (value) {
+                                              setState(() {
+                                                widget.escAppConfiguration.app_adc_conf.voltage_start = value;
+                                              });
+                                            },
+                                          ),
+                                          Text("ADC1 Max Voltage ${widget.escAppConfiguration.app_adc_conf.voltage_end}"),
+                                          SmartSlider(
+                                            value: widget.escAppConfiguration.app_adc_conf.voltage_end,
+                                            mini: 0,
+                                            maxi: 3.3,
+                                            divisions: 100,
+                                            label: "${widget.escAppConfiguration.app_adc_conf.voltage_end}",
+                                            onChanged: (value) {
+                                              setState(() {
+                                                widget.escAppConfiguration.app_adc_conf.voltage_end = value;
+                                              });
+                                            },
+                                          ),
+                                          Text("ADC1 Center Voltage ${widget.escAppConfiguration.app_adc_conf.voltage_center}"),
+                                          SmartSlider(
+                                            value: widget.escAppConfiguration.app_adc_conf.voltage_center,
+                                            mini: 0,
+                                            maxi: 3.3,
+                                            divisions: 100,
+                                            label: "${widget.escAppConfiguration.app_adc_conf.voltage_center}",
+                                            onChanged: (value) {
+                                              setState(() {
+                                                widget.escAppConfiguration.app_adc_conf.voltage_center = value;
+                                              });
+                                            },
+                                          ),
+
+                                          SwitchListTile(
+                                            title: Text("Invert ADC1 Voltage"),
+                                            value: widget.escAppConfiguration.app_adc_conf.voltage_inverted,
+                                            onChanged: (bool newValue) { setState((){widget.escAppConfiguration.app_adc_conf.voltage_inverted = newValue;}); },
+                                            secondary: const Icon(Icons.sync),
+                                          ),
+
+                                          Text("ADC2 Min Voltage ${widget.escAppConfiguration.app_adc_conf.voltage2_start}"),
+                                          SmartSlider(
+                                            value: widget.escAppConfiguration.app_adc_conf.voltage2_start,
+                                            mini: 0,
+                                            maxi: 3.3,
+                                            divisions: 100,
+                                            label: "${widget.escAppConfiguration.app_adc_conf.voltage2_start}",
+                                            onChanged: (value) {
+                                              setState(() {
+                                                widget.escAppConfiguration.app_adc_conf.voltage2_start = value;
+                                              });
+                                            },
+                                          ),
+                                          Text("ADC2 Max Voltage ${widget.escAppConfiguration.app_adc_conf.voltage2_end}"),
+                                          SmartSlider(
+                                            value: widget.escAppConfiguration.app_adc_conf.voltage2_end,
+                                            mini: 0,
+                                            maxi: 3.3,
+                                            divisions: 100,
+                                            label: "${widget.escAppConfiguration.app_adc_conf.voltage2_end}",
+                                            onChanged: (value) {
+                                              setState(() {
+                                                widget.escAppConfiguration.app_adc_conf.voltage2_end = value;
+                                              });
+                                            },
+                                          ),
+                                          SwitchListTile(
+                                            title: Text("Invert ADC2 Voltage"),
+                                            value: widget.escAppConfiguration.app_adc_conf.voltage2_inverted,
+                                            onChanged: (bool newValue) { setState((){widget.escAppConfiguration.app_adc_conf.voltage2_inverted = newValue;}); },
+                                            secondary: const Icon(Icons.sync),
+                                          ),
+
+                                          ElevatedButton(onPressed: (){
+                                            setState(() {
+                                              showAdvancedOptions = !showAdvancedOptions;
+                                            });
+                                          },
+                                            child: Text("${showAdvancedOptions?"Hide":"Show"} Advanced Options"),),
+                                        ]
+                                    )
+                                ) : Container(),
+                                /// Advanced options ^^^
+
+
+
+                                Text("Input deadband: ${(widget.escAppConfiguration.app_adc_conf.hyst * 100.0).toInt()}% (15% = default)"),
+                                SmartSlider(
+                                  value: widget.escAppConfiguration.app_adc_conf.hyst,
+                                  mini: 0.01,
+                                  maxi: 0.35,
+                                  divisions: 100,
+                                  label: "${(widget.escAppConfiguration.app_adc_conf.hyst * 100.0).toInt()}%",
+                                  onChanged: (value) {
+                                    setState(() {
+                                      widget.escAppConfiguration.app_adc_conf.hyst = value;
+                                    });
+                                  },
+                                ),
+
+                                Divider(thickness: 3),
+                                Text("Select ADC Control Type"),
+                                Center(child:
+                                DropdownButton<ListItem>(
+                                  value: _selectedADCCtrlType,
+                                  items: _adcCtrlTypeDropdownItems,
+                                  onChanged: (newValue) {
+                                    setState(() {
+                                      _selectedADCCtrlType = newValue;
+                                      widget.escAppConfiguration.app_adc_conf.ctrl_type = adc_control_type.values[newValue.value];
+                                    });
+                                  },
+                                )
+                                ),
+
+                                SwitchListTile(
+                                  title: Text("Use Filter (default = on)"),
+                                  value: widget.escAppConfiguration.app_adc_conf.use_filter,
+                                  onChanged: (bool newValue) { setState((){ widget.escAppConfiguration.app_adc_conf.use_filter = newValue;}); },
+                                  secondary: const Icon(Icons.filter_tilt_shift),
+                                ),
+                                SwitchListTile(
+                                  title: Text("Safe Start (default = on)"),
+                                  value: widget.escAppConfiguration.app_adc_conf.safe_start.index > 0 ? true : false,
+                                  onChanged: (bool newValue) { setState((){ widget.escAppConfiguration.app_adc_conf.safe_start = SAFE_START_MODE.values[newValue ? 1 : 0];}); },
+                                  secondary: const Icon(Icons.not_started),
+                                ),
+
+                                SwitchListTile(
+                                  title: Text("Invert Cruise Control Button"),
+                                  value: widget.escAppConfiguration.app_adc_conf.cc_button_inverted,
+                                  onChanged: (bool newValue) { setState((){ widget.escAppConfiguration.app_adc_conf.cc_button_inverted = newValue; }); },
+                                  secondary: const Icon(Icons.help_outline),
+                                ),
+
+                                SwitchListTile(
+                                  title: Text("Invert Reverse Button"),
+                                  value: widget.escAppConfiguration.app_adc_conf.rev_button_inverted,
+                                  onChanged: (bool newValue) { setState((){ widget.escAppConfiguration.app_adc_conf.rev_button_inverted = newValue; }); },
+                                  secondary: const Icon(Icons.help_outline),
+                                ),
+
+                                Text("Positive Ramping Time: ${widget.escAppConfiguration.app_adc_conf.ramp_time_pos} seconds (0.4 = default)"),
+                                SmartSlider(
+                                  value: widget.escAppConfiguration.app_adc_conf.ramp_time_pos,
+                                  mini: 0.01,
+                                  maxi: 0.5,
+                                  divisions: 100,
+                                  label: "${widget.escAppConfiguration.app_adc_conf.ramp_time_pos} seconds",
+                                  onChanged: (value) {
+                                    setState(() {
+                                      widget.escAppConfiguration.app_adc_conf.ramp_time_pos = value;
+                                    });
+                                  },
+                                ),
+                                Text("Negative Ramping Time: ${widget.escAppConfiguration.app_adc_conf.ramp_time_neg} seconds (0.2 = default)"),
+                                SmartSlider(
+                                  value: widget.escAppConfiguration.app_adc_conf.ramp_time_neg,
+                                  mini: 0.01,
+                                  maxi: 0.5,
+                                  divisions: 100,
+                                  label: "${widget.escAppConfiguration.app_adc_conf.ramp_time_neg} seconds",
+                                  onChanged: (value) {
+                                    setState(() {
+                                      widget.escAppConfiguration.app_adc_conf.ramp_time_neg = value;
+                                    });
+                                  },
+                                ),
+
+                                SwitchListTile(
+                                  title: Text("Enable Traction Control"),
+                                  value: widget.escAppConfiguration.app_adc_conf.tc,
+                                  onChanged: (bool newValue) { setState((){ widget.escAppConfiguration.app_adc_conf.tc = newValue;}); },
+                                  secondary: const Icon(Icons.compare_arrows),
+                                ),
+                                Text("Traction Control ERPM ${widget.escAppConfiguration.app_adc_conf.tc_max_diff.toInt()} (3000 = default)"),
+                                SmartSlider(
+                                  value: widget.escAppConfiguration.app_adc_conf.tc_max_diff,
+                                  mini: 1000.0,
+                                  maxi: 5000.0,
+                                  divisions: 1000,
+                                  label: "${widget.escAppConfiguration.app_adc_conf.tc_max_diff}",
+                                  onChanged: (value) {
+                                    setState(() {
+                                      widget.escAppConfiguration.app_adc_conf.tc_max_diff = value.toInt().toDouble();
+                                    });
+                                  },
+                                ),
+
+                              ]) : Container(),
 
                           // Show PPM Options
                           showPPMConfiguration ? Column(

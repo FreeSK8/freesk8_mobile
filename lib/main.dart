@@ -145,6 +145,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static MCCONF escMotorConfiguration;
   static APPCONF escApplicationConfiguration;
   static int ppmLastDuration;
+  static double adcLastVoltage;
+  static double adcLastVoltage2;
   static Uint8List escMotorConfigurationDefaults;
   static List<int> _validCANBusDeviceIDs = [];
   static String robogotchiVersion;
@@ -825,6 +827,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static bool _deviceIsRobogotchi = false;
   static bool _isPPMCalibrating;
   static bool _isPPMCalibrationReady = false;
+  static bool _isADCCalibrating;
+  static bool _isADCCalibrationReady = false;
 
   //TODO: some logger vars that need to be in their own class
   static String loggerTestBuffer = "";
@@ -1959,6 +1963,18 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             ppmLastDuration = msNow;
           });
           bleHelper.resetPacket();
+        } else if (packetID == COMM_PACKET_ID.COMM_GET_DECODED_ADC.index) {
+
+          double levelNow = buffer_get_float32(bleHelper.getPayload(), 1, 1000000.0);
+          double voltageNow = buffer_get_float32(bleHelper.getPayload(), 5, 1000000.0);
+          double level2Now = buffer_get_float32(bleHelper.getPayload(), 9, 1000000.0);
+          double voltage2Now = buffer_get_float32(bleHelper.getPayload(), 13, 1000000.0);
+          globalLogger.d("Decoded ADC packet received: level $levelNow, voltage $voltageNow, level2 $level2Now, voltage2 $voltage2Now");
+          setState(() {
+            adcLastVoltage = voltageNow;
+            adcLastVoltage2 = voltage2Now;
+          });
+          bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_PRINT.index) {
 
           int stringLength = bleHelper.getMessage()[1] - 1;
@@ -1981,6 +1997,20 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             _isPPMCalibrating = null;
             setState(() {
               _isPPMCalibrationReady = false;
+            });
+          } else if (_isADCCalibrating != null && _isADCCalibrating) {
+            globalLogger.d("ADC Calibration is Ready");
+            genericAlert(context, "Calibration", Text("Calibration Instructions:\nMove input to full brake, full throttle then leave in the center\n\nPlease ensure the wheels are off the ground in case something goes wrong. Press OK when ready."), "OK");
+            _isADCCalibrating = null;
+            setState(() {
+              _isADCCalibrationReady = true;
+            });
+          } else if (_isADCCalibrating != null && !_isADCCalibrating) {
+            globalLogger.d("ADC Calibration has completed");
+            genericAlert(context, "Calibration", Text("Calibration Completed"), "OK");
+            _isADCCalibrating = null;
+            setState(() {
+              _isADCCalibrationReady = false;
             });
           } else {
             globalLogger.d("Application Configuration Saved Successfully");
@@ -2805,6 +2835,14 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     }
   }
 
+  void notifyStopStartADCCalibrate(bool starting) {
+    // Set flag to change dialogs displayed when performing ADC calibration
+    _isADCCalibrating = starting;
+    if (!starting) {
+      _isADCCalibrationReady = false;
+    }
+  }
+
   void reloadUserSettings(bool navigateHome) async {
     globalLogger.wtf("reloadUserSettings");
     if (_connectedDevice != null) {
@@ -2950,6 +2988,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 updateComputedVehicleStatistics: updateComputedVehicleStatistics,
                 applicationDocumentsDirectory: applicationDocumentsDirectory,
                 reloadUserSettings: reloadUserSettings,
+                adcCalibrateReady: _isADCCalibrationReady,
+                adcLastVoltage: adcLastVoltage,
+                adcLastVoltage2: adcLastVoltage2,
+                notifyStartStopADCCalibrate: notifyStopStartADCCalibrate,
               )
             ])
           ),
