@@ -115,6 +115,8 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
   bool _showAdvanced = false;
 
+  MCCONF _mcconfClipboard;
+
   Future getImage(bool fromUserGallery) async {
     final documentsDirectory = await getApplicationDocumentsDirectory();
     final imagePicker = ImagePicker();
@@ -1154,7 +1156,11 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                           widget.requestESCApplicationConfiguration(_selectedCANFwdID);
                                           ScaffoldMessenger
                                               .of(context)
-                                              .showSnackBar(SnackBar(content: Text("Requesting ESC application configuration from primary ESC")));
+                                              .showSnackBar(
+                                              SnackBar(
+                                                content: Text("Requesting ESC application configuration from primary ESC"),
+                                                duration: Duration(seconds: 1),
+                                              ));
                                         });
                                       },
                                       child: Stack(
@@ -1202,7 +1208,11 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                           widget.requestESCApplicationConfiguration(_selectedCANFwdID);
                                           ScaffoldMessenger
                                               .of(context)
-                                              .showSnackBar(SnackBar(content: Text("Requesting ESC application configuration from primary ESC")));
+                                              .showSnackBar(
+                                              SnackBar(
+                                                content: Text("Requesting ESC application configuration from primary ESC"),
+                                                duration: Duration(seconds: 1),
+                                              ));
                                         });
                                       } else {
                                         if (_invalidCANID != widget.discoveredCANDevices[index-1]) {
@@ -1211,9 +1221,12 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                           widget.requestESCApplicationConfiguration(_selectedCANFwdID);
                                           ScaffoldMessenger
                                               .of(context)
-                                              .showSnackBar(SnackBar(content: Text("Requesting ESC application configuration from CAN ID $_selectedCANFwdID")));
+                                              .showSnackBar(
+                                              SnackBar(
+                                                content: Text("Requesting ESC application configuration from CAN ID $_selectedCANFwdID"),
+                                                duration: Duration(seconds: 1),
+                                              ));
                                         }
-
                                       }
                                     },
                                     child: Stack(
@@ -2582,112 +2595,47 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                         ],),
 
                         SizedBox(height:10),
-                      ],
-                    ),
-                    Expanded(
-                      child: ListView(
-                        padding: EdgeInsets.all(10),
-                        children: <Widget>[
-
-
-                          Center(child: Column( children: <Widget>[
-                            Text("Discovered Devices"),
-                            SizedBox(
-                              height: 50,
-                              child: GridView.builder(
-                                primary: false,
-                                itemCount: widget.discoveredCANDevices.length + 1, //NOTE: +1 to add the Direct ESC
-                                gridDelegate: new SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, childAspectRatio: 2, crossAxisSpacing: 1, mainAxisSpacing: 1),
-                                itemBuilder: (BuildContext context, int index) {
-                                  if (index == 0) {
-                                    return new Card(
-                                      shadowColor: Colors.transparent,
-                                      child: new GridTile(
-                                        // GestureDetector to switch the currently selected CAN Forward ID
-                                          child: new GestureDetector(
-                                            onTap: (){
-                                              setState(() {
-                                                // Clear CAN Forward
-                                                _selectedCANFwdID = null;
-                                                // Request primary ESC settings
-                                                widget.onAutoloadESCSettings(true);
-                                                ScaffoldMessenger
-                                                    .of(context)
-                                                    .showSnackBar(SnackBar(content: Text("Requesting ESC configuration from primary ESC")));
-                                              });
-                                            },
-                                            child: Stack(
-                                              children: <Widget>[
-
-
-
-                                                new Center(child: Text(_selectedCANFwdID == null ? "Direct (Active)" :"Direct", style: TextStyle(fontSize: 12))),
-                                                new ClipRRect(
-                                                    borderRadius: new BorderRadius.circular(10),
-                                                    child: new Container(
-                                                      decoration: new BoxDecoration(
-                                                        color: _selectedCANFwdID == null ? Theme.of(context).focusColor : Colors.transparent,
-                                                      ),
-                                                    )
-                                                )
-
-
-                                              ],
-                                            ),
-                                          )
-                                      ),
-                                    );
-                                  }
-                                  bool isCANIDSelected = false;
-                                  if (_selectedCANFwdID == widget.discoveredCANDevices[index-1]) {
-                                    isCANIDSelected = true;
-                                  }
-                                  String invalidDevice = "";
-                                  if (_invalidCANID == widget.discoveredCANDevices[index-1]) {
-                                    invalidDevice = " (Invalid)";
-                                  }
+                        Center(child: Column( children: <Widget>[
+                          Text("Discovered Devices"),
+                          SizedBox(
+                            height: 50,
+                            child: GridView.builder(
+                              primary: false,
+                              itemCount: widget.discoveredCANDevices.length + 1, //NOTE: +1 to add the Direct ESC
+                              gridDelegate: new SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, childAspectRatio: 2, crossAxisSpacing: 1, mainAxisSpacing: 1),
+                              itemBuilder: (BuildContext context, int index) {
+                                if (index == 0) {
                                   return new Card(
                                     shadowColor: Colors.transparent,
                                     child: new GridTile(
                                       // GestureDetector to switch the currently selected CAN Forward ID
                                         child: new GestureDetector(
                                           onTap: (){
-                                            if (isCANIDSelected) {
-                                              setState(() {
-                                                // Clear CAN Forward
-                                                _selectedCANFwdID = null;
-                                                // Request primary ESC settings
-                                                widget.onAutoloadESCSettings(true);
-                                                ScaffoldMessenger
-                                                    .of(context)
-                                                    .showSnackBar(SnackBar(content: Text("Requesting ESC configuration from primary ESC")));
-                                              });
-                                            } else {
-                                              if (_invalidCANID != widget.discoveredCANDevices[index-1]) {
-                                                //TODO: i don't know if we want to set state here or in the condition above either. needs testing
-                                                setState(() {
-                                                  _selectedCANFwdID = widget.discoveredCANDevices[index-1];
-                                                  // Request MCCONF from CAN device
-                                                  requestMCCONFCAN(_selectedCANFwdID);
-                                                  ScaffoldMessenger
-                                                      .of(context)
-                                                      .showSnackBar(SnackBar(content: Text("Requesting ESC configuration from CAN ID $_selectedCANFwdID")));
-                                                });
-                                              }
-
-                                            }
+                                            setState(() {
+                                              // Clear CAN Forward
+                                              _selectedCANFwdID = null;
+                                              // Request primary ESC settings
+                                              widget.onAutoloadESCSettings(true);
+                                              ScaffoldMessenger
+                                                  .of(context)
+                                                  .showSnackBar(
+                                                  SnackBar(
+                                                    content: Text("Requesting ESC configuration from primary ESC"),
+                                                    duration: Duration(seconds: 1),
+                                                  ));
+                                            });
                                           },
                                           child: Stack(
                                             children: <Widget>[
 
 
 
-                                              new Center(child: Text("${widget.discoveredCANDevices[index-1]}${isCANIDSelected?" (Active)":""}$invalidDevice", style: TextStyle(fontSize: 12)),),
+                                              new Center(child: Text(_selectedCANFwdID == null ? "Direct (Active)" :"Direct", style: TextStyle(fontSize: 12))),
                                               new ClipRRect(
                                                   borderRadius: new BorderRadius.circular(10),
                                                   child: new Container(
                                                     decoration: new BoxDecoration(
-                                                      color: isCANIDSelected ? Theme.of(context).focusColor : Colors.transparent,
+                                                      color: _selectedCANFwdID == null ? Theme.of(context).focusColor : Colors.transparent,
                                                     ),
                                                   )
                                               )
@@ -2698,36 +2646,89 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                         )
                                     ),
                                   );
-                                },
-                              ),
-                            )
-                          ],)
-                          ),
+                                }
+                                bool isCANIDSelected = false;
+                                if (_selectedCANFwdID == widget.discoveredCANDevices[index-1]) {
+                                  isCANIDSelected = true;
+                                }
+                                String invalidDevice = "";
+                                if (_invalidCANID == widget.discoveredCANDevices[index-1]) {
+                                  invalidDevice = " (Invalid)";
+                                }
+                                return new Card(
+                                  shadowColor: Colors.transparent,
+                                  child: new GridTile(
+                                    // GestureDetector to switch the currently selected CAN Forward ID
+                                      child: new GestureDetector(
+                                        onTap: (){
+                                          if (isCANIDSelected) {
+                                            setState(() {
+                                              // Clear CAN Forward
+                                              _selectedCANFwdID = null;
+                                              // Request primary ESC settings
+                                              widget.onAutoloadESCSettings(true);
+                                              ScaffoldMessenger
+                                                  .of(context)
+                                                  .showSnackBar(
+                                                  SnackBar(
+                                                    content: Text("Requesting ESC configuration from primary ESC"),
+                                                    duration: Duration(seconds: 1),
+                                                  ));
+                                            });
+                                          } else {
+                                            if (_invalidCANID != widget.discoveredCANDevices[index-1]) {
+                                              setState(() {
+                                                _selectedCANFwdID = widget.discoveredCANDevices[index-1];
+                                                // Request MCCONF from CAN device
+                                                requestMCCONFCAN(_selectedCANFwdID);
+                                                ScaffoldMessenger
+                                                    .of(context)
+                                                    .showSnackBar(
+                                                    SnackBar(
+                                                      content: Text("Requesting ESC configuration from CAN ID $_selectedCANFwdID"),
+                                                      duration: Duration(seconds: 1),
+                                                    ));
+                                              });
+                                            }
+                                          }
+                                        },
+                                        child: Stack(
+                                          children: <Widget>[
 
-                          Center(child:
-                          Column(children: <Widget>[
-                            Text("ESC Information"),
-                            ElevatedButton(
-                                child: Text("Request from ESC${_selectedCANFwdID != null ? "/CAN $_selectedCANFwdID" : ""}"),
-                                onPressed: () {
-                                  if (widget.currentDevice != null) {
-                                    setState(() {
-                                      if ( _selectedCANFwdID != null ) {
-                                        requestMCCONFCAN(_selectedCANFwdID);
-                                        ScaffoldMessenger
-                                            .of(context)
-                                            .showSnackBar(SnackBar(content: Text("Requesting ESC configuration from CAN ID $_selectedCANFwdID")));
-                                      } else {
-                                        widget.onAutoloadESCSettings(true);
-                                        ScaffoldMessenger
-                                            .of(context)
-                                            .showSnackBar(SnackBar(content: Text("Requesting ESC configuration")));
-                                      }
-                                    });
-                                  }
-                                })
-                          ],)
-                          ),
+
+
+                                            new Center(child: Text("${widget.discoveredCANDevices[index-1]}${isCANIDSelected?" (Active)":""}$invalidDevice", style: TextStyle(fontSize: 12)),),
+                                            new ClipRRect(
+                                                borderRadius: new BorderRadius.circular(10),
+                                                child: new Container(
+                                                  decoration: new BoxDecoration(
+                                                    color: isCANIDSelected ? Theme.of(context).focusColor : Colors.transparent,
+                                                  ),
+                                                )
+                                            )
+
+
+                                          ],
+                                        ),
+                                      )
+                                  ),
+                                );
+                              },
+                            ),
+                          )
+                        ],)
+                        ),
+                      ],
+                    ),
+                    Expanded(
+                      child: ListView(
+                        padding: EdgeInsets.all(10),
+                        children: <Widget>[
+
+
+
+
+
 
                           //TODO: consider all unused struct members again
                           //Text("${widget.escMotorConfiguration.motor_type}"),
@@ -3003,27 +3004,125 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
                           //Text(" ${widget.escMotorConfiguration.}"),
 
+                          Divider(height: 10,),
+                          Center(child: Text("Manage Settings"),),
+
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: <Widget>[
+                              ElevatedButton(
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.copy),
+                                      Text("Copy")
+                                    ],
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _mcconfClipboard = widget.escMotorConfiguration;
+                                      ScaffoldMessenger
+                                          .of(context)
+                                          .showSnackBar(
+                                          SnackBar(
+                                            content: Text("Motor Configuration Copied"),
+                                            duration: Duration(seconds: 1),
+                                          ));
+                                    });
+                                  }),
+                              ElevatedButton(
+                                  child: Text("Reload from ESC"),
+                                  onPressed: () {
+                                    if (widget.currentDevice != null) {
+                                      setState(() {
+                                        if ( _selectedCANFwdID != null ) {
+                                          requestMCCONFCAN(_selectedCANFwdID);
+                                          ScaffoldMessenger
+                                              .of(context)
+                                              .showSnackBar(
+                                              SnackBar(
+                                                content: Text("Requesting ESC configuration from CAN ID $_selectedCANFwdID"),
+                                                duration: Duration(seconds: 1),
+                                              ));
+                                        } else {
+                                          widget.onAutoloadESCSettings(true);
+                                          ScaffoldMessenger
+                                              .of(context)
+                                              .showSnackBar(
+                                              SnackBar(
+                                                content: Text("Requesting ESC configuration"),
+                                                duration: Duration(seconds: 1),
+                                              ));
+                                        }
+                                      });
+                                    }
+                                  }),
+                              ElevatedButton(
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.paste),
+                                      Text("Paste")
+                                    ],
+                                  ),
+                                  onPressed: () {
+                                    if (_mcconfClipboard != null) {
+                                      // Paste editor values to current motor configuration
+                                      widget.escMotorConfiguration.si_battery_type = _mcconfClipboard.si_battery_type;
+                                      widget.escMotorConfiguration.si_battery_cells = _mcconfClipboard.si_battery_cells;
+                                      widget.escMotorConfiguration.si_battery_ah = _mcconfClipboard.si_battery_ah;
+                                      widget.escMotorConfiguration.si_wheel_diameter = _mcconfClipboard.si_wheel_diameter;
+                                      widget.escMotorConfiguration.si_motor_poles = _mcconfClipboard.si_motor_poles;
+                                      widget.escMotorConfiguration.si_gear_ratio = _mcconfClipboard.si_gear_ratio;
+                                      widget.escMotorConfiguration.l_current_max = _mcconfClipboard.l_current_max;
+                                      widget.escMotorConfiguration.l_current_min = _mcconfClipboard.l_current_min;
+                                      widget.escMotorConfiguration.l_in_current_max = _mcconfClipboard.l_in_current_max;
+                                      widget.escMotorConfiguration.l_in_current_min = _mcconfClipboard.l_in_current_min;
+                                      widget.escMotorConfiguration.l_abs_current_max = _mcconfClipboard.l_abs_current_max;
+                                      widget.escMotorConfiguration.l_max_erpm = _mcconfClipboard.l_max_erpm;
+                                      widget.escMotorConfiguration.l_min_erpm = _mcconfClipboard.l_min_erpm;
+                                      widget.escMotorConfiguration.l_min_vin = _mcconfClipboard.l_min_vin;
+                                      widget.escMotorConfiguration.l_max_vin = _mcconfClipboard.l_max_vin;
+                                      widget.escMotorConfiguration.l_battery_cut_start = _mcconfClipboard.l_battery_cut_start;
+                                      widget.escMotorConfiguration.l_battery_cut_end = _mcconfClipboard.l_battery_cut_end;
+                                      widget.escMotorConfiguration.l_temp_fet_start = _mcconfClipboard.l_temp_fet_start;
+                                      widget.escMotorConfiguration.l_temp_fet_end = _mcconfClipboard.l_temp_fet_end;
+                                      widget.escMotorConfiguration.l_temp_motor_start = _mcconfClipboard.l_temp_motor_start;
+                                      widget.escMotorConfiguration.l_temp_motor_end = _mcconfClipboard.l_temp_motor_end;
+                                      widget.escMotorConfiguration.l_watt_min = _mcconfClipboard.l_watt_min;
+                                      widget.escMotorConfiguration.l_watt_max = _mcconfClipboard.l_watt_max;
+                                      widget.escMotorConfiguration.l_current_min_scale = _mcconfClipboard.l_current_min_scale;
+                                      widget.escMotorConfiguration.l_current_max_scale = _mcconfClipboard.l_current_max_scale;
+                                      widget.escMotorConfiguration.l_duty_start = _mcconfClipboard.l_duty_start;
+                                      // Notify User
+                                      setState(() {
+                                        ScaffoldMessenger
+                                            .of(context)
+                                            .showSnackBar(
+                                            SnackBar(
+                                                content: Text("Motor Configuration Pasted"),
+                                                duration: Duration(seconds: 1),
+                                            ));
+                                      });
+                                    } else {
+                                      setState(() {
+                                        ScaffoldMessenger
+                                            .of(context)
+                                            .showSnackBar(
+                                            SnackBar(
+                                              content: Text("Please Copy the before using Paste"),
+                                              duration: Duration(seconds: 1),
+                                            ));
+                                      });
+                                    }
+                                  })
+                            ],),
+
                           ElevatedButton(
                               child: Text("Save to ESC${_selectedCANFwdID != null ? "/CAN $_selectedCANFwdID" : ""}"),
                               onPressed: () {
                                 if (widget.currentDevice != null) {
-                                  //setState(() {
                                   // Save motor configuration; CAN FWD ID can be null
                                   saveMCCONF(_selectedCANFwdID);
-                                  //TODO: Not going to notify the user because sometimes saveMCCONF fails and they have to try again
-                                  /*
-                            // Notify user
-                            if ( _selectedCANFwdID != null ) {
-                              Scaffold
-                                  .of(context)
-                                  .showSnackBar(SnackBar(content: Text("Saving ESC configuration to CAN ID $_selectedCANFwdID")));
-                            } else {
-                              Scaffold
-                                  .of(context)
-                                  .showSnackBar(SnackBar(content: Text("Saving ESC configuration")));
-                            }
-                             */
-                                  //});
+                                  //NOTE: Not going to notify the user because sometimes saveMCCONF fails and they have to try again
                                 }
                               }),
 
