@@ -2287,11 +2287,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Uh oh'),
+          title: Text('Warning'),
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
-                Text('FreeSK8 currently works with ESCs using firmware 5.1 and 5.2 and the connected ESC says it is incompatible:'),
+                Text('FreeSK8 is not compatible with the firmware on the connected ESC:'),
                 SizedBox(height:10),
                 Text(escDetails),
               ],
