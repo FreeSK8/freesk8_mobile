@@ -2446,6 +2446,46 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                   widget.escAppConfiguration.app_ppm_conf.hyst = 0.15;
                                 });
                               }) : Container(),
+                      Divider(height: 10,),
+                      Center(child: Text("Additional Tools"),),
+                      Row( mainAxisAlignment: MainAxisAlignment.spaceBetween ,
+                        children: <Widget>[
+                          ElevatedButton(
+                            //TODO: quick pair for CAN FWD device?
+                              child: Row(children: <Widget>[
+                                Icon(Icons.settings_remote),
+                                Text("nRF Quick Pair")
+                              ],),
+                              onPressed: () {
+                                // Don't write if not connected
+                                if (widget.theTXCharacteristic != null) {
+                                  var byteData = new ByteData(10); //<start><payloadLen><packetID><int32_milliseconds><crc1><crc2><end>
+                                  byteData.setUint8(0, 0x02);
+                                  byteData.setUint8(1, 0x05);
+                                  byteData.setUint8(2, COMM_PACKET_ID.COMM_NRF_START_PAIRING.index);
+                                  byteData.setUint32(3, 10000); //milliseconds
+                                  int checksum = CRC16.crc16(byteData.buffer.asUint8List(), 2, 5);
+                                  byteData.setUint16(7, checksum);
+                                  byteData.setUint8(9, 0x03); //End of packet
+
+                                  //<start><payloadLen><packetID><int32_milliseconds><crc1><crc2><end>
+                                  widget.theTXCharacteristic.write(byteData.buffer.asUint8List()).then((value){
+                                    globalLogger.d('You have 10 seconds to power on your remote!');
+                                  }).catchError((e){
+                                    globalLogger.e("nRF Quick Pair: Exception: $e");
+                                  });
+                                } else {
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        title: Text("nRF Quick Pair"),
+                                        content: Text("Oops. Try connecting to your board first."),
+                                      );
+                                    },
+                                  );
+                                }
+                              }),]),
                         ],
                       ),
                     )
@@ -2746,15 +2786,15 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               items: [
                                 DropdownMenuItem(
                                   child: Text("Battery Type: Li-ion 3.0/4.2V"),
-                                  value: 0,
+                                  value: BATTERY_TYPE.BATTERY_TYPE_LIION_3_0__4_2.index,
                                 ),
                                 DropdownMenuItem(
                                   child: Text("Battery Type: LiFePO₄ 2.6/3.6V"),
-                                  value: 1,
+                                  value: BATTERY_TYPE.BATTERY_TYPE_LIIRON_2_6__3_6.index,
                                 ),
                                 DropdownMenuItem(
                                     child: Text("Battery Type: Lead Acid"),
-                                    value: 2
+                                    value: BATTERY_TYPE.BATTERY_TYPE_LEAD_ACID.index
                                 ),
                               ],
                               onChanged: (value) {
@@ -3130,43 +3170,6 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                           Center(child: Text("Additional Tools"),),
                           Row( mainAxisAlignment: MainAxisAlignment.spaceBetween ,
                             children: <Widget>[
-                              ElevatedButton(
-                                //TODO: quick pair for CAN FWD device?
-                                  child: Row(children: <Widget>[
-                                    Icon(Icons.settings_remote),
-                                    Text("nRF Quick Pair")
-                                  ],),
-                                  onPressed: () {
-                                    // Don't write if not connected
-                                    if (widget.theTXCharacteristic != null) {
-                                      var byteData = new ByteData(10); //<start><payloadLen><packetID><int32_milliseconds><crc1><crc2><end>
-                                      byteData.setUint8(0, 0x02);
-                                      byteData.setUint8(1, 0x05);
-                                      byteData.setUint8(2, COMM_PACKET_ID.COMM_NRF_START_PAIRING.index);
-                                      byteData.setUint32(3, 10000); //milliseconds
-                                      int checksum = CRC16.crc16(byteData.buffer.asUint8List(), 2, 5);
-                                      byteData.setUint16(7, checksum);
-                                      byteData.setUint8(9, 0x03); //End of packet
-
-                                      //<start><payloadLen><packetID><int32_milliseconds><crc1><crc2><end>
-                                      widget.theTXCharacteristic.write(byteData.buffer.asUint8List()).then((value){
-                                        globalLogger.d('You have 10 seconds to power on your remote!');
-                                      }).catchError((e){
-                                        globalLogger.e("nRF Quick Pair: Exception: $e");
-                                      });
-                                    } else {
-                                      showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            title: Text("nRF Quick Pair"),
-                                            content: Text("Oops. Try connecting to your board first."),
-                                          );
-                                        },
-                                      );
-                                    }
-                                  }),
-
                               ElevatedButton(
                                   child: Row(children: <Widget>[
                                     Icon(Icons.donut_large),
