@@ -1033,14 +1033,16 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       }
 
       // Monitor ADC min and max
-      adcMinV ??= doublePrecision(widget.adcLastVoltage, 2);
-      adcMaxV ??= doublePrecision(widget.adcLastVoltage, 2);
-      adcMinV2 ??= doublePrecision(widget.adcLastVoltage2, 2);
-      adcMaxV2 ??= doublePrecision(widget.adcLastVoltage2, 2);
-      if (widget.adcLastVoltage != null && widget.adcLastVoltage != 0.0 && widget.adcLastVoltage < adcMinV) adcMinV = doublePrecision(widget.adcLastVoltage, 2);
-      if (widget.adcLastVoltage != null && widget.adcLastVoltage != 0.0 && widget.adcLastVoltage > adcMaxV) adcMaxV = doublePrecision(widget.adcLastVoltage, 2);
-      if (widget.adcLastVoltage2 != null && widget.adcLastVoltage2 != 0.0 && widget.adcLastVoltage2 < adcMinV2) adcMinV2 = doublePrecision(widget.adcLastVoltage2, 2);
-      if (widget.adcLastVoltage2 != null && widget.adcLastVoltage2 != 0.0 && widget.adcLastVoltage2 > adcMaxV2) adcMaxV2 = doublePrecision(widget.adcLastVoltage2, 2);
+      if (widget.adcLastVoltage != null) {
+        adcMinV ??= doublePrecision(widget.adcLastVoltage, 2);
+        adcMaxV ??= doublePrecision(widget.adcLastVoltage, 2);
+        adcMinV2 ??= doublePrecision(widget.adcLastVoltage2, 2);
+        adcMaxV2 ??= doublePrecision(widget.adcLastVoltage2, 2);
+        if (widget.adcLastVoltage != null && widget.adcLastVoltage != 0.0 && widget.adcLastVoltage < adcMinV) adcMinV = doublePrecision(widget.adcLastVoltage, 2);
+        if (widget.adcLastVoltage != null && widget.adcLastVoltage != 0.0 && widget.adcLastVoltage > adcMaxV) adcMaxV = doublePrecision(widget.adcLastVoltage, 2);
+        if (widget.adcLastVoltage2 != null && widget.adcLastVoltage2 != 0.0 && widget.adcLastVoltage2 < adcMinV2) adcMinV2 = doublePrecision(widget.adcLastVoltage2, 2);
+        if (widget.adcLastVoltage2 != null && widget.adcLastVoltage2 != 0.0 && widget.adcLastVoltage2 > adcMaxV2) adcMaxV2 = doublePrecision(widget.adcLastVoltage2, 2);
+      }
 
       // Perform rounding to make doubles pretty
       widget.escAppConfiguration.app_ppm_conf.hyst = doublePrecision(widget.escAppConfiguration.app_ppm_conf.hyst, 2);
