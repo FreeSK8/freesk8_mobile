@@ -194,9 +194,9 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
     });
     tecAlertESCTemp.addListener(() {
       myArguments.currentConfiguration.alertESCTemp = doublePrecision(double.tryParse(tecAlertESCTemp.text.replaceFirst(',', '.')).abs(), 1);
-      if (myArguments.currentConfiguration.alertESCTemp > 85.0) {
+      if (myArguments.currentConfiguration.alertESCTemp > 120.0) {
         setState(() {
-          myArguments.currentConfiguration.alertESCTemp = 85.0;
+          myArguments.currentConfiguration.alertESCTemp = 120.0;
         });
       }
     });

@@ -33,6 +33,7 @@ dependencies:
 
   flutter_thermometer: ^1.0.0
   flutter_gauge:
+    #path: ../forked_packages/flutter_gauge
     git:
       url: git@github.com:FreeSK8/flutter_gauge.git
       ref: freesk8_mobile
@@ -118,7 +119,7 @@ flutter:
   assets:
     - assets/FreeSK8_Icon.png
     - assets/FreeSK8_Icon_Dark.png
-    - assets/firmware/Robogotchi_0.10.1.zip
+    - assets/firmware/Robogotchi_0.10.2.zip
     - assets/robogotchi_render.png
     - assets/FreeSK8_Mobile.png
     - assets/FreeSK8_MobileLogo.png

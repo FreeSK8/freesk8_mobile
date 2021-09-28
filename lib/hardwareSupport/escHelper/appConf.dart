@@ -21,6 +21,12 @@ enum thr_exp_mode {
   THR_EXP_POLY
 }
 
+enum SAFE_START_MODE {
+  SAFE_START_DISABLED, // Was boolean value prior to Firmware 5.3
+  SAFE_START_REGULAR, // Was boolean value prior to Firmware 5.3
+  SAFE_START_NO_FAULT, // Firmware 5.3 added
+}
+
 // PPM control types
 enum ppm_control_type {
   PPM_CTRL_TYPE_NONE,
@@ -43,7 +49,7 @@ class ppm_config {
   double pulse_end;
   double pulse_center;
   bool median_filter;
-  bool safe_start;
+  SAFE_START_MODE safe_start;
   double throttle_exp;
   double throttle_exp_brake;
   thr_exp_mode throttle_exp_mode;
@@ -96,7 +102,7 @@ class adc_config {
   double voltage2_start;
   double voltage2_end;
   bool use_filter;
-  bool safe_start;
+  SAFE_START_MODE safe_start;
   bool cc_button_inverted;
   bool rev_button_inverted;
   bool voltage_inverted;
@@ -216,6 +222,7 @@ class balance_config {
   double ki;
   double kd;
   int hertz;
+  int loop_time_filter; // Firmware 5.3 added
   double fault_pitch;
   double fault_roll;
   double fault_duty; // Firmware 5.2 added
@@ -229,17 +236,25 @@ class balance_config {
   int fault_adc_half_erpm;
   double overspeed_duty; // Firmware 5.1 only
   double tiltback_duty;
-  double tiltback_angle;
-  double tiltback_speed;
-  double tiltback_high_voltage;
-  double tiltback_low_voltage;
+  double tiltback_duty_angle;
+  double tiltback_duty_speed;
+  double tiltback_hv_angle; // Firmware 5.3 added
+  double tiltback_hv_speed; // Firmware 5.3 added
+  double tiltback_hv;
+  double tiltback_lv_angle; // Firmware 5.3 added
+  double tiltback_lv_speed; // Firmware 5.3 added
+  double tiltback_lv;
+  double tiltback_return_speed; // Firmware 5.3 added
   double tiltback_constant;
   int tiltback_constant_erpm; // Firmware 5.2 added
+  double tiltback_variable; // Firmware 5.3 added
+  double tiltback_variable_max; // Firmware 5.3 added
+  double noseangling_speed; // Firmware 5.3 added
   double startup_pitch_tolerance;
   double startup_roll_tolerance;
   double startup_speed;
   double deadzone;
-  double current_boost;
+  double current_boost; // Firmware 5.1 and 5.2 only
   bool multi_esc;
   double yaw_kp;
   double yaw_ki;
@@ -247,13 +262,33 @@ class balance_config {
   double roll_steer_kp;
   double roll_steer_erpm_kp;
   double brake_current;
+  int brake_timeout; // Firmware 5.3 added
   int overspeed_delay; // Firmware 5.1 only
   int fault_delay; // Firmware 5.1 only
   double yaw_current_clamp;
-  double setpoint_pitch_filter;
-  double setpoint_target_filter;
-  double setpoint_filter_clamp;
-  int kd_pt1_frequency; // Firmware 5.2 added
+  double setpoint_pitch_filter; // Firmware 5.1 and 5.2 only
+  double setpoint_target_filter; // Firmware 5.1 and 5.2 only
+  double setpoint_filter_clamp; // Firmware 5.1 and 5.2 only
+  int kd_pt1_lowpass_frequency; // Firmware 5.2 added
+  int kd_pt1_highpass_frequency; // Firmware 5.3 added
+  double kd_biquad_lowpass; // Firmware 5.3 added
+  double kd_biquad_highpass; // Firmware 5.3 added
+  double booster_angle; // Firmware 5.3 added
+  double booster_ramp; // Firmware 5.3 added
+  double booster_current; // Firmware 5.3 added
+  double torquetilt_start_current; // Firmware 5.3 added
+  double torquetilt_angle_limit; // Firmware 5.3 added
+  double torquetilt_on_speed; // Firmware 5.3 added
+  double torquetilt_off_speed; // Firmware 5.3 added
+  double torquetilt_strength; // Firmware 5.3 added
+  double torquetilt_filter; //Firmware 5.3 added
+  double turntilt_strength; // Firmware 5.3 added
+  double turntilt_angle_limit; // Firmware 5.3 added
+  double turntilt_start_angle; // Firmware 5.3 added
+  int turntilt_start_erpm; // Firmware 5.3 added
+  double turntilt_speed; // Firmware 5.3 added
+  int turntilt_erpm_boost; // Firmware 5.3 added
+  int turntilt_erpm_boost_end; // Firmware 5.3 added
 }
 
 // CAN status modes
@@ -290,14 +325,15 @@ enum IMU_TYPE {
 
 enum AHRS_MODE {
   AHRS_MODE_MADGWICK,
-  AHRS_MODE_MAHONY
+  AHRS_MODE_MAHONY,
+  AHRS_MODE_MADGWICK_FUSION, // Firmware 5.3 added
 }
 
 class imu_config {
   imu_config() {
     accel_offsets = List.filled(3, 0);
     gyro_offsets = List.filled(3, 0);
-    gyro_offset_comp_fact = List.filled(3, 0);
+    gyro_offset_comp_fact = List.filled(3, 0); // Firmware 5.1 and 5.2 only
   }
   IMU_TYPE type;
   AHRS_MODE mode;
@@ -311,8 +347,21 @@ class imu_config {
   double rot_yaw;
   List<double> accel_offsets;
   List<double> gyro_offsets;
-  List<double> gyro_offset_comp_fact;
-  double gyro_offset_comp_clamp;
+  List<double> gyro_offset_comp_fact; // Firmware 5.1 and 5.2 only
+  double gyro_offset_comp_clamp; // Firmware 5.1 and 5.2 only
+}
+
+class AS504x_diag { // Firmware 5.3 added
+  int is_connected;
+  int AGC_value;
+  int magnitude;
+  int is_OCF;
+  int is_COF;
+  int is_Comp_low;
+  int is_Comp_high;
+  int serial_diag_flgs;
+  int serial_magnitude;
+  int serial_error_flags;
 }
 
 enum CAN_MODE {
@@ -339,6 +388,14 @@ enum CAN_BAUD {
   CAN_BAUD_100K, // Firmware 5.2 added
 }
 
+enum KILL_SW_MODE { // Firmware 5.3 added
+  KILL_SW_MODE_DISABLED,
+  KILL_SW_MODE_PPM_LOW,
+  KILL_SW_MODE_PPM_HIGH,
+  KILL_SW_MODE_ADC2_LOW,
+  KILL_SW_MODE_ADC2_HIGH,
+}
+
 class APPCONF {
   APPCONF() {
     app_ppm_conf = new ppm_config();
@@ -359,6 +416,8 @@ class APPCONF {
   bool pairing_done;
   bool permanent_uart_enabled;
   SHUTDOWN_MODE shutdown_mode;
+  bool servo_out_enabled; // Firmware 5.3 added
+  KILL_SW_MODE kill_sw_mode; // Firmware 5.3 added
 
   // CAN modes
   CAN_MODE can_mode;

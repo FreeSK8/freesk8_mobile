@@ -97,12 +97,12 @@ class RealTimeDataState extends State<RealTimeData> {
     return double.parse((distance).toStringAsFixed(2));
   }
 
-  double calculateEfficiencyKm(double kmTraveled) {
-    double whKm = (escTelemetry.watt_hours - escTelemetry.watt_hours_charged) / kmTraveled;
-    if (whKm.isNaN || whKm.isInfinite) {
-      whKm = 0;
+  double calculateEfficiency(double distance) {
+    double wh = (escTelemetry.watt_hours - escTelemetry.watt_hours_charged) / distance;
+    if (wh.isNaN || wh.isInfinite) {
+      wh = 0;
     }
-    return double.parse((whKm).toStringAsFixed(2));
+    return double.parse((wh).toStringAsFixed(2));
 
   }
 
@@ -373,19 +373,17 @@ class RealTimeDataState extends State<RealTimeData> {
     String temperatureMotor = widget.currentSettings.settings.useFahrenheit ? "$tempMotor F" : "$tempMotor C";
 
     double speedMaxFromERPM = calculateSpeedKph(widget.currentSettings.settings.maxERPM);
-    double speedMax = widget.currentSettings.settings.useImperial ? kphToMph(speedMaxFromERPM<80?speedMaxFromERPM:80) : speedMaxFromERPM<80?speedMaxFromERPM:80;
+    if (speedMaxFromERPM > 142) speedMaxFromERPM = 142; //~88mph
+    double speedMax = widget.currentSettings.settings.useImperial ? kphToMph(speedMaxFromERPM) : speedMaxFromERPM;
     double speedNow = widget.currentSettings.settings.useImperial ? kphToMph(calculateSpeedKph(escTelemetry.rpm)) : calculateSpeedKph(escTelemetry.rpm);
     //String speed = widget.currentSettings.settings.useImperial ? "$speedNow mph" : "$speedNow kph";
 
-    //String distance = widget.currentSettings.settings.useImperial ? "${kmToMile(escTelemetry.tachometer_abs / 1000.0)} miles" : "${escTelemetry.tachometer_abs / 1000.0} km";
-    double distanceTraveled = doublePrecision(escTelemetry.tachometer_abs / 1000.0, 2);
-    String distance = widget.currentSettings.settings.useImperial ? "${kmToMile(distanceTraveled)} miles" : "$distanceTraveled km";
+    double distanceTraveled = escTelemetry.tachometer_abs / 1000.0;
+    if (widget.currentSettings.settings.useImperial) distanceTraveled = kmToMile(distanceTraveled);
+    String distance = widget.currentSettings.settings.useImperial ? "$distanceTraveled miles" : "$distanceTraveled km";
 
-
-    double efficiencyKm = calculateEfficiencyKm(distanceTraveled);
-    double efficiencyGauge = widget.currentSettings.settings.useImperial ? kmToMile(efficiencyKm) : efficiencyKm;
+    double efficiency = calculateEfficiency(distanceTraveled);
     String efficiencyGaugeLabel = widget.currentSettings.settings.useImperial ? "Efficiency Wh/Mi" : "Efficiency Wh/Km";
-    //String efficiency = widget.currentSettings.settings.useImperial ? "${kmToMile(efficiencyKm)} Wh/Mi" : "$efficiencyKm Wh/Km";
 
     double powerMax = widget.currentSettings.settings.batterySeriesCount * widget.currentSettings.settings.batteryCellMaxVoltage;
     double powerMinimum = widget.currentSettings.settings.batterySeriesCount * widget.currentSettings.settings.batteryCellMinVoltage;
@@ -431,8 +429,21 @@ class RealTimeDataState extends State<RealTimeData> {
 
     FlutterGauge _gaugePowerRemaining = FlutterGauge(inactiveColor: Colors.red,activeColor: Colors.black,numberInAndOut: NumberInAndOut.inside, index: batteryRemaining,counterStyle: TextStyle(color: Theme.of(context).textTheme.bodyText1.color,fontSize: 25,),widthCircle: 10,secondsMarker: SecondsMarker.secondsAndMinute,number: Number.all);
     FlutterGauge _gaugeVolts = FlutterGauge(inactiveColor: Colors.red,activeColor: Colors.black,hand: Hand.short,index: averageVoltageInput,fontFamily: "Courier",start: powerMinimum.floor().toInt(), end: powerMax.ceil().toInt(),number: Number.endAndCenterAndStart,secondsMarker: SecondsMarker.secondsAndMinute,counterStyle: TextStyle(color: Theme.of(context).textTheme.bodyText1.color,fontSize: 25,));
-    //TODO: scale efficiency and adjust end value for imperial users
-    FlutterGauge _gaugeEfficiency = FlutterGauge(reverseDial: true, reverseDigits: true, hand: Hand.short,index: efficiencyGauge,fontFamily: "Courier",start: 0, end: 100,number: Number.endAndStart,secondsMarker: SecondsMarker.secondsAndMinute,counterStyle: TextStyle(color: Theme.of(context).textTheme.bodyText1.color,fontSize: 25,));
+
+    FlutterGauge _gaugeEfficiency = FlutterGauge(
+        activeColor: Colors.black,
+        inactiveColor: Colors.red,
+        reverseDial: true,
+        reverseDigits: true,
+        hand: Hand.short,
+        index: efficiency,
+        fontFamily: "Courier",
+        start: 0,
+        end: widget.currentSettings.settings.useImperial ? 200 : 100,
+        number: Number.endAndStart,
+        secondsMarker: SecondsMarker.secondsAndMinute,
+        counterStyle: TextStyle(color: Theme.of(context).textTheme.bodyText1.color,fontSize: 25,)
+    );
 
     Oscilloscope scopeOne = Oscilloscope(
       backgroundColor: Colors.transparent,

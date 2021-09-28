@@ -179,7 +179,7 @@ packages:
     description:
       path: "."
       ref: freesk8_mobile
-      resolved-ref: "2c91bc21087daab9b8614f4d3e6020ffdc7a86e0"
+      resolved-ref: a97a5b8c55a68f89d873f20d9757f5e5f994b481
       url: "git@github.com:FreeSK8/flutter_gauge.git"
     source: git
     version: "1.0.8"

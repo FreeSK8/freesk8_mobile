@@ -117,6 +117,25 @@ enum COMM_PACKET_ID {
   COMM_ERASE_BOOTLOADER_ALL_CAN_HW, // Firmware 5.2 added
 
   COMM_SET_ODOMETER, // Firmware 5.2 added
+
+  // Power switch commands
+  COMM_PSW_GET_STATUS, // Firmware 5.3 added
+  COMM_PSW_SWITCH, // Firmware 5.3 added
+
+  COMM_BMS_FWD_CAN_RX, // Firmware 5.3 added
+  COMM_BMS_HW_DATA, // Firmware 5.3 added
+  COMM_GET_BATTERY_CUT, // Firmware 5.3 added
+  COMM_BM_HALT_REQ, // Firmware 5.3 added
+  COMM_GET_QML_UI_HW, // Firmware 5.3 added
+  COMM_GET_QML_UI_APP, // Firmware 5.3 added
+  COMM_CUSTOM_HW_DATA, // Firmware 5.3 added
+  COMM_QMLUI_ERASE, // Firmware 5.3 added
+  COMM_QMLUI_WRITE, // Firmware 5.3 added
+
+  // IO Board
+  COMM_IO_BOARD_GET_ALL, // Firmware 5.3 added
+  COMM_IO_BOARD_SET_PWM, // Firmware 5.3 added
+  COMM_IO_BOARD_SET_DIGITAL, // Firmware 5.3 added
 }
 
 // CAN commands
@@ -154,6 +173,7 @@ enum CAN_PACKET_ID {
   CAN_PACKET_CONF_BATTERY_CUT,
   CAN_PACKET_CONF_STORE_BATTERY_CUT,
   CAN_PACKET_SHUTDOWN,
+
   CAN_PACKET_IO_BOARD_ADC_1_TO_4, // Firmware 5.2 added
   CAN_PACKET_IO_BOARD_ADC_5_TO_8, // Firmware 5.2 added
   CAN_PACKET_IO_BOARD_ADC_9_TO_12, // Firmware 5.2 added
@@ -167,7 +187,20 @@ enum CAN_PACKET_ID {
   CAN_PACKET_BMS_BAL, // Firmware 5.2 added
   CAN_PACKET_BMS_TEMPS, // Firmware 5.2 added
   CAN_PACKET_BMS_HUM, // Firmware 5.2 added
-  CAN_PACKET_BMS_SOC_SOH_TEMP_STAT // Firmware 5.2 added
+  CAN_PACKET_BMS_SOC_SOH_TEMP_STAT, // Firmware 5.2 added
+
+  CAN_PACKET_PSW_STAT, // Firmware 5.3 added
+  CAN_PACKET_PSW_SWITCH, // Firmware 5.3 added
+  CAN_PACKET_BMS_HW_DATA_1, // Firmware 5.3 added
+  CAN_PACKET_BMS_HW_DATA_2, // Firmware 5.3 added
+  CAN_PACKET_BMS_HW_DATA_3, // Firmware 5.3 added
+  CAN_PACKET_BMS_HW_DATA_4, // Firmware 5.3 added
+  CAN_PACKET_BMS_HW_DATA_5, // Firmware 5.3 added
+  CAN_PACKET_BMS_AH_WH_CHG_TOTAL, // Firmware 5.3 added
+  CAN_PACKET_BMS_AH_WH_DIS_TOTAL, // Firmware 5.3 added
+  CAN_PACKET_UPDATE_PID_POS_OFFSET, // Firmware 5.3 added
+  CAN_PACKET_POLL_ROTOR_POS, // Firmware 5.3 added
+  CAN_PACKET_MAKE_ENUM_32_BITS, //TODO: invalid Dart syntax// = 0xFFFFFFFF, // Firmware 5.3 added
 }
 
 // VESC based ESC faults
@@ -198,5 +231,6 @@ enum mc_fault_code {
   FAULT_CODE_RESOLVER_LOS,
   FAULT_CODE_FLASH_CORRUPTION_APP_CFG, // Firmware 5.2 added
   FAULT_CODE_FLASH_CORRUPTION_MC_CFG, // Firmware 5.2 added
-  FAULT_CODE_ENCODER_NO_MAGNET // Firmware 5.2 added
+  FAULT_CODE_ENCODER_NO_MAGNET, // Firmware 5.2 added
+  FAULT_CODE_ENCODER_MAGNET_TOO_STRONG, // Firmware 5.3 added
 }

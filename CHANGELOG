@@ -1,3 +1,14 @@
+v0.19.0
+
+* Added support for VESC FW5.3-beta
+* Added support for ADC Input Configuration
+* Added Copy/Paste to Motor Configuration
+* Improve FOC detection results dialog
+* Increase Robogotchi ESC Temp Alert to 120C
+* Increase real-time gauge speed limit to 142kph
+* Fixes for real-time efficiency gauge
+* Includes Robogotchi 0.10.2 Firmware
+
 v0.18.2
 
 * Improved fault dialog in log viewer
