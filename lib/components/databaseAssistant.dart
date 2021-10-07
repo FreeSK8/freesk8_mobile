@@ -300,4 +300,72 @@ class DatabaseAssistant {
     //globalLogger.wtf("distance $distance wh $wattHours imperial $useImperial consumption $consumption");
     return consumption;
   }
+
+  static Future<double> getMaxValue(String boardID, String columnName) async {
+    final Database db = await getDatabase();
+    final List<Map<String, dynamic>> dbResults = await db.query('logs', columns: [columnName], where: "board_id = ?", whereArgs: [boardID]);
+    double maxValue = 0;
+    dbResults.forEach((element) {
+      if (element[columnName] > maxValue) maxValue = element[columnName];
+    });
+    await db.close();
+    return maxValue;
+  }
+
+  static Future<double> getTrendingValue(String boardID, String columnName, Duration window, DateTime moment, DateTime previousMoment, bool averageValue) async {
+    final Database db = await getDatabase();
+    final List<Map<String, dynamic>> dbResultsEarlier = await db.query('logs', columns: [columnName], where: "board_id = ? AND date_time BETWEEN ? AND ?", whereArgs: [boardID, previousMoment.millisecondsSinceEpoch / 1000 - window.inSeconds, previousMoment.millisecondsSinceEpoch / 1000]);
+    final List<Map<String, dynamic>> dbResultsLater = await db.query('logs', columns: [columnName], where: "board_id = ? AND date_time BETWEEN ? AND ?", whereArgs: [boardID, moment.millisecondsSinceEpoch / 1000 - window.inSeconds, moment.millisecondsSinceEpoch / 1000]);
+
+    double totalEarlier = 0;
+    int earlierCount = 0;
+    dbResultsEarlier.forEach((element) {
+      if (element[columnName] != -1.0) {
+        totalEarlier += element[columnName];
+        ++earlierCount;
+      }
+    });
+    if (averageValue) totalEarlier /= earlierCount;
+
+    double totalLater = 0;
+    int laterCount = 0;
+    dbResultsLater.forEach((element) {
+      if (element[columnName] != -1.0) {
+        totalLater += element[columnName];
+        ++laterCount;
+      }
+    });
+    if (averageValue) totalLater /= laterCount;
+
+    //TODO: calculate trend properly
+    double trend;
+    trend = totalLater / totalEarlier;
+    if (trend.isNaN || trend.isInfinite) trend = 1.1;
+
+    if (trend < 1.0) trend = 1.0 - trend;
+    else if (trend > 1.0) trend -= 1.0;
+
+    if (columnName == "distance_km")
+    globalLogger.wtf("Trending Column $columnName Window ${window.inSeconds} Earlier $totalEarlier Later $totalLater Trend $trend Agv $averageValue  ${previousMoment} ${moment}");
+
+
+    return trend;
+  }
+
+  static Future<double> getRangedValue(String boardID, String columnName, Duration window, DateTime moment, bool averageValue) async {
+    final Database db = await getDatabase();
+    final List<Map<String, dynamic>> dbResultsLater = await db.query('logs', columns: [columnName], where: "board_id = ? AND date_time BETWEEN ? AND ?", whereArgs: [boardID, moment.millisecondsSinceEpoch / 1000 - window.inSeconds, moment.millisecondsSinceEpoch / 1000]);
+
+    double totalLater = 0;
+    int laterCount = 0;
+    dbResultsLater.forEach((element) {
+      if (element[columnName] != -1.0) {
+        totalLater += element[columnName];
+        ++laterCount;
+      }
+    });
+    if (averageValue) totalLater /= laterCount;
+
+    return totalLater;
+  }
 }

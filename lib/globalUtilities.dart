@@ -15,6 +15,17 @@ import 'package:path/path.dart' as path;
 
 import 'package:latlong/latlong.dart';
 
+List<double> normalize(List<double> array) {
+  final lower = array.reduce(min);
+  final upper = array.reduce(max);
+  final List<double> normalized = [];
+
+  array.forEach((element) => element < 0
+      ? normalized.add(-(element / lower))
+      : normalized.add(element / upper));
+
+  return normalized;
+}
 class Dialogs {
   static Future<void> showPleaseWaitDialog(
       BuildContext context, GlobalKey key) async {
