@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:freesk8_mobile/hardwareSupport/escHelper/dataTypes.dart';
 
 import '../hardwareSupport/dieBieMSHelper.dart';
 import '../hardwareSupport/escHelper/escHelper.dart';
@@ -74,13 +75,17 @@ class RealTimeDataState extends State<RealTimeData> {
 
   static List<double> motorCurrentGraphPoints = [];
 
-  static double doubleItemWidth = 150; //This changes on widget build
-
   static double averageVoltageInput;
 
   static ESCTelemetry escTelemetry;
 
   double batteryRemaining;
+
+  bool showWhWithRegen = true;
+  bool showVoltsPerCell = false;
+  bool hideMap = false;
+  double fontSizeValues = 30;
+
 
   double calculateSpeedKph(double eRpm) {
     double ratio = 1.0 / widget.currentSettings.settings.gearRatio;
@@ -355,31 +360,21 @@ class RealTimeDataState extends State<RealTimeData> {
       escTelemetry = widget.telemetryMap.values.first;
     }
 
-    doubleItemWidth = MediaQuery.of(context).size.width /2 - 10;
-
-    //TODO: testing oscilloscope package
-    motorCurrentGraphPoints.add( escTelemetry.current_motor );
-    if(motorCurrentGraphPoints.length > doubleItemWidth * 0.75) motorCurrentGraphPoints.removeAt(0);
-
     double tempMosfet = widget.currentSettings.settings.useFahrenheit ? cToF(escTelemetry.temp_mos) : escTelemetry.temp_mos;
     double tempMotor = widget.currentSettings.settings.useFahrenheit ? cToF(escTelemetry.temp_motor) : escTelemetry.temp_motor;
-    // The gauges don't like to display outside their coded range
-    if (tempMotor < 0) { tempMotor = 0; }
 
     String temperatureMosfet = widget.currentSettings.settings.useFahrenheit ? "$tempMosfet F" : "$tempMosfet C";
-    //String temperatureMosfet1 = widget.currentSettings.settings.useFahrenheit ? "${cToF(escTelemetry.temp_mos_1)} F" : "${escTelemetry.temp_mos_1} C";
-    //String temperatureMosfet2 = widget.currentSettings.settings.useFahrenheit ? "${cToF(escTelemetry.temp_mos_2)} F" : "${escTelemetry.temp_mos_2} C";
-    //String temperatureMosfet3 = widget.currentSettings.settings.useFahrenheit ? "${cToF(escTelemetry.temp_mos_3)} F" : "${escTelemetry.temp_mos_3} C";
+
     String temperatureMotor = widget.currentSettings.settings.useFahrenheit ? "$tempMotor F" : "$tempMotor C";
 
     double speedMaxFromERPM = calculateSpeedKph(widget.currentSettings.settings.maxERPM);
     if (speedMaxFromERPM > 142) speedMaxFromERPM = 142; //~88mph
     double speedMax = widget.currentSettings.settings.useImperial ? kphToMph(speedMaxFromERPM) : speedMaxFromERPM;
     double speedNow = widget.currentSettings.settings.useImperial ? kphToMph(calculateSpeedKph(escTelemetry.rpm)) : calculateSpeedKph(escTelemetry.rpm);
-    //String speed = widget.currentSettings.settings.useImperial ? "$speedNow mph" : "$speedNow kph";
 
     double distanceTraveled = escTelemetry.tachometer_abs / 1000.0;
     if (widget.currentSettings.settings.useImperial) distanceTraveled = kmToMile(distanceTraveled);
+    distanceTraveled = doublePrecision(distanceTraveled, 2);
     String distance = widget.currentSettings.settings.useImperial ? "$distanceTraveled miles" : "$distanceTraveled km";
 
     double efficiency = calculateEfficiency(distanceTraveled);
@@ -421,204 +416,454 @@ class RealTimeDataState extends State<RealTimeData> {
       }
     }
 
+    //globalLogger.wtf("W: ${MediaQuery.of(context).size.width} H: ${MediaQuery.of(context).size.height}");
 
-
-    FlutterGauge _gaugeDutyCycle = FlutterGauge(activeColor: Colors.black, handSize: 30,index: escTelemetry.duty_now * 100,fontFamily: "Courier", start:-100, end: 100,number: Number.endAndCenterAndStart,secondsMarker: SecondsMarker.secondsAndMinute,counterStyle: TextStyle(color: Theme.of(context).textTheme.bodyText1.color,fontSize: 25,));
-    //TODO: if speed is less than start value of gauge this will error
-    FlutterGauge _gaugeSpeed = FlutterGauge(numberInAndOut: NumberInAndOut.inside, index: speedNow, start: -5, end: speedMax.ceil().toInt(),counterStyle: TextStyle(color: Theme.of(context).textTheme.bodyText1.color,fontSize: 25,),widthCircle: 10,secondsMarker: SecondsMarker.none,number: Number.all);
-
-    FlutterGauge _gaugePowerRemaining = FlutterGauge(inactiveColor: Colors.red,activeColor: Colors.black,numberInAndOut: NumberInAndOut.inside, index: batteryRemaining,counterStyle: TextStyle(color: Theme.of(context).textTheme.bodyText1.color,fontSize: 25,),widthCircle: 10,secondsMarker: SecondsMarker.secondsAndMinute,number: Number.all);
-    FlutterGauge _gaugeVolts = FlutterGauge(inactiveColor: Colors.red,activeColor: Colors.black,hand: Hand.short,index: averageVoltageInput,fontFamily: "Courier",start: powerMinimum.floor().toInt(), end: powerMax.ceil().toInt(),number: Number.endAndCenterAndStart,secondsMarker: SecondsMarker.secondsAndMinute,counterStyle: TextStyle(color: Theme.of(context).textTheme.bodyText1.color,fontSize: 25,));
-
-    FlutterGauge _gaugeEfficiency = FlutterGauge(
-        activeColor: Colors.black,
-        inactiveColor: Colors.red,
-        reverseDial: true,
-        reverseDigits: true,
-        hand: Hand.short,
-        index: efficiency,
-        fontFamily: "Courier",
-        start: 0,
-        end: widget.currentSettings.settings.useImperial ? 200 : 100,
-        number: Number.endAndStart,
-        secondsMarker: SecondsMarker.secondsAndMinute,
-        counterStyle: TextStyle(color: Theme.of(context).textTheme.bodyText1.color,fontSize: 25,)
-    );
-
-    Oscilloscope scopeOne = Oscilloscope(
-      backgroundColor: Colors.transparent,
-      traceColor: Theme.of(context).accentColor,
-      showYAxis: true,
-      yAxisMax: 25.0,
-      yAxisMin: -25.0,
-      dataSet: motorCurrentGraphPoints,
-    );
-
-    //globalLogger.wtf(MediaQuery.of(context).size.height);
-    //globalLogger.wtf(MediaQuery.of(context).size.width);
-
-    // Build widget
-    return Container(
-      child: Center(
-        child: ListView(
-          padding: const EdgeInsets.all(10),
-          children: <Widget>[
-
-            Row(children: <Widget>[
-              Column(
-                children: <Widget>[
-                  Center(child:Text("Duty Cycle")),
-                  Container(width: doubleItemWidth, child: _gaugeDutyCycle)
-                ]),
-
-              Column(
-                  children: <Widget>[
-                    Center(child:Text("Speed")),
-                    Container(width: doubleItemWidth, child: _gaugeSpeed)
-                  ]),],),
-
-            Row(children: <Widget>[
-              Column(
-                  children: <Widget>[
-                    Center(child:Text("Power Remaining")),
-                    Container(width: doubleItemWidth, child: _gaugePowerRemaining)
-                  ]),
-
-              Column(
-                  children: <Widget>[
-                    Center(child:Text("Volts")),
-                    Container(width: doubleItemWidth, child: _gaugeVolts)
-                  ]),
-            ],),
-
-            Row(children: <Widget>[
-              Column(
-                  children: <Widget>[
-                    Center(child:Text(efficiencyGaugeLabel)),
-                    Container(width: doubleItemWidth, child: _gaugeEfficiency)
-                  ]),
-
-              Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: <Widget>[
-                    Center( child:Text("Motor Current")),
-                    Text("${doublePrecision(escTelemetry.current_motor, 2)}"),
-                    SizedBox(width: doubleItemWidth, height: doubleItemWidth - 30, child: scopeOne),
-                  ]),
-            ],),
-
-            Row(children: <Widget>[
-
-              Column(  children: <Widget>[
-                Center(child:Text("ESC")),
-                Text(temperatureMosfet),
-                SizedBox(
-                    height:doubleItemWidth * 0.75,
-                    width: doubleItemWidth,
-                    child: Thermometer(
-                      value: tempMosfet,
-                      minValue: 0,
-                      maxValue: widget.currentSettings.settings.useFahrenheit ? cToF(80) : 80,
-                      label: widget.currentSettings.settings.useFahrenheit ? ThermometerLabel.farenheit():ThermometerLabel.celsius(),
-                      scale: widget.currentSettings.settings.useFahrenheit ? IntervalScaleProvider(25) : IntervalScaleProvider(15),
-                      mercuryColor: Colors.pink,
-                      outlineColor: Theme.of(context).textTheme.bodyText1.color,
-                    )
+    Color boxBgColor = Theme.of(context).dialogBackgroundColor;
+    int boxSpacing = 5;
+    double boxInnerPadding = hideMap ? 15 : 2;
+    // Check if we are in a landscape orientation
+    if (MediaQuery.of(context).size.width > MediaQuery.of(context).size.height) {
+      return Row(
+        children: [
+          Spacer(),
+          Column(
+            children: [
+              Spacer(),
+              Container(
+                width: MediaQuery.of(context).size.width * 0.25,
+                height: MediaQuery.of(context).size.height * 0.35,
+                child: Stack(
+                  children: [
+                    Positioned(
+                        left:10,
+                        child: Column(children: [
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                fontSizeValues += 1.0;
+                              });
+                              globalLogger.d("Font Size: $fontSizeValues Screen W: ${MediaQuery.of(context).size.width.toInt()} H: ${MediaQuery.of(context).size.height.toInt()}");
+                            },
+                            child: Icon(Icons.add_circle_outline, color: Theme.of(context).dialogBackgroundColor),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                fontSizeValues -= 1.0;
+                              });
+                              globalLogger.d("Font Size: $fontSizeValues Screen W: ${MediaQuery.of(context).size.width.toInt()} H: ${MediaQuery.of(context).size.height.toInt()}");
+                            },
+                            child: Icon(Icons.remove_circle, color: Theme.of(context).dialogBackgroundColor),
+                          ),
+                        ],)
+                    ),
+                    Positioned(
+                        top: 0,
+                        right: 0,
+                        child: Row(
+                          children: [
+                            escTelemetry.fault_code == mc_fault_code.FAULT_CODE_NONE ? Container() : Text("${escTelemetry.fault_code.toString().split('.')[1].substring(11)}"),
+                            escTelemetry.fault_code == mc_fault_code.FAULT_CODE_NONE ? Icon(Icons.check_circle, color: Colors.green,) : Icon(Icons.error, color: Colors.red)
+                          ],
+                        )
+                    ),
+                    Center(child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text("Speed"),
+                        FittedBox(
+                            fit: BoxFit.fitWidth,
+                            child: Text("$speedNow ", style: TextStyle(fontSize: 90, fontWeight: FontWeight.bold), textAlign: TextAlign.center)
+                        ),
+                      ],
+                    ),)
+                  ],
                 ),
-              ]),
-
-              Column( children: <Widget>[
-                Center(child:Text("Motor")),
-                Text(temperatureMotor),
-                SizedBox(
-                    height: doubleItemWidth * 0.75,
-                    width:doubleItemWidth,
-                    child: Thermometer(
-                      value: tempMotor,
-                      minValue: 0,
-                      maxValue: widget.currentSettings.settings.useFahrenheit ? cToF(90) : 90,
-                      label: widget.currentSettings.settings.useFahrenheit ? ThermometerLabel.farenheit():ThermometerLabel.celsius(),
-                      scale: widget.currentSettings.settings.useFahrenheit ? IntervalScaleProvider(25) : IntervalScaleProvider(15),
-                      mercuryColor: Colors.pink,
-                      outlineColor: Theme.of(context).textTheme.bodyText1.color,
-                    )
-                ),
-              ]),
-
-            ],),
-
-
-
-            SizedBox(height: 10),
-
-            Table(children: [
-              TableRow(children: [
-                Text("Distance Traveled: ", textAlign: TextAlign.right,),
-                Text(" $distance")
-              ]),
-              TableRow(children: [
-                Text("Watt Hours: ", textAlign: TextAlign.right,),
-                Text(" ${doublePrecision(escTelemetry.watt_hours, 2)} Wh")
-              ]),
-              TableRow(children: [
-                Text("Watt Hours Charged: ", textAlign: TextAlign.right,),
-                Text(" ${doublePrecision(escTelemetry.watt_hours_charged, 2)} Wh")
-              ]),
-
-
-              TableRow(children: [
-                Text("Amp Hours: ", textAlign: TextAlign.right,),
-                Text(" ${doublePrecision(escTelemetry.amp_hours, 2)} Ah")
-              ]),
-              TableRow(children: [
-                Text("Amp Hours Charged: ", textAlign: TextAlign.right,),
-                Text(" ${doublePrecision(escTelemetry.amp_hours_charged, 2)} Ah")
-              ]),
-
-              /*
-              TableRow(children: [
-                Text("Mosfet 1 Temperature: ", textAlign: TextAlign.right,),
-                Text(" $temperatureMosfet1")
-              ]),
-              TableRow(children: [
-                Text("Mosfet 2 Temperature: ", textAlign: TextAlign.right,),
-                Text(" $temperatureMosfet2")
-              ]),
-              TableRow(children: [
-                Text("Mosfet 3 Temperature: ", textAlign: TextAlign.right,),
-                Text(" $temperatureMosfet3")
-              ]),
-              */
-              TableRow(children: [
-                Text("Battery Current Now: ", textAlign: TextAlign.right,),
-                Text(" ${doublePrecision(escTelemetry.current_in, 2)} A")
-              ]),
-              TableRow(children: [
-                Text("ESC ID: ", textAlign: TextAlign.right,),
-                Text(" ${escTelemetry.vesc_id}")
-              ]),
-              TableRow(children: [
-                Text("Fault Now: ", textAlign: TextAlign.right,),
-                Text("${escTelemetry.fault_code.index == 0 ? " 0":" Code ${escTelemetry.fault_code.index}"}")
-              ]),
-            ],),
-            escTelemetry.fault_code.index != 0 ? Center(child: Text("${escTelemetry.fault_code.toString().split('.')[1]}")) : Container(),
-            SizedBox(height: 10),
-
-            ///FlutterMapWidget
-            Text("Mobile device position:"),
-            Container(
-              height: MediaQuery.of(context).size.height / 2,
-              child: Center(
-                  child: new FlutterMapWidget(routeTakenLocations: widget.routeTakenLocations,)
-                    //child: googleMapPage,
-                )
               ),
 
 
-          ],
-        ),
-      ),
-    );
+              Spacer(),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text("Duty Cycle"),
+                  Text("${(escTelemetry.duty_now * 100).toInt()}%", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+                ],
+              ),
+              Spacer(),
+            ],
+          ),
+          Spacer(),
+          Column(
+            children: [
+              Spacer(),
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    showVoltsPerCell = !showVoltsPerCell;
+                  });
+                },
+                child: showVoltsPerCell ? Column(
+                  children: [
+                    Text("Voltage/Cell"),
+                    Text("${doublePrecision(escTelemetry.v_in / widget.currentSettings.settings.batterySeriesCount, 2)} V", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold))
+                  ],
+                ) : Column(
+                  children: [
+                    Text("Battery"),
+                    Text("${doublePrecision(escTelemetry.v_in, 1)} V", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold))
+                  ],
+                ),
+              ),
+
+              Spacer(),
+              GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      showWhWithRegen = !showWhWithRegen;
+                    });
+                  },
+                  child: showWhWithRegen ? Column(
+                    children: [
+                      Text("Wh Total"),
+                      Text("${doublePrecision(escTelemetry.watt_hours - escTelemetry.watt_hours_charged, 1)}", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+                    ],
+                  ) :  Column(
+                    children: [
+                      Text("Wh Used"),
+                      Text("${doublePrecision(escTelemetry.watt_hours, 1)}", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+                    ],
+                  )),
+
+
+              Spacer(),
+              Text("Motor Current"),
+              Text("${doublePrecision(escTelemetry.current_motor, 1)} A", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+
+              Spacer(),
+              Text("Battery Current"),
+              Text("${doublePrecision(escTelemetry.current_in, 1)} A", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+              Spacer(),
+            ],
+          ),
+          Spacer(),
+          Column(
+            children: [
+              Spacer(),
+              Text("Odometer"),
+              FittedBox(
+                  fit: BoxFit.fitWidth,
+                  child: Text("$distance", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold), textAlign: TextAlign.center)
+              ),
+
+              Spacer(),
+              Text("$efficiencyGaugeLabel"),
+              Text("$efficiency", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+
+              Spacer(),
+              Text("ESC Temp"),
+              Text("${doublePrecision(widget.currentSettings.settings.useFahrenheit ? cToF(escTelemetry.temp_mos) : escTelemetry.temp_mos, 1)} ${widget.currentSettings.settings.useFahrenheit ? "F" : "C"}", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+
+              Spacer(),
+              Text("Motor Temp"),
+              Text("${doublePrecision(widget.currentSettings.settings.useFahrenheit ? cToF(escTelemetry.temp_motor) : escTelemetry.temp_motor, 1)} ${widget.currentSettings.settings.useFahrenheit ? "F" : "C"}", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+              Spacer(),
+            ],
+          ),
+          Spacer(),
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                hideMap = !hideMap;
+              });
+            },
+            child: RotatedBox(quarterTurns: 3, child: Text("${hideMap ? "Show Map" : "Hide Map"}"),),
+          ),
+          MediaQuery.of(context).size.width > 500 && !hideMap ? //TODO How wide
+          Container(
+                width: MediaQuery.of(context).size.width * 0.30,
+                child: new FlutterMapWidget(routeTakenLocations: widget.routeTakenLocations,),
+              )
+
+              :
+          Container()
+        ],
+      );
+    } else {
+      // Return portrait orientation
+      return Column(
+        children: [
+          Spacer(),
+          Row(
+            children: [
+              Spacer(),
+              Container(
+                //decoration: BoxDecoration(
+                //    color: boxBgColor,
+                //    borderRadius: BorderRadius.circular(15)
+                //),
+                height: MediaQuery.of(context).size.width / 2,
+                width: MediaQuery.of(context).size.width * 0.75,
+                child: Stack(
+                  children: [
+
+                    Positioned(
+                        left:0,
+                        child: Row(children: [
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                fontSizeValues -= 1.0;
+                              });
+                              globalLogger.d("Font Size: $fontSizeValues Screen W: ${MediaQuery.of(context).size.width.toInt()} H: ${MediaQuery.of(context).size.height.toInt()}");
+                            },
+                            child: Icon(Icons.remove_circle, color: Theme.of(context).dialogBackgroundColor),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                fontSizeValues += 1.0;
+                              });
+                              globalLogger.d("Font Size: $fontSizeValues Screen W: ${MediaQuery.of(context).size.width.toInt()} H: ${MediaQuery.of(context).size.height.toInt()}");
+                            },
+                            child: Icon(Icons.add_circle_outline, color: Theme.of(context).dialogBackgroundColor),
+                          )
+                        ],)
+                    ),
+                    Positioned(
+                        top: 0,
+                        right: 0,
+                        child: Row(
+                          children: [
+                            escTelemetry.fault_code == mc_fault_code.FAULT_CODE_NONE ? Container() : Text("${escTelemetry.fault_code.toString().split('.')[1].substring(11)}"),
+                            escTelemetry.fault_code == mc_fault_code.FAULT_CODE_NONE ? Icon(Icons.check_circle, color: Colors.green,) : Icon(Icons.error, color: Colors.red)
+                          ],
+                        )
+                    ),
+                    Center(child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text("Speed"),
+                        FittedBox(
+                            fit: BoxFit.fitWidth,
+                            child: Text("$speedNow", style: TextStyle(fontSize: 150, fontWeight: FontWeight.bold), textAlign: TextAlign.center)
+                        ),
+                      ],
+                    ))
+                  ],
+                ),
+              ),
+
+              Spacer(),
+
+            ],
+          ),
+          Spacer(),
+          Row(
+              children: [
+                Spacer(),
+                Container(
+                  decoration: BoxDecoration(
+                      color: boxBgColor,
+                      borderRadius: BorderRadius.circular(5)
+                  ),
+                  width: MediaQuery.of(context).size.width / 3 - boxSpacing,
+                  child: Padding(
+                      padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
+                      child: Column(
+                        children: [
+                          Text("Duty Cycle"),
+                          Text("${(escTelemetry.duty_now * 100).toInt()}%", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+                        ],
+                      )),
+                )
+                ,
+                Spacer(),
+                Container(
+                    decoration: BoxDecoration(
+                        color: boxBgColor,
+                        borderRadius: BorderRadius.circular(5)
+                    ),
+                    width: MediaQuery.of(context).size.width / 3 - boxSpacing,
+                    child: Padding(
+                      padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
+                      child: Column(
+                        children: [
+                          Text("Motor Current"),
+                          Text("${doublePrecision(escTelemetry.current_motor, 1)} A", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    )),
+                Spacer(),
+                Container(
+                    decoration: BoxDecoration(
+                        color: boxBgColor,
+                        borderRadius: BorderRadius.circular(5)
+                    ),
+                    width: MediaQuery.of(context).size.width / 3 - boxSpacing,
+                    child: Padding(
+                        padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
+                        child: Column(
+                          children: [
+                            Text("Odometer"),
+                            FittedBox(
+                                fit: BoxFit.fitWidth,
+                                child: Text("$distance", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold), textAlign: TextAlign.center)
+                            ),
+                          ],
+                        ))),
+                Spacer(),
+              ]
+          ),
+          Spacer(),
+          Row(
+              children: [
+                Spacer(),
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      showWhWithRegen = !showWhWithRegen;
+                    });
+                  },
+                  child: Container(
+                      decoration: BoxDecoration(
+                          color: boxBgColor,
+                          borderRadius: BorderRadius.circular(5)
+                      ),
+                      width: MediaQuery.of(context).size.width / 3 - boxSpacing,
+                      child: Padding(
+                          padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
+                          child: showWhWithRegen ? Column(
+                            children: [
+                              Text("Wh Total"),
+                              Text("${doublePrecision(escTelemetry.watt_hours - escTelemetry.watt_hours_charged, 1)}", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+                            ],
+                          ) :  Column(
+                            children: [
+                              Text("Wh Used"),
+                              Text("${doublePrecision(escTelemetry.watt_hours, 1)}", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+                            ],
+                          )
+                      )),
+                ),
+                Spacer(),
+                Container(
+                    decoration: BoxDecoration(
+                        color: boxBgColor,
+                        borderRadius: BorderRadius.circular(5)
+                    ),
+                    width: MediaQuery.of(context).size.width / 3 - boxSpacing,
+                    child: Padding(
+                        padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
+                        child: Column(
+                          children: [
+                            Text("Battery Current"),
+                            Text("${doublePrecision(escTelemetry.current_in, 1)} A", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+                          ],
+                        ))),
+                Spacer(),
+                Container(
+                    decoration: BoxDecoration(
+                        color: boxBgColor,
+                        borderRadius: BorderRadius.circular(5)
+                    ),
+                    width: MediaQuery.of(context).size.width / 3 - boxSpacing,
+                    child: Padding(
+                        padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
+                        child: Column(
+                          children: [
+                            Text("$efficiencyGaugeLabel"),
+                            Text("$efficiency", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+                          ],
+                        ))),
+                Spacer(),
+              ]
+          ),
+          Spacer(),
+          Row(
+              children: [
+                Spacer(),
+                Container(
+                    decoration: BoxDecoration(
+                        color: boxBgColor,
+                        borderRadius: BorderRadius.circular(5)
+                    ),
+                    width: MediaQuery.of(context).size.width / 3 - boxSpacing,
+                    child: Padding(
+                        padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              showVoltsPerCell = !showVoltsPerCell;
+                            });
+                          },
+                          child: showVoltsPerCell ? Column(
+                            children: [
+                              Text("Voltage/Cell"),
+                              Text("${doublePrecision(escTelemetry.v_in / widget.currentSettings.settings.batterySeriesCount, 2)} V", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold))
+                            ],
+                          ) : Column(
+                            children: [
+                              Text("Battery"),
+                              Text("${doublePrecision(escTelemetry.v_in, 1)} V", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold))
+                            ],
+                          ),
+                        ))),
+                Spacer(),
+                Container(
+                    decoration: BoxDecoration(
+                        color: boxBgColor,
+                        borderRadius: BorderRadius.circular(5)
+                    ),
+                    width: MediaQuery.of(context).size.width / 3 - boxSpacing,
+                    child: Padding(
+                        padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
+                        child: Column(
+                          children: [
+                            Text("ESC Temp"),
+                            Text("$temperatureMosfet", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+                          ],
+                        ))),
+                Spacer(),
+                Container(
+                    decoration: BoxDecoration(
+                        color: boxBgColor,
+                        borderRadius: BorderRadius.circular(5)
+                    ),
+                    width: MediaQuery.of(context).size.width / 3 - boxSpacing,
+                    child: Padding(
+                        padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
+                        child: Column(
+                          children: [
+                            Text("Motor Temp"),
+                            Text("$temperatureMotor", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+                          ],
+                        ))),
+                Spacer(),
+              ]
+          ),
+          Spacer(),
+          Column(
+            children: [
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    hideMap = !hideMap;
+                  });
+                },
+                child: RotatedBox(quarterTurns: 0, child: Text("${hideMap ? "Show Map" : "Hide Map"}"),),
+              ),
+              hideMap ? Container() :
+              Container(
+                height: MediaQuery.of(context).size.width * 0.6,
+                width: MediaQuery.of(context).size.width,
+                child: new FlutterMapWidget(routeTakenLocations: widget.routeTakenLocations,),
+              ),
+            ],
+          ),
+
+        ],
+      );
+    }
   }
 }
