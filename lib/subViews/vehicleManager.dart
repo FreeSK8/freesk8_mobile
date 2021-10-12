@@ -17,7 +17,7 @@ class VehicleManagerArguments {
   VehicleManagerArguments(this.connectedDeviceID);
 }
 
-/// Sample linear data type.
+/// Per vehicle data type for charting
 class DataTrend {
   final int index;
   final double distance;
@@ -312,7 +312,7 @@ class VehicleManagerState extends State<VehicleManager> {
           actionExtentRatio: 0.25,
           child: Container(
             decoration: BoxDecoration(
-                color: Theme.of(context).dialogBackgroundColor.withOpacity(0.5),
+                color: Theme.of(context).dialogBackgroundColor,
                 borderRadius: BorderRadius.circular(5)
             ),
             child: Row(
