@@ -460,17 +460,12 @@ class RealTimeDataState extends State<RealTimeData> {
                     Positioned(
                         top: 0,
                         right: 0,
-                        child: Row(
-                          children: [
-                            escTelemetry.fault_code == mc_fault_code.FAULT_CODE_NONE ? Container() : Text("${escTelemetry.fault_code.toString().split('.')[1].substring(11)}"),
-                            escTelemetry.fault_code == mc_fault_code.FAULT_CODE_NONE ? Icon(Icons.check_circle, color: Colors.green,) : Icon(Icons.error, color: Colors.red)
-                          ],
-                        )
+                        child: escTelemetry.fault_code == mc_fault_code.FAULT_CODE_NONE ? Icon(Icons.check_circle, color: Colors.green,) : Icon(Icons.error, color: Colors.red)
                     ),
                     Center(child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text("Speed"),
+                        escTelemetry.fault_code == mc_fault_code.FAULT_CODE_NONE ? Text("Speed") : Text("${escTelemetry.fault_code.toString().split('.')[1].substring(11)}"),
                         FittedBox(
                             fit: BoxFit.fitWidth,
                             child: Text("$speedNow ", style: TextStyle(fontSize: 90, fontWeight: FontWeight.bold), textAlign: TextAlign.center)
@@ -639,17 +634,12 @@ class RealTimeDataState extends State<RealTimeData> {
                     Positioned(
                         top: 0,
                         right: 0,
-                        child: Row(
-                          children: [
-                            escTelemetry.fault_code == mc_fault_code.FAULT_CODE_NONE ? Container() : Text("${escTelemetry.fault_code.toString().split('.')[1].substring(11)}"),
-                            escTelemetry.fault_code == mc_fault_code.FAULT_CODE_NONE ? Icon(Icons.check_circle, color: Colors.green,) : Icon(Icons.error, color: Colors.red)
-                          ],
-                        )
+                        child: escTelemetry.fault_code == mc_fault_code.FAULT_CODE_NONE ? Icon(Icons.check_circle, color: Colors.green,) : Icon(Icons.error, color: Colors.red)
                     ),
                     Center(child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text("Speed"),
+                        escTelemetry.fault_code == mc_fault_code.FAULT_CODE_NONE ? Text("Speed") : Text("${escTelemetry.fault_code.toString().split('.')[1].substring(11)}"),
                         FittedBox(
                             fit: BoxFit.fitWidth,
                             child: Text("$speedNow", style: TextStyle(fontSize: 150, fontWeight: FontWeight.bold), textAlign: TextAlign.center)
