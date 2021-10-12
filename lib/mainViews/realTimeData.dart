@@ -577,16 +577,22 @@ class RealTimeDataState extends State<RealTimeData> {
                 hideMap = !hideMap;
               });
             },
-            child: RotatedBox(quarterTurns: 3, child: Text("${hideMap ? "Show Map" : "Hide Map"}"),),
+            child: Container(
+              decoration: BoxDecoration(
+                  color: boxBgColor,
+                  borderRadius: BorderRadius.only(topLeft: Radius.circular(15), bottomLeft: Radius.circular(15))
+              ),
+              height: MediaQuery.of(context).size.height,
+              child: RotatedBox(quarterTurns: 3, child: Text("${hideMap ? "Show Map" : "Hide Map"}", textAlign: TextAlign.center,),),
+            ),
           ),
-          MediaQuery.of(context).size.width > 500 && !hideMap ? //TODO How wide
-          Container(
-                width: MediaQuery.of(context).size.width * 0.30,
-                child: new FlutterMapWidget(routeTakenLocations: widget.routeTakenLocations,),
-              )
 
-              :
-          Container()
+          hideMap ? Container() :
+          Container(
+            width: MediaQuery.of(context).size.width * 0.30,
+            child: new FlutterMapWidget(routeTakenLocations: widget.routeTakenLocations,),
+          )
+
         ],
       );
     } else {
@@ -851,7 +857,14 @@ class RealTimeDataState extends State<RealTimeData> {
                     hideMap = !hideMap;
                   });
                 },
-                child: RotatedBox(quarterTurns: 0, child: Text("${hideMap ? "Show Map" : "Hide Map"}"),),
+                child: Container(
+                  decoration: BoxDecoration(
+                      color: boxBgColor,
+                      borderRadius: BorderRadius.only(topLeft: Radius.circular(15), topRight: Radius.circular(15))
+                  ),
+                  width: MediaQuery.of(context).size.width,
+                  child: RotatedBox(quarterTurns: 0, child: Text("${hideMap ? "Show Map" : "Hide Map"}", textAlign: TextAlign.center,),),
+                )
               ),
               hideMap ? Container() :
               Container(
