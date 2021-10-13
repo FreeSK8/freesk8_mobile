@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:freesk8_mobile/hardwareSupport/escHelper/dataTypes.dart';
@@ -9,18 +10,10 @@ import '../hardwareSupport/escHelper/escHelper.dart';
 import '../globalUtilities.dart';
 import '../components/userSettings.dart';
 
-import 'package:flutter_thermometer/label.dart';
-import 'package:flutter_thermometer/scale.dart';
 import 'package:intl/intl.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 
-
 import '../widgets/flutterMap.dart'; import 'package:latlong/latlong.dart';
-
-import 'package:flutter_gauge/flutter_gauge.dart';
-import 'package:flutter_thermometer/thermometer_widget.dart';
-
-import 'package:oscilloscope/oscilloscope.dart';
 
 ///
 /// Asymmetric sigmoidal approximation
@@ -90,9 +83,9 @@ class RealTimeDataState extends State<RealTimeData> {
   double calculateSpeedKph(double eRpm) {
     double ratio = 1.0 / widget.currentSettings.settings.gearRatio;
     int minutesToHour = 60;
-    double ratioRpmSpeed = (ratio * minutesToHour * widget.currentSettings.settings.wheelDiameterMillimeters * pi) / ((widget.currentSettings.settings.motorPoles / 2) * 1000000);
+    double ratioRpmSpeed = (ratio * minutesToHour * widget.currentSettings.settings.wheelDiameterMillimeters * pi) / ((widget.currentSettings.settings.motorPoles / 2) * 1e6);
     double speed = eRpm * ratioRpmSpeed;
-    return double.parse((speed).toStringAsFixed(2));
+    return doublePrecision(speed, 1);
   }
 
   double calculateDistanceKm(double eCount) {
@@ -363,8 +356,11 @@ class RealTimeDataState extends State<RealTimeData> {
     double tempMosfet = widget.currentSettings.settings.useFahrenheit ? cToF(escTelemetry.temp_mos) : escTelemetry.temp_mos;
     double tempMotor = widget.currentSettings.settings.useFahrenheit ? cToF(escTelemetry.temp_motor) : escTelemetry.temp_motor;
 
+    double mosfetTempMapped = (escTelemetry.temp_mos - 45) / (90 - 45); // 45C min, 90C max
+    double motorTempMapped = (escTelemetry.temp_motor - 45) / (90 - 45); // 45C min, 90C max
+    Color colorMosfet = multiColorLerp(Colors.green, Colors.yellow, Colors.red, mosfetTempMapped);
+    Color colorMotor = multiColorLerp(Colors.green, Colors.yellow, Colors.red, motorTempMapped);
     String temperatureMosfet = widget.currentSettings.settings.useFahrenheit ? "$tempMosfet F" : "$tempMosfet C";
-
     String temperatureMotor = widget.currentSettings.settings.useFahrenheit ? "$tempMotor F" : "$tempMotor C";
 
     double speedMaxFromERPM = calculateSpeedKph(widget.currentSettings.settings.maxERPM);
@@ -419,10 +415,228 @@ class RealTimeDataState extends State<RealTimeData> {
     //globalLogger.wtf("W: ${MediaQuery.of(context).size.width} H: ${MediaQuery.of(context).size.height}");
 
     Color boxBgColor = Theme.of(context).dialogBackgroundColor;
-    int boxSpacing = 5;
-    double boxInnerPadding = hideMap ? 15 : 2;
-    // Check if we are in a landscape orientation
-    if (MediaQuery.of(context).size.width > MediaQuery.of(context).size.height) {
+    double cellVoltage = escTelemetry.v_in / widget.currentSettings.settings.batterySeriesCount;
+
+    // Compute color for cell voltage
+    final double voltageMapped = (cellVoltage - widget.currentSettings.settings.batteryCellMinVoltage) / (widget.currentSettings.settings.batteryCellMaxVoltage - widget.currentSettings.settings.batteryCellMinVoltage);
+    Color colorCellVoltage = multiColorLerp(Colors.red, Colors.yellow, Colors.green, voltageMapped);
+
+    final bool landscapeView = MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
+    final int boxSpacing = 5;
+    double boxInnerPadding;
+    double boxWidth;
+    if (landscapeView) {
+      boxInnerPadding = 4;
+      boxWidth = MediaQuery.of(context).size.width / (hideMap ? 4 : 6) - boxSpacing;
+    } else {
+      boxInnerPadding = hideMap ? 15 : 2;
+      boxWidth = MediaQuery.of(context).size.width / 3 - boxSpacing;
+    }
+
+
+    BoxDecoration boxDecoration = BoxDecoration(
+        color: Theme.of(context).dialogBackgroundColor,
+        borderRadius: BorderRadius.circular(5),
+
+        gradient: LinearGradient(
+          tileMode: TileMode.repeated,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          stops: [0.0, 0.9, 1.0],
+          colors: [
+            Theme.of(context).dialogBackgroundColor,
+            Theme.of(context).dialogBackgroundColor,
+            Theme.of(context).scaffoldBackgroundColor,
+          ],
+        )
+    );
+
+    Widget childWhTotal = GestureDetector(
+      onTap: () {
+        setState(() {
+          showWhWithRegen = !showWhWithRegen;
+        });
+      },
+      child: Container(
+          decoration: boxDecoration,
+          width: boxWidth,
+          child: Padding(
+              padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
+              child: showWhWithRegen ? Column(
+                children: [
+                  Text("Wh Total"),
+                  Text("${doublePrecision(escTelemetry.watt_hours - escTelemetry.watt_hours_charged, 1)}", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+                ],
+              ) :  Column(
+                children: [
+                  Text("Wh Used"),
+                  Text("${doublePrecision(escTelemetry.watt_hours, 1)}", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+                ],
+              )
+          )),
+    );
+
+    Widget childDutyCycle = Container(
+      decoration: boxDecoration,
+      width: boxWidth,
+      child: Padding(
+          padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
+          child: Column(
+            children: [
+              Text("Duty Cycle"),
+              Text("${(escTelemetry.duty_now * 100).toInt()}%", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+            ],
+          )),
+    );
+
+    Widget childBatteryCurrent = Container(
+        decoration: boxDecoration,
+        width: boxWidth,
+        child: Padding(
+            padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
+            child: Column(
+              children: [
+                Text("Battery Current"),
+                Text("${doublePrecision(escTelemetry.current_in, 1)} A", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+              ],
+            )));
+
+    Widget childMotorCurrent = Container(
+        decoration: boxDecoration,
+        width: boxWidth,
+        child: Padding(
+          padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
+          child: Column(
+            children: [
+              Text("Motor Current"),
+              Text("${doublePrecision(escTelemetry.current_motor, 1)} A", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ));
+
+    Widget childOdometer = Container(
+        decoration: boxDecoration,
+        width: boxWidth,
+        child: Padding(
+            padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
+            child: Column(
+              children: [
+                Text("Odometer"),
+                FittedBox(
+                    fit: BoxFit.fitWidth,
+                    child: Text("$distance", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold), textAlign: TextAlign.center)
+                ),
+              ],
+            )));
+
+    Widget childConsumption = Container(
+        decoration: boxDecoration,
+        width: boxWidth,
+        child: Padding(
+            padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
+            child: Column(
+              children: [
+                Text("$efficiencyGaugeLabel"),
+                Text("$efficiency", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+              ],
+            )));
+
+    Widget childBattery = Container(
+        decoration: BoxDecoration(
+            color: Theme.of(context).dialogBackgroundColor,
+            borderRadius: BorderRadius.circular(5),
+
+            gradient: LinearGradient(
+              tileMode: TileMode.repeated,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              stops: [0.0, 0.4, 1.0],
+              colors: [
+                Theme.of(context).dialogBackgroundColor,
+                Theme.of(context).dialogBackgroundColor,
+                colorCellVoltage,
+              ],
+            )
+        ),
+        width: boxWidth,
+        child: Padding(
+            padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  showVoltsPerCell = !showVoltsPerCell;
+                });
+              },
+              child: showVoltsPerCell ? Column(
+                children: [
+                  Text("Voltage/Cell"),
+                  Text("${doublePrecision(escTelemetry.v_in / widget.currentSettings.settings.batterySeriesCount, 2)} V", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold))
+                ],
+              ) : Column(
+                children: [
+                  Text("Battery"),
+                  Text("${doublePrecision(escTelemetry.v_in, 1)} V", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold))
+                ],
+              ),
+            )));
+
+    Widget childMosfetTemp = Container(
+        decoration: BoxDecoration(
+            color: Theme.of(context).dialogBackgroundColor,
+            borderRadius: BorderRadius.circular(5),
+
+            gradient: LinearGradient(
+              tileMode: TileMode.repeated,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              stops: [0.0, 0.4, 1.0],
+              colors: [
+                Theme.of(context).dialogBackgroundColor,
+                Theme.of(context).dialogBackgroundColor,
+                colorMosfet,
+              ],
+            )
+        ),
+        width: boxWidth,
+        child: Padding(
+            padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
+            child: Column(
+              children: [
+                Text("ESC Temp"),
+                Text("$temperatureMosfet", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+              ],
+            )));
+
+    Widget childMotorTemp = Container(
+        decoration: BoxDecoration(
+            color: Theme.of(context).dialogBackgroundColor,
+            borderRadius: BorderRadius.circular(5),
+
+            gradient: LinearGradient(
+              tileMode: TileMode.repeated,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              stops: [0.0, 0.4, 1.0],
+              colors: [
+                Theme.of(context).dialogBackgroundColor,
+                Theme.of(context).dialogBackgroundColor,
+                colorMotor,
+              ],
+            )
+        ),
+        width: boxWidth,
+        child: Padding(
+            padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
+            child: Column(
+              children: [
+                Text("Motor Temp"),
+                Text("$temperatureMotor", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+              ],
+            )));
+
+    // Return Widget Tree
+    if (landscapeView) {
+      // Landscape Layout
       return Row(
         children: [
           Spacer(),
@@ -460,7 +674,7 @@ class RealTimeDataState extends State<RealTimeData> {
                     Positioned(
                         top: 0,
                         right: 0,
-                        child: escTelemetry.fault_code == mc_fault_code.FAULT_CODE_NONE ? Icon(Icons.check_circle, color: Colors.green,) : Icon(Icons.error, color: Colors.red)
+                        child: escTelemetry.fault_code == mc_fault_code.FAULT_CODE_NONE ? Icon(Icons.check_circle_outline, color: Colors.green,) : Icon(Icons.warning, color: Colors.red)
                     ),
                     Center(child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -468,7 +682,7 @@ class RealTimeDataState extends State<RealTimeData> {
                         escTelemetry.fault_code == mc_fault_code.FAULT_CODE_NONE ? Text("Speed") : Text("${escTelemetry.fault_code.toString().split('.')[1].substring(11)}"),
                         FittedBox(
                             fit: BoxFit.fitWidth,
-                            child: Text("$speedNow ", style: TextStyle(fontSize: 90, fontWeight: FontWeight.bold), textAlign: TextAlign.center)
+                            child: Text("$speedNow", style: TextStyle(fontSize: 90, fontWeight: FontWeight.bold), textAlign: TextAlign.center)
                         ),
                       ],
                     ),)
@@ -492,52 +706,16 @@ class RealTimeDataState extends State<RealTimeData> {
           Column(
             children: [
               Spacer(),
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    showVoltsPerCell = !showVoltsPerCell;
-                  });
-                },
-                child: showVoltsPerCell ? Column(
-                  children: [
-                    Text("Voltage/Cell"),
-                    Text("${doublePrecision(escTelemetry.v_in / widget.currentSettings.settings.batterySeriesCount, 2)} V", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold))
-                  ],
-                ) : Column(
-                  children: [
-                    Text("Battery"),
-                    Text("${doublePrecision(escTelemetry.v_in, 1)} V", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold))
-                  ],
-                ),
-              ),
+              childBattery,
 
               Spacer(),
-              GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      showWhWithRegen = !showWhWithRegen;
-                    });
-                  },
-                  child: showWhWithRegen ? Column(
-                    children: [
-                      Text("Wh Total"),
-                      Text("${doublePrecision(escTelemetry.watt_hours - escTelemetry.watt_hours_charged, 1)}", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
-                    ],
-                  ) :  Column(
-                    children: [
-                      Text("Wh Used"),
-                      Text("${doublePrecision(escTelemetry.watt_hours, 1)}", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
-                    ],
-                  )),
-
+              childWhTotal,
 
               Spacer(),
-              Text("Motor Current"),
-              Text("${doublePrecision(escTelemetry.current_motor, 1)} A", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+              childMotorCurrent,
 
               Spacer(),
-              Text("Battery Current"),
-              Text("${doublePrecision(escTelemetry.current_in, 1)} A", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+              childBatteryCurrent,
               Spacer(),
             ],
           ),
@@ -545,23 +723,16 @@ class RealTimeDataState extends State<RealTimeData> {
           Column(
             children: [
               Spacer(),
-              Text("Odometer"),
-              FittedBox(
-                  fit: BoxFit.fitWidth,
-                  child: Text("$distance", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold), textAlign: TextAlign.center)
-              ),
+              childOdometer,
 
               Spacer(),
-              Text("$efficiencyGaugeLabel"),
-              Text("$efficiency", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+              childConsumption,
 
               Spacer(),
-              Text("ESC Temp"),
-              Text("${doublePrecision(widget.currentSettings.settings.useFahrenheit ? cToF(escTelemetry.temp_mos) : escTelemetry.temp_mos, 1)} ${widget.currentSettings.settings.useFahrenheit ? "F" : "C"}", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+              childMosfetTemp,
 
               Spacer(),
-              Text("Motor Temp"),
-              Text("${doublePrecision(widget.currentSettings.settings.useFahrenheit ? cToF(escTelemetry.temp_motor) : escTelemetry.temp_motor, 1)} ${widget.currentSettings.settings.useFahrenheit ? "F" : "C"}", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+              childMotorTemp,
               Spacer(),
             ],
           ),
@@ -591,7 +762,7 @@ class RealTimeDataState extends State<RealTimeData> {
         ],
       );
     } else {
-      // Return portrait orientation
+      // Portrait Layout
       return Column(
         children: [
           Spacer(),
@@ -642,7 +813,7 @@ class RealTimeDataState extends State<RealTimeData> {
                         escTelemetry.fault_code == mc_fault_code.FAULT_CODE_NONE ? Text("Speed") : Text("${escTelemetry.fault_code.toString().split('.')[1].substring(11)}"),
                         FittedBox(
                             fit: BoxFit.fitWidth,
-                            child: Text("$speedNow", style: TextStyle(fontSize: 150, fontWeight: FontWeight.bold), textAlign: TextAlign.center)
+                            child: Text("$speedNow", style: TextStyle(fontSize: 100, fontWeight: FontWeight.bold), textAlign: TextAlign.center)
                         ),
                       ],
                     ))
@@ -658,56 +829,11 @@ class RealTimeDataState extends State<RealTimeData> {
           Row(
               children: [
                 Spacer(),
-                Container(
-                  decoration: BoxDecoration(
-                      color: boxBgColor,
-                      borderRadius: BorderRadius.circular(5)
-                  ),
-                  width: MediaQuery.of(context).size.width / 3 - boxSpacing,
-                  child: Padding(
-                      padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
-                      child: Column(
-                        children: [
-                          Text("Duty Cycle"),
-                          Text("${(escTelemetry.duty_now * 100).toInt()}%", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
-                        ],
-                      )),
-                )
-                ,
+                childDutyCycle,
                 Spacer(),
-                Container(
-                    decoration: BoxDecoration(
-                        color: boxBgColor,
-                        borderRadius: BorderRadius.circular(5)
-                    ),
-                    width: MediaQuery.of(context).size.width / 3 - boxSpacing,
-                    child: Padding(
-                      padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
-                      child: Column(
-                        children: [
-                          Text("Motor Current"),
-                          Text("${doublePrecision(escTelemetry.current_motor, 1)} A", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                    )),
+                childMotorCurrent,
                 Spacer(),
-                Container(
-                    decoration: BoxDecoration(
-                        color: boxBgColor,
-                        borderRadius: BorderRadius.circular(5)
-                    ),
-                    width: MediaQuery.of(context).size.width / 3 - boxSpacing,
-                    child: Padding(
-                        padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
-                        child: Column(
-                          children: [
-                            Text("Odometer"),
-                            FittedBox(
-                                fit: BoxFit.fitWidth,
-                                child: Text("$distance", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold), textAlign: TextAlign.center)
-                            ),
-                          ],
-                        ))),
+                childOdometer,
                 Spacer(),
               ]
           ),
@@ -715,63 +841,11 @@ class RealTimeDataState extends State<RealTimeData> {
           Row(
               children: [
                 Spacer(),
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      showWhWithRegen = !showWhWithRegen;
-                    });
-                  },
-                  child: Container(
-                      decoration: BoxDecoration(
-                          color: boxBgColor,
-                          borderRadius: BorderRadius.circular(5)
-                      ),
-                      width: MediaQuery.of(context).size.width / 3 - boxSpacing,
-                      child: Padding(
-                          padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
-                          child: showWhWithRegen ? Column(
-                            children: [
-                              Text("Wh Total"),
-                              Text("${doublePrecision(escTelemetry.watt_hours - escTelemetry.watt_hours_charged, 1)}", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
-                            ],
-                          ) :  Column(
-                            children: [
-                              Text("Wh Used"),
-                              Text("${doublePrecision(escTelemetry.watt_hours, 1)}", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
-                            ],
-                          )
-                      )),
-                ),
+                childWhTotal,
                 Spacer(),
-                Container(
-                    decoration: BoxDecoration(
-                        color: boxBgColor,
-                        borderRadius: BorderRadius.circular(5)
-                    ),
-                    width: MediaQuery.of(context).size.width / 3 - boxSpacing,
-                    child: Padding(
-                        padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
-                        child: Column(
-                          children: [
-                            Text("Battery Current"),
-                            Text("${doublePrecision(escTelemetry.current_in, 1)} A", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
-                          ],
-                        ))),
+                childBatteryCurrent,
                 Spacer(),
-                Container(
-                    decoration: BoxDecoration(
-                        color: boxBgColor,
-                        borderRadius: BorderRadius.circular(5)
-                    ),
-                    width: MediaQuery.of(context).size.width / 3 - boxSpacing,
-                    child: Padding(
-                        padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
-                        child: Column(
-                          children: [
-                            Text("$efficiencyGaugeLabel"),
-                            Text("$efficiency", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
-                          ],
-                        ))),
+                childConsumption,
                 Spacer(),
               ]
           ),
@@ -779,62 +853,11 @@ class RealTimeDataState extends State<RealTimeData> {
           Row(
               children: [
                 Spacer(),
-                Container(
-                    decoration: BoxDecoration(
-                        color: boxBgColor,
-                        borderRadius: BorderRadius.circular(5)
-                    ),
-                    width: MediaQuery.of(context).size.width / 3 - boxSpacing,
-                    child: Padding(
-                        padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              showVoltsPerCell = !showVoltsPerCell;
-                            });
-                          },
-                          child: showVoltsPerCell ? Column(
-                            children: [
-                              Text("Voltage/Cell"),
-                              Text("${doublePrecision(escTelemetry.v_in / widget.currentSettings.settings.batterySeriesCount, 2)} V", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold))
-                            ],
-                          ) : Column(
-                            children: [
-                              Text("Battery"),
-                              Text("${doublePrecision(escTelemetry.v_in, 1)} V", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold))
-                            ],
-                          ),
-                        ))),
+                childBattery,
                 Spacer(),
-                Container(
-                    decoration: BoxDecoration(
-                        color: boxBgColor,
-                        borderRadius: BorderRadius.circular(5)
-                    ),
-                    width: MediaQuery.of(context).size.width / 3 - boxSpacing,
-                    child: Padding(
-                        padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
-                        child: Column(
-                          children: [
-                            Text("ESC Temp"),
-                            Text("$temperatureMosfet", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
-                          ],
-                        ))),
+                childMosfetTemp,
                 Spacer(),
-                Container(
-                    decoration: BoxDecoration(
-                        color: boxBgColor,
-                        borderRadius: BorderRadius.circular(5)
-                    ),
-                    width: MediaQuery.of(context).size.width / 3 - boxSpacing,
-                    child: Padding(
-                        padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
-                        child: Column(
-                          children: [
-                            Text("Motor Temp"),
-                            Text("$temperatureMotor", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
-                          ],
-                        ))),
+                childMotorTemp,
                 Spacer(),
               ]
           ),
