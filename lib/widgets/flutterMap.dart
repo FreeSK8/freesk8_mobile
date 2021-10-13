@@ -70,22 +70,18 @@ class FlutterMapWidgetState extends State<FlutterMapWidget> {
         ),
         new MarkerLayerOptions(
           markers: [
-            startPosition,
             new Marker(
-              width: 160.0,
-              height: 160.0,
+              width: 120.0,
+              height: 120.0,
               point: widget.routeTakenLocations.last,
               builder: (ctx) =>
               new Container(
-                margin: EdgeInsets.fromLTRB(0, 0, 0, 80),
+                margin: EdgeInsets.fromLTRB(0, 0, 0, 60),
                 child: new Image(image: AssetImage("assets/map_position.png")),
               ),
             ),
           ],
         ),
-        new PolylineLayerOptions(
-          polylines: [routePolyLine]
-        )
       ],
     );
   }
