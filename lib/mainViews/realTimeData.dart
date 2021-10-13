@@ -805,7 +805,7 @@ class RealTimeDataState extends State<RealTimeData> {
                     Positioned(
                         top: 0,
                         right: 0,
-                        child: escTelemetry.fault_code == mc_fault_code.FAULT_CODE_NONE ? Icon(Icons.check_circle, color: Colors.green,) : Icon(Icons.error, color: Colors.red)
+                        child: escTelemetry.fault_code == mc_fault_code.FAULT_CODE_NONE ? Icon(Icons.check_circle_outline, color: Colors.green,) : Icon(Icons.warning, color: Colors.red)
                     ),
                     Center(child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
