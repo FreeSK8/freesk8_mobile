@@ -15,6 +15,20 @@ import 'package:path/path.dart' as path;
 
 import 'package:latlong/latlong.dart';
 
+Color multiColorLerp(Color colorA, Color colorB, Color colorC, double value) {
+  value = value.clamp(0.0, 1.0);
+  Color result;
+  if (value < 0.5) {
+    result =
+        Color.lerp(colorA, colorB, value * 2);
+  }
+  else {
+    result =
+        Color.lerp(colorB, colorC, value * 2 - 1);
+  }
+  return result;
+}
+
 List<double> normalize(List<double> array) {
   final lower = array.reduce(min);
   final upper = array.reduce(max);
@@ -26,6 +40,7 @@ List<double> normalize(List<double> array) {
 
   return normalized;
 }
+
 class Dialogs {
   static Future<void> showPleaseWaitDialog(
       BuildContext context, GlobalKey key) async {
