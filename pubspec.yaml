@@ -31,13 +31,6 @@ dependencies:
 
   flutter_polyline_points: 0.2.6 #https://pub.dev/packages/flutter_polyline_points/changelog
 
-  flutter_thermometer: ^1.0.0
-  flutter_gauge:
-    #path: ../forked_packages/flutter_gauge
-    git:
-      url: git@github.com:FreeSK8/flutter_gauge.git
-      ref: freesk8_mobile
-
   oscilloscope: 0.0.3
   intl: ^0.16.1
 
