@@ -2910,15 +2910,24 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
     return Scaffold(
         // Appbar
-        appBar: AppBar(
-            title: Row(children: [
-              Text("FreeSK8 (v$freeSK8ApplicationVersion)"),
-              syncInProgress ? Icon(Icons.sync) : Container()
-            ],),
-            // Set the background color of the App Bar
-            backgroundColor: serverTCPSocket != null ? Colors.blueAccent : Theme.of(context).primaryColor,
-            // Set the bottom property of the Appbar to include a Tab Bar
-            //bottom: getTabBar()
+        appBar: MediaQuery.of(context).size.width > MediaQuery.of(context).size.height ?
+            // Horizontal hide appbar
+        PreferredSize(
+            preferredSize: Size.fromHeight(4.2), // here the desired height
+            child: AppBar(
+                backgroundColor: serverTCPSocket != null ? Colors.blueAccent : Theme.of(context).primaryColor
+            )
+        ) :
+            // Vertical show appbar
+        AppBar(
+          title: Row(children: [
+            Text("FreeSK8 (v$freeSK8ApplicationVersion)"),
+            syncInProgress ? Icon(Icons.sync) : Container()
+          ],),
+          // Set the background color of the App Bar
+          backgroundColor: serverTCPSocket != null ? Colors.blueAccent : Theme.of(context).primaryColor,
+          // Set the bottom property of the Appbar to include a Tab Bar
+          //bottom: getTabBar()
         ),
         // Set the TabBar view as the body of the Scaffold
         body: LogConsoleOnShake(
