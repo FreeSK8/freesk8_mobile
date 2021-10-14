@@ -371,7 +371,7 @@ class RealTimeDataState extends State<RealTimeData> {
     double distanceTraveled = escTelemetry.tachometer_abs / 1000.0;
     if (widget.currentSettings.settings.useImperial) distanceTraveled = kmToMile(distanceTraveled);
     distanceTraveled = doublePrecision(distanceTraveled, 2);
-    String distance = widget.currentSettings.settings.useImperial ? "$distanceTraveled miles" : "$distanceTraveled km";
+    String distance = widget.currentSettings.settings.useImperial ? "$distanceTraveled mi" : "$distanceTraveled km";
 
     double efficiency = calculateEfficiency(distanceTraveled);
     String efficiencyGaugeLabel = widget.currentSettings.settings.useImperial ? "Efficiency Wh/Mi" : "Efficiency Wh/Km";
