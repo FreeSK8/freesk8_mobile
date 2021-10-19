@@ -1060,7 +1060,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             catCurrentFilename = fileList.first.fileName;
             catBytesTotal = fileList.first.fileSize;
             catBytesRaw.clear();
-            theTXLoggerCharacteristic.write(utf8.encode("cat ${fileList.first.fileName}~"));
+            sendBLEData(theTXLoggerCharacteristic, utf8.encode("cat ${fileList.first.fileName}~"), false);
           }else _alertLoggerTest();
           return;
         }
@@ -1093,8 +1093,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             // Verify the correct number of bytes were received, retry file if necessary
             if (catBytesReceived != catBytesTotal) {
               globalLogger.e("Concatenate file operation complete but received $catBytesReceived of $catBytesTotal bytes. Retrying $catCurrentFilename");
-              // Take the current file and add it to the front of the fileList to be re-attempted
-              fileList.insert(0,fileList.first);
+
               // Advance the sync process after failure
               setState(() {
                 catInProgress = false;
@@ -1343,6 +1342,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             catUnpackingFile = false; // Un-pause gotchiTimer
             // Once finished add this file to fileListToDelete
             fileListToDelete.add(catCurrentFilename); // Add this file to fileListToDelete
+            // Remove this file from list of file to sync
+            fileList.removeAt(0);
             loggerTestBuffer = receiveStr;
             if(!syncInProgress) _alertLoggerTest();
             setState(() {
@@ -2872,31 +2873,20 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       globalLogger.d("Building main.dart with syncAdvanceProgress: fileList.length=${fileList.length} fileListToDelete.length=${fileListToDelete.length} syncEraseOnComplete=$syncEraseOnComplete");
       syncAdvanceProgress = false;
 
-      if(fileList.length>0) //TODO: logically I didn't think this needed to be conditional but helps during debugging
-        fileList.removeAt(0); //Remove the first file in the list (we just finished receiving this file)
-
-      if(fileList.length>0){
+      // First check if any files need to be erased
+      if(fileListToDelete.length>0 && syncEraseOnComplete) {
+          globalLogger.d("Sync requesting rm of ${fileListToDelete.first}");
+          // Remove the first file in the list of files to delete
+          sendBLEData(theTXLoggerCharacteristic,
+              utf8.encode("rm ${fileListToDelete.first}~"), false);
+      // Second check if we have more files to sync
+      } else if(fileList.length>0) {
         catCurrentFilename = fileList.first.fileName;
         catBytesTotal = fileList.first.fileSize; //Set the total expected bytes for the current file
         globalLogger.d("Sync requesting cat of $catCurrentFilename with $catBytesTotal bytes");
         sendBLEData(theTXLoggerCharacteristic, utf8.encode("cat ${fileList.first.fileName}~"), false); //Request next file
-      }
-      else if(fileListToDelete.length>0){
-        // We have sync'd all the files and we have files to erase
-        // Evaluate user's option to remove files on sync
-        if (syncEraseOnComplete) {
-          globalLogger.d("Sync requesting rm of ${fileListToDelete.first}");
-          // Remove the first file in the list of files to delete
-          sendBLEData(theTXLoggerCharacteristic, utf8.encode("rm ${fileListToDelete.first}~"), false);
-        } else {
-          // We are finished with the sync process because the user does not
-          // want to erase files on the receiver
-          globalLogger.d("Sync complete without performing erase");
-          sendSyncStop();
-          syncInProgress = false;
-        }
-      }
-      else {
+      // We've finished the sync
+      }  else {
         globalLogger.d("Sync complete!");
         sendSyncStop();
         syncInProgress = false;
