@@ -6,10 +6,11 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:freesk8_mobile/components/databaseAssistant.dart';
 import 'package:freesk8_mobile/components/userSettings.dart';
 import 'package:freesk8_mobile/globalUtilities.dart';
-
 import 'package:uuid/uuid.dart';
 
 import 'package:charts_flutter/flutter.dart' as charts;
+
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class VehicleManagerArguments {
   final String connectedDeviceID;
@@ -167,10 +168,71 @@ class VehicleManagerState extends State<VehicleManager> {
     ];
   }
 
+  static double _averageGroup(List<List<double>> group) {
+    double average = 0;
+    int count = 0;
+    group.forEach((member) {
+      double value = (member.reduce((value, element) => value + element) / member.length);
+      if (!value.isNaN) {
+        average += value;
+        ++count;
+      }
+    });
+    average /= count;
+
+    return average;
+  }
+  static List<List<double>> _offsetGroupByAverage(List<List<double>> group, double average) {
+    final List<List<double>> response = group;
+    response.forEach((member) {
+      member.forEach((element) {
+        element -= average;
+      });
+    });
+    return response;
+  }
+
+  /// Create carting series
+  static List<charts.Series<DataTrend, int>> _createDataFromGroup(List<String> deviceNames, List<List<double>> dataGroup) {
+
+
+    double groupAverage = _averageGroup(dataGroup);
+    dataGroup = _offsetGroupByAverage(dataGroup, groupAverage);
+    dataGroup.forEach((element) {
+      element = normalizeToGroup(element, dataGroup);
+    });
+
+    List<List<DataTrend>> data = [];
+    for (int i=0; i<dataGroup.length; ++i) {
+      data.add([]);
+      for (int j=0; j<dataGroup[i].length; ++j) {
+        data[i].add(new DataTrend(j, dataGroup[i][j], null, null, null));
+      }
+    }
+
+    List<charts.Series<DataTrend, int>> response = [];
+    for (int i=0; i<deviceNames.length; ++i) {
+      if (deviceNames[i] == null) continue; //NOTE: I set these device names to null if there is no data to chart
+      charts.Color thisColor = charts.ColorUtil.fromDartColor(Color(googleChartsDefaultColors[i]));
+      response.add(
+        new charts.Series<DataTrend, int>(
+          id: deviceNames[i],
+          colorFn: (_, __) => thisColor,
+          domainFn: (DataTrend trend, _) => trend.index,
+          measureFn: (DataTrend trend, _) => trend.distance,
+          data: data[i],
+        ),
+      );
+    }
+
+    return response;
+  }
+
   Future<Widget> _buildBody(BuildContext context) async {
     Widget bodyWidget;
 
     List<Widget> listChildren = [];
+    List<String> deviceNames = [];
     List<String> knownDevices = await UserSettings.getKnownDevices();
     bool currentDeviceKnown = knownDevices.contains(myArguments.connectedDeviceID);
     globalLogger.w("connected device is in known devices? $currentDeviceKnown Connected device: ${myArguments.connectedDeviceID}");
@@ -186,6 +248,18 @@ class VehicleManagerState extends State<VehicleManager> {
                 Text("Trending statistics:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
 
                 Row(children: [
+                  Text("Daily"),
+                  Radio(
+                    value: 1,
+                    groupValue: trendDays,
+                    onChanged: (int value){
+                      setState(() {
+                        loadingTrends = true;
+                        trendDays = value;
+                      });
+                    },
+                  ),
+
                   Text("Weekly"),
                   Radio(
                     value: 7,
@@ -247,7 +321,7 @@ class VehicleManagerState extends State<VehicleManager> {
         maxAmpsMotors.add(await DatabaseAssistant.getMaxValue(knownDevices[i], "max_amps_motors"));
         maxSpeed.add(await DatabaseAssistant.getMaxValue(knownDevices[i], "max_speed"));
         maxSpeedGPS.add(await DatabaseAssistant.getMaxValue(knownDevices[i], "max_speed_gps"));
-
+        deviceNames.add(distances[i] != 0 ? mySettings.settings.boardAlias : null); //NOTE: Storing device names for charting series labels (null = don't chart)
 
         //NOTE: Trending last 7 days for the past 6 months (26 weeks) or 1 months for the past 12 months
         List<double> trendingLineDistance = [];
@@ -255,7 +329,7 @@ class VehicleManagerState extends State<VehicleManager> {
         List<double> trendingLineDuration = [];
         List<double> trendingLineSpeed = [];
         DateTime trendDate = DateTime.now();
-        int numWindows = trendDays == 7 ? 26 : 12; // Display 6 months for weekly and 1 year for monthly
+        int numWindows = trendDays == 1 ? 14 : trendDays == 7 ? 26 : 12; // Display 2 weeks for daily, 6 months for weekly and 1 year for monthly
         for (int j=0; j<numWindows; ++j) {
           trendingLineDistance.insert(0, await DatabaseAssistant.getRangedValue(knownDevices[i], "distance_km", Duration(days: trendDays), trendDate, false));
           trendingLineEnergy.insert(0, await DatabaseAssistant.getRangedValue(knownDevices[i], "watt_hours", Duration(days: trendDays), trendDate, false));
@@ -408,12 +482,39 @@ class VehicleManagerState extends State<VehicleManager> {
         }
       } else {
         globalLogger.e("help!");
+        //TODO: this device was not known. This is going to cause problems
       }
     }
+
+    // Add chart comparing each vehicle's usage
+    listChildren.add(Text("Vehicle Distance Comparison:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20), textAlign: TextAlign.center,),);
+    listChildren.add(Container(
+        decoration: BoxDecoration(
+            color: Theme.of(context).dialogBackgroundColor,
+            borderRadius: BorderRadius.circular(5)
+        ),
+        child: SizedBox(width: 140, height: 250, child: new charts.LineChart(
+          _createDataFromGroup(deviceNames, trendDistanceWeekly),
+          animate: false,
+          behaviors: [new charts.SeriesLegend(
+            desiredMaxColumns: MediaQuery.of(context).size.width ~/ 125,
+          )],
+          defaultRenderer: charts.LineRendererConfig(
+            includePoints: false,
+            strokeWidthPx: 3,
+          ),
+          primaryMeasureAxis: new charts.NumericAxisSpec(showAxisLine: false, renderSpec: new charts.NoneRenderSpec()),
+          domainAxis: new charts.NumericAxisSpec(),
+
+        )
+        )
+    )
+    );
+
     bodyWidget = ListView.separated(
       separatorBuilder: (BuildContext context, int index) {
         return SizedBox(
-          height: 5,
+          height: 10,
         );
       },
       itemCount: listChildren.length,
@@ -460,9 +561,10 @@ class VehicleManagerState extends State<VehicleManager> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                  Text("Loading.... Please wait 🙏"),
+                  Text("Loading...."),
                   SizedBox(height: 10),
-                  Center(child: CircularProgressIndicator())
+                  Center(child: SpinKitDancingSquare(color: Colors.white,)),
+                  Text("Please wait 🙏"),
                 ],);
               }
             }
