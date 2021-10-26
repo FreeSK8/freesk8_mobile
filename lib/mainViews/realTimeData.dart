@@ -645,7 +645,7 @@ class RealTimeDataState extends State<RealTimeData> {
               Spacer(),
               Container(
                 width: MediaQuery.of(context).size.width * 0.25,
-                height: MediaQuery.of(context).size.height * 0.35,
+                height: MediaQuery.of(context).size.height * 0.45,
                 child: Stack(
                   children: [
                     Positioned(
@@ -770,11 +770,7 @@ class RealTimeDataState extends State<RealTimeData> {
             children: [
               Spacer(),
               Container(
-                //decoration: BoxDecoration(
-                //    color: boxBgColor,
-                //    borderRadius: BorderRadius.circular(15)
-                //),
-                height: MediaQuery.of(context).size.width / 2,
+                height: MediaQuery.of(context).size.width * 0.4,
                 width: MediaQuery.of(context).size.width * 0.75,
                 child: Stack(
                   children: [
@@ -808,7 +804,7 @@ class RealTimeDataState extends State<RealTimeData> {
                         child: escTelemetry.fault_code == mc_fault_code.FAULT_CODE_NONE ? Icon(Icons.check_circle_outline, color: Colors.green,) : Icon(Icons.warning, color: Colors.red)
                     ),
                     Center(child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         escTelemetry.fault_code == mc_fault_code.FAULT_CODE_NONE ? Text("Speed") : Text("${escTelemetry.fault_code.toString().split('.')[1].substring(11)}"),
                         FittedBox(
