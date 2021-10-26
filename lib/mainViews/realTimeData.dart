@@ -374,7 +374,7 @@ class RealTimeDataState extends State<RealTimeData> {
     String distance = widget.currentSettings.settings.useImperial ? "$distanceTraveled mi" : "$distanceTraveled km";
 
     double efficiency = calculateEfficiency(distanceTraveled);
-    String efficiencyGaugeLabel = widget.currentSettings.settings.useImperial ? "Efficiency Wh/Mi" : "Efficiency Wh/Km";
+    String efficiencyGaugeLabel = widget.currentSettings.settings.useImperial ? "Wh/mi" : "Wh/km";
 
     double powerMax = widget.currentSettings.settings.batterySeriesCount * widget.currentSettings.settings.batteryCellMaxVoltage;
     double powerMinimum = widget.currentSettings.settings.batterySeriesCount * widget.currentSettings.settings.batteryCellMinVoltage;
