@@ -497,7 +497,10 @@ class RealTimeDataState extends State<RealTimeData> {
             child: Column(
               children: [
                 Text("Battery Current"),
-                Text("${doublePrecision(escTelemetry.current_in, 1)} A", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+                FittedBox(
+                  fit: BoxFit.fitWidth,
+                  child: Text("${doublePrecision(escTelemetry.current_in, 1)} A", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+                ),
               ],
             )));
 
@@ -509,7 +512,10 @@ class RealTimeDataState extends State<RealTimeData> {
           child: Column(
             children: [
               Text("Motor Current"),
-              Text("${doublePrecision(escTelemetry.current_motor, 1)} A", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+              FittedBox(
+                fit: BoxFit.fitWidth,
+                child: Text("${doublePrecision(escTelemetry.current_motor, 1)} A", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+              ),
             ],
           ),
         ));
@@ -570,12 +576,18 @@ class RealTimeDataState extends State<RealTimeData> {
               child: showVoltsPerCell ? Column(
                 children: [
                   Text("Voltage/Cell"),
-                  Text("${doublePrecision(escTelemetry.v_in / widget.currentSettings.settings.batterySeriesCount, 2)} V", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold))
+                  FittedBox(
+                    fit: BoxFit.fitWidth,
+                    child: Text("${doublePrecision(escTelemetry.v_in / widget.currentSettings.settings.batterySeriesCount, 2)} V", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+                  ),
                 ],
               ) : Column(
                 children: [
                   Text("Battery"),
-                  Text("${doublePrecision(escTelemetry.v_in, 1)} V", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold))
+                  FittedBox(
+                    fit: BoxFit.fitWidth,
+                    child: Text("${doublePrecision(escTelemetry.v_in, 1)} V", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+                  ),
                 ],
               ),
             )));
@@ -603,7 +615,10 @@ class RealTimeDataState extends State<RealTimeData> {
             child: Column(
               children: [
                 Text("ESC Temp"),
-                Text("$temperatureMosfet", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+                FittedBox(
+                  fit: BoxFit.fitWidth,
+                  child: Text("$temperatureMosfet", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+                ),
               ],
             )));
 
@@ -630,7 +645,10 @@ class RealTimeDataState extends State<RealTimeData> {
             child: Column(
               children: [
                 Text("Motor Temp"),
-                Text("$temperatureMotor", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+                FittedBox(
+                  fit: BoxFit.fitWidth,
+                  child: Text("$temperatureMotor", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+                ),
               ],
             )));
 
