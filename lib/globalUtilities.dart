@@ -52,12 +52,16 @@ Color multiColorLerp(Color colorA, Color colorB, Color colorC, double value) {
   value = value.clamp(0.0, 1.0);
   Color result;
   if (value < 0.5) {
-    result =
-        Color.lerp(colorA, colorB, value * 2);
+    result = HSVColor.lerp(
+        HSVColor.fromColor(colorA),
+        HSVColor.fromColor(colorB),
+        value * 2).toColor();
   }
   else {
-    result =
-        Color.lerp(colorB, colorC, value * 2 - 1);
+    result = HSVColor.lerp(
+        HSVColor.fromColor(colorB),
+        HSVColor.fromColor(colorC),
+        value * 2 - 1).toColor();
   }
   return result;
 }
