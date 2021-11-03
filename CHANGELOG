@@ -5,6 +5,7 @@ v0.20.0
 * Updated GPS route colors again (slow-fast = Green-Blue-Red)
 * Added Multi ESC over CAN in Advanced Input Configuration
 * Allow landscape orientation on iOS
+* Adjust Sync logic to perform erase once file is received
 
 v0.19.0
 
