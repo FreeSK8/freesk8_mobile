@@ -1028,7 +1028,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           // Compute color for this section of the route
           if (escTimeSeriesMap[key] != null && escTimeSeriesMap[key].speed != null && _maxSpeed > 0.0) {
             double normalizedSpeed = escTimeSeriesMap[key].speed.abs() / _maxSpeed;
-            thisColor = multiColorLerp(Color(0xff004dff), Color(0xff008032), Color(0xffFf0004), normalizedSpeed);
+            thisColor = multiColorLerp(Color(0xff008032), Color(0xff004dff), Color(0xffFf0004), normalizedSpeed);
           }
           // Add colored polyline from last section to this one
           polylineList.add(Polyline(points: [lastPoint, value], strokeWidth: 4, color: thisColor));
@@ -1051,7 +1051,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           // Compute color for this section of the route
           if (escTimeSeriesMap[key] != null && escTimeSeriesMap[key].speed != null && _maxSpeed > 0.0) {
             double normalizedSpeed = escTimeSeriesMap[key].speed.abs() / _maxSpeed;
-            thisColor = multiColorLerp(Color(0xff004dff), Color(0xff008032), Color(0xffFf0004), normalizedSpeed);
+            thisColor = multiColorLerp(Color(0xff008032), Color(0xff004dff), Color(0xffFf0004), normalizedSpeed);
           }
           // Add colored polyline from last section to this one
           polylineList.add(Polyline(points: [lastPoint, value], strokeWidth: 4, color: thisColor));
