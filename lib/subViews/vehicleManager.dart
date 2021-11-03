@@ -2,16 +2,31 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:freesk8_mobile/components/databaseAssistant.dart';
 import 'package:freesk8_mobile/components/userSettings.dart';
 import 'package:freesk8_mobile/globalUtilities.dart';
-
 import 'package:uuid/uuid.dart';
+
+import 'package:charts_flutter/flutter.dart' as charts;
+
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class VehicleManagerArguments {
   final String connectedDeviceID;
 
   VehicleManagerArguments(this.connectedDeviceID);
+}
+
+/// Per vehicle data type for charting
+class DataTrend {
+  final int index;
+  final double distance;
+  final double energy;
+  final double duration;
+  final double speed;
+
+  DataTrend(this.index, this.distance, this.energy, this.duration, this.speed);
 }
 
 class VehicleManager extends StatefulWidget {
@@ -24,6 +39,8 @@ class VehicleManager extends StatefulWidget {
 class VehicleManagerState extends State<VehicleManager> {
   bool changesMadeToVehicle = false;
   VehicleManagerArguments myArguments;
+  int trendDays = 7;
+  bool loadingTrends = false;
 
   @override
   void initState() {
@@ -91,10 +108,131 @@ class VehicleManagerState extends State<VehicleManager> {
     ), "Remove Vehicle", Text("Remove the selected vehicle and all of it's data?"));
   }
 
+  /// Create carting series
+  static List<charts.Series<DataTrend, int>> _createChartData(List<double> distances, List<double> energies, List<double> durations, List<double> speeds) {
+
+    double energy_avg = (energies.reduce((value, element) => value + element) / energies.length);
+    energies.forEach((element) {element -= energy_avg;});
+    energies = normalize(energies);
+
+    double distance_avg = (distances.reduce((value, element) => value + element) / distances.length);
+    distances.forEach((element) {element -= distance_avg;});
+    distances = normalize(distances);
+
+    double duration_avg = (durations.reduce((value, element) => value + element) / durations.length);
+    durations.forEach((element) {element -= duration_avg;});
+    durations = normalize(durations);
+
+    double speed_avg = (speeds.reduce((value, element) => value + element) / speeds.length);
+    speeds.forEach((element) {element -= speed_avg;});
+    speeds = normalize(speeds);
+
+    List<DataTrend> data = [];
+    for (int i=0; i<distances.length; ++i) {
+      data.add(new DataTrend(i, distances[i], energies[i], durations[i], speeds[i]));
+    }
+
+    return [
+      new charts.Series<DataTrend, int>(
+        id: "Speed",
+        colorFn: (_, __) => charts.MaterialPalette.white,
+        domainFn: (DataTrend trend, _) => trend.index,
+        measureFn: (DataTrend trend, _) => trend.speed,
+        data: data,
+      ),
+
+      new charts.Series<DataTrend, int>(
+        id: "Energy",
+        colorFn: (_, __) => charts.MaterialPalette.red.shadeDefault,
+        domainFn: (DataTrend trend, _) => trend.index,
+        measureFn: (DataTrend trend, _) => trend.energy,
+        data: data,
+      ),
+
+      new charts.Series<DataTrend, int>(
+        id: "Distance",
+        colorFn: (_, __) => charts.MaterialPalette.green.shadeDefault,
+        domainFn: (DataTrend trend, _) => trend.index,
+        measureFn: (DataTrend trend, _) => trend.distance,
+        data: data,
+      ),
+
+      new charts.Series<DataTrend, int>(
+        id: "Duration",
+        colorFn: (_, __) => charts.MaterialPalette.blue.shadeDefault,
+        domainFn: (DataTrend trend, _) => trend.index,
+        measureFn: (DataTrend trend, _) => trend.duration,
+        data: data,
+      ),
+
+    ];
+  }
+
+  static double _averageGroup(List<List<double>> group) {
+    double average = 0;
+    int count = 0;
+    group.forEach((member) {
+      double value = (member.reduce((value, element) => value + element) / member.length);
+      if (!value.isNaN) {
+        average += value;
+        ++count;
+      }
+    });
+    average /= count;
+
+    return average;
+  }
+  static List<List<double>> _offsetGroupByAverage(List<List<double>> group, double average) {
+    final List<List<double>> response = group;
+    response.forEach((member) {
+      member.forEach((element) {
+        element -= average;
+      });
+    });
+    return response;
+  }
+
+  /// Create carting series
+  static List<charts.Series<DataTrend, int>> _createDataFromGroup(List<String> deviceNames, List<List<double>> dataGroup) {
+
+
+    double groupAverage = _averageGroup(dataGroup);
+    dataGroup = _offsetGroupByAverage(dataGroup, groupAverage);
+    dataGroup.forEach((element) {
+      element = normalizeToGroup(element, dataGroup);
+    });
+
+    List<List<DataTrend>> data = [];
+    for (int i=0; i<dataGroup.length; ++i) {
+      data.add([]);
+      for (int j=0; j<dataGroup[i].length; ++j) {
+        data[i].add(new DataTrend(j, dataGroup[i][j], null, null, null));
+      }
+    }
+
+    List<charts.Series<DataTrend, int>> response = [];
+    for (int i=0; i<deviceNames.length; ++i) {
+      if (deviceNames[i] == null) continue; //NOTE: I set these device names to null if there is no data to chart
+      charts.Color thisColor = charts.ColorUtil.fromDartColor(Color(googleChartsDefaultColors[i]));
+      response.add(
+        new charts.Series<DataTrend, int>(
+          id: deviceNames[i],
+          colorFn: (_, __) => thisColor,
+          domainFn: (DataTrend trend, _) => trend.index,
+          measureFn: (DataTrend trend, _) => trend.distance,
+          data: data[i],
+        ),
+      );
+    }
+
+    return response;
+  }
+
   Future<Widget> _buildBody(BuildContext context) async {
     Widget bodyWidget;
 
     List<Widget> listChildren = [];
+    List<String> deviceNames = [];
     List<String> knownDevices = await UserSettings.getKnownDevices();
     bool currentDeviceKnown = knownDevices.contains(myArguments.connectedDeviceID);
     globalLogger.w("connected device is in known devices? $currentDeviceKnown Connected device: ${myArguments.connectedDeviceID}");
@@ -106,25 +244,52 @@ class VehicleManagerState extends State<VehicleManager> {
             children: [
               Image(image: AssetImage("assets/dri_icon.png"),height: 100),
               Column(children: [
-                Text("Actions available:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+
+                Text("Trending statistics:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+
                 Row(children: [
-                  Icon(Icons.remove_circle),
-                  Text("Retire"),
-                  SizedBox(width: 3),
-                  Icon(Icons.delete_forever),
-                  Text("Erase"),
-                  SizedBox(width: 4),
-                  Icon(Icons.family_restroom),
-                  Text("Adopt")
+                  Text("Daily"),
+                  Radio(
+                    value: 1,
+                    groupValue: trendDays,
+                    onChanged: (int value){
+                      setState(() {
+                        loadingTrends = true;
+                        trendDays = value;
+                      });
+                    },
+                  ),
+
+                  Text("Weekly"),
+                  Radio(
+                    value: 7,
+                    groupValue: trendDays,
+                    onChanged: (int value){
+                      setState(() {
+                        loadingTrends = true;
+                        trendDays = value;
+                      });
+                    },
+                  ),
+
+                  Text("Monthly"),
+                  Radio(
+                    value: 30,
+                    groupValue: trendDays,
+                    onChanged: (int value){
+                      setState(() {
+                        loadingTrends = true;
+                        trendDays = value;
+                      });
+                    },
+                  ),
                 ],),
 
-                Text("Status icons:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.grey)),
                 Row(children: [
-                  Icon(Icons.bedtime_outlined, color: Colors.grey),
-                  Text("Retired"),
-                  SizedBox(width: 4),
-                  Icon(Icons.bluetooth_connected, color: Colors.grey),
-                  Text("Connected")
+                  Text("Distance", style: TextStyle(fontSize: 10, color: Colors.green)),
+                  Text(" Duration", style: TextStyle(fontSize: 10, color: Colors.blue)),
+                  Text(" Energy", style: TextStyle(fontSize: 10, color: Colors.red)),
+                  Text(" Speed", style: TextStyle(fontSize: 10, color: Colors.white)),
                 ],),
 
               ])
@@ -138,54 +303,173 @@ class VehicleManagerState extends State<VehicleManager> {
     List<UserSettingsStructure> settings = [];
     List<double> distances = [];
     List<double> consumptions = [];
+    List<double> maxAmpsBattery = [];
+    List<double> maxAmpsMotors = [];
+    List<double> maxSpeed = [];
+    List<double> maxSpeedGPS = [];
+    List<List<double>> trendDistanceWeekly = [];
+    List<List<double>> trendEnergyWeekly = [];
+    List<List<double>> trendDurationWeekly = [];
+    List<List<double>> trendSpeedWeekly = [];
     UserSettings mySettings = new UserSettings();
     for (int i=0; i<knownDevices.length; ++i) {
       if (await mySettings.loadSettings(knownDevices[i])) {
         settings.add(new UserSettingsStructure.fromValues(mySettings.settings));
         distances.add(await DatabaseAssistant.dbGetOdometer(knownDevices[i], mySettings.settings.useGPSData));
         consumptions.add(await DatabaseAssistant.dbGetConsumption(knownDevices[i], mySettings.settings.useImperial, mySettings.settings.useGPSData));
+        maxAmpsBattery.add(await DatabaseAssistant.getMaxValue(knownDevices[i], "max_amps_battery"));
+        maxAmpsMotors.add(await DatabaseAssistant.getMaxValue(knownDevices[i], "max_amps_motors"));
+        maxSpeed.add(await DatabaseAssistant.getMaxValue(knownDevices[i], "max_speed"));
+        maxSpeedGPS.add(await DatabaseAssistant.getMaxValue(knownDevices[i], "max_speed_gps"));
+        deviceNames.add(distances[i] != 0 ? mySettings.settings.boardAlias : null); //NOTE: Storing device names for charting series labels (null = don't chart)
+
+        //NOTE: Trending last 7 days for the past 6 months (26 weeks) or 1 months for the past 12 months
+        List<double> trendingLineDistance = [];
+        List<double> trendingLineEnergy = [];
+        List<double> trendingLineDuration = [];
+        List<double> trendingLineSpeed = [];
+        DateTime trendDate = DateTime.now();
+        int numWindows = trendDays == 1 ? 14 : trendDays == 7 ? 26 : 12; // Display 2 weeks for daily, 6 months for weekly and 1 year for monthly
+        for (int j=0; j<numWindows; ++j) {
+          trendingLineDistance.insert(0, await DatabaseAssistant.getRangedValue(knownDevices[i], "distance_km", Duration(days: trendDays), trendDate, false));
+          trendingLineEnergy.insert(0, await DatabaseAssistant.getRangedValue(knownDevices[i], "watt_hours", Duration(days: trendDays), trendDate, false));
+          trendingLineDuration.insert(0, await DatabaseAssistant.getRangedValue(knownDevices[i], "duration_seconds", Duration(days: trendDays), trendDate, false));
+          //TODO: max_speed_gps would be cool but that stat hasn't been around long enough to use
+          trendingLineSpeed.insert(0, await DatabaseAssistant.getRangedValue(knownDevices[i], "max_speed", Duration(days: trendDays), trendDate, false));
+          trendDate = trendDate.subtract(Duration(days: trendDays));
+        }
+        loadingTrends = false;
+        trendDistanceWeekly.add(trendingLineDistance);
+        trendEnergyWeekly.add(trendingLineEnergy);
+        trendDurationWeekly.add(trendingLineDuration);
+        trendSpeedWeekly.add(trendingLineSpeed);
+
+
+        // Determine actions list for Slidable
+        List<Widget> actionsList = [];
+        if (myArguments.connectedDeviceID == settings[i].deviceID) {
+          actionsList.add(
+              Padding(
+                padding: EdgeInsets.only(bottom:5, top: 5),
+                child: IconSlideAction(
+                    caption: 'Retire',
+                    color: Colors.blue,
+                    icon: Icons.bedtime,
+                    onTap: () async {
+                      _retireVehicle(settings[i].deviceID);
+                    } // Merge onTap
+                ),
+              )
+          );
+        }
+        // Allow any vehicle to be adopted/recruited if we are not currently connected to a known device
+        if (!currentDeviceKnown && myArguments.connectedDeviceID != null) {
+          actionsList.add(
+              Padding(
+                padding: EdgeInsets.only(bottom:5, top: 5),
+                child: IconSlideAction(
+                    caption: 'Adopt',
+                    color: Colors.indigo,
+                    icon: Icons.family_restroom,
+                    onTap: () async {
+                      _recruitVehicle(settings[i].deviceID);
+                    } // Merge onTap
+                ),
+              )
+          );
+        }
+
         // Add a Row for each Vehicle we load
-        Widget listChild = Row(
-          children: [
-            //TODO: Editable board avatar
-            FutureBuilder<String>(
-                future: UserSettings.getBoardAvatarPath(knownDevices[i]),
-                builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
-                  return CircleAvatar(
-                      backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.png'),
-                      radius: 42,
-                      backgroundColor: Colors.white);
-                }),
-            SizedBox(width: 10),
-            Column(children: [
-              Text("${settings[i].boardAlias}"), //TODO: Editable board name
-              Text("${settings[i].batterySeriesCount}S ${settings[i].wheelDiameterMillimeters}mm ${settings[i].gearRatio}:1"),
-              Text("${settings[i].deviceID}", style: TextStyle(fontSize: 4),),
-            ],
-            crossAxisAlignment: CrossAxisAlignment.start),
+        Widget listChild = Slidable(
+          key: Key("$i"),
+          actionPane: SlidableDrawerActionPane(),
+          actionExtentRatio: 0.25,
+          child: Container(
+            decoration: BoxDecoration(
+                color: Theme.of(context).dialogBackgroundColor,
+                borderRadius: BorderRadius.circular(5)
+            ),
+            child: Row(
+
+              children: [
+                SizedBox(width: 5),
+                //TODO: Editable board avatar
+                FutureBuilder<String>(
+                    future: UserSettings.getBoardAvatarPath(knownDevices[i]),
+                    builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+                      return CircleAvatar(
+                          backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.png'),
+                          radius: 42,
+                          backgroundColor: Colors.white);
+                    }),
+                SizedBox(width: 10),
+                Container(
+                  color: Colors.green,
+                  child: Row(children: [
+
+                  ],),
+                ),
+                Column(children: [
+                  Row(children: [
+
+                    // Show if the listed device is the one we are connected to
+                    myArguments.connectedDeviceID == settings[i].deviceID ? Icon(Icons.bluetooth_connected, color: Colors.grey) : Container(),
+                    // Show if vehicle has been retired from service
+                    settings[i].deviceID.startsWith("R*") ? Icon(Icons.bedtime_outlined, color: Colors.grey) : Container(),
+
+                    Text("${settings[i].boardAlias}"), //TODO: Editable board name
+                  ],),
+
+                  Text("${settings[i].batterySeriesCount}S ${settings[i].wheelDiameterMillimeters}mm ${settings[i].gearRatio}:1", style: TextStyle(fontSize: 10, color: Colors.grey),),
+                  SizedBox(width: 140, height: 75, child: new charts.LineChart(
+                    _createChartData(trendDistanceWeekly[i], trendEnergyWeekly[i], trendDurationWeekly[i], trendSpeedWeekly[i]),
+                    animate: false,
+                    primaryMeasureAxis: new charts.NumericAxisSpec(showAxisLine: false, renderSpec: new charts.NoneRenderSpec()),
+                    domainAxis: new charts.NumericAxisSpec(showAxisLine: false, renderSpec: new charts.NoneRenderSpec()),
+                    layoutConfig: new charts.LayoutConfig(
+                        leftMarginSpec: new charts.MarginSpec.fixedPixel(0),
+                        topMarginSpec: new charts.MarginSpec.fixedPixel(0),
+                        rightMarginSpec: new charts.MarginSpec.fixedPixel(0),
+                        bottomMarginSpec: new charts.MarginSpec.fixedPixel(0)),
+                  ),),
+                  SizedBox(height: 5),
+                ],
+                    crossAxisAlignment: CrossAxisAlignment.start),
 
 
-            Spacer(),
-            Column(children: [
-              Text("${settings[i].useImperial ? kmToMile(distances[i]) : doublePrecision(distances[i], 2)} ${settings[i].useImperial ? "mi" : "km"}"),
-              Text("${doublePrecision(consumptions[i], 2)} ${settings[i].useImperial ? "wh/mi" : "wh/km"}"),
-            ],crossAxisAlignment: CrossAxisAlignment.end),
+                Spacer(),
+                Column(children: [
+                  SizedBox(height: 10),
+                  Text("${settings[i].useImperial ? kmToMile(distances[i]) : doublePrecision(distances[i], 2)} ${settings[i].useImperial ? "mi" : "km"}"),
+                  Text("${doublePrecision(consumptions[i], 2)} ${settings[i].useImperial ? "wh/mi" : "wh/km"}"),
+                  Text("${maxSpeed[i]} top kph"),
+                  Text("${maxAmpsBattery[i]}A batt max"),
+                  Text("${maxAmpsMotors[i]}A motor max"),
+                  SizedBox(height: 10),
+                ],crossAxisAlignment: CrossAxisAlignment.end),
 
-            SizedBox(width: 10),
-            // Show if the listed device is the one we are connected to
-            myArguments.connectedDeviceID == settings[i].deviceID ? Icon(Icons.bluetooth_connected, color: Colors.grey) : Container(),
-            myArguments.connectedDeviceID == settings[i].deviceID ? GestureDetector(child: Icon(Icons.remove_circle), onTap: (){_retireVehicle(settings[i].deviceID);}) : Container(),
+                SizedBox(width: 5),
 
-            // Show if vehicle has been retired from service
-            settings[i].deviceID.startsWith("R*") ? Icon(Icons.bedtime_outlined, color: Colors.grey) : Container(),
+              ],
+            ),),
 
-            // Allow any vehicle to be adopted/recruited if we are not currently connected to a known device
-            !currentDeviceKnown && myArguments.connectedDeviceID != null ? GestureDetector(child: Icon(Icons.family_restroom), onTap: (){_recruitVehicle(settings[i].deviceID);}) : Container(),
+          // Computed above
+          actions: actionsList,
 
+          secondaryActions: myArguments.connectedDeviceID != settings[i].deviceID ? <Widget>[
             // Allow any disconnected vehicle to be removed
-            myArguments.connectedDeviceID != settings[i].deviceID ? GestureDetector(child: Icon(Icons.delete_forever), onTap: (){_removeVehicle(settings[i].deviceID);}) : Container(),
-            SizedBox(width: 10),
-          ],
+            Padding(
+              padding: EdgeInsets.only(bottom:5, top: 5),
+              child: IconSlideAction(
+                caption: 'Delete',
+                color: Colors.red,
+                icon: Icons.delete,
+                onTap: () async {
+                  _removeVehicle(settings[i].deviceID);
+                },
+              ),
+            ),
+          ] : <Widget>[],
         );
 
         if (myArguments.connectedDeviceID == settings[i].deviceID) {
@@ -198,12 +482,39 @@ class VehicleManagerState extends State<VehicleManager> {
         }
       } else {
         globalLogger.e("help!");
+        //TODO: this device was not known. This is going to cause problems
       }
     }
+
+    // Add chart comparing each vehicle's usage
+    listChildren.add(Text("Vehicle Distance Comparison:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20), textAlign: TextAlign.center,),);
+    listChildren.add(Container(
+        decoration: BoxDecoration(
+            color: Theme.of(context).dialogBackgroundColor,
+            borderRadius: BorderRadius.circular(5)
+        ),
+        child: SizedBox(width: 140, height: 250, child: new charts.LineChart(
+          _createDataFromGroup(deviceNames, trendDistanceWeekly),
+          animate: false,
+          behaviors: [new charts.SeriesLegend(
+            desiredMaxColumns: MediaQuery.of(context).size.width ~/ 125,
+          )],
+          defaultRenderer: charts.LineRendererConfig(
+            includePoints: false,
+            strokeWidthPx: 3,
+          ),
+          primaryMeasureAxis: new charts.NumericAxisSpec(showAxisLine: false, renderSpec: new charts.NoneRenderSpec()),
+          domainAxis: new charts.NumericAxisSpec(),
+
+        )
+        )
+    )
+    );
+
     bodyWidget = ListView.separated(
       separatorBuilder: (BuildContext context, int index) {
         return SizedBox(
-          height: 5,
+          height: 10,
         );
       },
       itemCount: listChildren.length,
@@ -243,10 +554,18 @@ class VehicleManagerState extends State<VehicleManager> {
         body: FutureBuilder<Widget>(
             future: _buildBody(context),
             builder: (context, AsyncSnapshot<Widget> snapshot) {
-              if (snapshot.hasData) {
+              if (snapshot.hasData && !loadingTrends) {
                 return snapshot.data;
               } else {
-                return Center(child: CircularProgressIndicator());
+                return Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                  Text("Loading...."),
+                  SizedBox(height: 10),
+                  Center(child: SpinKitDancingSquare(color: Colors.white,)),
+                  Text("Please wait 🙏"),
+                ],);
               }
             }
         ),

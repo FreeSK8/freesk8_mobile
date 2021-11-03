@@ -1,3 +1,11 @@
+v0.20.0
+
+* Add statistics to Vehicle Manager
+* Updated Real Time data display (Inspired by @frankthedragon)
+* Updated GPS route colors again (slow-fast = Green-Blue-Red)
+* Added Multi ESC over CAN in Advanced Input Configuration
+* Allow landscape orientation on iOS
+
 v0.19.0
 
 * Added support for VESC FW5.3-beta

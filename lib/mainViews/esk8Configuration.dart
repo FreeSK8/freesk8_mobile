@@ -1704,6 +1704,13 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                             secondary: const Icon(Icons.sync),
                                           ),
 
+                                          SwitchListTile(
+                                            title: Text("Multiple ESC over CAN (default = on)"),
+                                            value: widget.escAppConfiguration.app_adc_conf.multi_esc,
+                                            onChanged: (bool newValue) { setState((){ widget.escAppConfiguration.app_adc_conf.multi_esc = newValue;}); },
+                                            secondary: const Icon(Icons.settings_ethernet),
+                                          ),
+
                                           ElevatedButton(onPressed: (){
                                             setState(() {
                                               showAdvancedOptions = !showAdvancedOptions;
@@ -2188,8 +2195,12 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                   },
                                 ),
 
-
-                                //TODO: Allow user control? Text("multi esc ${widget.escAppConfiguration.app_ppm_conf.multi_esc} (uh this needs to be true)"),
+                                SwitchListTile(
+                                  title: Text("Multiple ESC over CAN (default = on)"),
+                                  value: widget.escAppConfiguration.app_ppm_conf.multi_esc,
+                                  onChanged: (bool newValue) { setState((){ widget.escAppConfiguration.app_ppm_conf.multi_esc = newValue;}); },
+                                  secondary: const Icon(Icons.settings_ethernet),
+                                ),
 
                               ],) : Container(),
 
@@ -2218,8 +2229,6 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                   },
                                 )
                                 ),
-
-                                //TODO: We don't want this disabled: Text("${widget.escAppConfiguration.app_chuk_conf.multi_esc}"),
 
 
                                 Text("Input deadband: ${(widget.escAppConfiguration.app_chuk_conf.hyst * 100).toInt()}% (15% = default)"),
@@ -2390,6 +2399,13 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                           widget.escAppConfiguration.app_chuk_conf.tc_max_diff = value.toInt().toDouble();
                                         });
                                       },
+                                    ),
+
+                                    SwitchListTile(
+                                      title: Text("Multiple ESC over CAN (default = on"),
+                                      value: widget.escAppConfiguration.app_chuk_conf.multi_esc,
+                                      onChanged: (bool newValue) { setState((){ widget.escAppConfiguration.app_chuk_conf.multi_esc = newValue;}); },
+                                      secondary: const Icon(Icons.settings_ethernet),
                                     ),
 
                                   ],) : Container(),

@@ -15,6 +15,88 @@ import 'package:path/path.dart' as path;
 
 import 'package:latlong/latlong.dart';
 
+// Google Chart Colors
+var googleChartsDefaultColors = [0xff3366cc,
+  0xffdc3912,
+  0xffff9900,
+  0xff109618,
+  0xff990099,
+  0xff0099c6,
+  0xffdd4477,
+  0xff66aa00,
+  0xffb82e2e,
+  0xff316395,
+  0xff994499,
+  0xff22aa99,
+  0xffaaaa11,
+  0xff6633cc,
+  0xffe67300,
+  0xff8b0707,
+  0xff651067,
+  0xff329262,
+  0xff5574a6,
+  0xff3b3eac,
+  0xffb77322,
+  0xff16d620,
+  0xffb91383,
+  0xfff4359e,
+  0xff9c5935,
+  0xffa9c413,
+  0xff2a778d,
+  0xff668d1c,
+  0xffbea413,
+  0xff0c5922,
+  0xff743411];
+
+Color multiColorLerp(Color colorA, Color colorB, Color colorC, double value) {
+  value = value.clamp(0.0, 1.0);
+  Color result;
+  if (value < 0.5) {
+    result = HSVColor.lerp(
+        HSVColor.fromColor(colorA),
+        HSVColor.fromColor(colorB),
+        value * 2).toColor();
+  }
+  else {
+    result = HSVColor.lerp(
+        HSVColor.fromColor(colorB),
+        HSVColor.fromColor(colorC),
+        value * 2 - 1).toColor();
+  }
+  return result;
+}
+
+List<double> normalize(List<double> array) {
+  final lower = array.reduce(min);
+  final upper = array.reduce(max);
+  final List<double> normalized = [];
+
+  array.forEach((element) => element < 0
+      ? normalized.add(-(element / lower))
+      : normalized.add(element / upper));
+
+  return normalized;
+}
+
+List<double> normalizeToGroup(List<double> array, List<List<double>> group) {
+  double lower = 0;
+  double upper = 0;
+  group.forEach((element) {
+    final minimum = element.reduce(min);
+    final maximum = element.reduce(max);
+    if (minimum < lower) lower = minimum;
+    if (maximum > upper) upper = maximum;
+  });
+
+  final List<double> normalized = [];
+
+  array.forEach((element) => element < 0
+      ? normalized.add(-(element / lower))
+      : normalized.add(element / upper));
+
+  return normalized;
+}
+
 class Dialogs {
   static Future<void> showPleaseWaitDialog(
       BuildContext context, GlobalKey key) async {

@@ -174,15 +174,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "4.0.1"
-  flutter_gauge:
-    dependency: "direct main"
-    description:
-      path: "."
-      ref: freesk8_mobile
-      resolved-ref: a97a5b8c55a68f89d873f20d9757f5e5f994b481
-      url: "git@github.com:FreeSK8/flutter_gauge.git"
-    source: git
-    version: "1.0.8"
   flutter_image:
     dependency: transitive
     description:
@@ -232,18 +223,18 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.6.0"
+  flutter_spinkit:
+    dependency: "direct main"
+    description:
+      name: flutter_spinkit
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "5.1.0"
   flutter_test:
     dependency: "direct dev"
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_thermometer:
-    dependency: "direct main"
-    description:
-      name: flutter_thermometer
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "1.0.0"
   flutter_web_plugins:
     dependency: transitive
     description: flutter
