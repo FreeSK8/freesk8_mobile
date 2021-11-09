@@ -361,6 +361,17 @@ class RideLogViewerState extends State<RideLogViewer> {
     ), "OK");
   }
 
+  double processVehicleSpeed(double speedStored, double eRPM, double gearRatio, int wheelDiameterMillimeters, int motorPoles) {
+    double thisSpeed = myArguments.userSettings.settings.useImperial ? kmToMile(eRPMToKph(eRPM, gearRatio, wheelDiameterMillimeters, motorPoles)) : eRPMToKph(eRPM, gearRatio, wheelDiameterMillimeters, motorPoles);
+    // Check if thisSpeed is greater than the one previously stored
+    if (speedStored == null || thisSpeed.abs() > speedStored.abs()) {
+      // Return the greater value
+      return thisSpeed;
+    }
+    // No changes, return previously stored value
+    return speedStored;
+  }
+
   @override
   Widget build(BuildContext context) {
     globalLogger.d("Build: rideLogViewer");
@@ -583,7 +594,9 @@ class RideLogViewerState extends State<RideLogViewer> {
               escTimeSeriesMap[thisDt].dutyCycle = double.tryParse(entry[6]);
               escTimeSeriesMap[thisDt].currentMotor = double.tryParse(entry[7]);
               escTimeSeriesMap[thisDt].currentInput = double.tryParse(entry[8]);
-              escTimeSeriesMap[thisDt].speed = myArguments.userSettings.settings.useImperial ? kmToMile(eRPMToKph(double.tryParse(entry[11]), gearRatio, wheelDiameterMillimeters, motorPoles)) : eRPMToKph(double.tryParse(entry[11]), gearRatio, wheelDiameterMillimeters, motorPoles);
+              if (!myArguments.userSettings.settings.useGPSData) {
+                escTimeSeriesMap[thisDt].speed = processVehicleSpeed(escTimeSeriesMap[thisDt].speed, double.tryParse(entry[11]), gearRatio, wheelDiameterMillimeters, motorPoles);
+              }
               escTimeSeriesMap[thisDt].distance = myArguments.userSettings.settings.useImperial ? kmToMile(eDistanceToKm(double.tryParse(entry[12]), gearRatio, wheelDiameterMillimeters, motorPoles)) : eDistanceToKm(double.tryParse(entry[12]), gearRatio, wheelDiameterMillimeters, motorPoles);
               if (distanceStartPrimary == null) {
                 distanceStartPrimary = escTimeSeriesMap[thisDt].distance;
@@ -611,6 +624,9 @@ class RideLogViewerState extends State<RideLogViewer> {
               break;
             case 1:
             // Second ESC in multiESC configuration
+              if (!myArguments.userSettings.settings.useGPSData) {
+                escTimeSeriesMap[thisDt].speed = processVehicleSpeed(escTimeSeriesMap[thisDt].speed, double.tryParse(entry[11]), gearRatio, wheelDiameterMillimeters, motorPoles);
+              }
               escTimeSeriesMap[thisDt].tempMotor2 = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[4]), places: 1) : double.tryParse(entry[4]);
               escTimeSeriesMap[thisDt].tempMosfet2 = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[5]), places: 1) : double.tryParse(entry[5]);
               escTimeSeriesMap[thisDt].currentMotor2 = double.tryParse(entry[7]);
@@ -618,6 +634,9 @@ class RideLogViewerState extends State<RideLogViewer> {
               break;
             case 2:
             // Third ESC in multiESC configuration
+              if (!myArguments.userSettings.settings.useGPSData) {
+                escTimeSeriesMap[thisDt].speed = processVehicleSpeed(escTimeSeriesMap[thisDt].speed, double.tryParse(entry[11]), gearRatio, wheelDiameterMillimeters, motorPoles);
+              }
               escTimeSeriesMap[thisDt].tempMotor3 = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[4]), places: 1) : double.tryParse(entry[4]);
               escTimeSeriesMap[thisDt].tempMosfet3 = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[5]), places: 1) : double.tryParse(entry[5]);
               escTimeSeriesMap[thisDt].currentMotor3 = double.tryParse(entry[7]);
@@ -625,6 +644,9 @@ class RideLogViewerState extends State<RideLogViewer> {
               break;
             case 3:
             // Fourth ESC in multiESC configuration
+              if (!myArguments.userSettings.settings.useGPSData) {
+                escTimeSeriesMap[thisDt].speed = processVehicleSpeed(escTimeSeriesMap[thisDt].speed, double.tryParse(entry[11]), gearRatio, wheelDiameterMillimeters, motorPoles);
+              }
               escTimeSeriesMap[thisDt].tempMotor4 = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[4]), places: 1) : double.tryParse(entry[4]);
               escTimeSeriesMap[thisDt].tempMosfet4 = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[5]), places: 1) : double.tryParse(entry[5]);
               escTimeSeriesMap[thisDt].currentMotor4 = double.tryParse(entry[7]);
