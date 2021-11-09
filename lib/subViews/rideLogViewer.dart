@@ -407,6 +407,13 @@ class RideLogViewerState extends State<RideLogViewer> {
       return Container();
     }
 
+    // Parsed variables
+    // NOTE: Start with userSettings, update values when parsing CSV header data
+    double gearRatio = myArguments.userSettings.settings.gearRatio;
+    int wheelDiameterMillimeters = myArguments.userSettings.settings.wheelDiameterMillimeters;
+    int motorPoles = myArguments.userSettings.settings.motorPoles;
+    Duration timeZoneOffset = DateTime.now().timeZoneOffset;
+
     // Allow user to prefer GPS distance and speed vs the ESC
     _useGPSData = myArguments.userSettings.settings.useGPSData;
 
@@ -444,6 +451,28 @@ class RideLogViewerState extends State<RideLogViewer> {
             fileMultiESCMode = int.parse(entry[2]);
             globalLogger.d("Parsed: ${thisRideLogEntries[i]}");
           }
+          if (entry[1] == "gear_ratio") {
+            gearRatio = double.parse(entry[2]);
+            globalLogger.d("Parsed: ${thisRideLogEntries[i]}");
+          }
+          if (entry[1] == "wheel_diameter_mm") {
+            wheelDiameterMillimeters = int.parse(entry[2]);
+            globalLogger.d("Parsed: ${thisRideLogEntries[i]}");
+          }
+          if (entry[1] == "motor_poles") {
+            motorPoles = int.parse(entry[2]);
+            globalLogger.d("Parsed: ${thisRideLogEntries[i]}");
+          }
+          if (entry[1] == "utc_offset") {
+            List<String> parts = entry[2].split(":");
+            Duration parsedOffset = Duration(
+              hours: int.parse(parts[0]),
+              minutes: int.parse(parts[1]),
+              seconds: int.parse(parts[2])
+            );
+            globalLogger.d("UTC Offset $timeZoneOffset changing to $parsedOffset");
+            timeZoneOffset = parsedOffset;
+          }
         }
         ///GPS position entry
         else if(entry[1] == "gps" && entry.length >= 6) {
@@ -453,7 +482,7 @@ class RideLogViewerState extends State<RideLogViewer> {
             gpsDistance += calculateGPSDistance(_positionEntries.last, thisPosition);
           }
           _positionEntries.add(thisPosition);
-          DateTime thisGPSTime = DateTime.tryParse(entry[0]).add((DateTime.now().timeZoneOffset));
+          DateTime thisGPSTime = DateTime.tryParse(entry[0]).add(timeZoneOffset);
           // Sanity check on GPS time please
           if (thisGPSTime.isBefore(DateTime(2000))) {
             globalLogger.w("rideLogViewer:thisRideLogEntry: GPS DateTime was out of bounds! ${entry[0]} -> ${thisGPSTime.toString()}");
@@ -493,7 +522,7 @@ class RideLogViewerState extends State<RideLogViewer> {
         ///ESC Values
         else if (entry[1] == "esc" && entry.length >= 14) {
           //dt,esc,esc_id,voltage,motor_temp,esc_temp,duty_cycle,motor_current,battery_current,watt_hours,watt_hours_regen,e_rpm,e_distance,fault
-          DateTime thisDt = DateTime.parse(entry[0]).add((DateTime.now().timeZoneOffset));
+          DateTime thisDt = DateTime.parse(entry[0]).add(timeZoneOffset);
           int thisESCID = int.parse(entry[2]);
 
           // Watch for OoO records, Validating by the second (subtract milliseconds)
@@ -554,8 +583,8 @@ class RideLogViewerState extends State<RideLogViewer> {
               escTimeSeriesMap[thisDt].dutyCycle = double.tryParse(entry[6]);
               escTimeSeriesMap[thisDt].currentMotor = double.tryParse(entry[7]);
               escTimeSeriesMap[thisDt].currentInput = double.tryParse(entry[8]);
-              if (!myArguments.userSettings.settings.useGPSData) escTimeSeriesMap[thisDt].speed = myArguments.userSettings.settings.useImperial ? kmToMile(_calculateSpeedKph(double.tryParse(entry[11]))) : _calculateSpeedKph(double.tryParse(entry[11]));
-              escTimeSeriesMap[thisDt].distance = myArguments.userSettings.settings.useImperial ? kmToMile(_calculateDistanceKm(double.tryParse(entry[12]))) : _calculateDistanceKm(double.tryParse(entry[12]));
+              escTimeSeriesMap[thisDt].speed = myArguments.userSettings.settings.useImperial ? kmToMile(eRPMToKph(double.tryParse(entry[11]), gearRatio, wheelDiameterMillimeters, motorPoles)) : eRPMToKph(double.tryParse(entry[11]), gearRatio, wheelDiameterMillimeters, motorPoles);
+              escTimeSeriesMap[thisDt].distance = myArguments.userSettings.settings.useImperial ? kmToMile(eDistanceToKm(double.tryParse(entry[12]), gearRatio, wheelDiameterMillimeters, motorPoles)) : eDistanceToKm(double.tryParse(entry[12]), gearRatio, wheelDiameterMillimeters, motorPoles);
               if (distanceStartPrimary == null) {
                 distanceStartPrimary = escTimeSeriesMap[thisDt].distance;
                 distanceEndPrimary = escTimeSeriesMap[thisDt].distance;
@@ -615,7 +644,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           ++faultCodeCount;
 
           // Parse time of event for tracking
-          DateTime thisDt = DateTime.tryParse(entry[0]).add((DateTime.now().timeZoneOffset));
+          DateTime thisDt = DateTime.tryParse(entry[0]).add(timeZoneOffset);
           int thisFaultCode = int.parse(entry[3]);
           int escID = int.parse(entry[4]);
 
@@ -680,7 +709,7 @@ class RideLogViewerState extends State<RideLogViewer> {
             gpsDistance += calculateGPSDistance(_positionEntries.last, thisPosition);
           }
           _positionEntries.add(thisPosition);
-          DateTime thisGPSTime = DateTime.tryParse(entry[0]).add((DateTime.now().timeZoneOffset));
+          DateTime thisGPSTime = DateTime.tryParse(entry[0]).add(timeZoneOffset);
           // Set the GPS start time if null
           gpsStartTime ??= thisGPSTime;
           // Set the GPS end time to the last message parsed
@@ -701,7 +730,7 @@ class RideLogViewerState extends State<RideLogViewer> {
         }
         else if (entry[1] == "values" && entry.length >= 10) {
           //[2020-05-19T13:46:28.8, values, 12.9, -99.9, 29.0, 0.0, 0.0, 0.0, 0.0, 11884, 102]
-          DateTime thisDt = DateTime.parse(entry[0]).add((DateTime.now().timeZoneOffset));
+          DateTime thisDt = DateTime.parse(entry[0]).add(timeZoneOffset);
           int thisESCID = int.parse(entry[10]);
 
           if (!escIDsInLog.contains(thisESCID)) {
@@ -724,8 +753,8 @@ class RideLogViewerState extends State<RideLogViewer> {
               escTimeSeriesMap[thisDt].dutyCycle = double.tryParse(entry[5]);
               escTimeSeriesMap[thisDt].currentMotor = double.tryParse(entry[6]);
               escTimeSeriesMap[thisDt].currentInput = double.tryParse(entry[7]);
-              if (!myArguments.userSettings.settings.useGPSData) escTimeSeriesMap[thisDt].speed = myArguments.userSettings.settings.useImperial ? kmToMile(_calculateSpeedKph(double.tryParse(entry[8]))) : _calculateSpeedKph(double.tryParse(entry[8]));
-              escTimeSeriesMap[thisDt].distance = myArguments.userSettings.settings.useImperial ? kmToMile(_calculateDistanceKm(double.tryParse(entry[9]))) : _calculateDistanceKm(double.tryParse(entry[9]));
+              if (!myArguments.userSettings.settings.useGPSData) escTimeSeriesMap[thisDt].speed = myArguments.userSettings.settings.useImperial ? kmToMile(eRPMToKph(double.tryParse(entry[8]), gearRatio, wheelDiameterMillimeters, motorPoles)) : eRPMToKph(double.tryParse(entry[8]), gearRatio, wheelDiameterMillimeters, motorPoles);
+              escTimeSeriesMap[thisDt].distance = myArguments.userSettings.settings.useImperial ? kmToMile(eDistanceToKm(double.tryParse(entry[9]), gearRatio, wheelDiameterMillimeters, motorPoles)) : eDistanceToKm(double.tryParse(entry[9]), gearRatio, wheelDiameterMillimeters, motorPoles);
               if (distanceStartPrimary == null) {
                 distanceStartPrimary = escTimeSeriesMap[thisDt].distance;
                 distanceEndPrimary = escTimeSeriesMap[thisDt].distance;
@@ -1147,7 +1176,7 @@ class RideLogViewerState extends State<RideLogViewer> {
     return Scaffold(
       appBar: AppBar(
         title: Row(children: <Widget>[
-          Text(myArguments.logFileInfo.dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)),
+          Text(myArguments.logFileInfo.dateTime.add(timeZoneOffset).toString().substring(0,19)),
           Spacer(),
           ClipRRect(
             borderRadius: new BorderRadius.circular(10),
@@ -1472,21 +1501,6 @@ class RideLogViewerState extends State<RideLogViewer> {
         ),
       )
     );
-  }
-
-  double _calculateSpeedKph(double eRpm) {
-    double ratio = 1.0 / myArguments.userSettings.settings.gearRatio;
-    int minutesToHour = 60;
-    double ratioRpmSpeed = (ratio * minutesToHour * myArguments.userSettings.settings.wheelDiameterMillimeters * pi) / ((myArguments.userSettings.settings.motorPoles / 2) * 1000000);
-    double speed = eRpm * ratioRpmSpeed;
-    return double.parse((speed).toStringAsFixed(2));
-  }
-
-  double _calculateDistanceKm(double eCount) {
-    double ratio = 1.0 / myArguments.userSettings.settings.gearRatio;
-    double ratioPulseDistance = (ratio * myArguments.userSettings.settings.wheelDiameterMillimeters * pi) / ((myArguments.userSettings.settings.motorPoles * 3) * 1000000);
-    double distance = eCount * ratioPulseDistance;
-    return double.parse((distance).toStringAsFixed(2));
   }
 
 }
