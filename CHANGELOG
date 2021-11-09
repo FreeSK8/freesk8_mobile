@@ -1,3 +1,14 @@
+v0.20.1
+
+* Update purpose strings to comply with Apple guidelines
+* Allow landscape only on real time display
+* Utilize vehicle properties from log file header data
+* Display speed from ESC with the faster value
+* Battery percentage restored to real time display
+* Range estimation available on real time display
+* Changes to real time "panels" are persistent
+* Hide ability to manipulate real time font size
+
 v0.20.0
 
 * Add statistics to Vehicle Manager
