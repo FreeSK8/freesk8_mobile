@@ -29,19 +29,15 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>Need BLE permission</string>
+	<string>Allow access to Bluetooth to communicate with your vehicle.</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
-	<string>Need BLE permission</string>
+	<string>Allow access to Bluetooth to communicate with your vehicle.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Need Camera permission</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Need Location permission</string>
-	<key>NSLocationAlwaysUsageDescription</key>
-	<string>Need Location permission</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Need Location permission</string>
+	<string>Allow access to your camera to take pictures of your vehicle.</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+	<string>Turning on location services allows us to show your current location on a map.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Need Photo Library permission</string>
+	<string>Allow access to your photos to select pictures for your vehicle avatar.</string>
 	<key>UIBackgroundModes</key>
 	<array/>
 	<key>UILaunchStoryboardName</key>
