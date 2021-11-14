@@ -120,7 +120,7 @@ class BrocatorState extends State<Brocator> {
 
     myUUID = prefs.getString('brocatorUUID') ?? _uuid.v4().toString();
     broadcastPosition = prefs.getBool('broadcastBrocation') ?? false;
-    serverURL = prefs.getString('brocatorServer');
+    serverURL = prefs.getString('brocatorServer') ?? "";
     serverURLValid = Uri.tryParse(serverURL).isAbsolute;
   }
 
@@ -240,7 +240,7 @@ class BrocatorState extends State<Brocator> {
     tecServer.selection = TextSelection.fromPosition(TextPosition(offset: tecServer.text.length));
 
     List<Marker> mapMakers = [];
-    myBros.brocations.forEach((element) {
+    if (myBros != null) myBros.brocations.forEach((element) {
       mapMakers.add(new Marker(
         width: 50.0,
         height: 50.0,
@@ -289,7 +289,7 @@ class BrocatorState extends State<Brocator> {
                   mapController: _mapController
               )),
         ),
-        Expanded(
+        myBros != null ? Expanded(
           child: ListView.builder(
             itemCount: myBros.brocations.length,
               itemBuilder: (context, i) {
@@ -314,7 +314,7 @@ class BrocatorState extends State<Brocator> {
                   ),
                 );
               })
-        )
+        ) : Text("No Data From Server"),
       ],
     );
 
