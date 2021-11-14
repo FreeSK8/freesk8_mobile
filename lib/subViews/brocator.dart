@@ -100,6 +100,7 @@ class BrocatorState extends State<Brocator> {
   LatLng currentLocation;
   Bro myBrocation = new Bro();
   BroList myBros;
+  bool includeAvatar = true;
 
   static Timer dataRequestTimer;
 
@@ -123,7 +124,7 @@ class BrocatorState extends State<Brocator> {
   }
 
   Future<void> loadSettings() async {
-    globalLogger.wtf("settings loading");
+    globalLogger.wtf("loading settings");
     final prefs = await SharedPreferences.getInstance();
 
     myUUID = prefs.getString('brocatorUUID') ?? _uuid.v4().toString();
@@ -134,6 +135,7 @@ class BrocatorState extends State<Brocator> {
   }
 
   void saveSettings() async {
+    globalLogger.wtf("saving settings");
     final prefs = await SharedPreferences.getInstance();
 
     await prefs.setString('brocatorUUID', myUUID);
@@ -174,8 +176,13 @@ class BrocatorState extends State<Brocator> {
     myBrocation.lastUpdated = DateTime.now().toUtc();
 
     final response = await http.post(Uri.parse(Uri.encodeFull("${serverURL}/brocator.php")),
-      body: jsonEncode(<String, String>{
+      body: includeAvatar ? jsonEncode(<String, String>{
         'Avatar': base64Encode(myBrocation.avatar.bytes),
+        'UUID' : myUUID,
+        'Alias' : myBrocation.alias,
+        'Latitude' : myBrocation.position.latitude.toString(),
+        'Longitude' : myBrocation.position.longitude.toString(),
+      }) : jsonEncode(<String, String>{
         'UUID' : myUUID,
         'Alias' : myBrocation.alias,
         'Latitude' : myBrocation.position.latitude.toString(),
@@ -184,7 +191,8 @@ class BrocatorState extends State<Brocator> {
     );
     if (response.statusCode == 200) {
       // Server returned a 200 OK response
-      //globalLogger.d("sendBrocation Response: ${response.body}");
+      includeAvatar = false; // Only send the vehicle avatar once to reduce bandwidth
+     // globalLogger.d("sendBrocation Response: ${response.body}");
     } else {
       throw Exception('Failed to sendBrocation');
     }
@@ -214,17 +222,22 @@ class BrocatorState extends State<Brocator> {
   @override
   void initState() {
     tecServer.addListener(() {
-      serverURL = tecServer.text;
-      serverURLValid = Uri.tryParse(serverURL).isAbsolute;
-      // Save settings when URL is valid
-      if (serverURLValid) {
-        saveSettings();
+      if (tecServer.text != serverURL) {
+        serverURL = tecServer.text;
+        serverURLValid = Uri.tryParse(serverURL).isAbsolute;
+        // Save settings when URL is valid
+        if (serverURLValid) {
+          saveSettings();
+          includeAvatar = true; // Include avatar on server change
+        }
       }
     });
 
     tecAlias.addListener(() {
-      offlineAlias = tecAlias.text;
-      saveSettings();
+      if (tecAlias.text != offlineAlias) {
+        offlineAlias = tecAlias.text;
+        saveSettings();
+      }
     });
 
     checkLocationPermission();
