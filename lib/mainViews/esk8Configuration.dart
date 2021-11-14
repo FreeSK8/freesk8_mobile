@@ -7,6 +7,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:freesk8_mobile/components/smartSlider.dart';
+import 'package:freesk8_mobile/subViews/brocator.dart';
 
 import '../components/crc16.dart';
 import '../widgets/throttleCurvePainter.dart';
@@ -3599,6 +3600,18 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                 if (result == true) {
                                   // Request the user settings to be reloaded
                                   widget.reloadUserSettings(result);
+                                }
+                              }),
+
+                          ElevatedButton(
+                              child: Text("Brocator"),
+                              onPressed: () async {
+                                FocusScope.of(context).requestFocus(new FocusNode()); //Hide keyboard
+                                // Wait for the navigation to return
+                                final result = await Navigator.of(context).pushNamed(Brocator.routeName, arguments: BrocatorArguments(widget.currentDevice == null ? "Not Connected" : widget.myUserSettings.settings.boardAlias, _boardAvatar));
+                                // If changes were made the result of the Navigation will be true and we'll want to reload the user settings
+                                if (result == true) {
+                                  globalLogger.wtf(result);
                                 }
                               }),
                         ],),

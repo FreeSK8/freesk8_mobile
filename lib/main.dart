@@ -17,6 +17,7 @@ import 'mainViews/realTimeData.dart';
 import 'mainViews/esk8Configuration.dart';
 import 'mainViews/rideLogging.dart';
 
+import 'subViews/brocator.dart';
 import 'subViews/rideLogViewer.dart';
 import 'subViews/focWizard.dart';
 import 'subViews/escProfileEditor.dart';
@@ -77,6 +78,7 @@ void main() {
         RobogotchiCfgEditor.routeName: (BuildContext context) => RobogotchiCfgEditor(),
         RobogotchiDFU.routeName: (BuildContext context) => RobogotchiDFU(),
         VehicleManager.routeName: (BuildContext context) => VehicleManager(),
+        Brocator.routeName: (BuildContext context) => Brocator(),
       },
       theme: ThemeData(
         //TODO: Select satisfying colors for the light theme
