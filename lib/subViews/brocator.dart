@@ -90,6 +90,8 @@ class BrocatorState extends State<Brocator> {
   TextEditingController tecServer = TextEditingController();
   String serverURL = "";
   bool serverURLValid = false;
+  TextEditingController tecAlias = TextEditingController();
+  String offlineAlias = "No Vehicle";
 
   var geolocator = Geolocator();
   var locationOptions = LocationOptions(accuracy: LocationAccuracy.high, distanceFilter: 0);
@@ -101,7 +103,7 @@ class BrocatorState extends State<Brocator> {
 
   static Timer dataRequestTimer;
 
-  static MapController _mapController = MapController();
+  MapController _mapController = MapController();
 
   Future<void> checkLocationPermission() async {
     await Geolocator().checkGeolocationPermissionStatus();
@@ -110,7 +112,13 @@ class BrocatorState extends State<Brocator> {
     }
   }
   Future<void> updateLocation(LatLng data) async {
-    currentLocation = data;
+    if (currentLocation == null) {
+      setState(() {
+        currentLocation = data;
+      });
+    } else {
+      currentLocation = data;
+    }
     //globalLogger.wtf(data);
   }
 
@@ -122,6 +130,7 @@ class BrocatorState extends State<Brocator> {
     broadcastPosition = prefs.getBool('broadcastBrocation') ?? false;
     serverURL = prefs.getString('brocatorServer') ?? "";
     serverURLValid = Uri.tryParse(serverURL).isAbsolute;
+    offlineAlias = prefs.getString('brocatorAlias') ?? offlineAlias;
   }
 
   void saveSettings() async {
@@ -130,6 +139,7 @@ class BrocatorState extends State<Brocator> {
     await prefs.setString('brocatorUUID', myUUID);
     await prefs.setBool('broadcastBrocation', broadcastPosition);
     await prefs.setString('brocatorServer', serverURL);
+    await prefs.setString('brocatorAlias', offlineAlias);
   }
 
   Future<BroList> fetchBrocations() async {
@@ -151,7 +161,7 @@ class BrocatorState extends State<Brocator> {
   Future<void> sendBrocation() async {
     globalLogger.wtf("Sending brocation");
 
-    myBrocation.alias = myArguments.boardAlias;
+    myBrocation.alias = myArguments.boardAlias == null ? offlineAlias : myArguments.boardAlias;
     if (myArguments.boardAvatar != null) {
       myBrocation.avatar = MemoryImage(myArguments.boardAvatar.file.readAsBytesSync(), scale: 0.1);
     } else {
@@ -212,6 +222,11 @@ class BrocatorState extends State<Brocator> {
       }
     });
 
+    tecAlias.addListener(() {
+      offlineAlias = tecAlias.text;
+      saveSettings();
+    });
+
     checkLocationPermission();
     positionStream = geolocator.getPositionStream(locationOptions).listen(
             (Position position) {
@@ -227,6 +242,7 @@ class BrocatorState extends State<Brocator> {
   @override
   void dispose() {
     tecServer?.dispose();
+    tecAlias?.dispose();
     positionStream?.cancel();
     dataRequestTimer?.cancel();
 
@@ -238,6 +254,9 @@ class BrocatorState extends State<Brocator> {
 
     tecServer.text = serverURL;
     tecServer.selection = TextSelection.fromPosition(TextPosition(offset: tecServer.text.length));
+
+    tecAlias.text = offlineAlias;
+    tecAlias.selection = TextSelection.fromPosition(TextPosition(offset: tecAlias.text.length));
 
     List<Marker> mapMakers = [];
     if (myBros != null) myBros.brocations.forEach((element) {
@@ -280,14 +299,20 @@ class BrocatorState extends State<Brocator> {
             decoration: new InputDecoration(labelText: "Server URL"),
             keyboardType: TextInputType.url
         ),
+        TextField(
+          controller: tecAlias,
+          decoration: new InputDecoration(labelText: "Username"),
+          keyboardType: TextInputType.text,
+          maxLength: 13,
+        ),
         Container(
           height: MediaQuery.of(context).size.height * 0.50,
-          child: BrocatorMap(
+          child: currentLocation != null ? BrocatorMap(
               brocatorMapData: BrocatorMapData(
                   currentPosition: currentLocation,
                   mapMarkers: mapMakers,
                   mapController: _mapController
-              )),
+              )) : Text("Awaiting location"),
         ),
         myBros != null ? Expanded(
           child: ListView.builder(

@@ -3608,7 +3608,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               onPressed: () async {
                                 FocusScope.of(context).requestFocus(new FocusNode()); //Hide keyboard
                                 // Wait for the navigation to return
-                                final result = await Navigator.of(context).pushNamed(Brocator.routeName, arguments: BrocatorArguments(widget.currentDevice == null ? "Not Connected" : widget.myUserSettings.settings.boardAlias, _boardAvatar));
+                                final result = await Navigator.of(context).pushNamed(Brocator.routeName, arguments: BrocatorArguments(widget.currentDevice == null ? null : widget.myUserSettings.settings.boardAlias, _boardAvatar));
                                 // If changes were made the result of the Navigation will be true and we'll want to reload the user settings
                                 if (result == true) {
                                   globalLogger.wtf(result);
