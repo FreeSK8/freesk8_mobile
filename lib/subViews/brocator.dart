@@ -18,6 +18,8 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 import 'package:http/http.dart' as http;
 
+import 'package:image/image.dart' as Im;
+
 class Bro {
   String alias;
   MemoryImage avatar;
@@ -40,6 +42,7 @@ class Bro {
       };
 
   factory Bro.fromJson(Map<String, dynamic> json) {
+    //globalLogger.d("${base64Decode(json['Avatar']).length} bytes for ${json['Alias']}");
     return Bro(
       alias: json['Alias'],
       avatar: MemoryImage(base64Decode(json['Avatar'])),
@@ -84,6 +87,7 @@ class BrocatorState extends State<Brocator> {
   String myUUID;
   Uuid _uuid = new Uuid();
 
+  bool _showSettings = false;
   bool broadcastPosition;
   BrocatorArguments myArguments;
 
@@ -145,7 +149,7 @@ class BrocatorState extends State<Brocator> {
   }
 
   Future<BroList> fetchBrocations() async {
-    globalLogger.wtf("Requesting Bros");
+    //globalLogger.wtf("Requesting Bros");
     final response = await http
         .get(Uri.parse("${serverURL}/brocator.php"));
 
@@ -161,15 +165,30 @@ class BrocatorState extends State<Brocator> {
   }
 
   Future<void> sendBrocation() async {
-    globalLogger.wtf("Sending brocation");
+    //globalLogger.wtf("Sending brocation");
 
     myBrocation.alias = myArguments.boardAlias == null ? offlineAlias : myArguments.boardAlias;
-    if (myArguments.boardAvatar != null) {
-      myBrocation.avatar = MemoryImage(myArguments.boardAvatar.file.readAsBytesSync(), scale: 0.1);
-    } else {
-      myBrocation.avatar = MemoryImage((await rootBundle.load('assets/FreeSK8_Mobile.png'))
-          .buffer
-          .asUint8List(), scale: 0.1);
+    if (myArguments.boardAvatar != null && includeAvatar) {
+      // Resize the current avatar to reduce bandwidth
+      Im.Image image = Im.decodeImage(
+          myArguments.boardAvatar.file.readAsBytesSync());
+      Im.Image smallerImage = Im.copyResize(image,
+          width: 120); // choose the size here, it will maintain aspect ratio
+
+      myBrocation.avatar =
+          MemoryImage(Im.encodeJpg(smallerImage, quality: 85));
+
+    } else if (includeAvatar){
+      // Resize the default avatar to reduce bandwidth
+      Im.Image image = Im.decodeImage(
+          (await rootBundle.load('assets/FreeSK8_Mobile.png'))
+              .buffer
+              .asUint8List());
+      Im.Image smallerImage = Im.copyResize(image,
+          width: 120); // choose the size here, it will maintain aspect ratio
+
+      myBrocation.avatar =
+          MemoryImage(Im.encodeJpg(smallerImage, quality: 85));
     }
     
     myBrocation.position = currentLocation;
@@ -214,9 +233,13 @@ class BrocatorState extends State<Brocator> {
       globalLogger.e("fetchBrocations failed: $e");
     }
 
-    setState(() {
-      // Update UI
-    });
+    // Only update the UI if the keyboard isn't open
+    if (MediaQuery.of(context).viewInsets.bottom == 0) {
+      setState(() {
+        // Update UI
+      });
+    }
+
   }
 
   @override
@@ -282,7 +305,7 @@ class BrocatorState extends State<Brocator> {
           margin: EdgeInsets.fromLTRB(0, 0, 0, 0),
           child: GestureDetector(
             onTap: (){
-              //TODO:
+              //TODO: Data popup
             },
             child: CircleAvatar(
                 backgroundImage: element.avatar != null ? element.avatar : AssetImage('assets/FreeSK8_Mobile.png'),
@@ -296,28 +319,55 @@ class BrocatorState extends State<Brocator> {
     Widget bodyWidget = Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        SwitchListTile(
-          title: Text("Share my brocation with everyone"),
-          value: broadcastPosition,
-          onChanged: (bool newValue) {
-            setState((){
-              broadcastPosition = newValue;
-            });
-            saveSettings();
-          },
-          secondary: Icon(broadcastPosition ? Icons.public : Icons.public_off),
+        ExpansionPanelList(
+            elevation: 0,
+            expansionCallback: (int index, bool isExpanded) {
+              setState(() {
+                print(_showSettings);
+                _showSettings = !_showSettings;
+              });
+            },
+            children: [
+              ExpansionPanel(
+                  isExpanded: _showSettings,
+                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                  headerBuilder: (context, isOpen) {
+                    return Row(children: [
+                      SizedBox(width: 10),
+                      Icon(Icons.settings),
+                      Text("Settings")
+                    ],);
+                  },
+                  body: Column(
+                    children: [
+                      SwitchListTile(
+                        title: Text("Share my brocation with everyone"),
+                        value: broadcastPosition,
+                        onChanged: (bool newValue) {
+                          setState((){
+                            broadcastPosition = newValue;
+                          });
+                          saveSettings();
+                        },
+                        secondary: Icon(broadcastPosition ? Icons.public : Icons.public_off),
+                      ),
+                      TextField(
+                          controller: tecServer,
+                          decoration: new InputDecoration(labelText: "Server URL"),
+                          keyboardType: TextInputType.url
+                      ),
+                      TextField(
+                        controller: tecAlias,
+                        decoration: new InputDecoration(labelText: "Username"),
+                        keyboardType: TextInputType.text,
+                        maxLength: 13,
+                      ),
+                    ],
+                  )
+              )
+            ]
         ),
-        TextField(
-            controller: tecServer,
-            decoration: new InputDecoration(labelText: "Server URL"),
-            keyboardType: TextInputType.url
-        ),
-        TextField(
-          controller: tecAlias,
-          decoration: new InputDecoration(labelText: "Username"),
-          keyboardType: TextInputType.text,
-          maxLength: 13,
-        ),
+
         Container(
           height: MediaQuery.of(context).size.height * 0.50,
           child: currentLocation != null ? BrocatorMap(
@@ -327,31 +377,79 @@ class BrocatorState extends State<Brocator> {
                   mapController: _mapController
               )) : Text("Awaiting location"),
         ),
+        Row(
+          children: [
+            Container(width: 40),
+            Spacer(),
+            Container(
+              width: MediaQuery.of(context).size.width * 0.25,
+              child: Text("Name", textAlign: TextAlign.center),
+            ),
+            Spacer(),
+            Container(
+              width: MediaQuery.of(context).size.width * 0.25,
+              child: Text("Last Updated", textAlign: TextAlign.center),
+            ),
+
+            Spacer(),
+            Container(
+              width: MediaQuery.of(context).size.width * 0.25,
+              child: Text("Distance", textAlign: TextAlign.center,),
+            ),
+
+          ],
+        ),
         myBros != null ? Expanded(
           child: ListView.builder(
             itemCount: myBros.brocations.length,
               itemBuilder: (context, i) {
-                return GestureDetector(
-                  onTap: (){
-                    // Center map on selected user
-                    _mapController.move(myBros.brocations[i].position, _mapController.zoom);
-                  },
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                          backgroundImage: myBros.brocations[i].avatar != null ? myBros.brocations[i].avatar : AssetImage('assets/FreeSK8_Mobile.png'),
-                          radius: 20,
-                          backgroundColor: Colors.white),
-                      Spacer(),
-                      Text(myBros.brocations[i].alias.toString()),
-                      Spacer(),
-                      Text("${(DateTime.now().subtract(DateTime.now().timeZoneOffset)).difference(myBros.brocations[i].lastUpdated).inSeconds} seconds"),
-                      Spacer(),
-                      currentLocation == null ? Container() : Text("${doublePrecision(calculateGPSDistance(currentLocation, myBros.brocations[i].position), 1)}km"),
-                    ],
-                  ),
-                );
-              })
+              Duration lastUpdated = (DateTime.now().subtract(DateTime.now().timeZoneOffset)).difference(myBros.brocations[i].lastUpdated);
+              String lastUpdatedString = "";
+              if (lastUpdated.inSeconds < 120) {
+                lastUpdatedString = "${lastUpdated.inSeconds} second${lastUpdated.inSeconds == 1 ? "": "s"}";
+              } else if (lastUpdated.inMinutes < 60) {
+                lastUpdatedString = "${lastUpdated.inMinutes} minute${lastUpdated.inMinutes == 1 ? "": "s"}";
+              } else {
+                lastUpdatedString = "${lastUpdated.inHours} hour${lastUpdated.inHours == 1 ? "": "s"}";
+              }
+              return GestureDetector(
+                onTap: (){
+                  // Increase map zoom level if we are already centered on this user
+                  double mapZoom = _mapController.zoom;
+                  if (_mapController.center == myBros.brocations[i].position && _mapController.zoom < 18) {
+                    mapZoom += 2;
+                    globalLogger.d("Increasing zoom $mapZoom");
+                  }
+                  // Center map and set zoom
+                  _mapController.move(myBros.brocations[i].position, mapZoom);
+                },
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                        backgroundImage: myBros.brocations[i].avatar != null ? myBros.brocations[i].avatar : AssetImage('assets/FreeSK8_Mobile.png'),
+                        radius: 20,
+                        backgroundColor: Colors.white),
+                    Spacer(),
+                    Container(
+                      width: MediaQuery.of(context).size.width * 0.25,
+                      child: Text(myBros.brocations[i].alias.toString(), textAlign: TextAlign.left,),
+                    ),
+                    Spacer(),
+                    Container(
+                      width: MediaQuery.of(context).size.width * 0.25,
+                      child: Text(lastUpdatedString),
+                    ),
+
+                    Spacer(),
+                    Container(
+                      width: MediaQuery.of(context).size.width * 0.25,
+                      child: currentLocation == null ? Container() : Text("${doublePrecision(calculateGPSDistance(currentLocation, myBros.brocations[i].position), 1)}km", textAlign: TextAlign.right,),
+                    ),
+
+                  ],
+                ),
+              );
+            })
         ) : Text("No Data From Server"),
       ],
     );
