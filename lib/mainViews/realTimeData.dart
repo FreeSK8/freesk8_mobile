@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:freesk8_mobile/hardwareSupport/escHelper/dataTypes.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../hardwareSupport/dieBieMSHelper.dart';
 import '../hardwareSupport/escHelper/escHelper.dart';
@@ -74,9 +75,17 @@ class RealTimeDataState extends State<RealTimeData> {
 
   double batteryRemaining;
 
+  double rangeEstimateAverage;
+
   bool showWhWithRegen = true;
+  int showPowerState = 0;
   bool showVoltsPerCell = false;
+  bool showBatteryPercentage = false;
+  bool showRangeEstimate = false;
   bool hideMap = false;
+  bool settingsLoaded = false;
+
+  bool allowFontResize = false;
   double fontSizeValues = 30;
 
 
@@ -119,10 +128,38 @@ class RealTimeDataState extends State<RealTimeData> {
     return double.parse((distance).toStringAsFixed(2));
   }
 
+  void loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    showWhWithRegen = prefs.getBool('rtShowWhWithRegen') ?? showWhWithRegen;
+    showVoltsPerCell = prefs.getBool('rtShowVoltsPerCell') ?? showVoltsPerCell;
+    showBatteryPercentage = prefs.getBool('rtShowBatteryPercentage') ?? showBatteryPercentage;
+    showRangeEstimate = prefs.getBool('rtShowRangeEstimate') ?? showRangeEstimate;
+    hideMap = prefs.getBool('rtShowMap') ?? hideMap;
+
+    Future.delayed(Duration(milliseconds: 250), (){
+      setState(() {
+        showPowerState = showBatteryPercentage ? 2 : showVoltsPerCell ? 1 : 0;
+        settingsLoaded = true;
+      });
+    });
+  }
+
+  void saveSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setBool('rtShowWhWithRegen', showWhWithRegen);
+    await prefs.setBool('rtShowVoltsPerCell', showVoltsPerCell);
+    await prefs.setBool('rtShowBatteryPercentage', showBatteryPercentage);
+    await prefs.setBool('rtShowRangeEstimate', showRangeEstimate);
+    await prefs.setBool('rtShowMap', hideMap);
+  }
+
   @override
   void initState() {
     super.initState();
     globalLogger.d("initState: realTimeData");
+    loadSettings();
     widget.startStopTelemetryFunc(false); //Start the telemetry timer
   }
 
@@ -136,6 +173,7 @@ class RealTimeDataState extends State<RealTimeData> {
   Widget build(BuildContext context) {
     print("Build: RealTimeData");
     if(widget.showDieBieMS) {
+      setLandscapeOrientation(enabled: false);
       var formatTriple = new NumberFormat("##0.000", "en_US");
       return SlidingUpPanel(
         color: Theme.of(context).primaryColor,
@@ -402,7 +440,7 @@ class RealTimeDataState extends State<RealTimeData> {
 
     // Smooth battery remaining from ESC
     if (escTelemetry.battery_level != null) {
-      batteryRemaining = (0.25 * escTelemetry.battery_level * 100) + (0.75 * batteryRemaining);
+      batteryRemaining = (0.1 * escTelemetry.battery_level * 100) + (0.9 * batteryRemaining);
       if (batteryRemaining < 0.0) {
         globalLogger.e("Battery Remaining $batteryRemaining battery_level ${escTelemetry.battery_level} v_in ${escTelemetry.v_in}");
         batteryRemaining = 0;
@@ -412,7 +450,15 @@ class RealTimeDataState extends State<RealTimeData> {
       }
     }
 
-    //globalLogger.wtf("W: ${MediaQuery.of(context).size.width} H: ${MediaQuery.of(context).size.height}");
+    // Estimate range
+    double rangeEstimate = (escTelemetry.battery_wh ?? 1) * (batteryRemaining / 100 ?? 1) / efficiency;
+    if (rangeEstimateAverage == null) rangeEstimateAverage = rangeEstimate;
+    if (rangeEstimate.isNaN || rangeEstimate.isInfinite) {
+      rangeEstimate = 0;
+      rangeEstimateAverage = 0;
+    } else {
+      rangeEstimateAverage = rangeEstimate * 0.1 + rangeEstimateAverage * 0.9;
+    }
 
     Color boxBgColor = Theme.of(context).dialogBackgroundColor;
     double cellVoltage = escTelemetry.v_in / widget.currentSettings.settings.batterySeriesCount;
@@ -456,6 +502,7 @@ class RealTimeDataState extends State<RealTimeData> {
         setState(() {
           showWhWithRegen = !showWhWithRegen;
         });
+        saveSettings();
       },
       child: Container(
           decoration: boxDecoration,
@@ -464,13 +511,21 @@ class RealTimeDataState extends State<RealTimeData> {
               padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
               child: showWhWithRegen ? Column(
                 children: [
-                  Text("Wh Total"),
-                  Text("${doublePrecision(escTelemetry.watt_hours - escTelemetry.watt_hours_charged, 1)}", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+                  FittedBox(
+                      fit: BoxFit.fitWidth,
+                      child: Text("Wh Total")),
+                  FittedBox(
+                      fit: BoxFit.fitWidth,
+                      child: Text("${doublePrecision(escTelemetry.watt_hours - escTelemetry.watt_hours_charged, 1)}", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold))),
                 ],
               ) :  Column(
                 children: [
-                  Text("Wh Used"),
-                  Text("${doublePrecision(escTelemetry.watt_hours, 1)}", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+                  FittedBox(
+                      fit: BoxFit.fitWidth,
+                      child: Text("Wh Used")),
+                  FittedBox(
+                      fit: BoxFit.fitWidth,
+                      child: Text("${doublePrecision(escTelemetry.watt_hours, 1)}", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold))),
                 ],
               )
           )),
@@ -483,8 +538,12 @@ class RealTimeDataState extends State<RealTimeData> {
           padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
           child: Column(
             children: [
-              Text("Duty Cycle"),
-              Text("${(escTelemetry.duty_now * 100).toInt()}%", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+              FittedBox(
+                  fit: BoxFit.fitWidth,
+                  child: Text("Duty Cycle")),
+              FittedBox(
+                  fit: BoxFit.fitWidth,
+                  child: Text("${(escTelemetry.duty_now * 100).toInt()}%", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold))),
             ],
           )),
     );
@@ -496,7 +555,9 @@ class RealTimeDataState extends State<RealTimeData> {
             padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
             child: Column(
               children: [
-                Text("Battery Current"),
+                FittedBox(
+                    fit: BoxFit.fitWidth,
+                    child: Text("Battery Current")),
                 FittedBox(
                   fit: BoxFit.fitWidth,
                   child: Text("${doublePrecision(escTelemetry.current_in, 1)} A", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
@@ -511,7 +572,9 @@ class RealTimeDataState extends State<RealTimeData> {
           padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
           child: Column(
             children: [
-              Text("Motor Current"),
+              FittedBox(
+                  fit: BoxFit.fitWidth,
+                  child: Text("Motor Current")),
               FittedBox(
                 fit: BoxFit.fitWidth,
                 child: Text("${doublePrecision(escTelemetry.current_motor, 1)} A", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
@@ -520,20 +583,40 @@ class RealTimeDataState extends State<RealTimeData> {
           ),
         ));
 
-    Widget childOdometer = Container(
+    Widget childOdometer = GestureDetector(
+        onTap: () {
+          setState(() {
+            showRangeEstimate = !showRangeEstimate;
+          });
+          saveSettings();
+        },
+        child: Container(
         decoration: boxDecoration,
         width: boxWidth,
         child: Padding(
             padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
-            child: Column(
+            child: showRangeEstimate ? Column(
               children: [
-                Text("Odometer"),
+                FittedBox(
+                    fit: BoxFit.fitWidth,
+                    child: Text("Range")),
+                FittedBox(
+                    fit: BoxFit.fitWidth,
+                    child: Text("${doublePrecision(rangeEstimateAverage, 1)} ${widget.currentSettings.settings.useImperial ? "mi": "km"}", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold), textAlign: TextAlign.center)
+                ),
+              ],
+            ) : Column(
+              children: [
+                FittedBox(
+                    fit: BoxFit.fitWidth,
+                    child: Text("Odometer")),
                 FittedBox(
                     fit: BoxFit.fitWidth,
                     child: Text("$distance", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold), textAlign: TextAlign.center)
                 ),
               ],
-            )));
+            )
+        )));
 
     Widget childConsumption = Container(
         decoration: boxDecoration,
@@ -542,8 +625,12 @@ class RealTimeDataState extends State<RealTimeData> {
             padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
             child: Column(
               children: [
-                Text("$efficiencyGaugeLabel"),
-                Text("$efficiency", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+                FittedBox(
+                    fit: BoxFit.fitWidth,
+                    child: Text("$efficiencyGaugeLabel")),
+                FittedBox(
+                    fit: BoxFit.fitWidth,
+                    child: Text("$efficiency", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold))),
               ],
             )));
 
@@ -570,20 +657,49 @@ class RealTimeDataState extends State<RealTimeData> {
             child: GestureDetector(
               onTap: () {
                 setState(() {
-                  showVoltsPerCell = !showVoltsPerCell;
+                  switch (++showPowerState) {
+                    case 1:
+                      showVoltsPerCell = true;
+                      showBatteryPercentage = false;
+                      break;
+                    case 2:
+                      showVoltsPerCell = false;
+                      showBatteryPercentage = true;
+                      break;
+                    case 0:
+                    default:
+                      showVoltsPerCell = false;
+                      showBatteryPercentage = false;
+                      showPowerState = 0;
+                  }
                 });
+                saveSettings();
               },
               child: showVoltsPerCell ? Column(
                 children: [
-                  Text("Voltage/Cell"),
+                  FittedBox(
+                      fit: BoxFit.fitWidth,
+                      child: Text("Voltage/Cell")),
                   FittedBox(
                     fit: BoxFit.fitWidth,
                     child: Text("${doublePrecision(escTelemetry.v_in / widget.currentSettings.settings.batterySeriesCount, 2)} V", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
                   ),
                 ],
+              ) : showBatteryPercentage ? Column(
+                children: [
+                  FittedBox(
+                      fit: BoxFit.fitWidth,
+                      child: Text("Battery")),
+                  FittedBox(
+                    fit: BoxFit.fitWidth,
+                    child: Text("${batteryRemaining.toInt()} %", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+                  ),
+                ],
               ) : Column(
                 children: [
-                  Text("Battery"),
+                  FittedBox(
+                      fit: BoxFit.fitWidth,
+                      child: Text("Battery")),
                   FittedBox(
                     fit: BoxFit.fitWidth,
                     child: Text("${doublePrecision(escTelemetry.v_in, 1)} V", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
@@ -614,7 +730,9 @@ class RealTimeDataState extends State<RealTimeData> {
             padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
             child: Column(
               children: [
-                Text("ESC Temp"),
+                FittedBox(
+                    fit: BoxFit.fitWidth,
+                    child: Text("ESC Temp")),
                 FittedBox(
                   fit: BoxFit.fitWidth,
                   child: Text("$temperatureMosfet", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
@@ -644,13 +762,24 @@ class RealTimeDataState extends State<RealTimeData> {
             padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
             child: Column(
               children: [
-                Text("Motor Temp"),
+                FittedBox(
+                    fit: BoxFit.fitWidth,
+                    child: Text("Motor Temp")),
                 FittedBox(
                   fit: BoxFit.fitWidth,
                   child: Text("$temperatureMotor", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
                 ),
               ],
             )));
+
+    if (settingsLoaded == false) {
+      return Column(children: [
+        Text("Fetching preferences")
+      ],
+      mainAxisAlignment: MainAxisAlignment.center,);
+    }
+
+    setLandscapeOrientation(enabled: true);
 
     // Return Widget Tree
     if (landscapeView) {
@@ -666,13 +795,14 @@ class RealTimeDataState extends State<RealTimeData> {
                 height: MediaQuery.of(context).size.height * 0.45,
                 child: Stack(
                   children: [
-                    Positioned(
+                    //TODO: remove font resizing
+                    allowFontResize ? Positioned(
                         left:10,
                         child: Column(children: [
                           GestureDetector(
                             onTap: () {
                               setState(() {
-                                fontSizeValues += 1.0;
+                                if (++fontSizeValues > 50) fontSizeValues = 50;
                               });
                               globalLogger.d("Font Size: $fontSizeValues Screen W: ${MediaQuery.of(context).size.width.toInt()} H: ${MediaQuery.of(context).size.height.toInt()}");
                             },
@@ -681,14 +811,14 @@ class RealTimeDataState extends State<RealTimeData> {
                           GestureDetector(
                             onTap: () {
                               setState(() {
-                                fontSizeValues -= 1.0;
+                                if (--fontSizeValues < 14) fontSizeValues = 14;
                               });
                               globalLogger.d("Font Size: $fontSizeValues Screen W: ${MediaQuery.of(context).size.width.toInt()} H: ${MediaQuery.of(context).size.height.toInt()}");
                             },
                             child: Icon(Icons.remove_circle, color: Theme.of(context).dialogBackgroundColor),
                           ),
                         ],)
-                    ),
+                    ) : Container(),
                     Positioned(
                         top: 0,
                         right: 0,
@@ -700,7 +830,7 @@ class RealTimeDataState extends State<RealTimeData> {
                         escTelemetry.fault_code == mc_fault_code.FAULT_CODE_NONE ? Text("Speed") : Text("${escTelemetry.fault_code.toString().split('.')[1].substring(11)}"),
                         FittedBox(
                             fit: BoxFit.fitWidth,
-                            child: Text("$speedNow", style: TextStyle(fontSize: 90, fontWeight: FontWeight.bold), textAlign: TextAlign.center)
+                            child: Text("${doublePrecision(speedNow, 1)}", style: TextStyle(fontSize: 90, fontWeight: FontWeight.bold), textAlign: TextAlign.center)
                         ),
                       ],
                     ),)
@@ -760,6 +890,7 @@ class RealTimeDataState extends State<RealTimeData> {
               setState(() {
                 hideMap = !hideMap;
               });
+              saveSettings();
             },
             child: Container(
               decoration: BoxDecoration(
@@ -792,14 +923,14 @@ class RealTimeDataState extends State<RealTimeData> {
                 width: MediaQuery.of(context).size.width * 0.75,
                 child: Stack(
                   children: [
-
-                    Positioned(
+                    //TODO: remove font resizing
+                    allowFontResize ? Positioned(
                         left:0,
                         child: Row(children: [
                           GestureDetector(
                             onTap: () {
                               setState(() {
-                                fontSizeValues -= 1.0;
+                                if (--fontSizeValues < 14) fontSizeValues = 14;
                               });
                               globalLogger.d("Font Size: $fontSizeValues Screen W: ${MediaQuery.of(context).size.width.toInt()} H: ${MediaQuery.of(context).size.height.toInt()}");
                             },
@@ -808,14 +939,14 @@ class RealTimeDataState extends State<RealTimeData> {
                           GestureDetector(
                             onTap: () {
                               setState(() {
-                                fontSizeValues += 1.0;
+                                if (++fontSizeValues > 50) fontSizeValues = 50;
                               });
                               globalLogger.d("Font Size: $fontSizeValues Screen W: ${MediaQuery.of(context).size.width.toInt()} H: ${MediaQuery.of(context).size.height.toInt()}");
                             },
                             child: Icon(Icons.add_circle_outline, color: Theme.of(context).dialogBackgroundColor),
                           )
                         ],)
-                    ),
+                    ) : Container(),
                     Positioned(
                         top: 0,
                         right: 0,
@@ -825,10 +956,14 @@ class RealTimeDataState extends State<RealTimeData> {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         escTelemetry.fault_code == mc_fault_code.FAULT_CODE_NONE ? Text("Speed") : Text("${escTelemetry.fault_code.toString().split('.')[1].substring(11)}"),
-                        FittedBox(
+                        GestureDetector(onLongPress: (){
+                          setState(() {
+                            allowFontResize = !allowFontResize;
+                          });
+                        }, child: FittedBox(
                             fit: BoxFit.fitWidth,
-                            child: Text("$speedNow", style: TextStyle(fontSize: 100, fontWeight: FontWeight.bold), textAlign: TextAlign.center)
-                        ),
+                            child: Text("${doublePrecision(speedNow, 1)}", style: TextStyle(fontSize: 100, fontWeight: FontWeight.bold), textAlign: TextAlign.center)
+                        )),
                       ],
                     ))
                   ],
@@ -883,6 +1018,7 @@ class RealTimeDataState extends State<RealTimeData> {
                   setState(() {
                     hideMap = !hideMap;
                   });
+                  saveSettings();
                 },
                 child: Container(
                   decoration: BoxDecoration(

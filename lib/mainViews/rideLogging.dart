@@ -314,6 +314,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
   @override
   Widget build(BuildContext context) {
     print("Build: RideLogging");
+    setLandscapeOrientation(enabled: false);
 
     // Access database to request file list if we are not performing Sync operation
     if (!widget.syncInProgress) {

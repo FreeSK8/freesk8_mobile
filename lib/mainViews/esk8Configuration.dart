@@ -727,6 +727,8 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
   @override
   Widget build(BuildContext context) {
     print("Build: ESK8Configuration");
+    setLandscapeOrientation(enabled: false);
+
     if (widget.showESCProfiles) {
       ///ESC Speed Profiles
       return Center(

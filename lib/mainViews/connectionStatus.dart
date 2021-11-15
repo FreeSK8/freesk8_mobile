@@ -88,6 +88,8 @@ class ConnectionStatus extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     print("Build: ConnectionStatus");
+    setLandscapeOrientation(enabled: false);
+
     if (active == true) {
       return bleDevicesGrid;
     } else if (currentDevice != null) {

@@ -15,6 +15,20 @@ import 'package:path/path.dart' as path;
 
 import 'package:latlong/latlong.dart';
 
+void setLandscapeOrientation({bool enabled}) {
+  SystemChrome.setPreferredOrientations(
+      enabled ? [
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ] : [
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ]
+  );
+}
+
 // Google Chart Colors
 var googleChartsDefaultColors = [0xff3366cc,
   0xffdc3912,
