@@ -34,7 +34,7 @@
 	<string>Allow access to Bluetooth to communicate with your vehicle.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Allow access to your camera to take pictures of your vehicle.</string>
-    <key>NSLocationWhenInUseUsageDescription</key>
+	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Turning on location services allows us to show your current location on a map.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Allow access to your photos to select pictures for your vehicle avatar.</string>
