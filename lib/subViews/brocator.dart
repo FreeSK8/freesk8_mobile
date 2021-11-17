@@ -297,9 +297,9 @@ class BrocatorState extends State<Brocator> {
         Text("Last Updated $lastUpdatedString ago"),
         Icon(Icons.location_on_outlined),
         Text("Seen ${doublePrecision(calculateGPSDistance(currentLocation, element.position), 1)}km from your location"),
-        Icon(Icons.stacked_bar_chart),
-        Text("Vehicle Battery was ${element.batteryPercentage}% @ ${element.batteryVoltage}V"),
-        Text("Vehicle traveled ${element.distanceTraveled}km"),
+        element.batteryPercentage == 0 ? Container() : Icon(Icons.stacked_bar_chart),
+        element.batteryPercentage == 0 ? Container() : Text("Vehicle Battery was ${element.batteryPercentage}% @ ${element.batteryVoltage}V"),
+        element.batteryPercentage == 0 ? Container() : Text("Vehicle traveled ${element.distanceTraveled}km"),
       ],
     );
     genericAlert(context, "Quick Inspection", alertBody, "OK");
