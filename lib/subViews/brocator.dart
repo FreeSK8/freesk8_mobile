@@ -307,6 +307,8 @@ class BrocatorState extends State<Brocator> {
 
   @override
   void initState() {
+    myTelemetry = new ESCTelemetry();
+
     tecServer.addListener(() {
       if (tecServer.text != serverURL) {
         serverURL = tecServer.text;
