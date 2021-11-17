@@ -1,12 +1,16 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_blue/flutter_blue.dart';
 import 'package:flutter_map/flutter_map.dart';
 
 import 'package:freesk8_mobile/globalUtilities.dart';
+import 'package:freesk8_mobile/hardwareSupport/escHelper/dataTypes.dart';
+import 'package:freesk8_mobile/hardwareSupport/escHelper/escHelper.dart';
 import 'package:freesk8_mobile/widgets/brocatorMap.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -25,8 +29,11 @@ class Bro {
   MemoryImage avatar;
   DateTime lastUpdated;
   LatLng position;
+  double batteryVoltage;
+  int batteryPercentage;
+  double distanceTraveled;
 
-  Bro({this.alias, this.avatar, this.lastUpdated, this.position});
+  Bro({this.alias, this.avatar, this.lastUpdated, this.position, this.batteryVoltage, this.batteryPercentage, this.distanceTraveled});
   @override
   String toString(){
     return jsonEncode(this.toJson());
@@ -38,7 +45,10 @@ class Bro {
         'Avatar': avatar == null ? '' : base64Encode(avatar.bytes),
         'LastUpdate': lastUpdated.toIso8601String().substring(0,19),
         'Latitude': position.latitude.toString(),
-        'Longitude': position.longitude.toString()
+        'Longitude': position.longitude.toString(),
+        'BatteryVoltage' : batteryVoltage,
+        'BatteryPercentage' : batteryPercentage,
+        'DistanceTraveled' : distanceTraveled,
       };
 
   factory Bro.fromJson(Map<String, dynamic> json) {
@@ -47,7 +57,10 @@ class Bro {
       alias: json['Alias'],
       avatar: MemoryImage(base64Decode(json['Avatar'])),
       lastUpdated: DateTime.parse(json['LastUpdate']),
-      position: LatLng(double.parse(json['Latitude']), double.parse(json['Longitude']))
+      position: LatLng(double.parse(json['Latitude']), double.parse(json['Longitude'])),
+      batteryVoltage: double.parse(json['BatteryVoltage']),
+      batteryPercentage: int.parse(json['BatteryPercentage']),
+      distanceTraveled: double.parse(json['DistanceTraveled']),
     );
   }
 }
@@ -71,8 +84,10 @@ class BroList {
 class BrocatorArguments {
   final String boardAlias;
   final FileImage boardAvatar;
+  final Stream telemetryStream;
+  final BluetoothCharacteristic theTXCharacteristic;
 
-  BrocatorArguments(this.boardAlias, this.boardAvatar);
+  BrocatorArguments(this.boardAlias, this.boardAvatar, this.telemetryStream, this.theTXCharacteristic);
 }
 
 class Brocator extends StatefulWidget {
@@ -109,6 +124,11 @@ class BrocatorState extends State<Brocator> {
   static Timer dataRequestTimer;
 
   MapController _mapController = MapController();
+
+  static StreamSubscription<ESCTelemetry> streamSubscription;
+  BluetoothCharacteristic theTXCharacteristic;
+
+  static ESCTelemetry myTelemetry = new ESCTelemetry();
 
   Future<void> checkLocationPermission() async {
     await Geolocator().checkGeolocationPermissionStatus();
@@ -195,17 +215,23 @@ class BrocatorState extends State<Brocator> {
     myBrocation.lastUpdated = DateTime.now().toUtc();
 
     final response = await http.post(Uri.parse(Uri.encodeFull("${serverURL}/brocator.php")),
-      body: includeAvatar ? jsonEncode(<String, String>{
+      body: includeAvatar ? jsonEncode(<String, dynamic>{
         'Avatar': base64Encode(myBrocation.avatar.bytes),
         'UUID' : myUUID,
         'Alias' : myBrocation.alias,
-        'Latitude' : myBrocation.position.latitude.toString(),
-        'Longitude' : myBrocation.position.longitude.toString(),
-      }) : jsonEncode(<String, String>{
+        'Latitude' : myBrocation.position.latitude,
+        'Longitude' : myBrocation.position.longitude,
+        'BatteryVoltage' : myTelemetry.v_in,
+        'BatteryPercentage' : myTelemetry.battery_level == null ? 0 : myTelemetry.battery_level * 100.toInt(),
+        'DistanceTraveled' : myTelemetry.tachometer_abs / 1000.0,
+      }) : jsonEncode(<String, dynamic>{
         'UUID' : myUUID,
         'Alias' : myBrocation.alias,
-        'Latitude' : myBrocation.position.latitude.toString(),
-        'Longitude' : myBrocation.position.longitude.toString(),
+        'Latitude' : myBrocation.position.latitude,
+        'Longitude' : myBrocation.position.longitude,
+        'BatteryVoltage' : myTelemetry.v_in,
+        'BatteryPercentage' : myTelemetry.battery_level == null ? 0 : myTelemetry.battery_level * 100.toInt(),
+        'DistanceTraveled' : myTelemetry.tachometer_abs / 1000.0,
       }),
     );
     if (response.statusCode == 200) {
@@ -240,6 +266,43 @@ class BrocatorState extends State<Brocator> {
       });
     }
 
+    if (theTXCharacteristic != null) {
+      globalLogger.wtf("Brocator Telemetry Requested");
+      /// Request ESC Telemetry
+      Uint8List packet = simpleVESCRequest(COMM_PACKET_ID.COMM_GET_VALUES_SETUP.index);
+
+      // Request COMM_GET_VALUES_SETUP from the ESC
+      if (!await sendBLEData(theTXCharacteristic, packet, true)) {
+        globalLogger.e("_requestTelemetry() failed");
+      }
+    }
+  }
+
+  void showPopup(Bro element) {
+    Duration lastUpdated = (DateTime.now().subtract(DateTime.now().timeZoneOffset)).difference(element.lastUpdated);
+    String lastUpdatedString = "";
+    if (lastUpdated.inSeconds < 120) {
+      lastUpdatedString = "${lastUpdated.inSeconds} second${lastUpdated.inSeconds == 1 ? "": "s"}";
+    } else if (lastUpdated.inMinutes < 60) {
+      lastUpdatedString = "${lastUpdated.inMinutes} minute${lastUpdated.inMinutes == 1 ? "": "s"}";
+    } else {
+      lastUpdatedString = "${lastUpdated.inHours} hour${lastUpdated.inHours == 1 ? "": "s"}";
+    }
+
+    Widget alertBody = Column(
+
+      children: [
+        Text(element.alias),
+        Icon(Icons.watch_outlined),
+        Text("Last Updated $lastUpdatedString ago"),
+        Icon(Icons.location_on_outlined),
+        Text("Seen ${doublePrecision(calculateGPSDistance(currentLocation, element.position), 1)}km from your location"),
+        Icon(Icons.stacked_bar_chart),
+        Text("Vehicle Battery was ${element.batteryPercentage}% @ ${element.batteryVoltage}V"),
+        Text("Vehicle traveled ${element.distanceTraveled}km"),
+      ],
+    );
+    genericAlert(context, "Quick Inspection", alertBody, "OK");
   }
 
   @override
@@ -281,6 +344,9 @@ class BrocatorState extends State<Brocator> {
     tecAlias?.dispose();
     positionStream?.cancel();
     dataRequestTimer?.cancel();
+    dataRequestTimer = null;
+    streamSubscription?.cancel();
+    streamSubscription = null;
 
     super.dispose();
   }
@@ -305,7 +371,7 @@ class BrocatorState extends State<Brocator> {
           margin: EdgeInsets.fromLTRB(0, 0, 0, 0),
           child: GestureDetector(
             onTap: (){
-              //TODO: Data popup
+              showPopup(element);
             },
             child: CircleAvatar(
                 backgroundImage: element.avatar != null ? element.avatar : AssetImage('assets/FreeSK8_Mobile.png'),
@@ -403,6 +469,7 @@ class BrocatorState extends State<Brocator> {
           child: ListView.builder(
             itemCount: myBros.brocations.length,
               itemBuilder: (context, i) {
+              Color colorCellVoltage = multiColorLerp(Colors.red, Colors.yellow, Colors.green, myBros.brocations[i].batteryPercentage / 100.0);
               Duration lastUpdated = (DateTime.now().subtract(DateTime.now().timeZoneOffset)).difference(myBros.brocations[i].lastUpdated);
               String lastUpdatedString = "";
               if (lastUpdated.inSeconds < 120) {
@@ -412,41 +479,70 @@ class BrocatorState extends State<Brocator> {
               } else {
                 lastUpdatedString = "${lastUpdated.inHours} hour${lastUpdated.inHours == 1 ? "": "s"}";
               }
-              return GestureDetector(
-                onTap: (){
-                  // Increase map zoom level if we are already centered on this user
-                  double mapZoom = _mapController.zoom;
-                  if (_mapController.center == myBros.brocations[i].position && _mapController.zoom < 18) {
-                    mapZoom += 2;
-                    globalLogger.d("Increasing zoom $mapZoom");
-                  }
-                  // Center map and set zoom
-                  _mapController.move(myBros.brocations[i].position, mapZoom);
-                },
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                        backgroundImage: myBros.brocations[i].avatar != null ? myBros.brocations[i].avatar : AssetImage('assets/FreeSK8_Mobile.png'),
-                        radius: 20,
-                        backgroundColor: Colors.white),
-                    Spacer(),
-                    Container(
-                      width: MediaQuery.of(context).size.width * 0.25,
-                      child: Text(myBros.brocations[i].alias.toString(), textAlign: TextAlign.left,),
-                    ),
-                    Spacer(),
-                    Container(
-                      width: MediaQuery.of(context).size.width * 0.25,
-                      child: Text(lastUpdatedString),
+              return Container(
+                height: 50,
+                padding: EdgeInsets.only(bottom: 5),
+                child: GestureDetector(
+                  // Center view and increase zoom
+                  onTap: () {
+                    // Increase map zoom level if we are already centered on this user
+                    double mapZoom = _mapController.zoom;
+                    if (_mapController.center == myBros.brocations[i].position && _mapController.zoom < 18) {
+                      mapZoom += 2;
+                      globalLogger.d("Increasing zoom $mapZoom");
+                    }
+                    // Center map and set zoom
+                    _mapController.move(myBros.brocations[i].position, mapZoom);
+                  },
+                  // Center view and show telemetry popup
+                  onLongPress: () {
+                    _mapController.move(myBros.brocations[i].position, _mapController.zoom);
+                    showPopup(myBros.brocations[i]);
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                        color: Theme.of(context).dialogBackgroundColor,
+                        borderRadius: BorderRadius.circular(2),
+
+                        gradient: myBros.brocations[i].batteryPercentage == 0 ? null :  LinearGradient(
+                          tileMode: TileMode.repeated,
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          stops: [0.0, 0.85, 1.0],
+                          colors: [
+                            colorCellVoltage,
+                            Theme.of(context).dialogBackgroundColor,
+                            Theme.of(context).dialogBackgroundColor,
+                          ],
+                        )
                     ),
 
-                    Spacer(),
-                    Container(
-                      width: MediaQuery.of(context).size.width * 0.25,
-                      child: currentLocation == null ? Container() : Text("${doublePrecision(calculateGPSDistance(currentLocation, myBros.brocations[i].position), 1)}km", textAlign: TextAlign.right,),
-                    ),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                            backgroundImage: myBros.brocations[i].avatar != null ? myBros.brocations[i].avatar : AssetImage('assets/FreeSK8_Mobile.png'),
+                            radius: 20,
+                            backgroundColor: Colors.white),
+                        Spacer(),
+                        Container(
+                          width: MediaQuery.of(context).size.width * 0.25,
+                          child: Text(myBros.brocations[i].alias.toString(), textAlign: TextAlign.left,),
+                        ),
+                        Spacer(),
+                        Container(
+                          width: MediaQuery.of(context).size.width * 0.25,
+                          child: Text(lastUpdatedString),
+                        ),
 
-                  ],
+                        Spacer(),
+                        Container(
+                          width: MediaQuery.of(context).size.width * 0.25,
+                          child: currentLocation == null ? Container() : Text("${doublePrecision(calculateGPSDistance(currentLocation, myBros.brocations[i].position), 1)}km", textAlign: TextAlign.right,),
+                        ),
+
+                      ],
+                    ),
+                  ),
                 ),
               );
             })
@@ -465,6 +561,17 @@ class BrocatorState extends State<Brocator> {
     myArguments = ModalRoute.of(context).settings.arguments;
     if(myArguments == null){
       return Container(child:Text("No Arguments"));
+    }
+
+    if(streamSubscription == null) {
+      streamSubscription = myArguments.telemetryStream.listen((value) {
+        globalLogger.wtf("Brocator Telemetry Received");
+        myTelemetry = value;
+      });
+    }
+
+    if (theTXCharacteristic == null) {
+      theTXCharacteristic = myArguments.theTXCharacteristic;
     }
 
     return new WillPopScope(

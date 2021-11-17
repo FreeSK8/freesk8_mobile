@@ -166,6 +166,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   MemoryImage cachedBoardAvatar;
   String applicationDocumentsDirectory;
 
+  StreamController<ESCTelemetry> telemetryStream = StreamController<ESCTelemetry>.broadcast();
+
   @override
   void initState() {
     super.initState();
@@ -326,6 +328,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     controller.dispose();
 
     positionStream?.cancel();
+
+    telemetryStream?.close();
 
     super.dispose();
   }
@@ -1646,6 +1650,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
           // Update map of ESC telemetry
           telemetryMap[telemetryPacket.vesc_id] = telemetryPacket;
+
+          // Update telemetryStream for those who are subscribed
+          telemetryStream.add(telemetryPacket);
 
           if(controller.index == controllerViewRealTime) { //Only re-draw if we are on the real time data tab
             setState(() { //Re-drawing with updated telemetry data
@@ -2993,6 +3000,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 adcLastVoltage: adcLastVoltage,
                 adcLastVoltage2: adcLastVoltage2,
                 notifyStartStopADCCalibrate: notifyStopStartADCCalibrate,
+                telemetryStream: telemetryStream.stream,
               )
             ])
           ),

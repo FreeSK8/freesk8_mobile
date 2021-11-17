@@ -62,6 +62,7 @@ class ESK8Configuration extends StatefulWidget {
     this.adcLastVoltage2,
     this.notifyStartStopADCCalibrate,
     this.adcCalibrateReady,
+    this.telemetryStream,
   });
   final UserSettings myUserSettings;
   final BluetoothDevice currentDevice;
@@ -96,6 +97,7 @@ class ESK8Configuration extends StatefulWidget {
   final ValueChanged<bool> notifyStartStopADCCalibrate;
   final bool adcCalibrateReady;
 
+  final Stream telemetryStream;
   ESK8ConfigurationState createState() => new ESK8ConfigurationState();
 
   static const String routeName = "/settings";
@@ -3608,7 +3610,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               onPressed: () async {
                                 FocusScope.of(context).requestFocus(new FocusNode()); //Hide keyboard
                                 // Wait for the navigation to return
-                                final result = await Navigator.of(context).pushNamed(Brocator.routeName, arguments: BrocatorArguments(widget.currentDevice == null ? null : widget.myUserSettings.settings.boardAlias, _boardAvatar));
+                                final result = await Navigator.of(context).pushNamed(Brocator.routeName, arguments: BrocatorArguments(widget.currentDevice == null ? null : widget.myUserSettings.settings.boardAlias, _boardAvatar, widget.telemetryStream, widget.theTXCharacteristic));
                                 // If changes were made the result of the Navigation will be true and we'll want to reload the user settings
                                 if (result == true) {
                                   globalLogger.wtf(result);
