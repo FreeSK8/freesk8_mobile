@@ -281,7 +281,7 @@ class BrocatorState extends State<Brocator> {
   void showPopup(Bro element) {
     Duration lastUpdated = (DateTime.now().subtract(DateTime.now().timeZoneOffset)).difference(element.lastUpdated);
     String lastUpdatedString = "";
-    if (lastUpdated.inSeconds < 120) {
+    if (lastUpdated.inSeconds < 60) {
       lastUpdatedString = "${lastUpdated.inSeconds} second${lastUpdated.inSeconds == 1 ? "": "s"}";
     } else if (lastUpdated.inMinutes < 60) {
       lastUpdatedString = "${lastUpdated.inMinutes} minute${lastUpdated.inMinutes == 1 ? "": "s"}";
@@ -474,7 +474,7 @@ class BrocatorState extends State<Brocator> {
               Color colorCellVoltage = multiColorLerp(Colors.red, Colors.yellow, Colors.green, myBros.brocations[i].batteryPercentage / 100.0);
               Duration lastUpdated = (DateTime.now().subtract(DateTime.now().timeZoneOffset)).difference(myBros.brocations[i].lastUpdated);
               String lastUpdatedString = "";
-              if (lastUpdated.inSeconds < 120) {
+              if (lastUpdated.inSeconds < 60) {
                 lastUpdatedString = "${lastUpdated.inSeconds} second${lastUpdated.inSeconds == 1 ? "": "s"}";
               } else if (lastUpdated.inMinutes < 60) {
                 lastUpdatedString = "${lastUpdated.inMinutes} minute${lastUpdated.inMinutes == 1 ? "": "s"}";
