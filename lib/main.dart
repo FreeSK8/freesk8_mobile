@@ -6,6 +6,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:freesk8_mobile/subViews/mcconfEditor.dart';
 import 'components/crc16.dart';
 import 'components/deviceInformation.dart';
 import 'hardwareSupport/dieBieMSHelper.dart';
@@ -73,12 +74,13 @@ void main() {
       home: MyHome(),
       routes: <String, WidgetBuilder>{
         RideLogViewer.routeName: (BuildContext context) => RideLogViewer(),
-        ConfigureESC.routeName: (BuildContext context) => ConfigureESC(),
+        FOCWizard.routeName: (BuildContext context) => FOCWizard(),
         ESCProfileEditor.routeName: (BuildContext context) => ESCProfileEditor(),
         RobogotchiCfgEditor.routeName: (BuildContext context) => RobogotchiCfgEditor(),
         RobogotchiDFU.routeName: (BuildContext context) => RobogotchiDFU(),
         VehicleManager.routeName: (BuildContext context) => VehicleManager(),
         Brocator.routeName: (BuildContext context) => Brocator(),
+        MotorConfigurationEditor.routeName: (BuildContext context) => MotorConfigurationEditor(),
       },
       theme: ThemeData(
         //TODO: Select satisfying colors for the light theme
@@ -167,6 +169,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   String applicationDocumentsDirectory;
 
   StreamController<ESCTelemetry> telemetryStream = StreamController<ESCTelemetry>.broadcast();
+  StreamController<MCCONF> mcconfStream = StreamController<MCCONF>.broadcast();
+  StreamController<APPCONF> appconfStream = StreamController<APPCONF>.broadcast();
 
   @override
   void initState() {
@@ -330,6 +334,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     positionStream?.cancel();
 
     telemetryStream?.close();
+    mcconfStream?.close();
+    appconfStream?.close();
 
     super.dispose();
   }
@@ -391,14 +397,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     setState(() {
       _showESCProfiles = newValue;
     });
-  }
-  void _handleAutoloadESCSettings(bool newValue) {
-    if(_connectedDevice != null) {
-      _autoloadESCSettings = true;
-      //TODO: Testing resetPacket here to prevent `Missing Motor Configuration from the ESC` message
-      bleHelper.resetPacket();
-      requestMCCONF();
-    }
   }
 
   bool _scanActive = false;
@@ -510,7 +508,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       _showESCProfiles = false;
 
       // Reset displaying ESC Configurator flag
-      _showESCConfigurator = false;
       _showESCApplicationConfigurator = false;
 
       // Reset Robogotchi version
@@ -599,10 +596,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     );
   }
 
+  //TODO: remove!! hooray
   void _hideAllSubviews() {
     _showDieBieMS = false;
     _showESCProfiles = false;
-    _showESCConfigurator = false;
     _showESCApplicationConfigurator = false;
   }
 
@@ -821,10 +818,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static DieBieMSTelemetry dieBieMSTelemetry = new DieBieMSTelemetry();
   static int smartBMSCANID = 10;
   static bool _showDieBieMS = false;
-  static bool _showESCConfigurator = false;
   static bool _showESCApplicationConfigurator = false;
   static bool _showESCProfiles = false;
-  static bool _autoloadESCSettings = false; // Controls the population of ESC Information from MCCONF response
   static Timer telemetryTimer;
   static Timer _gotchiStatusTimer;
   static Timer _timerMonitor;
@@ -1802,11 +1797,14 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           globalLogger.d("COMM_PACKET_ID = COMM_SET_MCCONF_TEMP_SETUP");
           //TODO: analyze packet before assuming success?
           _alertProfileSet();
-          _handleAutoloadESCSettings(true); // Reload ESC settings from applied configuration
+          requestMCCONF();
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_GET_MCCONF.index) {
           ///ESC Motor Configuration
           escMotorConfiguration = escHelper.processMCCONF(bleHelper.getPayload(), escFirmwareVersion); //bleHelper.payload.sublist(0,bleHelper.lenPayload);
+
+          // Publish MCCONF to potential subscriber
+          mcconfStream.add(escMotorConfiguration);
 
           if (escMotorConfiguration.si_battery_ah == null) {
             // Show dialog
@@ -1835,10 +1833,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             });
           }
 
-          // Check flag to update application configuration with ESC motor configuration
-          else if (_autoloadESCSettings) {
+          // Save FreeSK8 user settings from received MCCONF
+          {
             globalLogger.d("MCCONF is updating application settings specific to this board");
-            _autoloadESCSettings = false;
             widget.myUserSettings.settings.batterySeriesCount = escMotorConfiguration.si_battery_cells;
             switch (escMotorConfiguration.si_battery_type) {
               case BATTERY_TYPE.BATTERY_TYPE_LIIRON_2_6__3_6:
@@ -1859,14 +1856,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             widget.myUserSettings.settings.gearRatio = doublePrecision(escMotorConfiguration.si_gear_ratio, 2);
 
             widget.myUserSettings.saveSettings();
-
-            setState(() {
-              // Update UI for ESC Configurator
-            });
-          } else {
-            setState(() {
-              // Update UI for ESC Configurator
-            });
           }
 
           bleHelper.resetPacket();
@@ -2098,7 +2087,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     } else if (!initMsgESCMotorConfig) {
       globalLogger.d("_requestInitMessages: Requesting initMsgESCMotorConfig");
       // Request MCCONF
-      _handleAutoloadESCSettings(true);
+      requestMCCONF();
       if (!initShowMotorConfiguration) {
         _changeConnectedDialogMessage("Requesting Motor Configuration");
         initShowMotorConfiguration = true;
@@ -2511,14 +2500,31 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         title: Text("Motor Configuration"),
         onTap: () async {
           if (menuOptionIsReady(isRobogotchiOption: false)) {
-            setState(() {
-              _hideAllSubviews();
-              _showESCConfigurator = true;
-            });
-            _delayedTabControllerIndexChange(controllerViewConfiguration);
-            globalLogger.d("ESC Configurator Displayed");
+            //TODO: remove
+            //setState(() {
+            //  _hideAllSubviews();
+            //  _showESCConfigurator = true;
+            //});
+
             // Close the menu
             Navigator.pop(context);
+
+            // Wait for the navigation to return
+            final result = await Navigator.of(context).pushNamed(
+                MotorConfigurationEditor.routeName,
+                arguments: MotorConfigurationArguments(
+                  dataStream: mcconfStream.stream,
+                  theTXCharacteristic: theTXCharacteristic,
+                  motorConfiguration: escMotorConfiguration,
+                  discoveredCANDevices: _validCANBusDeviceIDs,
+                  escFirmwareVersion: escFirmwareVersion,
+                ));
+            //TODO: requesting mcconf
+            requestMCCONF();
+            //TODO: If changes were made the result of the Navigation will be true
+            if (result == true) {
+              globalLogger.wtf(result);
+            }
           }
         },
       ),
@@ -2815,14 +2821,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     globalLogger.d("Smart BMS RealTime Disabled");
   }
 
-  void closeESCConfiguratorFunc(bool closeView) {
-    setState(() {
-      _showESCConfigurator = false;
-      _handleAutoloadESCSettings(true); // Reload ESC settings after user configuration
-    });
-    globalLogger.d("closeESCConfiguratorFunc: Closed ESC Configurator");
-  }
-
   void closeESCAppConfFunc(bool closeView) {
     setState(() {
       _showESCApplicationConfigurator = false;
@@ -2980,10 +2978,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 theTXCharacteristic: theTXCharacteristic,
                 escMotorConfiguration: escMotorConfiguration,
                 onExitProfiles: _handleESCProfileFinished,
-                onAutoloadESCSettings: _handleAutoloadESCSettings,
-                showESCConfigurator: _showESCConfigurator,
                 discoveredCANDevices: _validCANBusDeviceIDs,
-                closeESCConfigurator: closeESCConfiguratorFunc,
                 updateCachedAvatar: _cacheAvatar,
                 showESCAppConfig: _showESCApplicationConfigurator,
                 escAppConfiguration: escApplicationConfiguration,

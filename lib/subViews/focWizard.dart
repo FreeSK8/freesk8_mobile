@@ -16,15 +16,15 @@ class FOCWizardArguments {
   FOCWizardArguments(this.txCharacteristic, this.escMotorConfigurationDefaults);
 }
 
-class ConfigureESC extends StatefulWidget {
+class FOCWizard extends StatefulWidget {
   @override
-  ConfigureESCState createState() => ConfigureESCState();
+  FOCWizardState createState() => FOCWizardState();
 
   static const String routeName = "/focwizard";
 }
 
 
-class ConfigureESCState extends State<ConfigureESC> {
+class FOCWizardState extends State<FOCWizard> {
   int currentStepIndex = 0;
   static bool loadESCDefaults = false;
 

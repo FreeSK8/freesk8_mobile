@@ -257,7 +257,7 @@ List<DropdownMenuItem<ListItem>> buildDropDownMenuItems(List listItems) {
 /// Returns true on success
 Future<bool> sendBLEData(BluetoothCharacteristic txCharacteristic, Uint8List data, bool withoutResponse) async
 {
-  int errorLimiter = 10;
+  int errorLimiter = 20;
   int packetLength = data.length;
   int bytesSent = 0;
   while (bytesSent < packetLength) {
