@@ -249,7 +249,7 @@ class BrocatorState extends State<Brocator> {
       return;
     }
 
-    if (broadcastPosition) {
+    if (broadcastPosition && currentLocation != null) {
       sendBrocation();
     }
 
