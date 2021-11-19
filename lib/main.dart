@@ -6,7 +6,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:freesk8_mobile/subViews/mcconfEditor.dart';
+import 'package:freesk8_mobile/subViews/inputConfigurationEditor.dart';
+import 'package:freesk8_mobile/subViews/motorConfigurationEditor.dart';
 import 'components/crc16.dart';
 import 'components/deviceInformation.dart';
 import 'hardwareSupport/dieBieMSHelper.dart';
@@ -81,6 +82,7 @@ void main() {
         VehicleManager.routeName: (BuildContext context) => VehicleManager(),
         Brocator.routeName: (BuildContext context) => Brocator(),
         MotorConfigurationEditor.routeName: (BuildContext context) => MotorConfigurationEditor(),
+        InputConfigurationEditor.routeName: (BuildContext context) => InputConfigurationEditor(),
       },
       theme: ThemeData(
         //TODO: Select satisfying colors for the light theme
@@ -148,9 +150,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static ESC_FIRMWARE escFirmwareVersion = ESC_FIRMWARE.UNSUPPORTED;
   static MCCONF escMotorConfiguration;
   static APPCONF escApplicationConfiguration;
-  static int ppmLastDuration;
-  static double adcLastVoltage;
-  static double adcLastVoltage2;
+  static InputCalibration inputCalibration = new InputCalibration();
+
   static Uint8List escMotorConfigurationDefaults;
   static List<int> _validCANBusDeviceIDs = [];
   static String robogotchiVersion;
@@ -171,6 +172,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   StreamController<ESCTelemetry> telemetryStream = StreamController<ESCTelemetry>.broadcast();
   StreamController<MCCONF> mcconfStream = StreamController<MCCONF>.broadcast();
   StreamController<APPCONF> appconfStream = StreamController<APPCONF>.broadcast();
+  StreamController<InputCalibration> calibrationStream = StreamController<InputCalibration>.broadcast();
 
   @override
   void initState() {
@@ -336,6 +338,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     telemetryStream?.close();
     mcconfStream?.close();
     appconfStream?.close();
+    calibrationStream?.close();
 
     super.dispose();
   }
@@ -373,7 +376,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     );
   }
 
-  void requestAPPCONF(int optionalCANID) async {
+  void requestAPPCONF({int optionalCANID}) async {
     Uint8List packet = simpleVESCRequest(COMM_PACKET_ID.COMM_GET_APPCONF.index, optionalCANID: optionalCANID);
 
     // Request APPCONF from the ESC
@@ -537,9 +540,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       // Clear the ESC firmware version
       escFirmwareVersion = ESC_FIRMWARE.UNSUPPORTED;
-
-      // Clear the PPM calibration is ready flag
-      _isPPMCalibrationReady = false;
 
       // Stop the TCP socket server
       stopTCPServer();
@@ -826,10 +826,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static Timer _initMsgSequencer;
   static int bleTXErrorCount = 0;
   static bool _deviceIsRobogotchi = false;
-  static bool _isPPMCalibrating;
-  static bool _isPPMCalibrationReady = false;
-  static bool _isADCCalibrating;
-  static bool _isADCCalibrationReady = false;
+
 
   //TODO: some logger vars that need to be in their own class
   static String loggerTestBuffer = "";
@@ -851,6 +848,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static double connectedVehicleConsumption = 0;
   static DateTime syncLastACK = DateTime.now();
   static List<ESCFault> escFaults = [];
+  static bool pauseRobogotchiStatus = false;
 
   // Handler for RideLogging's sync button
   void _handleBLESyncState(bool startSync) async {
@@ -1874,17 +1872,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           ///ESC Application Configuration
           escApplicationConfiguration = escHelper.processAPPCONF(bleHelper.getPayload(), escFirmwareVersion);
 
-          if (_showESCApplicationConfigurator) {
-            setState(() {
-              _hideAllSubviews();
-              controller.index = controllerViewConfiguration;
-              _showESCApplicationConfigurator = true;
-            });
-          } else {
-            // Update UI for configurator
-            setState(() {
+          // Publish APPCONF to subscribers
+          appconfStream.add(escApplicationConfiguration);
 
-            });
+          if (_showESCApplicationConfigurator) {
+            _showESCApplicationConfigurator = false;
+            //TODO: navigate to view
           }
 
           bleHelper.resetPacket();
@@ -1955,12 +1948,16 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_GET_DECODED_PPM.index) {
 
-          //int valueNow = buffer_get_int32(bleHelper.getPayload(), 1);
+          int valueNow = buffer_get_int32(bleHelper.getPayload(), 1);
           int msNow = buffer_get_int32(bleHelper.getPayload(), 5);
           //globalLogger.d("Decoded PPM packet received: value $valueNow, milliseconds $msNow");
-          setState(() {
-            ppmLastDuration = msNow;
-          });
+
+          inputCalibration.ppmMillisecondsNow = msNow;
+          inputCalibration.ppmValueNow = valueNow;
+
+          // Publish Calibration data to Subscribers
+          calibrationStream.add(inputCalibration);
+
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_GET_DECODED_ADC.index) {
 
@@ -1968,11 +1965,16 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           double voltageNow = buffer_get_float32(bleHelper.getPayload(), 5, 1000000.0);
           double level2Now = buffer_get_float32(bleHelper.getPayload(), 9, 1000000.0);
           double voltage2Now = buffer_get_float32(bleHelper.getPayload(), 13, 1000000.0);
-          globalLogger.d("Decoded ADC packet received: level $levelNow, voltage $voltageNow, level2 $level2Now, voltage2 $voltage2Now");
-          setState(() {
-            adcLastVoltage = voltageNow;
-            adcLastVoltage2 = voltage2Now;
-          });
+          //globalLogger.d("Decoded ADC packet received: level $levelNow, voltage $voltageNow, level2 $level2Now, voltage2 $voltage2Now");
+
+          inputCalibration.adcLevelNow = levelNow;
+          inputCalibration.adcLevel2Now = level2Now;
+          inputCalibration.adcVoltageNow = voltageNow;
+          inputCalibration.adcVoltage2Now = voltage2Now;
+
+          // Publish Calibration data to subscribers
+          calibrationStream.add(inputCalibration);
+
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_PRINT.index) {
 
@@ -1983,34 +1985,30 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
         } else if (packetID == COMM_PACKET_ID.COMM_SET_APPCONF.index) {
 
-          if (_isPPMCalibrating != null && _isPPMCalibrating) {
+          if (inputCalibration.ppmCalibrationStarting != null && inputCalibration.ppmCalibrationStarting) {
             globalLogger.d("PPM Calibration is Ready");
             genericAlert(context, "Calibration", Text("Calibration Instructions:\nMove input to full brake, full throttle then leave in the center\n\nPlease ensure the wheels are off the ground in case something goes wrong. Press OK when ready."), "OK");
-            _isPPMCalibrating = null;
-            setState(() {
-              _isPPMCalibrationReady = true;
-            });
-          } else if (_isPPMCalibrating != null && !_isPPMCalibrating) {
+            inputCalibration.ppmCalibrationStarting = null;
+            inputCalibration.ppmCalibrationRunning = true;
+            calibrationStream.add(inputCalibration); // Publish update
+          } else if (inputCalibration.ppmCalibrationRunning != null && !inputCalibration.ppmCalibrationRunning) {
             globalLogger.d("PPM Calibration has completed");
             genericAlert(context, "Calibration", Text("Calibration Completed"), "OK");
-            _isPPMCalibrating = null;
-            setState(() {
-              _isPPMCalibrationReady = false;
-            });
-          } else if (_isADCCalibrating != null && _isADCCalibrating) {
+            inputCalibration.ppmCalibrationStarting = null;
+            inputCalibration.ppmCalibrationRunning = null;
+            calibrationStream.add(inputCalibration); // Publish update
+          } else if (inputCalibration.adcCalibrationStarting != null && inputCalibration.adcCalibrationStarting) {
             globalLogger.d("ADC Calibration is Ready");
             genericAlert(context, "Calibration", Text("Calibration Instructions:\nMove input to full brake, full throttle then leave in the center\n\nPlease ensure the wheels are off the ground in case something goes wrong. Press OK when ready."), "OK");
-            _isADCCalibrating = null;
-            setState(() {
-              _isADCCalibrationReady = true;
-            });
-          } else if (_isADCCalibrating != null && !_isADCCalibrating) {
+            inputCalibration.adcCalibrationStarting = null;
+            inputCalibration.adcCalibrationRunning = true;
+            calibrationStream.add(inputCalibration); // Publish update
+          } else if (inputCalibration.adcCalibrationRunning != null && !inputCalibration.adcCalibrationRunning) {
             globalLogger.d("ADC Calibration has completed");
             genericAlert(context, "Calibration", Text("Calibration Completed"), "OK");
-            _isADCCalibrating = null;
-            setState(() {
-              _isADCCalibrationReady = false;
-            });
+            inputCalibration.adcCalibrationStarting = null;
+            inputCalibration.adcCalibrationRunning = null;
+            calibrationStream.add(inputCalibration); // Publish update
           } else {
             globalLogger.d("Application Configuration Saved Successfully");
             genericAlert(context, "Success", Text("Application configuration set"), "Excellent");
@@ -2483,14 +2481,50 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       ListTile(
         leading: Icon(Icons.settings_applications_outlined),
         title: Text("Input Configuration"),
-        onTap: () {
+        onTap: () async {
           if (menuOptionIsReady(isRobogotchiOption: false)) {
-            setState(() {
-              _hideAllSubviews();
-              _showESCApplicationConfigurator = true;
-            });
-            requestAPPCONF(null);
-            Navigator.of(context).pop();
+            // Close the menu
+            Navigator.pop(context);
+
+            // Stop telemetry timer if running
+            if (controller.index == controllerViewRealTime) {
+              startStopTelemetryTimer(true);
+            }
+            // Pause Robogotchi Status requests
+            pauseRobogotchiStatus = true;
+
+            requestAPPCONF(); // Get Input Configuration before displaying
+
+            // Wait for the navigation to return
+            final result = await Navigator.of(context).pushNamed(
+                InputConfigurationEditor.routeName,
+                arguments: InputConfigurationArguments(
+                  calibrationStream: calibrationStream.stream,
+                  dataStream: appconfStream.stream,
+                  theTXCharacteristic: theTXCharacteristic,
+                  applicationConfiguration: escApplicationConfiguration,
+                  discoveredCANDevices: _validCANBusDeviceIDs,
+                  escFirmwareVersion: escFirmwareVersion,
+                  notifyStopStartADCCalibrate: notifyStopStartADCCalibrate,
+                  notifyStopStartPPMCalibrate: notifyStopStartPPMCalibrate,
+                  calibrationState: inputCalibration,
+                ));
+
+            inputCalibration = new InputCalibration();
+            requestAPPCONF(); // Get Input Configuration after editing
+
+            //TODO: If changes were made the result of the Navigation will be true
+            if (result == true) {
+              globalLogger.wtf(result);
+            }
+
+            // Restart telemetry timer if needed
+            if (controller.index == controllerViewRealTime) {
+              startStopTelemetryTimer(false);
+            }
+
+            // Resume Robogotchi Status requests
+            pauseRobogotchiStatus = false;
           }
         },
       ),
@@ -2500,14 +2534,15 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         title: Text("Motor Configuration"),
         onTap: () async {
           if (menuOptionIsReady(isRobogotchiOption: false)) {
-            //TODO: remove
-            //setState(() {
-            //  _hideAllSubviews();
-            //  _showESCConfigurator = true;
-            //});
-
             // Close the menu
             Navigator.pop(context);
+
+            // Stop telemetry timer if running
+            if (controller.index == controllerViewRealTime) {
+              startStopTelemetryTimer(true);
+            }
+            // Pause Robogotchi Status requests
+            pauseRobogotchiStatus = true;
 
             // Wait for the navigation to return
             final result = await Navigator.of(context).pushNamed(
@@ -2519,12 +2554,20 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   discoveredCANDevices: _validCANBusDeviceIDs,
                   escFirmwareVersion: escFirmwareVersion,
                 ));
-            //TODO: requesting mcconf
-            requestMCCONF();
+            requestMCCONF(); // Get Motor Configuration after editing
+
             //TODO: If changes were made the result of the Navigation will be true
             if (result == true) {
               globalLogger.wtf(result);
             }
+
+            // Restart telemetry timer if needed
+            if (controller.index == controllerViewRealTime) {
+              startStopTelemetryTimer(false);
+            }
+
+            // Resume Robogotchi Status requests
+            pauseRobogotchiStatus = false;
           }
         },
       ),
@@ -2709,6 +2752,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
   // Called by timer on interval to request Robogotchi Status packet
   void _requestGotchiStatus() {
+    if (pauseRobogotchiStatus) return;
     if ((controller.index != controllerViewConnection && controller.index != controllerViewLogging ) || syncInProgress || theTXLoggerCharacteristic == null) {
       globalLogger.d("_requestGotchiStatus: Auto stopping gotchi timer");
       startStopGotchiTimer(true);
@@ -2837,18 +2881,20 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
   void notifyStopStartPPMCalibrate(bool starting) {
     // Set flag to change dialogs displayed when performing PPM calibration
-    _isPPMCalibrating = starting;
+    inputCalibration.ppmCalibrationStarting = starting;
     if (!starting) {
-      _isPPMCalibrationReady = false;
+      inputCalibration.ppmCalibrationRunning = false;
     }
+    calibrationStream.add(inputCalibration);
   }
 
   void notifyStopStartADCCalibrate(bool starting) {
     // Set flag to change dialogs displayed when performing ADC calibration
-    _isADCCalibrating = starting;
+    inputCalibration.adcCalibrationStarting = starting;
     if (!starting) {
-      _isADCCalibrationReady = false;
+      inputCalibration.adcCalibrationRunning = false;
     }
+    calibrationStream.add(inputCalibration);
   }
 
   void reloadUserSettings(bool navigateHome) async {
@@ -2976,25 +3022,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 currentDevice: _connectedDevice,
                 showESCProfiles: _showESCProfiles,
                 theTXCharacteristic: theTXCharacteristic,
-                escMotorConfiguration: escMotorConfiguration,
-                onExitProfiles: _handleESCProfileFinished,
-                discoveredCANDevices: _validCANBusDeviceIDs,
+                escMotorConfiguration: escMotorConfiguration, //TODO: remove
+                onExitProfiles: _handleESCProfileFinished, //TODO: remove
                 updateCachedAvatar: _cacheAvatar,
-                showESCAppConfig: _showESCApplicationConfigurator,
-                escAppConfiguration: escApplicationConfiguration,
-                closeESCApplicationConfigurator: closeESCAppConfFunc,
-                requestESCApplicationConfiguration: requestAPPCONF,
-                ppmLastDuration: ppmLastDuration,
-                notifyStopStartPPMCalibrate: notifyStopStartPPMCalibrate,
-                ppmCalibrateReady: _isPPMCalibrationReady,
                 escFirmwareVersion: escFirmwareVersion,
                 updateComputedVehicleStatistics: updateComputedVehicleStatistics,
                 applicationDocumentsDirectory: applicationDocumentsDirectory,
                 reloadUserSettings: reloadUserSettings,
-                adcCalibrateReady: _isADCCalibrationReady,
-                adcLastVoltage: adcLastVoltage,
-                adcLastVoltage2: adcLastVoltage2,
-                notifyStartStopADCCalibrate: notifyStopStartADCCalibrate,
                 telemetryStream: telemetryStream.stream,
               )
             ])
