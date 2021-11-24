@@ -532,6 +532,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       // Clear the Robogotchi status
       gotchiStatus = new RobogotchiStatus();
 
+      // Reset pause flag
+      pauseRobogotchiStatus = false;
+
       // Clear the ESC firmware version
       escFirmwareVersion = ESC_FIRMWARE.UNSUPPORTED;
 
@@ -2296,6 +2299,29 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     });
   }
 
+  void _preNavigationTasks() {
+    // Close the menu
+    Navigator.pop(context);
+
+    // Stop telemetry timer if running
+    if (controller.index == controllerViewRealTime) {
+      startStopTelemetryTimer(true);
+    }
+
+    // Pause Robogotchi Status requests
+    pauseRobogotchiStatus = true;
+  }
+
+  void _postNavigationTasks() {
+    // Restart telemetry timer if needed
+    if (controller.index == controllerViewRealTime) {
+      startStopTelemetryTimer(false);
+    }
+
+    // Resume Robogotchi Status requests
+    pauseRobogotchiStatus = false;
+  }
+
   /// Hamburger Menu... mmmm hamburgers
   Drawer getNavDrawer(BuildContext context) {
     var headerChild = DrawerHeader(
@@ -2394,17 +2420,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         title: Text("Smart BMS Viewer"),
         onTap: () async {
           if (menuOptionIsReady(isRobogotchiOption: false)) {
-
-            // Close the menu
-            Navigator.pop(context);
-
-            // Stop telemetry timer if running
-            if (controller.index == controllerViewRealTime) {
-              startStopTelemetryTimer(true);
-            }
-
-            // Pause Robogotchi Status requests
-            pauseRobogotchiStatus = true;
+            _preNavigationTasks();
 
             _showDieBieMS = true;
             // Wait for the navigation to return
@@ -2416,18 +2432,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   myUserSettings: widget.myUserSettings,
                   changeSmartBMSID: changeSmartBMSIDFunc,
                 ));
-
             _showDieBieMS = false;
 
-            //TODO: If changes were made the result of the Navigation will be true
-            if (result == true) {
-              globalLogger.wtf(result);
-            }
-
-            // Restart telemetry timer if needed
-            if (controller.index == controllerViewRealTime) {
-              startStopTelemetryTimer(false);
-            }
+            _postNavigationTasks();
           }
         },
       ),
@@ -2437,13 +2444,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         title: Text("Speed Profiles"),
         onTap: () async {
           if (menuOptionIsReady(isRobogotchiOption: false)) {
-            // Close the menu
-            Navigator.pop(context);
-
-            // Stop telemetry timer if running
-            if (controller.index == controllerViewRealTime) {
-              startStopTelemetryTimer(true);
-            }
+            _preNavigationTasks();
 
             // Wait for the navigation to return
             final result = await Navigator.of(context).pushNamed(
@@ -2454,18 +2455,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   myUserSettings: widget.myUserSettings,
                 ));
 
-            //TODO: If changes were made the result of the Navigation will be true
-            if (result == true) {
-              globalLogger.wtf(result);
-            }
-
-            // Restart telemetry timer if needed
-            if (controller.index == controllerViewRealTime) {
-              startStopTelemetryTimer(false);
-            }
-
-            // Resume Robogotchi Status requests
-            pauseRobogotchiStatus = false;
+            _postNavigationTasks();
           }
         },
       ),
@@ -2476,15 +2466,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         title: Text("Input Configuration"),
         onTap: () async {
           if (menuOptionIsReady(isRobogotchiOption: false)) {
-            // Close the menu
-            Navigator.pop(context);
-
-            // Stop telemetry timer if running
-            if (controller.index == controllerViewRealTime) {
-              startStopTelemetryTimer(true);
-            }
-            // Pause Robogotchi Status requests
-            pauseRobogotchiStatus = true;
+            _preNavigationTasks();
 
             requestAPPCONF(); // Get Input Configuration before displaying
 
@@ -2506,18 +2488,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             inputCalibration = new InputCalibration();
             requestAPPCONF(); // Get Input Configuration after editing
 
-            //TODO: If changes were made the result of the Navigation will be true
-            if (result == true) {
-              globalLogger.wtf(result);
-            }
-
-            // Restart telemetry timer if needed
-            if (controller.index == controllerViewRealTime) {
-              startStopTelemetryTimer(false);
-            }
-
-            // Resume Robogotchi Status requests
-            pauseRobogotchiStatus = false;
+            _postNavigationTasks();
           }
         },
       ),
@@ -2527,15 +2498,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         title: Text("Motor Configuration"),
         onTap: () async {
           if (menuOptionIsReady(isRobogotchiOption: false)) {
-            // Close the menu
-            Navigator.pop(context);
-
-            // Stop telemetry timer if running
-            if (controller.index == controllerViewRealTime) {
-              startStopTelemetryTimer(true);
-            }
-            // Pause Robogotchi Status requests
-            pauseRobogotchiStatus = true;
+            _preNavigationTasks();
 
             // Wait for the navigation to return
             final result = await Navigator.of(context).pushNamed(
@@ -2549,18 +2512,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 ));
             requestMCCONF(); // Get Motor Configuration after editing
 
-            //TODO: If changes were made the result of the Navigation will be true
-            if (result == true) {
-              globalLogger.wtf(result);
-            }
-
-            // Restart telemetry timer if needed
-            if (controller.index == controllerViewRealTime) {
-              startStopTelemetryTimer(false);
-            }
-
-            // Resume Robogotchi Status requests
-            pauseRobogotchiStatus = false;
+            _postNavigationTasks();
           }
         },
       ),
@@ -2581,10 +2533,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         onLongPress: (){
           if (_connectedDevice == null) {
             Navigator.of(context).pop();
-            setState(() {
-              // navigate to the route
-              Navigator.of(context).pushNamed(RobogotchiDFU.routeName, arguments: null);
-            });
+            // navigate to the route
+            Navigator.of(context).pushNamed(RobogotchiDFU.routeName, arguments: null);
             genericAlert(context, "Hey there 👋", Text("We are not connected to a Robogotchi which means I can't prepare it for update mode.\n\nI'll search for devices anyway but you'll probably want to turn back now."), "Ok 👍");
           }
         },
@@ -2622,10 +2572,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
                           _bleDisconnect();
 
-                          setState(() {
-                            // navigate to the route
-                            Navigator.of(context).pushNamed(RobogotchiDFU.routeName, arguments: null);
-                          });
+                          // navigate to the route
+                          Navigator.of(context).pushNamed(RobogotchiDFU.routeName, arguments: null);
                         }).catchError((e){
                           globalLogger.e("Firmware Update: Exception: $e");
                         });
