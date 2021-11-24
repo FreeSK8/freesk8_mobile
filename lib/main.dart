@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:freesk8_mobile/subViews/inputConfigurationEditor.dart';
 import 'package:freesk8_mobile/subViews/motorConfigurationEditor.dart';
+import 'package:freesk8_mobile/subViews/smartBMSViewer.dart';
 import 'package:freesk8_mobile/subViews/speedProfiles.dart';
 import 'components/crc16.dart';
 import 'components/deviceInformation.dart';
@@ -85,6 +86,7 @@ void main() {
         MotorConfigurationEditor.routeName: (BuildContext context) => MotorConfigurationEditor(),
         InputConfigurationEditor.routeName: (BuildContext context) => InputConfigurationEditor(),
         SpeedProfilesEditor.routeName: (BuildContext context) => SpeedProfilesEditor(),
+        SmartBMSViewer.routeName: (BuildContext context) => SmartBMSViewer(),
       },
       theme: ThemeData(
         //TODO: Select satisfying colors for the light theme
@@ -175,6 +177,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   StreamController<MCCONF> mcconfStream = StreamController<MCCONF>.broadcast();
   StreamController<APPCONF> appconfStream = StreamController<APPCONF>.broadcast();
   StreamController<InputCalibration> calibrationStream = StreamController<InputCalibration>.broadcast();
+  StreamController<DieBieMSTelemetry> bmsTelemetryStream = StreamController<DieBieMSTelemetry>.broadcast();
 
   @override
   void initState() {
@@ -341,6 +344,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     mcconfStream?.close();
     appconfStream?.close();
     calibrationStream?.close();
+    bmsTelemetryStream?.close();
 
     super.dispose();
   }
@@ -919,6 +923,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           break;
         case BluetoothDeviceState.disconnected:
           if ( deviceIsConnected  ) {
+
             globalLogger.w("_connectedDeviceStreamSubscription: WARNING: We have disconnected but FreeSK8 was expecting a connection");
             setState(() {
               deviceHasDisconnected = true;
@@ -931,6 +936,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             //NOTE: On iOS this connection will never re-connection
             // Disconnect
             _bleDisconnect();
+
+            // Navigate back to home
+            while (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            }
           }
           break;
         default:
@@ -1611,11 +1621,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
         }
         else if ( packetID == DieBieMSHelper.COMM_GET_BMS_CELLS ) {
-          if (controller.index == controllerViewRealTime) { //Only re-draw if we are on the real time data tab
-            setState(() {
-              dieBieMSTelemetry = dieBieMSHelper.processCells(bleHelper.getPayload());
-            });
-          }
+          // Update SmartBMS Telemetry with Cell Data
+          dieBieMSTelemetry = dieBieMSHelper.processCells(bleHelper.getPayload());
+
+          // Publish SmartBMS Telemetry
+          bmsTelemetryStream.add(dieBieMSTelemetry);
+
           bleHelper.resetPacket(); //Prepare for next packet
         }
         else if (packetID == COMM_PACKET_ID.COMM_GET_VALUES_SETUP.index) {
@@ -1646,9 +1657,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             // Parse DieBieMS GET_VALUES packet - A shame they share the same ID as ESC values
             DieBieMSTelemetry parsedTelemetry = dieBieMSHelper.processTelemetry(bleHelper.getPayload(), smartBMSCANID);
 
+            // Make sure we parsed what we are expecting
             if (parsedTelemetry != null) {
-              dieBieMSTelemetry = parsedTelemetry;
-
               /// Automatically request cell data from DieBieMS
               var byteData = new ByteData(10);
               byteData.setUint8(0, 0x02); // Start of packet
@@ -2380,22 +2390,44 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
 
       ListTile(
-        leading: Icon(Icons.battery_unknown),
-        title: Text(_showDieBieMS ? "Hide Flexi/DieBieMS" : "Show Flexi/DieBieMS"),
+        leading: Icon(Icons.battery_charging_full),
+        title: Text("Smart BMS Viewer"),
         onTap: () async {
-          if(_showDieBieMS) {
-            setState(() {
-              _showDieBieMS = false;
-            });
-            globalLogger.d("Smart BMS RealTime Disabled");
-            Navigator.pop(context); // Close drawer
-          } else if (menuOptionIsReady(isRobogotchiOption: false)) {
-            setState(() {
-              _showDieBieMS = true;
-            });
-            _delayedTabControllerIndexChange(controllerViewRealTime);
-            globalLogger.d("Smart BMS RealTime Enabled");
-            Navigator.pop(context); // Close drawer
+          if (menuOptionIsReady(isRobogotchiOption: false)) {
+
+            // Close the menu
+            Navigator.pop(context);
+
+            // Stop telemetry timer if running
+            if (controller.index == controllerViewRealTime) {
+              startStopTelemetryTimer(true);
+            }
+
+            // Pause Robogotchi Status requests
+            pauseRobogotchiStatus = true;
+
+            _showDieBieMS = true;
+            // Wait for the navigation to return
+            final result = await Navigator.of(context).pushNamed(
+                SmartBMSViewer.routeName,
+                arguments: SmartBMSArguments(
+                  dataStream: bmsTelemetryStream.stream,
+                  theTXCharacteristic: theTXCharacteristic,
+                  myUserSettings: widget.myUserSettings,
+                  changeSmartBMSID: changeSmartBMSIDFunc,
+                ));
+
+            _showDieBieMS = false;
+
+            //TODO: If changes were made the result of the Navigation will be true
+            if (result == true) {
+              globalLogger.wtf(result);
+            }
+
+            // Restart telemetry timer if needed
+            if (controller.index == controllerViewRealTime) {
+              startStopTelemetryTimer(false);
+            }
           }
         },
       ),
@@ -2431,6 +2463,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             if (controller.index == controllerViewRealTime) {
               startStopTelemetryTimer(false);
             }
+
+            // Resume Robogotchi Status requests
+            pauseRobogotchiStatus = false;
           }
         },
       ),
@@ -2732,39 +2767,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       }
 
       //Request telemetry packet; On error increase error counter
-      if(_showDieBieMS) {
-        /// Request DieBieMS Telemetry
-        if(++telemetryRateLimiter > 7) {
-          telemetryRateLimiter = 0;
-        } else {
-          return;
-        }
-        /// Request DieBieMS Telemetry
-        var byteData = new ByteData(10);
-        const int packetLength = 3;
-        byteData.setUint8(0, 0x02); //Start of packet
-        byteData.setUint8(1, packetLength);
-        byteData.setUint8(2, COMM_PACKET_ID.COMM_FORWARD_CAN.index);
-        byteData.setUint8(3, smartBMSCANID); //CAN ID
-        byteData.setUint8(4, COMM_PACKET_ID.COMM_GET_VALUES.index);
-        int checksum = CRC16.crc16(byteData.buffer.asUint8List(), 2, packetLength);
-        byteData.setUint16(5, checksum);
-        byteData.setUint8(7, 0x03); //End of packet
-        await theTXCharacteristic.write(byteData.buffer.asUint8List(), withoutResponse: true).then((value) {
-        }).
-        catchError((e) {
-          ++bleTXErrorCount;
-          globalLogger.e("_requestTelemetry() failed ($bleTXErrorCount) times. Exception: $e");
-        });
-      } else {
-        /// Request ESC Telemetry
-        Uint8List packet = simpleVESCRequest(COMM_PACKET_ID.COMM_GET_VALUES_SETUP.index);
+      Uint8List packet = simpleVESCRequest(COMM_PACKET_ID.COMM_GET_VALUES_SETUP.index);
 
-        // Request COMM_GET_VALUES_SETUP from the ESC instead of COMM_GET_VALUES
-        if (!await sendBLEData(theTXCharacteristic, packet, true)) {
-          ++bleTXErrorCount;
-          globalLogger.e("_requestTelemetry() failed ($bleTXErrorCount) times!");
-        }
+      if (!await sendBLEData(theTXCharacteristic, packet, true)) {
+        ++bleTXErrorCount;
+        globalLogger.e("_requestTelemetry() failed ($bleTXErrorCount) times!");
       }
     } else {
       // We are requesting telemetry but are not connected =/
@@ -2950,11 +2957,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 telemetryMap: telemetryMap,
                 currentSettings: widget.myUserSettings,
                 startStopTelemetryFunc: startStopTelemetryTimer,
-                showDieBieMS: _showDieBieMS,
-                dieBieMSTelemetry: dieBieMSTelemetry,
-                closeDieBieMSFunc: closeDieBieMSFunc,
-                changeSmartBMSID: changeSmartBMSIDFunc,
-                smartBMSID: smartBMSCANID,
                 deviceIsConnected: deviceIsConnected,
               ),
               RideLogging(
