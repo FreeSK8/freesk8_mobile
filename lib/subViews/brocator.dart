@@ -290,16 +290,21 @@ class BrocatorState extends State<Brocator> {
     }
 
     Widget alertBody = Column(
-
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(element.alias),
-        Icon(Icons.watch_outlined),
-        Text("Last Updated $lastUpdatedString ago"),
+        Icon(Icons.person),
+        Text("Name: ${element.alias}"),
+        SizedBox(height: 10),
+        Icon(Icons.timer),
+        Text("Last Updated: $lastUpdatedString ago"),
+        SizedBox(height: 10),
         Icon(Icons.location_on_outlined),
-        Text("Seen ${doublePrecision(calculateGPSDistance(currentLocation, element.position), 1)}km from your location"),
+        Text("Distance: ${doublePrecision(calculateGPSDistance(currentLocation, element.position), 1)}km away"),
+        SizedBox(height: 10),
         element.batteryPercentage == 0 ? Container() : Icon(Icons.stacked_bar_chart),
-        element.batteryPercentage == 0 ? Container() : Text("Vehicle Battery was ${element.batteryPercentage}% @ ${element.batteryVoltage}V"),
-        element.batteryPercentage == 0 ? Container() : Text("Vehicle traveled ${element.distanceTraveled}km"),
+        element.batteryPercentage == 0 ? Container() : Text("Vehicle Battery: ${element.batteryPercentage}%"),
+        element.batteryPercentage == 0 ? Container() : Text("Vehicle Voltage: ${element.batteryVoltage}V"),
+        element.batteryPercentage == 0 ? Container() : Text("Vehicle Odometer: ${doublePrecision(element.distanceTraveled, 1)}km"),
       ],
     );
     genericAlert(context, "Quick Inspection", alertBody, "OK");

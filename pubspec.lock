@@ -343,7 +343,7 @@ packages:
     description:
       path: "."
       ref: freesk8_mobile
-      resolved-ref: "9dda38f8b057bf71e1ab3ef4dc149a49449b4cd8"
+      resolved-ref: f460fd46d5d6572b4cb926de85bdee78032f4e2b
       url: "git@github.com:FreeSK8/logger_flutter.git"
     source: git
     version: "0.7.1"

@@ -10,9 +10,10 @@ class UserSettingsStructure {
   bool useFahrenheit;
   bool useGPSData;
 
-  //TODO: these are technically board settings below
   String boardAlias;
   String boardAvatarPath;
+
+  bool showDebugLogOnShake;
 
   int batterySeriesCount;
   double batteryCellMinVoltage;
@@ -32,6 +33,8 @@ class UserSettingsStructure {
     this.useImperial = values.useImperial;
     this.useFahrenheit = values.useFahrenheit;
     this.useGPSData = values.useGPSData;
+    this.showDebugLogOnShake = values.showDebugLogOnShake;
+
     this.boardAlias = values.boardAlias;
     this.boardAvatarPath = values.boardAvatarPath;
     this.batterySeriesCount = values.batterySeriesCount;
@@ -113,6 +116,7 @@ class UserSettings {
     settings.useImperial = prefs.getBool('useImperial') ?? false;
     settings.useFahrenheit = prefs.getBool('useFahrenheit') ?? false;
     settings.useGPSData = prefs.getBool('useGPSData') ?? false;
+    settings.showDebugLogOnShake = prefs.getBool('showDebugLogOnShake') ?? true;
 
     settings.boardAlias =
         prefs.getString('$currentDeviceID boardAlias') ?? "Unnamed";
@@ -144,6 +148,8 @@ class UserSettings {
     await prefs.setBool('useImperial', settings.useImperial);
     await prefs.setBool('useFahrenheit', settings.useFahrenheit);
     await prefs.setBool('useGPSData', settings.useGPSData);
+
+    await prefs.setBool('showDebugLogOnShake', settings.showDebugLogOnShake);
 
     // Do not allow the internal "defaults" profile to update the board image or alias
     if (currentDeviceID != "defaults") {

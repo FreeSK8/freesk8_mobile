@@ -1,22 +1,17 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
-
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:freesk8_mobile/subViews/brocator.dart';
+import 'package:logger_flutter/logger_flutter.dart';
 
-import '../components/crc16.dart';
-import '../subViews/escProfileEditor.dart';
 import '../subViews/vehicleManager.dart';
 import '../globalUtilities.dart';
 
 import '../components/userSettings.dart';
 import '../hardwareSupport/escHelper/escHelper.dart';
-import '../hardwareSupport/escHelper/mcConf.dart';
-import '../hardwareSupport/escHelper/dataTypes.dart';
 
 import 'package:esys_flutter_share/esys_flutter_share.dart';
 
@@ -101,6 +96,8 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
   final tecBoardAlias = TextEditingController();
 
+  int _showDeveloperOptions = 1;
+
   @override
   void initState() {
     if (widget.myUserSettings.settings.boardAvatarPath != null) {
@@ -148,14 +145,22 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
 
 
-                Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-                  Icon(
-                    Icons.settings,
-                    size: 80.0,
-                    color: Colors.blue,
-                  ),
-                  Text("FreeSK8\nConfiguration", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
-                ],),
+                GestureDetector(
+                  child: Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+                    Icon(
+                      Icons.settings,
+                      size: 80.0,
+                      color: Colors.blue,
+                    ),
+                    Text("FreeSK8\nConfiguration", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
+                  ],),
+                  onLongPress: (){
+                    setState(() {
+                      ++_showDeveloperOptions;
+                      print(_showDeveloperOptions);
+                    });
+                  },
+                ),
 
 
                 SwitchListTile(
@@ -317,6 +322,31 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                           ],);
                         },
                         body: Column(children: [
+
+                          SwitchListTile(
+                            title: Text("Show Debug Log with Shake (default = on)"),
+                            value: widget.myUserSettings.settings.showDebugLogOnShake,
+                            onChanged: (bool newValue) { setState((){widget.myUserSettings.settings.showDebugLogOnShake = newValue;}); },
+                            secondary: const Icon(Icons.bug_report_outlined),
+                          ),
+
+                          ElevatedButton(onPressed: () async {
+                            var logConsole = LogConsole(
+                              showCloseButton: true,
+                              dark: true,
+                            );
+                            PageRoute route;
+                            if (Platform.isIOS) {
+                              route = CupertinoPageRoute(builder: (_) => logConsole);
+                            } else {
+                              route = MaterialPageRoute(builder: (_) => logConsole);
+                            }
+
+                            await Navigator.push(context, route);
+                          }, child: Text("Show Debug Log")),
+
+                          Divider(thickness: 3),
+
                           ElevatedButton(
                               child: Text("Export Data Backup"),
                               onPressed: () async {
@@ -471,6 +501,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                 }
                               }),
 
+                          _showDeveloperOptions % 4 != 0 ? Container() :
                           ElevatedButton(
                               child: Text("Brocator"),
                               onPressed: () async {

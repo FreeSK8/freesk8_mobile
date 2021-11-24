@@ -2882,6 +2882,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         body: LogConsoleOnShake(
           debugOnly: false,
           dark: true,
+          showOnShake: widget.myUserSettings.settings.showDebugLogOnShake,
           child: Center(
             child: getTabBarView( <Widget>[
               ConnectionStatus(
