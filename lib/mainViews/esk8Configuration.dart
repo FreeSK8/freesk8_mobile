@@ -34,10 +34,7 @@ class ESK8Configuration extends StatefulWidget {
   ESK8Configuration({
     @required this.myUserSettings,
     this.currentDevice,
-    this.showESCProfiles,
     this.theTXCharacteristic,
-    this.escMotorConfiguration,
-    this.onExitProfiles,
     this.updateCachedAvatar,
     this.escFirmwareVersion,
     this.updateComputedVehicleStatistics,
@@ -47,10 +44,7 @@ class ESK8Configuration extends StatefulWidget {
   });
   final UserSettings myUserSettings;
   final BluetoothDevice currentDevice;
-  final bool showESCProfiles;
   final BluetoothCharacteristic theTXCharacteristic;
-  final MCCONF escMotorConfiguration;
-  final ValueChanged<bool> onExitProfiles;
   final ValueChanged<bool> updateCachedAvatar;
   final ESC_FIRMWARE escFirmwareVersion;
   final ValueChanged<bool> updateComputedVehicleStatistics;
@@ -60,15 +54,11 @@ class ESK8Configuration extends StatefulWidget {
 
   final Stream telemetryStream;
   ESK8ConfigurationState createState() => new ESK8ConfigurationState();
-
-  static const String routeName = "/settings";
 }
 
 class ESK8ConfigurationState extends State<ESK8Configuration> {
 
   final GlobalKey<State> _keyLoader = new GlobalKey<State>();
-
-  bool _applyESCProfilePermanently;
 
   FileImage _boardAvatar;
 
@@ -117,8 +107,6 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
       _boardAvatar = FileImage(File("${widget.applicationDocumentsDirectory}${widget.myUserSettings.settings.boardAvatarPath}"));
     }
 
-    _applyESCProfilePermanently = false;
-
     //TODO: these try parse can return null.. then the device will remove null because it's not a number
     tecBoardAlias.addListener(() { widget.myUserSettings.settings.boardAlias = tecBoardAlias.text; });
 
@@ -132,247 +120,11 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
     super.dispose();
   }
 
-  void setMCCONFTemp(bool persistentChange, ESCProfile escProfile) {
-
-    var byteData = new ByteData(42); //<start><payloadLen><payload><crc1><crc2><end>
-    byteData.setUint8(0, 0x02); //Start of packet <255 in length
-    byteData.setUint8(1, 37); //Payload length
-    byteData.setUint8(2, COMM_PACKET_ID.COMM_SET_MCCONF_TEMP_SETUP.index);
-    byteData.setUint8(3, persistentChange ? 1 : 0);
-    byteData.setUint8(4, 0x01); //Forward to CAN devices =D Hooray
-    byteData.setUint8(5, 0x01); //ACK = true
-    byteData.setUint8(6, 0x00); //Divide By Controllers = false
-    byteData.setFloat32(7, escProfile.l_current_min_scale);
-    byteData.setFloat32(11, escProfile.l_current_max_scale);
-    byteData.setFloat32(15, escProfile.speedKmhRev / 3.6); //kph to m/s
-    byteData.setFloat32(19, escProfile.speedKmh / 3.6); //kph to m/s
-    byteData.setFloat32(23, widget.escMotorConfiguration.l_min_duty);
-    byteData.setFloat32(27, widget.escMotorConfiguration.l_max_duty);
-    if (escProfile.l_watt_min != 0.0){
-      byteData.setFloat32(31, escProfile.l_watt_min);
-    } else {
-      byteData.setFloat32(31, widget.escMotorConfiguration.l_watt_min);
-    }
-    if (escProfile.l_watt_max != 0.0){
-      byteData.setFloat32(35, escProfile.l_watt_max);
-    } else {
-      byteData.setFloat32(35, widget.escMotorConfiguration.l_watt_max);
-    }
-    int checksum = CRC16.crc16(byteData.buffer.asUint8List(), 2, 37);
-    byteData.setUint16(39, checksum);
-    byteData.setUint8(41, 0x03); //End of packet
-
-    sendBLEData(widget.theTXCharacteristic, byteData.buffer.asUint8List(), true).then((sendResult){
-      if (sendResult) globalLogger.d('COMM_SET_MCCONF_TEMP_SETUP sent');
-      else globalLogger.d('COMM_SET_MCCONF_TEMP_SETUP failed to send');
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     print("Build: ESK8Configuration");
     setLandscapeOrientation(enabled: false);
-
-    if (widget.showESCProfiles) {
-      ///ESC Speed Profiles
-      return Center(
-        child: Column(
-          children: <Widget>[
-            Icon(
-              Icons.timer,
-              size: 60.0,
-              color: Colors.blue,
-            ),
-            Center(child:Text("ESC Profiles")),
-
-            Expanded(
-              child: ListView.builder(
-                primary: false,
-                padding: EdgeInsets.all(5),
-                itemCount: 3,
-                itemBuilder: (context, i) {
-                  //TODO: Custom icons!?!
-                  Icon rowIcon;
-                  switch (i) {
-                    case 0:
-                      rowIcon = Icon(Icons.filter_1);
-                      break;
-                    case 1:
-                      rowIcon = Icon(Icons.filter_2);
-                      break;
-                    case 2:
-                      rowIcon = Icon(Icons.filter_3);
-                      break;
-                    case 3:
-                      rowIcon = Icon(Icons.filter_4);
-                      break;
-                    default:
-                      rowIcon = Icon(Icons.filter_none);
-                      break;
-                  }
-                  return Column(
-                    children: <Widget>[
-
-                      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: <Widget>[
-                            rowIcon,
-
-                            FutureBuilder<String>(
-                                future: ESCHelper.getESCProfileName(i),
-                                builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
-                                  if(snapshot.connectionState == ConnectionState.waiting){
-                                    return Center(
-                                        child:Text("Loading...")
-                                    );
-                                  }
-                                  return Text("${snapshot.data}");
-                                }),
-
-                            ElevatedButton(
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: <Widget>[
-                                  Text("Reset "),
-                                  Icon(Icons.flip_camera_android),
-                                ],),
-                              onPressed: () async {
-                                //TODO: reset values
-                                await ESCHelper.setESCProfile(i, ESCHelper.getESCProfileDefaults(i));
-                                setState(() {
-
-                                });
-                              },
-                              style: ButtonStyle(backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
-                                if (states.contains(MaterialState.disabled)) {
-                                  return Colors.grey[100];
-                                }
-                                return Colors.transparent;
-                              })),
-                            ),
-                            ElevatedButton(
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: <Widget>[
-                                  Text("Edit "),
-                                  Icon(Icons.edit),
-                                ],),
-                              onPressed: () async {
-                                // navigate to the editor
-                                Navigator.of(context).pushNamed(ESCProfileEditor.routeName, arguments: ESCProfileEditorArguments(widget.theTXCharacteristic, await ESCHelper.getESCProfile(i), i, widget.myUserSettings.settings.useImperial));
-                              },
-                              style: ButtonStyle(backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
-                                if (states.contains(MaterialState.disabled)) {
-                                  return Colors.grey[100];
-                                }
-                                return Colors.transparent;
-                              })),
-                            ),
-                            ElevatedButton(
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: <Widget>[
-                                  Text("Apply "),
-                                  Icon(Icons.exit_to_app),
-                                ],),
-                              onPressed: () async {
-                                setMCCONFTemp(_applyESCProfilePermanently, await ESCHelper.getESCProfile(i));
-                              },
-                              style: ButtonStyle(backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
-                                if (states.contains(MaterialState.disabled)) {
-                                  return Colors.grey[100];
-                                }
-                                return Colors.transparent;
-                              })),
-                            )
-                          ]
-                      ),
-
-                      FutureBuilder<ESCProfile>(
-                          future: ESCHelper.getESCProfile(i),
-                          builder: (BuildContext context, AsyncSnapshot<ESCProfile> snapshot) {
-                            if(snapshot.connectionState == ConnectionState.waiting){
-                              return Center(
-                                  child:Text("Loading...")
-                              );
-                            }
-                            Table thisTableData = new Table(
-                              children: [
-                                TableRow(children: [
-                                  Text("Speed Forward", textAlign: TextAlign.right),
-                                  Text(":"),
-                                  Text("${widget.myUserSettings.settings.useImperial ? kmToMile(snapshot.data.speedKmh) : snapshot.data.speedKmh} ${widget.myUserSettings.settings.useImperial ? "mph" : "km/h"}")
-                                ]),
-                                TableRow(children: [
-                                  Text("Speed Reverse", textAlign: TextAlign.right),
-                                  Text(":"),
-                                  Text("${widget.myUserSettings.settings.useImperial ? kmToMile(snapshot.data.speedKmhRev) : snapshot.data.speedKmhRev} ${widget.myUserSettings.settings.useImperial ? "mph" : "km/h"}")
-                                ]),
-                                TableRow(children: [
-                                  Text("Current Accel", textAlign: TextAlign.right),
-                                  Text(":"),
-                                  Text("${snapshot.data.l_current_max_scale * 100} %")
-                                ]),
-                                TableRow(children: [
-                                  Text("Current Brake", textAlign: TextAlign.right),
-                                  Text(":"),
-                                  Text("${snapshot.data.l_current_min_scale * 100} %")
-                                ]),
-
-                              ],
-                            );
-
-                            if (snapshot.data.l_watt_max != 0.0) {
-                              thisTableData.children.add(new TableRow(children: [
-                                Text("Max Power Out", textAlign: TextAlign.right),
-                                Text(":"),
-                                Text("${snapshot.data.l_watt_max} W")
-                              ]));
-                            }
-
-                            if (snapshot.data.l_watt_min != 0.0) {
-                              thisTableData.children.add(new TableRow(children: [
-                                Text("Max Power Regen", textAlign: TextAlign.right),
-                                Text(":"),
-                                Text("${snapshot.data.l_watt_min} W")
-                              ]));
-                            }
-                            return thisTableData;
-                          }),
-                      SizedBox(height: 20,)
-                    ],
-                  );
-                },
-              ),
-            ),
-            SizedBox(
-              height: 115,
-              child: ListView(
-                padding: EdgeInsets.all(5),
-                primary: false,
-                children: <Widget>[
-                  SwitchListTile(
-                    title: Text("Retain profile after ESC is reset?"),
-                    value: _applyESCProfilePermanently,
-                    onChanged: (bool newValue) { setState((){_applyESCProfilePermanently = newValue;}); },
-                    secondary: const Icon(Icons.memory),
-                  ),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      ElevatedButton(child:
-                      Row(mainAxisAlignment: MainAxisAlignment.center , children: <Widget>[Text("Finished"),Icon(Icons.check),],),
-                          onPressed: () {
-                            widget.onExitProfiles(false);
-                          })
-                    ],)
-                ],
-              ),
-            )
-          ],
-        ),
-      );
-    }
 
     tecBoardAlias.text = widget.myUserSettings.settings.boardAlias;
     tecBoardAlias.selection = TextSelection.fromPosition(TextPosition(offset: tecBoardAlias.text.length));

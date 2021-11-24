@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:freesk8_mobile/subViews/inputConfigurationEditor.dart';
 import 'package:freesk8_mobile/subViews/motorConfigurationEditor.dart';
+import 'package:freesk8_mobile/subViews/speedProfiles.dart';
 import 'components/crc16.dart';
 import 'components/deviceInformation.dart';
 import 'hardwareSupport/dieBieMSHelper.dart';
@@ -63,7 +64,7 @@ import 'package:signal_strength_indicator/signal_strength_indicator.dart';
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.20.1";
+const String freeSK8ApplicationVersion = "0.21.0";
 const String robogotchiFirmwareExpectedVersion = "0.10.2";
 
 void main() {
@@ -83,6 +84,7 @@ void main() {
         Brocator.routeName: (BuildContext context) => Brocator(),
         MotorConfigurationEditor.routeName: (BuildContext context) => MotorConfigurationEditor(),
         InputConfigurationEditor.routeName: (BuildContext context) => InputConfigurationEditor(),
+        SpeedProfilesEditor.routeName: (BuildContext context) => SpeedProfilesEditor(),
       },
       theme: ThemeData(
         //TODO: Select satisfying colors for the light theme
@@ -396,12 +398,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     }
   }
 
-  void _handleESCProfileFinished(bool newValue) {
-    setState(() {
-      _showESCProfiles = newValue;
-    });
-  }
-
   bool _scanActive = false;
   Future<void> _handleBLEScanState(bool startScan) async {
     if (_connectedDevice != null) {
@@ -507,12 +503,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       // Reset current ESC application configuration
       escApplicationConfiguration = new APPCONF();
 
-      // Reset displaying ESC profiles flag
-      _showESCProfiles = false;
-
-      // Reset displaying ESC Configurator flag
-      _showESCApplicationConfigurator = false;
-
       // Reset Robogotchi version
       robogotchiVersion = null;
 
@@ -594,13 +584,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         disconnectTCPClient();
       },
     );
-  }
-
-  //TODO: remove!! hooray
-  void _hideAllSubviews() {
-    _showDieBieMS = false;
-    _showESCProfiles = false;
-    _showESCApplicationConfigurator = false;
   }
 
   Future<void> _attemptDeviceConnection(BluetoothDevice device) async {
@@ -818,8 +801,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static DieBieMSTelemetry dieBieMSTelemetry = new DieBieMSTelemetry();
   static int smartBMSCANID = 10;
   static bool _showDieBieMS = false;
-  static bool _showESCApplicationConfigurator = false;
-  static bool _showESCProfiles = false;
   static Timer telemetryTimer;
   static Timer _gotchiStatusTimer;
   static Timer _timerMonitor;
@@ -1793,8 +1774,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_SET_MCCONF_TEMP_SETUP.index ) {
           globalLogger.d("COMM_PACKET_ID = COMM_SET_MCCONF_TEMP_SETUP");
-          //TODO: analyze packet before assuming success?
-          _alertProfileSet();
+          genericAlert(context, "Success", Text("Profile set successfully!"), "OK" );
           requestMCCONF();
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_GET_MCCONF.index) {
@@ -1823,13 +1803,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
           // Flag the reception of an init message
           initMsgESCMotorConfig = true;
-
-          // Check flag to show ESC Profiles when MCCONF data is received
-          if (_showESCProfiles) {
-            setState(() {
-              controller.index = controllerViewConfiguration; // Navigate user to Configuration tab
-            });
-          }
 
           // Save FreeSK8 user settings from received MCCONF
           {
@@ -1874,11 +1847,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
           // Publish APPCONF to subscribers
           appconfStream.add(escApplicationConfiguration);
-
-          if (_showESCApplicationConfigurator) {
-            _showESCApplicationConfigurator = false;
-            //TODO: navigate to view
-          }
 
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_DETECT_APPLY_ALL_FOC.index) {
@@ -2222,34 +2190,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     }
   }
 
-  Future<void> _alertProfileSet() {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false, // user must tap button!
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Good news everyone'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                Text('Profile set successfully.'),
-                Text('Give it a test before your session!')
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('Noice'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   Future<void> _alertInvalidDevice() {
     return showDialog<void>(
       context: context,
@@ -2463,16 +2403,34 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       ListTile(
         leading: Icon(Icons.timer),
         title: Text("Speed Profiles"),
-        onTap: () {
+        onTap: () async {
           if (menuOptionIsReady(isRobogotchiOption: false)) {
-            setState(() {
-              _hideAllSubviews();
-              // Set the flag to show ESC profiles. Display when MCCONF is returned
-              _showESCProfiles = true;
-            });
+            // Close the menu
+            Navigator.pop(context);
 
-            requestMCCONF();
-            Navigator.pop(context); // Close the drawer
+            // Stop telemetry timer if running
+            if (controller.index == controllerViewRealTime) {
+              startStopTelemetryTimer(true);
+            }
+
+            // Wait for the navigation to return
+            final result = await Navigator.of(context).pushNamed(
+                SpeedProfilesEditor.routeName,
+                arguments: SpeedProfileArguments(
+                  theTXCharacteristic: theTXCharacteristic,
+                  escMotorConfiguration: escMotorConfiguration,
+                  myUserSettings: widget.myUserSettings,
+                ));
+
+            //TODO: If changes were made the result of the Navigation will be true
+            if (result == true) {
+              globalLogger.wtf(result);
+            }
+
+            // Restart telemetry timer if needed
+            if (controller.index == controllerViewRealTime) {
+              startStopTelemetryTimer(false);
+            }
           }
         },
       ),
@@ -2865,13 +2823,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     globalLogger.d("Smart BMS RealTime Disabled");
   }
 
-  void closeESCAppConfFunc(bool closeView) {
-    setState(() {
-      _showESCApplicationConfigurator = false;
-    });
-    globalLogger.d("closeESCAppConfFunc: Closed ESC Application Configurator");
-  }
-
   void changeSmartBMSIDFunc(int nextID) {
     globalLogger.d("changeSmartBMSIDFunc: Setting smart BMS CAN FWD ID to $nextID from $smartBMSCANID");
     setState(() {
@@ -3020,10 +2971,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               ESK8Configuration(
                 myUserSettings: widget.myUserSettings,
                 currentDevice: _connectedDevice,
-                showESCProfiles: _showESCProfiles,
                 theTXCharacteristic: theTXCharacteristic,
-                escMotorConfiguration: escMotorConfiguration, //TODO: remove
-                onExitProfiles: _handleESCProfileFinished, //TODO: remove
                 updateCachedAvatar: _cacheAvatar,
                 escFirmwareVersion: escFirmwareVersion,
                 updateComputedVehicleStatistics: updateComputedVehicleStatistics,
