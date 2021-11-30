@@ -24,6 +24,13 @@ import 'package:http/http.dart' as http;
 
 import 'package:image/image.dart' as Im;
 
+class PrivacyZone {
+  bool activated;
+  double latitude;
+  double longitude;
+  double radius;
+}
+
 class Bro {
   String alias;
   MemoryImage avatar;
@@ -69,7 +76,7 @@ class BroList {
   final List<Bro> brocations;
 
   BroList({@required this.brocations});
-  
+
   factory BroList.fromJson(List<dynamic> json) {
     List<Bro> bros = [];
     json.forEach((element) {
@@ -104,6 +111,7 @@ class BrocatorState extends State<Brocator> {
 
   bool _showSettings = false;
   bool broadcastPosition;
+  PrivacyZone privacyZone = new PrivacyZone();
   BrocatorArguments myArguments;
 
   TextEditingController tecServer = TextEditingController();
@@ -148,7 +156,7 @@ class BrocatorState extends State<Brocator> {
   }
 
   Future<void> loadSettings() async {
-    globalLogger.wtf("loading settings");
+    //globalLogger.wtf("loading settings");
     final prefs = await SharedPreferences.getInstance();
 
     myUUID = prefs.getString('brocatorUUID') ?? _uuid.v4().toString();
@@ -156,16 +164,24 @@ class BrocatorState extends State<Brocator> {
     serverURL = prefs.getString('brocatorServer') ?? "";
     serverURLValid = Uri.tryParse(serverURL).isAbsolute;
     offlineAlias = prefs.getString('brocatorAlias') ?? offlineAlias;
+    privacyZone.activated = prefs.getBool('brocatorPrivacyZoneActivated') ?? false;
+    privacyZone.latitude = prefs.getDouble('brocatorPrivacyZoneLatitude');
+    privacyZone.longitude = prefs.getDouble('brocatorPrivacyZoneLongitude');
+    privacyZone.radius = prefs.getDouble('brocatorPrivacyZoneRadius') ?? 2.0;
   }
 
   void saveSettings() async {
-    globalLogger.wtf("saving settings");
+    //globalLogger.wtf("saving settings");
     final prefs = await SharedPreferences.getInstance();
 
     await prefs.setString('brocatorUUID', myUUID);
     await prefs.setBool('broadcastBrocation', broadcastPosition);
     await prefs.setString('brocatorServer', serverURL);
     await prefs.setString('brocatorAlias', offlineAlias);
+    await prefs.setBool('brocatorPrivacyZoneActivated', privacyZone.activated);
+    await prefs.setDouble('brocatorPrivacyZoneLatitude', privacyZone.latitude);
+    await prefs.setDouble('brocatorPrivacyZoneLongitude', privacyZone.longitude);
+    await prefs.setDouble('brocatorPrivacyZoneRadius', privacyZone.radius);
   }
 
   Future<BroList> fetchBrocations() async {
@@ -185,6 +201,13 @@ class BrocatorState extends State<Brocator> {
   }
 
   Future<void> sendBrocation() async {
+    if (privacyZone.activated && privacyZone.latitude != null) {
+      double distanceFromPrivacyZone = calculateGPSDistance(currentLocation, LatLng(privacyZone.latitude, privacyZone.longitude));
+      if (distanceFromPrivacyZone < privacyZone.radius) {
+        print("Inside privacy zone");
+        return;
+      }
+    }
     //globalLogger.wtf("Sending brocation");
 
     myBrocation.alias = myArguments.boardAlias == null ? offlineAlias : myArguments.boardAlias;
@@ -210,7 +233,7 @@ class BrocatorState extends State<Brocator> {
       myBrocation.avatar =
           MemoryImage(Im.encodeJpg(smallerImage, quality: 85));
     }
-    
+
     myBrocation.position = currentLocation;
     myBrocation.lastUpdated = DateTime.now().toUtc();
 
@@ -245,7 +268,7 @@ class BrocatorState extends State<Brocator> {
   }
 
   Future<void> performWebRequests() async {
-    if (!serverURLValid) {
+    if (!serverURLValid || !this.mounted) {
       return;
     }
 
@@ -267,7 +290,7 @@ class BrocatorState extends State<Brocator> {
     }
 
     if (theTXCharacteristic != null) {
-      globalLogger.wtf("Brocator Telemetry Requested");
+      //globalLogger.wtf("Brocator Telemetry Requested");
       /// Request ESC Telemetry
       Uint8List packet = simpleVESCRequest(COMM_PACKET_ID.COMM_GET_VALUES_SETUP.index);
 
@@ -395,8 +418,8 @@ class BrocatorState extends State<Brocator> {
         ExpansionPanelList(
             elevation: 0,
             expansionCallback: (int index, bool isExpanded) {
+              FocusScope.of(context).requestFocus(new FocusNode()); //Hide keyboard
               setState(() {
-                print(_showSettings);
                 _showSettings = !_showSettings;
               });
             },
@@ -412,67 +435,123 @@ class BrocatorState extends State<Brocator> {
                     ],);
                   },
                   body: Column(
-                    children: [
-                      SwitchListTile(
-                        title: Text("Share my brocation with everyone"),
-                        value: broadcastPosition,
-                        onChanged: (bool newValue) {
-                          setState((){
-                            broadcastPosition = newValue;
-                          });
-                          saveSettings();
-                        },
-                        secondary: Icon(broadcastPosition ? Icons.public : Icons.public_off),
-                      ),
-                      TextField(
-                          controller: tecServer,
-                          decoration: new InputDecoration(labelText: "Server URL"),
-                          keyboardType: TextInputType.url
-                      ),
-                      TextField(
-                        controller: tecAlias,
-                        decoration: new InputDecoration(labelText: "Username"),
-                        keyboardType: TextInputType.text,
-                        maxLength: 13,
-                      ),
-                    ],
+
+                      children: [
+
+                        SwitchListTile(
+                          title: Text("Share my brocation with everyone"),
+                          value: broadcastPosition,
+                          onChanged: (bool newValue) {
+                            setState((){
+                              broadcastPosition = newValue;
+                            });
+                            saveSettings();
+                          },
+                          secondary: Icon(broadcastPosition ? Icons.public : Icons.public_off),
+                        ),
+                        TextField(
+                            controller: tecServer,
+                            decoration: new InputDecoration(labelText: "Server URL"),
+                            keyboardType: TextInputType.url
+                        ),
+                        TextField(
+                          controller: tecAlias,
+                          decoration: new InputDecoration(labelText: "Username"),
+                          keyboardType: TextInputType.text,
+                          maxLength: 13,
+                        ),
+
+                        Divider(thickness: 3),
+
+                        SwitchListTile(
+                          title: Text("Activate Privacy Zone"),
+                          value: privacyZone.activated,
+                          onChanged: (bool newValue) {
+                            if (newValue == true && privacyZone.latitude == null) {
+                              genericAlert(context, "Zone Missing", Text("Please set the Privacy Zone Location before activating."), "OK");
+                              return;
+                            }
+                            setState((){
+                              privacyZone.activated = newValue;
+                            });
+                            saveSettings();
+                          },
+                          secondary: Icon(privacyZone.activated ? Icons.privacy_tip : Icons.privacy_tip_outlined),
+                        ),
+
+                        ElevatedButton(onPressed: (){
+                          if (currentLocation != null) {
+                            privacyZone.latitude = currentLocation.latitude;
+                            privacyZone.longitude = currentLocation.longitude;
+                            setState(() {
+                              saveSettings();
+                            });
+                          }
+                        }, child: Text("Set Privacy Zone to Current Location")),
+
+                        Text("Privacy Zone Radius (${privacyZone.radius}km)"),
+                        Slider(
+                            min: 0.1,
+                            max: 11,
+                            divisions: 10,
+                            value: privacyZone.radius,
+                            onChanged: (value){
+                              double newValue = doublePrecision(value, 1);
+                              if (privacyZone.radius != newValue) {
+                                setState(() {
+                                  privacyZone.radius = doublePrecision(value, 1);
+                                  saveSettings();
+                                });
+                              }
+
+                            }),
+
+
+
+
+
+                      ],
+                    ),
                   )
-              )
             ]
         ),
 
-        Container(
-          height: MediaQuery.of(context).size.height * 0.50,
-          child: currentLocation != null ? BrocatorMap(
-              brocatorMapData: BrocatorMapData(
+        /// MAP
+        Flexible(
+            child: currentLocation != null ? BrocatorMap(
+                brocatorMapData: BrocatorMapData(
                   currentPosition: currentLocation,
                   mapMarkers: mapMakers,
-                  mapController: _mapController
-              )) : Text("Awaiting location"),
+                  mapController: _mapController,
+                  privacyZone: privacyZone.activated ? LatLng(privacyZone.latitude, privacyZone.longitude) : null,
+                  privacyZoneRadius: privacyZone.radius,
+                )) : Container(height: MediaQuery.of(context).size.height * 0.50, child: Text("Requesting location from mobile device"),)
         ),
-        Row(
+
+        /// BRO LIST
+        _showSettings ? Container() : Row(
           children: [
             Container(width: 40),
             Spacer(),
             Container(
               width: MediaQuery.of(context).size.width * 0.25,
-              child: Text("Name", textAlign: TextAlign.center),
+              child: Text("Name", textAlign: TextAlign.left),
             ),
             Spacer(),
             Container(
               width: MediaQuery.of(context).size.width * 0.25,
-              child: Text("Last Updated", textAlign: TextAlign.center),
+              child: Text("Last Updated", textAlign: TextAlign.left),
             ),
 
             Spacer(),
             Container(
               width: MediaQuery.of(context).size.width * 0.25,
-              child: Text("Distance", textAlign: TextAlign.center,),
+              child: Text("Distance", textAlign: TextAlign.left,),
             ),
 
           ],
         ),
-        myBros != null ? Expanded(
+        _showSettings ? Container() : myBros != null ? Expanded(
           child: ListView.builder(
             itemCount: myBros.brocations.length,
               itemBuilder: (context, i) {
@@ -544,7 +623,7 @@ class BrocatorState extends State<Brocator> {
                         Spacer(),
                         Container(
                           width: MediaQuery.of(context).size.width * 0.25,
-                          child: currentLocation == null ? Container() : Text("${doublePrecision(calculateGPSDistance(currentLocation, myBros.brocations[i].position), 1)}km", textAlign: TextAlign.right,),
+                          child: currentLocation == null ? Container() : Text("${doublePrecision(calculateGPSDistance(currentLocation, myBros.brocations[i].position), 1)}km", textAlign: TextAlign.left,),
                         ),
 
                       ],
@@ -553,7 +632,7 @@ class BrocatorState extends State<Brocator> {
                 ),
               );
             })
-        ) : Text("No Data From Server"),
+        ) : Expanded(child: Text("No Data From Server")),
       ],
     );
 
@@ -572,7 +651,7 @@ class BrocatorState extends State<Brocator> {
 
     if(streamSubscription == null) {
       streamSubscription = myArguments.telemetryStream.listen((value) {
-        globalLogger.wtf("Brocator Telemetry Received");
+        print("Brocator Telemetry Received");
         myTelemetry = value;
       });
     }
