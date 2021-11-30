@@ -1731,8 +1731,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             case 1:
               globalLogger.d("Pairing Successful");
               Navigator.of(context).pop(); //Pop Quick Pair initial dialog
-              if (controller.index == controllerViewRealTime) startStopTelemetryTimer(
-                  false); //Resume the telemetry timer
 
               showDialog(
                 context: context,
@@ -1748,8 +1746,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             case 2:
               globalLogger.d("Pairing timeout");
               Navigator.of(context).pop(); //Pop Quick Pair initial dialog
-              if (controller.index == controllerViewRealTime) startStopTelemetryTimer(
-                  false); //Resume the telemetry timer
 
               showDialog(
                 context: context,
@@ -1765,10 +1761,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             default:
               globalLogger.e("ERROR: Pairing unknown payload");
               Navigator.of(context).pop(); //Pop Quick Pair initial dialog
-              if (controller.index == controllerViewRealTime) {
-                //Resume the telemetry timer
-                startStopTelemetryTimer(false);
-              }
           }
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_SET_MCCONF.index ) {
@@ -1879,7 +1871,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           int resultFOCDetection = byteData.getInt16(1);
 
           Navigator.of(context).pop(); //Pop away the FOC wizard Loading Overlay
-          if (controller.index == controllerViewRealTime) startStopTelemetryTimer(false); //Resume the telemetry timer
 
           String resultText = "";
           switch(resultFOCDetection) {
