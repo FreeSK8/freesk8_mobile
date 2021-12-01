@@ -96,7 +96,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
   final tecBoardAlias = TextEditingController();
 
-  int _showDeveloperOptions = 1;
+  int _showDeveloperOptions = 0;
 
   @override
   void initState() {
@@ -501,7 +501,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                 }
                               }),
 
-                          _showDeveloperOptions % 4 != 0 ? Container() :
+                          _showDeveloperOptions % 2 == 0 ? Container() :
                           ElevatedButton(
                               child: Text("Brocator"),
                               onPressed: () async {
