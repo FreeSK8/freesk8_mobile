@@ -26,21 +26,21 @@ dependencies:
   #background_locator: 1.1.3+1
   #location_permissions: ^2.0.5
 
-  flutter_map: 0.12.0 #https://pub.dev/packages/flutter_map/changelog
+  flutter_map: 0.14.0 #https://pub.dev/packages/flutter_map/changelog
   rxdart: '>=0.18.1'
 
   flutter_polyline_points: 0.2.6 #https://pub.dev/packages/flutter_polyline_points/changelog
 
   oscilloscope: 0.0.3
-  intl: ^0.16.1
+  intl: ^0.17.0 #https://pub.dev/packages/intl/changelog
 
   image_picker: 0.7.0 #https://pub.dev/packages/image_picker/changelog
   path_provider: 1.6.7 #https://pub.dev/packages/path_provider/changelog
 
-  charts_flutter: 0.10.0 #https://pub.dev/packages/charts_flutter/changelog
+  charts_flutter: 0.12.0 #https://pub.dev/packages/charts_flutter/changelog
   sliding_up_panel: ^1.0.2
   #this one does not support files# share: 0.6.4+2
-  esys_flutter_share: ^1.0.2 #https://pub.dev/packages/esys_flutter_share/changelog
+  esys_flutter_share: ^1.0.2 #https://pub.dev/packages/esys_flutter_share/changelog #TODO: take a look at the docs for migrating the plugin to the V2 embedding: https://flutter.dev/go/android-plugin-migration
 
   wakelock: 0.1.4+1
 
@@ -48,9 +48,9 @@ dependencies:
 
   table_calendar: ^2.3.3 #https://pub.dev/packages/table_calendar/changelog
 
-  flutter_nordic_dfu: ^2.4.0 #https://pub.dev/packages/flutter_nordic_dfu/changelog
+  flutter_nordic_dfu: ^3.0.0 #https://pub.dev/packages/flutter_nordic_dfu/changelog #TODO: take a look at the docs for migrating the plugin to the V2 embedding: https://flutter.dev/go/android-plugin-migration
 
-  get_ip: ^0.4.0
+  get_ip_address: ^0.0.5 #https://pub.dev/packages/get_ip_address/changelog
 
   logger_flutter:
     #path: ../forked_packages/logger_flutter

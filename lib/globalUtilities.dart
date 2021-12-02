@@ -13,7 +13,7 @@ import 'hardwareSupport/escHelper/dataTypes.dart';
 import 'dart:io';
 import 'package:path/path.dart' as path;
 
-import 'package:latlong/latlong.dart';
+import 'package:latlong2/latlong.dart';
 
 void setLandscapeOrientation({bool enabled}) {
   SystemChrome.setPreferredOrientations(

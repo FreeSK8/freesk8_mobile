@@ -46,7 +46,7 @@ import 'package:path_provider/path_provider.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:latlong/latlong.dart';
+import 'package:latlong2/latlong.dart';
 
 import 'package:geolocator/geolocator.dart';
 
@@ -54,7 +54,7 @@ import 'package:wakelock/wakelock.dart';
 
 import 'package:esys_flutter_share/esys_flutter_share.dart';
 
-import 'package:get_ip/get_ip.dart';
+import 'package:get_ip_address/get_ip_address.dart';
 
 import 'package:logger_flutter/logger_flutter.dart';
 
@@ -569,7 +569,16 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     globalLogger.i("TCP Socket Server Started: ${serverTCPSocket.address}");
     serverTCPSocket.listen(handleTCPClient);
     if (serverTCPSocket != null) {
-      genericAlert(context, "TCP Bridge Active", Text("Connect to ${await GetIp.ipAddress} on port $tcpBridgePort"), "OK");
+      String myIP = "(address unknown)";
+      try {
+        var ipAddress = IpAddress(type: RequestType.text);
+        dynamic data = await ipAddress.getIpAddress();
+        myIP = data.toString();
+      } on IpAddressException catch (exception) {
+        /// Handle the exception.
+        globalLogger.e(exception.message);
+      }
+      genericAlert(context, "TCP Bridge Active", Text("Connect to $myIP on port $tcpBridgePort"), "OK");
     }
     
   }

@@ -10,7 +10,7 @@ import '../hardwareSupport/escHelper/escHelper.dart';
 import '../globalUtilities.dart';
 import '../components/userSettings.dart';
 
-import '../widgets/flutterMap.dart'; import 'package:latlong/latlong.dart';
+import '../widgets/flutterMap.dart'; import 'package:latlong2/latlong.dart';
 
 class RealTimeData extends StatefulWidget {
 
