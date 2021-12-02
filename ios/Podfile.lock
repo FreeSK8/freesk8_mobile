@@ -14,18 +14,16 @@ PODS:
     - Flutter
   - flutter_nordic_dfu (0.0.1):
     - Flutter
-    - iOSDFULibrary (~> 4.5.1)
+    - iOSDFULibrary (~> 4.10.3)
   - FMDB (2.7.5):
     - FMDB/standard (= 2.7.5)
   - FMDB/standard (2.7.5)
   - "geolocator (5.3.2+2)":
     - Flutter
-  - get_ip (0.0.1):
-    - Flutter
   - image_picker (0.0.1):
     - Flutter
-  - iOSDFULibrary (4.5.1):
-    - ZIPFoundation (= 0.9.9)
+  - iOSDFULibrary (4.10.4):
+    - ZIPFoundation (= 0.9.11)
   - "location_permissions (3.0.0+1)":
     - Flutter
   - path_provider (0.0.1):
@@ -42,7 +40,7 @@ PODS:
     - Flutter
   - wakelock (0.0.1):
     - Flutter
-  - ZIPFoundation (0.9.9)
+  - ZIPFoundation (0.9.11)
 
 DEPENDENCIES:
   - device_info (from `.symlinks/plugins/device_info/ios`)
@@ -52,7 +50,6 @@ DEPENDENCIES:
   - flutter_document_picker (from `.symlinks/plugins/flutter_document_picker/ios`)
   - flutter_nordic_dfu (from `.symlinks/plugins/flutter_nordic_dfu/ios`)
   - geolocator (from `.symlinks/plugins/geolocator/ios`)
-  - get_ip (from `.symlinks/plugins/get_ip/ios`)
   - image_picker (from `.symlinks/plugins/image_picker/ios`)
   - location_permissions (from `.symlinks/plugins/location_permissions/ios`)
   - path_provider (from `.symlinks/plugins/path_provider/ios`)
@@ -84,8 +81,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/flutter_nordic_dfu/ios"
   geolocator:
     :path: ".symlinks/plugins/geolocator/ios"
-  get_ip:
-    :path: ".symlinks/plugins/get_ip/ios"
   image_picker:
     :path: ".symlinks/plugins/image_picker/ios"
   location_permissions:
@@ -106,15 +101,14 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   device_info: d7d233b645a32c40dfdc212de5cf646ca482f175
   esys_flutter_share: 403498dab005b36ce1f8d7aff377e81f0621b0b4
-  Flutter: 434fef37c0980e73bb6479ef766c45957d4b510c
+  Flutter: 50d75fe2f02b26cc09d224853bb45737f8b3214a
   flutter_blue: eeb381dc4727a0954dede73515f683865494b370
   flutter_document_picker: 109ba1c4622e6e62bfced17c22ff544a9a3541f4
-  flutter_nordic_dfu: b265b606c5b200764e8e377e83fb3f5d161f3990
+  flutter_nordic_dfu: e23ff86a4ad749a8c49b6247bde25525853e2a68
   FMDB: 2ce00b547f966261cd18927a3ddb07cb6f3db82a
   geolocator: f7622e0e7e2a24718285b73916d60c4a54b9f5b6
-  get_ip: c063133e0a399ae4089048c90d6a232cb2344846
   image_picker: 9c3312491f862b28d21ecd8fdf0ee14e601b3f09
-  iOSDFULibrary: 87c6a088cf7172e3694dfaa8305e7ded5eda2547
+  iOSDFULibrary: 5d41d0ac69418d63755195db5f46e99588ae7d48
   location_permissions: 7e0f9aa0f60deb8ff93ddf0e2a164c7e8197bc94
   path_provider: abfe2b5c733d04e238b0d8691db0cfd63a27a93c
   Protobuf: 176220c526ad8bd09ab1fb40a978eac3fef665f7
@@ -123,7 +117,7 @@ SPEC CHECKSUMS:
   sqflite: 6d358c025f5b867b29ed92fc697fd34924e11904
   url_launcher: 6fef411d543ceb26efce54b05a0a40bfd74cbbef
   wakelock: 0d4a70faf8950410735e3f61fb15d517c8a6efc4
-  ZIPFoundation: 89df685c971926b0323087952320bdfee9f0b6ef
+  ZIPFoundation: b1f0de4eed33e74a676f76e12559ab6b75990197
 
 PODFILE CHECKSUM: aafe91acc616949ddb318b77800a7f51bffa2a4c
 
