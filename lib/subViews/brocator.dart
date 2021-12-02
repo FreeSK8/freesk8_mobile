@@ -61,13 +61,13 @@ class Bro {
   factory Bro.fromJson(Map<String, dynamic> json) {
     //globalLogger.d("${base64Decode(json['Avatar']).length} bytes for ${json['Alias']}");
     return Bro(
-      alias: json['Alias'],
-      avatar: MemoryImage(base64Decode(json['Avatar'])),
-      lastUpdated: DateTime.parse(json['LastUpdate']),
-      position: LatLng(double.parse(json['Latitude']), double.parse(json['Longitude'])),
-      batteryVoltage: double.parse(json['BatteryVoltage']),
-      batteryPercentage: int.parse(json['BatteryPercentage']),
-      distanceTraveled: double.parse(json['DistanceTraveled']),
+      alias: json['alias'],
+      avatar: MemoryImage(base64Decode(json['avatar'])),
+      lastUpdated: DateTime.parse(json['lastupdate']),
+      position: LatLng(double.parse(json['latitude']), double.parse(json['longitude'])),
+      batteryVoltage: double.parse(json['batteryvoltage']),
+      batteryPercentage: int.parse(json['batterypercentage']),
+      distanceTraveled: double.parse(json['distancetraveled']),
     );
   }
 }
@@ -245,7 +245,7 @@ class BrocatorState extends State<Brocator> {
         'Latitude' : myBrocation.position.latitude,
         'Longitude' : myBrocation.position.longitude,
         'BatteryVoltage' : myTelemetry.v_in,
-        'BatteryPercentage' : myTelemetry.battery_level == null ? 0 : myTelemetry.battery_level * 100.toInt(),
+        'BatteryPercentage' : myTelemetry.battery_level == null ? 0 : (myTelemetry.battery_level * 100).toInt(),
         'DistanceTraveled' : myTelemetry.tachometer_abs / 1000.0,
       }) : jsonEncode(<String, dynamic>{
         'UUID' : myUUID,
@@ -253,7 +253,7 @@ class BrocatorState extends State<Brocator> {
         'Latitude' : myBrocation.position.latitude,
         'Longitude' : myBrocation.position.longitude,
         'BatteryVoltage' : myTelemetry.v_in,
-        'BatteryPercentage' : myTelemetry.battery_level == null ? 0 : myTelemetry.battery_level * 100.toInt(),
+        'BatteryPercentage' : myTelemetry.battery_level == null ? 0 : (myTelemetry.battery_level * 100).toInt(),
         'DistanceTraveled' : myTelemetry.tachometer_abs / 1000.0,
       }),
     );
