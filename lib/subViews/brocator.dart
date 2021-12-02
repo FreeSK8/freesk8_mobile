@@ -16,7 +16,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
-import 'package:latlong/latlong.dart';
+import 'package:latlong2/latlong.dart';
 
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
@@ -112,6 +112,7 @@ class BrocatorState extends State<Brocator> {
   bool _showSettings = false;
   bool broadcastPosition;
   PrivacyZone privacyZone = new PrivacyZone();
+  bool _insidePrivacyZone = true;
   BrocatorArguments myArguments;
 
   TextEditingController tecServer = TextEditingController();
@@ -205,9 +206,15 @@ class BrocatorState extends State<Brocator> {
       double distanceFromPrivacyZone = calculateGPSDistance(currentLocation, LatLng(privacyZone.latitude, privacyZone.longitude));
       if (distanceFromPrivacyZone < privacyZone.radius) {
         print("Inside privacy zone");
+        _insidePrivacyZone = true;
         return;
+      } else {
+        _insidePrivacyZone = false;
       }
+    } else {
+      _insidePrivacyZone = false;
     }
+
     //globalLogger.wtf("Sending brocation");
 
     myBrocation.alias = myArguments.boardAlias == null ? offlineAlias : myArguments.boardAlias;
@@ -669,6 +676,7 @@ class BrocatorState extends State<Brocator> {
               size: 35.0,
               color: Colors.blue,
             ),
+            _insidePrivacyZone ? Icon(Icons.shield, size: 35, color: Colors.blue) : Container(),
             SizedBox(width: 3),
             Text("Brocator"),
           ],),
