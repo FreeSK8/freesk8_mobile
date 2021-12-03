@@ -1,3 +1,11 @@
+v0.21.0
+
+* Added option to disable debug log view on shake
+* Fix navigation to all features
+* Upgrade to Flutter 2.5.3
+* Update project dependencies
+* Adding Brocator to developer options
+
 v0.20.1
 
 * Update purpose strings to comply with Apple guidelines

@@ -6,6 +6,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:freesk8_mobile/subViews/inputConfigurationEditor.dart';
+import 'package:freesk8_mobile/subViews/motorConfigurationEditor.dart';
+import 'package:freesk8_mobile/subViews/smartBMSViewer.dart';
+import 'package:freesk8_mobile/subViews/speedProfiles.dart';
 import 'components/crc16.dart';
 import 'components/deviceInformation.dart';
 import 'hardwareSupport/dieBieMSHelper.dart';
@@ -17,6 +21,7 @@ import 'mainViews/realTimeData.dart';
 import 'mainViews/esk8Configuration.dart';
 import 'mainViews/rideLogging.dart';
 
+import 'subViews/brocator.dart';
 import 'subViews/rideLogViewer.dart';
 import 'subViews/focWizard.dart';
 import 'subViews/escProfileEditor.dart';
@@ -41,7 +46,7 @@ import 'package:path_provider/path_provider.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:latlong/latlong.dart';
+import 'package:latlong2/latlong.dart';
 
 import 'package:geolocator/geolocator.dart';
 
@@ -49,7 +54,7 @@ import 'package:wakelock/wakelock.dart';
 
 import 'package:esys_flutter_share/esys_flutter_share.dart';
 
-import 'package:get_ip/get_ip.dart';
+import 'package:get_ip_address/get_ip_address.dart';
 
 import 'package:logger_flutter/logger_flutter.dart';
 
@@ -60,7 +65,7 @@ import 'package:signal_strength_indicator/signal_strength_indicator.dart';
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.20.1";
+const String freeSK8ApplicationVersion = "0.21.0";
 const String robogotchiFirmwareExpectedVersion = "0.10.2";
 
 void main() {
@@ -72,11 +77,16 @@ void main() {
       home: MyHome(),
       routes: <String, WidgetBuilder>{
         RideLogViewer.routeName: (BuildContext context) => RideLogViewer(),
-        ConfigureESC.routeName: (BuildContext context) => ConfigureESC(),
+        FOCWizard.routeName: (BuildContext context) => FOCWizard(),
         ESCProfileEditor.routeName: (BuildContext context) => ESCProfileEditor(),
         RobogotchiCfgEditor.routeName: (BuildContext context) => RobogotchiCfgEditor(),
         RobogotchiDFU.routeName: (BuildContext context) => RobogotchiDFU(),
         VehicleManager.routeName: (BuildContext context) => VehicleManager(),
+        Brocator.routeName: (BuildContext context) => Brocator(),
+        MotorConfigurationEditor.routeName: (BuildContext context) => MotorConfigurationEditor(),
+        InputConfigurationEditor.routeName: (BuildContext context) => InputConfigurationEditor(),
+        SpeedProfilesEditor.routeName: (BuildContext context) => SpeedProfilesEditor(),
+        SmartBMSViewer.routeName: (BuildContext context) => SmartBMSViewer(),
       },
       theme: ThemeData(
         //TODO: Select satisfying colors for the light theme
@@ -144,9 +154,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static ESC_FIRMWARE escFirmwareVersion = ESC_FIRMWARE.UNSUPPORTED;
   static MCCONF escMotorConfiguration;
   static APPCONF escApplicationConfiguration;
-  static int ppmLastDuration;
-  static double adcLastVoltage;
-  static double adcLastVoltage2;
+  static InputCalibration inputCalibration = new InputCalibration();
+
   static Uint8List escMotorConfigurationDefaults;
   static List<int> _validCANBusDeviceIDs = [];
   static String robogotchiVersion;
@@ -163,6 +172,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
   MemoryImage cachedBoardAvatar;
   String applicationDocumentsDirectory;
+
+  StreamController<ESCTelemetry> telemetryStream = StreamController<ESCTelemetry>.broadcast();
+  StreamController<MCCONF> mcconfStream = StreamController<MCCONF>.broadcast();
+  StreamController<APPCONF> appconfStream = StreamController<APPCONF>.broadcast();
+  StreamController<InputCalibration> calibrationStream = StreamController<InputCalibration>.broadcast();
+  StreamController<DieBieMSTelemetry> bmsTelemetryStream = StreamController<DieBieMSTelemetry>.broadcast();
 
   @override
   void initState() {
@@ -325,6 +340,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
     positionStream?.cancel();
 
+    telemetryStream?.close();
+    mcconfStream?.close();
+    appconfStream?.close();
+    calibrationStream?.close();
+    bmsTelemetryStream?.close();
+
     super.dispose();
   }
 
@@ -361,7 +382,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     );
   }
 
-  void requestAPPCONF(int optionalCANID) async {
+  void requestAPPCONF({int optionalCANID}) async {
     Uint8List packet = simpleVESCRequest(COMM_PACKET_ID.COMM_GET_APPCONF.index, optionalCANID: optionalCANID);
 
     // Request APPCONF from the ESC
@@ -378,20 +399,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     globalLogger.i("requestMCCONF: requesting motor configuration");
     if (!await sendBLEData(theTXCharacteristic, packet, false)) {
       globalLogger.e("requestMCCONF: failed to request motor configuration");
-    }
-  }
-
-  void _handleESCProfileFinished(bool newValue) {
-    setState(() {
-      _showESCProfiles = newValue;
-    });
-  }
-  void _handleAutoloadESCSettings(bool newValue) {
-    if(_connectedDevice != null) {
-      _autoloadESCSettings = true;
-      //TODO: Testing resetPacket here to prevent `Missing Motor Configuration from the ESC` message
-      bleHelper.resetPacket();
-      requestMCCONF();
     }
   }
 
@@ -500,13 +507,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       // Reset current ESC application configuration
       escApplicationConfiguration = new APPCONF();
 
-      // Reset displaying ESC profiles flag
-      _showESCProfiles = false;
-
-      // Reset displaying ESC Configurator flag
-      _showESCConfigurator = false;
-      _showESCApplicationConfigurator = false;
-
       // Reset Robogotchi version
       robogotchiVersion = null;
 
@@ -532,11 +532,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       // Clear the Robogotchi status
       gotchiStatus = new RobogotchiStatus();
 
+      // Reset pause flag
+      pauseRobogotchiStatus = false;
+
       // Clear the ESC firmware version
       escFirmwareVersion = ESC_FIRMWARE.UNSUPPORTED;
-
-      // Clear the PPM calibration is ready flag
-      _isPPMCalibrationReady = false;
 
       // Stop the TCP socket server
       stopTCPServer();
@@ -569,7 +569,16 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     globalLogger.i("TCP Socket Server Started: ${serverTCPSocket.address}");
     serverTCPSocket.listen(handleTCPClient);
     if (serverTCPSocket != null) {
-      genericAlert(context, "TCP Bridge Active", Text("Connect to ${await GetIp.ipAddress} on port $tcpBridgePort"), "OK");
+      String myIP = "(address unknown)";
+      try {
+        var ipAddress = IpAddress(type: RequestType.text);
+        dynamic data = await ipAddress.getIpAddress();
+        myIP = data.toString();
+      } on IpAddressException catch (exception) {
+        /// Handle the exception.
+        globalLogger.e(exception.message);
+      }
+      genericAlert(context, "TCP Bridge Active", Text("Connect to $myIP on port $tcpBridgePort"), "OK");
     }
     
   }
@@ -591,13 +600,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         disconnectTCPClient();
       },
     );
-  }
-
-  void _hideAllSubviews() {
-    _showDieBieMS = false;
-    _showESCProfiles = false;
-    _showESCConfigurator = false;
-    _showESCApplicationConfigurator = false;
   }
 
   Future<void> _attemptDeviceConnection(BluetoothDevice device) async {
@@ -815,20 +817,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static DieBieMSTelemetry dieBieMSTelemetry = new DieBieMSTelemetry();
   static int smartBMSCANID = 10;
   static bool _showDieBieMS = false;
-  static bool _showESCConfigurator = false;
-  static bool _showESCApplicationConfigurator = false;
-  static bool _showESCProfiles = false;
-  static bool _autoloadESCSettings = false; // Controls the population of ESC Information from MCCONF response
   static Timer telemetryTimer;
   static Timer _gotchiStatusTimer;
   static Timer _timerMonitor;
   static Timer _initMsgSequencer;
   static int bleTXErrorCount = 0;
   static bool _deviceIsRobogotchi = false;
-  static bool _isPPMCalibrating;
-  static bool _isPPMCalibrationReady = false;
-  static bool _isADCCalibrating;
-  static bool _isADCCalibrationReady = false;
+
 
   //TODO: some logger vars that need to be in their own class
   static String loggerTestBuffer = "";
@@ -850,6 +845,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static double connectedVehicleConsumption = 0;
   static DateTime syncLastACK = DateTime.now();
   static List<ESCFault> escFaults = [];
+  static bool pauseRobogotchiStatus = false;
 
   // Handler for RideLogging's sync button
   void _handleBLESyncState(bool startSync) async {
@@ -939,6 +935,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           break;
         case BluetoothDeviceState.disconnected:
           if ( deviceIsConnected  ) {
+
             globalLogger.w("_connectedDeviceStreamSubscription: WARNING: We have disconnected but FreeSK8 was expecting a connection");
             setState(() {
               deviceHasDisconnected = true;
@@ -951,6 +948,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             //NOTE: On iOS this connection will never re-connection
             // Disconnect
             _bleDisconnect();
+
+            // Navigate back to home
+            while (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            }
           }
           break;
         default:
@@ -1631,11 +1633,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
         }
         else if ( packetID == DieBieMSHelper.COMM_GET_BMS_CELLS ) {
-          if (controller.index == controllerViewRealTime) { //Only re-draw if we are on the real time data tab
-            setState(() {
-              dieBieMSTelemetry = dieBieMSHelper.processCells(bleHelper.getPayload());
-            });
-          }
+          // Update SmartBMS Telemetry with Cell Data
+          dieBieMSTelemetry = dieBieMSHelper.processCells(bleHelper.getPayload());
+
+          // Publish SmartBMS Telemetry
+          bmsTelemetryStream.add(dieBieMSTelemetry);
+
           bleHelper.resetPacket(); //Prepare for next packet
         }
         else if (packetID == COMM_PACKET_ID.COMM_GET_VALUES_SETUP.index) {
@@ -1644,6 +1647,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
           // Update map of ESC telemetry
           telemetryMap[telemetryPacket.vesc_id] = telemetryPacket;
+
+          // Update telemetryStream for those who are subscribed
+          telemetryStream.add(telemetryPacket);
 
           if(controller.index == controllerViewRealTime) { //Only re-draw if we are on the real time data tab
             setState(() { //Re-drawing with updated telemetry data
@@ -1663,9 +1669,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             // Parse DieBieMS GET_VALUES packet - A shame they share the same ID as ESC values
             DieBieMSTelemetry parsedTelemetry = dieBieMSHelper.processTelemetry(bleHelper.getPayload(), smartBMSCANID);
 
+            // Make sure we parsed what we are expecting
             if (parsedTelemetry != null) {
-              dieBieMSTelemetry = parsedTelemetry;
-
               /// Automatically request cell data from DieBieMS
               var byteData = new ByteData(10);
               byteData.setUint8(0, 0x02); // Start of packet
@@ -1735,8 +1740,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             case 1:
               globalLogger.d("Pairing Successful");
               Navigator.of(context).pop(); //Pop Quick Pair initial dialog
-              if (controller.index == controllerViewRealTime) startStopTelemetryTimer(
-                  false); //Resume the telemetry timer
 
               showDialog(
                 context: context,
@@ -1752,8 +1755,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             case 2:
               globalLogger.d("Pairing timeout");
               Navigator.of(context).pop(); //Pop Quick Pair initial dialog
-              if (controller.index == controllerViewRealTime) startStopTelemetryTimer(
-                  false); //Resume the telemetry timer
 
               showDialog(
                 context: context,
@@ -1769,10 +1770,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             default:
               globalLogger.e("ERROR: Pairing unknown payload");
               Navigator.of(context).pop(); //Pop Quick Pair initial dialog
-              if (controller.index == controllerViewRealTime) {
-                //Resume the telemetry timer
-                startStopTelemetryTimer(false);
-              }
           }
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_SET_MCCONF.index ) {
@@ -1791,13 +1788,15 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_SET_MCCONF_TEMP_SETUP.index ) {
           globalLogger.d("COMM_PACKET_ID = COMM_SET_MCCONF_TEMP_SETUP");
-          //TODO: analyze packet before assuming success?
-          _alertProfileSet();
-          _handleAutoloadESCSettings(true); // Reload ESC settings from applied configuration
+          genericAlert(context, "Success", Text("Profile set successfully!"), "OK" );
+          requestMCCONF();
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_GET_MCCONF.index) {
           ///ESC Motor Configuration
           escMotorConfiguration = escHelper.processMCCONF(bleHelper.getPayload(), escFirmwareVersion); //bleHelper.payload.sublist(0,bleHelper.lenPayload);
+
+          // Publish MCCONF to potential subscriber
+          mcconfStream.add(escMotorConfiguration);
 
           if (escMotorConfiguration.si_battery_ah == null) {
             // Show dialog
@@ -1819,17 +1818,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           // Flag the reception of an init message
           initMsgESCMotorConfig = true;
 
-          // Check flag to show ESC Profiles when MCCONF data is received
-          if (_showESCProfiles) {
-            setState(() {
-              controller.index = controllerViewConfiguration; // Navigate user to Configuration tab
-            });
-          }
-
-          // Check flag to update application configuration with ESC motor configuration
-          else if (_autoloadESCSettings) {
+          // Save FreeSK8 user settings from received MCCONF
+          {
             globalLogger.d("MCCONF is updating application settings specific to this board");
-            _autoloadESCSettings = false;
             widget.myUserSettings.settings.batterySeriesCount = escMotorConfiguration.si_battery_cells;
             switch (escMotorConfiguration.si_battery_type) {
               case BATTERY_TYPE.BATTERY_TYPE_LIIRON_2_6__3_6:
@@ -1850,14 +1841,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             widget.myUserSettings.settings.gearRatio = doublePrecision(escMotorConfiguration.si_gear_ratio, 2);
 
             widget.myUserSettings.saveSettings();
-
-            setState(() {
-              // Update UI for ESC Configurator
-            });
-          } else {
-            setState(() {
-              // Update UI for ESC Configurator
-            });
           }
 
           bleHelper.resetPacket();
@@ -1876,18 +1859,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           ///ESC Application Configuration
           escApplicationConfiguration = escHelper.processAPPCONF(bleHelper.getPayload(), escFirmwareVersion);
 
-          if (_showESCApplicationConfigurator) {
-            setState(() {
-              _hideAllSubviews();
-              controller.index = controllerViewConfiguration;
-              _showESCApplicationConfigurator = true;
-            });
-          } else {
-            // Update UI for configurator
-            setState(() {
-
-            });
-          }
+          // Publish APPCONF to subscribers
+          appconfStream.add(escApplicationConfiguration);
 
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_DETECT_APPLY_ALL_FOC.index) {
@@ -1907,7 +1880,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           int resultFOCDetection = byteData.getInt16(1);
 
           Navigator.of(context).pop(); //Pop away the FOC wizard Loading Overlay
-          if (controller.index == controllerViewRealTime) startStopTelemetryTimer(false); //Resume the telemetry timer
 
           String resultText = "";
           switch(resultFOCDetection) {
@@ -1957,12 +1929,16 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_GET_DECODED_PPM.index) {
 
-          //int valueNow = buffer_get_int32(bleHelper.getPayload(), 1);
+          int valueNow = buffer_get_int32(bleHelper.getPayload(), 1);
           int msNow = buffer_get_int32(bleHelper.getPayload(), 5);
           //globalLogger.d("Decoded PPM packet received: value $valueNow, milliseconds $msNow");
-          setState(() {
-            ppmLastDuration = msNow;
-          });
+
+          inputCalibration.ppmMillisecondsNow = msNow;
+          inputCalibration.ppmValueNow = valueNow;
+
+          // Publish Calibration data to Subscribers
+          calibrationStream.add(inputCalibration);
+
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_GET_DECODED_ADC.index) {
 
@@ -1970,11 +1946,16 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           double voltageNow = buffer_get_float32(bleHelper.getPayload(), 5, 1000000.0);
           double level2Now = buffer_get_float32(bleHelper.getPayload(), 9, 1000000.0);
           double voltage2Now = buffer_get_float32(bleHelper.getPayload(), 13, 1000000.0);
-          globalLogger.d("Decoded ADC packet received: level $levelNow, voltage $voltageNow, level2 $level2Now, voltage2 $voltage2Now");
-          setState(() {
-            adcLastVoltage = voltageNow;
-            adcLastVoltage2 = voltage2Now;
-          });
+          //globalLogger.d("Decoded ADC packet received: level $levelNow, voltage $voltageNow, level2 $level2Now, voltage2 $voltage2Now");
+
+          inputCalibration.adcLevelNow = levelNow;
+          inputCalibration.adcLevel2Now = level2Now;
+          inputCalibration.adcVoltageNow = voltageNow;
+          inputCalibration.adcVoltage2Now = voltage2Now;
+
+          // Publish Calibration data to subscribers
+          calibrationStream.add(inputCalibration);
+
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_PRINT.index) {
 
@@ -1985,34 +1966,30 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
         } else if (packetID == COMM_PACKET_ID.COMM_SET_APPCONF.index) {
 
-          if (_isPPMCalibrating != null && _isPPMCalibrating) {
+          if (inputCalibration.ppmCalibrationStarting != null && inputCalibration.ppmCalibrationStarting) {
             globalLogger.d("PPM Calibration is Ready");
             genericAlert(context, "Calibration", Text("Calibration Instructions:\nMove input to full brake, full throttle then leave in the center\n\nPlease ensure the wheels are off the ground in case something goes wrong. Press OK when ready."), "OK");
-            _isPPMCalibrating = null;
-            setState(() {
-              _isPPMCalibrationReady = true;
-            });
-          } else if (_isPPMCalibrating != null && !_isPPMCalibrating) {
+            inputCalibration.ppmCalibrationStarting = null;
+            inputCalibration.ppmCalibrationRunning = true;
+            calibrationStream.add(inputCalibration); // Publish update
+          } else if (inputCalibration.ppmCalibrationRunning != null && !inputCalibration.ppmCalibrationRunning) {
             globalLogger.d("PPM Calibration has completed");
             genericAlert(context, "Calibration", Text("Calibration Completed"), "OK");
-            _isPPMCalibrating = null;
-            setState(() {
-              _isPPMCalibrationReady = false;
-            });
-          } else if (_isADCCalibrating != null && _isADCCalibrating) {
+            inputCalibration.ppmCalibrationStarting = null;
+            inputCalibration.ppmCalibrationRunning = null;
+            calibrationStream.add(inputCalibration); // Publish update
+          } else if (inputCalibration.adcCalibrationStarting != null && inputCalibration.adcCalibrationStarting) {
             globalLogger.d("ADC Calibration is Ready");
             genericAlert(context, "Calibration", Text("Calibration Instructions:\nMove input to full brake, full throttle then leave in the center\n\nPlease ensure the wheels are off the ground in case something goes wrong. Press OK when ready."), "OK");
-            _isADCCalibrating = null;
-            setState(() {
-              _isADCCalibrationReady = true;
-            });
-          } else if (_isADCCalibrating != null && !_isADCCalibrating) {
+            inputCalibration.adcCalibrationStarting = null;
+            inputCalibration.adcCalibrationRunning = true;
+            calibrationStream.add(inputCalibration); // Publish update
+          } else if (inputCalibration.adcCalibrationRunning != null && !inputCalibration.adcCalibrationRunning) {
             globalLogger.d("ADC Calibration has completed");
             genericAlert(context, "Calibration", Text("Calibration Completed"), "OK");
-            _isADCCalibrating = null;
-            setState(() {
-              _isADCCalibrationReady = false;
-            });
+            inputCalibration.adcCalibrationStarting = null;
+            inputCalibration.adcCalibrationRunning = null;
+            calibrationStream.add(inputCalibration); // Publish update
           } else {
             globalLogger.d("Application Configuration Saved Successfully");
             genericAlert(context, "Success", Text("Application configuration set"), "Excellent");
@@ -2089,7 +2066,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     } else if (!initMsgESCMotorConfig) {
       globalLogger.d("_requestInitMessages: Requesting initMsgESCMotorConfig");
       // Request MCCONF
-      _handleAutoloadESCSettings(true);
+      requestMCCONF();
       if (!initShowMotorConfiguration) {
         _changeConnectedDialogMessage("Requesting Motor Configuration");
         initShowMotorConfiguration = true;
@@ -2226,34 +2203,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     }
   }
 
-  Future<void> _alertProfileSet() {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false, // user must tap button!
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Good news everyone'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                Text('Profile set successfully.'),
-                Text('Give it a test before your session!')
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('Noice'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   Future<void> _alertInvalidDevice() {
     return showDialog<void>(
       context: context,
@@ -2350,6 +2299,29 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     });
   }
 
+  void _preNavigationTasks() {
+    // Close the menu
+    Navigator.pop(context);
+
+    // Stop telemetry timer if running
+    if (controller.index == controllerViewRealTime) {
+      startStopTelemetryTimer(true);
+    }
+
+    // Pause Robogotchi Status requests
+    pauseRobogotchiStatus = true;
+  }
+
+  void _postNavigationTasks() {
+    // Restart telemetry timer if needed
+    if (controller.index == controllerViewRealTime) {
+      startStopTelemetryTimer(false);
+    }
+
+    // Resume Robogotchi Status requests
+    pauseRobogotchiStatus = false;
+  }
+
   /// Hamburger Menu... mmmm hamburgers
   Drawer getNavDrawer(BuildContext context) {
     var headerChild = DrawerHeader(
@@ -2444,22 +2416,25 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
 
       ListTile(
-        leading: Icon(Icons.battery_unknown),
-        title: Text(_showDieBieMS ? "Hide Flexi/DieBieMS" : "Show Flexi/DieBieMS"),
+        leading: Icon(Icons.battery_charging_full),
+        title: Text("Smart BMS Viewer"),
         onTap: () async {
-          if(_showDieBieMS) {
-            setState(() {
-              _showDieBieMS = false;
-            });
-            globalLogger.d("Smart BMS RealTime Disabled");
-            Navigator.pop(context); // Close drawer
-          } else if (menuOptionIsReady(isRobogotchiOption: false)) {
-            setState(() {
-              _showDieBieMS = true;
-            });
-            _delayedTabControllerIndexChange(controllerViewRealTime);
-            globalLogger.d("Smart BMS RealTime Enabled");
-            Navigator.pop(context); // Close drawer
+          if (menuOptionIsReady(isRobogotchiOption: false)) {
+            _preNavigationTasks();
+
+            _showDieBieMS = true;
+            // Wait for the navigation to return
+            final result = await Navigator.of(context).pushNamed(
+                SmartBMSViewer.routeName,
+                arguments: SmartBMSArguments(
+                  dataStream: bmsTelemetryStream.stream,
+                  theTXCharacteristic: theTXCharacteristic,
+                  myUserSettings: widget.myUserSettings,
+                  changeSmartBMSID: changeSmartBMSIDFunc,
+                ));
+            _showDieBieMS = false;
+
+            _postNavigationTasks();
           }
         },
       ),
@@ -2467,16 +2442,20 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       ListTile(
         leading: Icon(Icons.timer),
         title: Text("Speed Profiles"),
-        onTap: () {
+        onTap: () async {
           if (menuOptionIsReady(isRobogotchiOption: false)) {
-            setState(() {
-              _hideAllSubviews();
-              // Set the flag to show ESC profiles. Display when MCCONF is returned
-              _showESCProfiles = true;
-            });
+            _preNavigationTasks();
 
-            requestMCCONF();
-            Navigator.pop(context); // Close the drawer
+            // Wait for the navigation to return
+            final result = await Navigator.of(context).pushNamed(
+                SpeedProfilesEditor.routeName,
+                arguments: SpeedProfileArguments(
+                  theTXCharacteristic: theTXCharacteristic,
+                  escMotorConfiguration: escMotorConfiguration,
+                  myUserSettings: widget.myUserSettings,
+                ));
+
+            _postNavigationTasks();
           }
         },
       ),
@@ -2485,14 +2464,31 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       ListTile(
         leading: Icon(Icons.settings_applications_outlined),
         title: Text("Input Configuration"),
-        onTap: () {
+        onTap: () async {
           if (menuOptionIsReady(isRobogotchiOption: false)) {
-            setState(() {
-              _hideAllSubviews();
-              _showESCApplicationConfigurator = true;
-            });
-            requestAPPCONF(null);
-            Navigator.of(context).pop();
+            _preNavigationTasks();
+
+            requestAPPCONF(); // Get Input Configuration before displaying
+
+            // Wait for the navigation to return
+            final result = await Navigator.of(context).pushNamed(
+                InputConfigurationEditor.routeName,
+                arguments: InputConfigurationArguments(
+                  calibrationStream: calibrationStream.stream,
+                  dataStream: appconfStream.stream,
+                  theTXCharacteristic: theTXCharacteristic,
+                  applicationConfiguration: escApplicationConfiguration,
+                  discoveredCANDevices: _validCANBusDeviceIDs,
+                  escFirmwareVersion: escFirmwareVersion,
+                  notifyStopStartADCCalibrate: notifyStopStartADCCalibrate,
+                  notifyStopStartPPMCalibrate: notifyStopStartPPMCalibrate,
+                  calibrationState: inputCalibration,
+                ));
+
+            inputCalibration = new InputCalibration();
+            requestAPPCONF(); // Get Input Configuration after editing
+
+            _postNavigationTasks();
           }
         },
       ),
@@ -2502,14 +2498,21 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         title: Text("Motor Configuration"),
         onTap: () async {
           if (menuOptionIsReady(isRobogotchiOption: false)) {
-            setState(() {
-              _hideAllSubviews();
-              _showESCConfigurator = true;
-            });
-            _delayedTabControllerIndexChange(controllerViewConfiguration);
-            globalLogger.d("ESC Configurator Displayed");
-            // Close the menu
-            Navigator.pop(context);
+            _preNavigationTasks();
+
+            // Wait for the navigation to return
+            final result = await Navigator.of(context).pushNamed(
+                MotorConfigurationEditor.routeName,
+                arguments: MotorConfigurationArguments(
+                  dataStream: mcconfStream.stream,
+                  theTXCharacteristic: theTXCharacteristic,
+                  motorConfiguration: escMotorConfiguration,
+                  discoveredCANDevices: _validCANBusDeviceIDs,
+                  escFirmwareVersion: escFirmwareVersion,
+                ));
+            requestMCCONF(); // Get Motor Configuration after editing
+
+            _postNavigationTasks();
           }
         },
       ),
@@ -2530,10 +2533,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         onLongPress: (){
           if (_connectedDevice == null) {
             Navigator.of(context).pop();
-            setState(() {
-              // navigate to the route
-              Navigator.of(context).pushNamed(RobogotchiDFU.routeName, arguments: null);
-            });
+            // navigate to the route
+            Navigator.of(context).pushNamed(RobogotchiDFU.routeName, arguments: null);
             genericAlert(context, "Hey there 👋", Text("We are not connected to a Robogotchi which means I can't prepare it for update mode.\n\nI'll search for devices anyway but you'll probably want to turn back now."), "Ok 👍");
           }
         },
@@ -2571,10 +2572,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
                           _bleDisconnect();
 
-                          setState(() {
-                            // navigate to the route
-                            Navigator.of(context).pushNamed(RobogotchiDFU.routeName, arguments: null);
-                          });
+                          // navigate to the route
+                          Navigator.of(context).pushNamed(RobogotchiDFU.routeName, arguments: null);
                         }).catchError((e){
                           globalLogger.e("Firmware Update: Exception: $e");
                         });
@@ -2694,6 +2693,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
   // Called by timer on interval to request Robogotchi Status packet
   void _requestGotchiStatus() {
+    if (pauseRobogotchiStatus) return;
     if ((controller.index != controllerViewConnection && controller.index != controllerViewLogging ) || syncInProgress || theTXLoggerCharacteristic == null) {
       globalLogger.d("_requestGotchiStatus: Auto stopping gotchi timer");
       startStopGotchiTimer(true);
@@ -2715,39 +2715,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       }
 
       //Request telemetry packet; On error increase error counter
-      if(_showDieBieMS) {
-        /// Request DieBieMS Telemetry
-        if(++telemetryRateLimiter > 7) {
-          telemetryRateLimiter = 0;
-        } else {
-          return;
-        }
-        /// Request DieBieMS Telemetry
-        var byteData = new ByteData(10);
-        const int packetLength = 3;
-        byteData.setUint8(0, 0x02); //Start of packet
-        byteData.setUint8(1, packetLength);
-        byteData.setUint8(2, COMM_PACKET_ID.COMM_FORWARD_CAN.index);
-        byteData.setUint8(3, smartBMSCANID); //CAN ID
-        byteData.setUint8(4, COMM_PACKET_ID.COMM_GET_VALUES.index);
-        int checksum = CRC16.crc16(byteData.buffer.asUint8List(), 2, packetLength);
-        byteData.setUint16(5, checksum);
-        byteData.setUint8(7, 0x03); //End of packet
-        await theTXCharacteristic.write(byteData.buffer.asUint8List(), withoutResponse: true).then((value) {
-        }).
-        catchError((e) {
-          ++bleTXErrorCount;
-          globalLogger.e("_requestTelemetry() failed ($bleTXErrorCount) times. Exception: $e");
-        });
-      } else {
-        /// Request ESC Telemetry
-        Uint8List packet = simpleVESCRequest(COMM_PACKET_ID.COMM_GET_VALUES_SETUP.index);
+      Uint8List packet = simpleVESCRequest(COMM_PACKET_ID.COMM_GET_VALUES_SETUP.index);
 
-        // Request COMM_GET_VALUES_SETUP from the ESC instead of COMM_GET_VALUES
-        if (!await sendBLEData(theTXCharacteristic, packet, true)) {
-          ++bleTXErrorCount;
-          globalLogger.e("_requestTelemetry() failed ($bleTXErrorCount) times!");
-        }
+      if (!await sendBLEData(theTXCharacteristic, packet, true)) {
+        ++bleTXErrorCount;
+        globalLogger.e("_requestTelemetry() failed ($bleTXErrorCount) times!");
       }
     } else {
       // We are requesting telemetry but are not connected =/
@@ -2806,21 +2778,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     globalLogger.d("Smart BMS RealTime Disabled");
   }
 
-  void closeESCConfiguratorFunc(bool closeView) {
-    setState(() {
-      _showESCConfigurator = false;
-      _handleAutoloadESCSettings(true); // Reload ESC settings after user configuration
-    });
-    globalLogger.d("closeESCConfiguratorFunc: Closed ESC Configurator");
-  }
-
-  void closeESCAppConfFunc(bool closeView) {
-    setState(() {
-      _showESCApplicationConfigurator = false;
-    });
-    globalLogger.d("closeESCAppConfFunc: Closed ESC Application Configurator");
-  }
-
   void changeSmartBMSIDFunc(int nextID) {
     globalLogger.d("changeSmartBMSIDFunc: Setting smart BMS CAN FWD ID to $nextID from $smartBMSCANID");
     setState(() {
@@ -2830,18 +2787,20 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
   void notifyStopStartPPMCalibrate(bool starting) {
     // Set flag to change dialogs displayed when performing PPM calibration
-    _isPPMCalibrating = starting;
+    inputCalibration.ppmCalibrationStarting = starting;
     if (!starting) {
-      _isPPMCalibrationReady = false;
+      inputCalibration.ppmCalibrationRunning = false;
     }
+    calibrationStream.add(inputCalibration);
   }
 
   void notifyStopStartADCCalibrate(bool starting) {
     // Set flag to change dialogs displayed when performing ADC calibration
-    _isADCCalibrating = starting;
+    inputCalibration.adcCalibrationStarting = starting;
     if (!starting) {
-      _isADCCalibrationReady = false;
+      inputCalibration.adcCalibrationRunning = false;
     }
+    calibrationStream.add(inputCalibration);
   }
 
   void reloadUserSettings(bool navigateHome) async {
@@ -2923,6 +2882,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         body: LogConsoleOnShake(
           debugOnly: false,
           dark: true,
+          showOnShake: widget.myUserSettings.settings.showDebugLogOnShake,
           child: Center(
             child: getTabBarView( <Widget>[
               ConnectionStatus(
@@ -2946,11 +2906,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 telemetryMap: telemetryMap,
                 currentSettings: widget.myUserSettings,
                 startStopTelemetryFunc: startStopTelemetryTimer,
-                showDieBieMS: _showDieBieMS,
-                dieBieMSTelemetry: dieBieMSTelemetry,
-                closeDieBieMSFunc: closeDieBieMSFunc,
-                changeSmartBMSID: changeSmartBMSIDFunc,
-                smartBMSID: smartBMSCANID,
                 deviceIsConnected: deviceIsConnected,
               ),
               RideLogging(
@@ -2967,30 +2922,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               ESK8Configuration(
                 myUserSettings: widget.myUserSettings,
                 currentDevice: _connectedDevice,
-                showESCProfiles: _showESCProfiles,
                 theTXCharacteristic: theTXCharacteristic,
-                escMotorConfiguration: escMotorConfiguration,
-                onExitProfiles: _handleESCProfileFinished,
-                onAutoloadESCSettings: _handleAutoloadESCSettings,
-                showESCConfigurator: _showESCConfigurator,
-                discoveredCANDevices: _validCANBusDeviceIDs,
-                closeESCConfigurator: closeESCConfiguratorFunc,
                 updateCachedAvatar: _cacheAvatar,
-                showESCAppConfig: _showESCApplicationConfigurator,
-                escAppConfiguration: escApplicationConfiguration,
-                closeESCApplicationConfigurator: closeESCAppConfFunc,
-                requestESCApplicationConfiguration: requestAPPCONF,
-                ppmLastDuration: ppmLastDuration,
-                notifyStopStartPPMCalibrate: notifyStopStartPPMCalibrate,
-                ppmCalibrateReady: _isPPMCalibrationReady,
                 escFirmwareVersion: escFirmwareVersion,
                 updateComputedVehicleStatistics: updateComputedVehicleStatistics,
                 applicationDocumentsDirectory: applicationDocumentsDirectory,
                 reloadUserSettings: reloadUserSettings,
-                adcCalibrateReady: _isADCCalibrationReady,
-                adcLastVoltage: adcLastVoltage,
-                adcLastVoltage2: adcLastVoltage2,
-                notifyStartStopADCCalibrate: notifyStopStartADCCalibrate,
+                telemetryStream: telemetryStream.stream,
               )
             ])
           ),

@@ -13,7 +13,7 @@ import 'hardwareSupport/escHelper/dataTypes.dart';
 import 'dart:io';
 import 'package:path/path.dart' as path;
 
-import 'package:latlong/latlong.dart';
+import 'package:latlong2/latlong.dart';
 
 void setLandscapeOrientation({bool enabled}) {
   SystemChrome.setPreferredOrientations(
@@ -257,7 +257,7 @@ List<DropdownMenuItem<ListItem>> buildDropDownMenuItems(List listItems) {
 /// Returns true on success
 Future<bool> sendBLEData(BluetoothCharacteristic txCharacteristic, Uint8List data, bool withoutResponse) async
 {
-  int errorLimiter = 10;
+  int errorLimiter = 30;
   int packetLength = data.length;
   int bytesSent = 0;
   while (bytesSent < packetLength) {
@@ -266,9 +266,20 @@ Future<bool> sendBLEData(BluetoothCharacteristic txCharacteristic, Uint8List dat
       endByte = packetLength;
     }
     try {
-      await txCharacteristic.write(data.buffer.asUint8List().sublist(bytesSent,endByte), withoutResponse: withoutResponse);
+      await txCharacteristic.write(
+          data.buffer.asUint8List().sublist(bytesSent, endByte),
+          withoutResponse: withoutResponse);
+    } on PlatformException catch (err) {
+      //TODO: Assuming err.code will always be "write_characteristic_error"
+      if (--errorLimiter == 0) {
+        globalLogger.e("sendBLEData: Write to characteristic exhausted all attempts. Data not sent. ${txCharacteristic.toString()}");
+        return Future.value(false);
+      } else {
+        continue; // Try again without incrementing bytesSent
+      }
     } catch (e) {
       globalLogger.w("sendBLEData: Exception ${e.toString()}");
+
       if (--errorLimiter == 0) {
         globalLogger.e("sendBLEData: Write to characteristic exhausted all attempts. Data not sent. ${txCharacteristic.toString()}");
         return Future.value(false);

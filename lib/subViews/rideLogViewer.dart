@@ -7,7 +7,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_map/flutter_map.dart';
 import '../globalUtilities.dart';
 import '../widgets/rideLogViewChartOverlay.dart';
-import 'package:latlong/latlong.dart';
+import 'package:latlong2/latlong.dart';
 import '../components/databaseAssistant.dart';
 import '../components/fileManager.dart';
 
