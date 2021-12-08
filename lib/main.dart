@@ -54,7 +54,7 @@ import 'package:wakelock/wakelock.dart';
 
 import 'package:esys_flutter_share/esys_flutter_share.dart';
 
-import 'package:get_ip_address/get_ip_address.dart';
+import 'package:wifi_iot/wifi_iot.dart';
 
 import 'package:logger_flutter/logger_flutter.dart';
 
@@ -65,7 +65,7 @@ import 'package:signal_strength_indicator/signal_strength_indicator.dart';
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.21.0";
+const String freeSK8ApplicationVersion = "0.21.1";
 const String robogotchiFirmwareExpectedVersion = "0.10.2";
 
 void main() {
@@ -571,10 +571,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     if (serverTCPSocket != null) {
       String myIP = "(address unknown)";
       try {
-        var ipAddress = IpAddress(type: RequestType.text);
-        dynamic data = await ipAddress.getIpAddress();
-        myIP = data.toString();
-      } on IpAddressException catch (exception) {
+        myIP = await WiFiForIoTPlugin.getIP();
+      } catch (exception) {
         /// Handle the exception.
         globalLogger.e(exception.message);
       }

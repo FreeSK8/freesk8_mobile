@@ -226,13 +226,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "5.3.2+2"
-  get_ip_address:
-    dependency: "direct main"
-    description:
-      name: get_ip_address
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.0.5"
   google_api_availability:
     dependency: transitive
     description:
@@ -681,6 +674,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.1.4+1"
+  wifi_iot:
+    dependency: "direct main"
+    description:
+      name: wifi_iot
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.3.10"
   wkt_parser:
     dependency: transitive
     description:

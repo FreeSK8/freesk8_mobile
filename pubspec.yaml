@@ -50,7 +50,7 @@ dependencies:
 
   flutter_nordic_dfu: ^3.0.0 #https://pub.dev/packages/flutter_nordic_dfu/changelog #TODO: take a look at the docs for migrating the plugin to the V2 embedding: https://flutter.dev/go/android-plugin-migration
 
-  get_ip_address: ^0.0.5 #https://pub.dev/packages/get_ip_address/changelog
+  wifi_iot: ^0.3.10 #https://pub.dev/packages/wifi_iot/changelog
 
   logger_flutter:
     #path: ../forked_packages/logger_flutter
