@@ -44,7 +44,7 @@ dependencies:
 
   wakelock: 0.5.6 #https://pub.dev/packages/wakelock/changelog
 
-  multiselect_formfield: ^0.1.6 #https://pub.dev/packages/multiselect_formfield/changelog
+  multiselect_formfield: ^0.1.7 #https://pub.dev/packages/multiselect_formfield/changelog
 
   table_calendar: ^2.3.3 #https://pub.dev/packages/table_calendar/changelog #TODO: Update to 3.0.3
 
