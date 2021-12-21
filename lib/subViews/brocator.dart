@@ -140,9 +140,13 @@ class BrocatorState extends State<Brocator> {
   static ESCTelemetry myTelemetry = new ESCTelemetry();
 
   Future<void> checkLocationPermission() async {
-    await _geolocatorPlatform.checkPermission();
     if (await _geolocatorPlatform.isLocationServiceEnabled() != true) {
       genericAlert(context, "Location service unavailable", Text('Please enable location services on your mobile device'), "OK");
+    } else {
+      LocationPermission permission = await _geolocatorPlatform.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await _geolocatorPlatform.requestPermission();
+      }
     }
   }
   Future<void> updateLocation(LatLng data) async {

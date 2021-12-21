@@ -65,7 +65,7 @@ import 'package:signal_strength_indicator/signal_strength_indicator.dart';
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.21.1";
+const String freeSK8ApplicationVersion = "0.21.2";
 const String robogotchiFirmwareExpectedVersion = "0.10.2";
 
 void main() {
@@ -286,9 +286,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   }
 
   Future<void> checkLocationPermission() async {
-    await _geolocatorPlatform.checkPermission();
     if (await _geolocatorPlatform.isLocationServiceEnabled() != true) {
       genericAlert(context, "Location service unavailable", Text('Please enable location services on your mobile device'), "OK");
+    } else {
+      LocationPermission permission = await _geolocatorPlatform.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await _geolocatorPlatform.requestPermission();
+      }
     }
   }
 
