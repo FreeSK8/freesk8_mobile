@@ -1,7 +1,7 @@
-v0.21.1
+v0.21.2
 
 * Fix IP address displayed with TCP Bridge
-* Fix missing iOS location permission
+* Fix requesting location permission
 * Upgrade to Flutter 2.8.1
 
 v0.21.0
