@@ -544,7 +544,7 @@ class VehicleManagerState extends State<VehicleManager> {
               color: Colors.blue,
             ),
             SizedBox(width: 3),
-            Text("FreeSK8 Garage"),
+            Text("Vehicle Manager"),
           ],),
           leading: new IconButton(
             icon: new Icon(Icons.arrow_back),

@@ -121,8 +121,8 @@ class BrocatorState extends State<Brocator> {
   TextEditingController tecAlias = TextEditingController();
   String offlineAlias = "No Vehicle";
 
-  var geolocator = Geolocator();
-  var locationOptions = LocationOptions(accuracy: LocationAccuracy.high, distanceFilter: 0);
+  final GeolocatorPlatform _geolocatorPlatform = GeolocatorPlatform.instance;
+  var locationOptions = LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: 0);
   static StreamSubscription<Position> positionStream;
 
   LatLng currentLocation;
@@ -140,9 +140,13 @@ class BrocatorState extends State<Brocator> {
   static ESCTelemetry myTelemetry = new ESCTelemetry();
 
   Future<void> checkLocationPermission() async {
-    await Geolocator().checkGeolocationPermissionStatus();
-    if (await Geolocator().isLocationServiceEnabled() != true) {
+    if (await _geolocatorPlatform.isLocationServiceEnabled() != true) {
       genericAlert(context, "Location service unavailable", Text('Please enable location services on your mobile device'), "OK");
+    } else {
+      LocationPermission permission = await _geolocatorPlatform.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await _geolocatorPlatform.requestPermission();
+      }
     }
   }
   Future<void> updateLocation(LatLng data) async {
@@ -363,13 +367,17 @@ class BrocatorState extends State<Brocator> {
       }
     });
 
-    checkLocationPermission();
-    positionStream = geolocator.getPositionStream(locationOptions).listen(
-            (Position position) {
-          if(position != null) {
-            updateLocation(new LatLng(position.latitude, position.longitude));
-          }
-        });
+    try {
+      checkLocationPermission();
+      positionStream = _geolocatorPlatform.getPositionStream(locationSettings: locationOptions).listen(
+              (Position position) {
+            if(position != null) {
+              updateLocation(new LatLng(position.latitude, position.longitude));
+            }
+          });
+    } catch (e) {
+      currentLocation = LatLng(0,0);
+    }
 
     dataRequestTimer = new Timer.periodic(Duration(seconds: 5), (Timer t) => performWebRequests());
     super.initState();

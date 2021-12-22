@@ -20,37 +20,41 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_blue: 0.8.0 #https://pub.dev/packages/flutter_blue/changelog
-  shared_preferences: 0.5.7 #https://pub.dev/packages/shared_preferences/changelog
+  shared_preferences: 2.0.9 #https://pub.dev/packages/shared_preferences/changelog
 
-  geolocator: ^5.3.2+2
-  #background_locator: 1.1.3+1
-  #location_permissions: ^2.0.5
+  geolocator: ^8.0.1 #https://pub.dev/packages/geolocator/changelog
 
   flutter_map: 0.14.0 #https://pub.dev/packages/flutter_map/changelog
-  rxdart: '>=0.18.1'
 
-  flutter_polyline_points: 0.2.6 #https://pub.dev/packages/flutter_polyline_points/changelog
+  flutter_polyline_points: 1.0.0 #https://pub.dev/packages/flutter_polyline_points/changelog
 
-  oscilloscope: 0.0.3
   intl: ^0.17.0 #https://pub.dev/packages/intl/changelog
 
-  image_picker: 0.7.0 #https://pub.dev/packages/image_picker/changelog
-  path_provider: 1.6.7 #https://pub.dev/packages/path_provider/changelog
+  image_picker: 0.8.4+4 #https://pub.dev/packages/image_picker/changelog
+  path_provider: 2.0.7 #https://pub.dev/packages/path_provider/changelog
 
   charts_flutter: 0.12.0 #https://pub.dev/packages/charts_flutter/changelog
-  sliding_up_panel: ^1.0.2
-  #this one does not support files# share: 0.6.4+2
-  esys_flutter_share: ^1.0.2 #https://pub.dev/packages/esys_flutter_share/changelog #TODO: take a look at the docs for migrating the plugin to the V2 embedding: https://flutter.dev/go/android-plugin-migration
+  sliding_up_panel: ^2.0.0+1 #https://pub.dev/packages/sliding_up_panel/changelog
 
-  wakelock: 0.1.4+1
+  esys_flutter_share: #^1.0.2 #https://pub.dev/packages/esys_flutter_share/changelog
+    #TODO: Change to release package when updated from 1.0.2
+    git:
+      url: git@github.com:FreeSK8/esys-flutter-share.git
+      ref: nullsafety+embedding-2
 
-  multiselect_formfield: ^0.1.3
+  wakelock: 0.5.6 #https://pub.dev/packages/wakelock/changelog
 
-  table_calendar: ^2.3.3 #https://pub.dev/packages/table_calendar/changelog
+  multiselect_formfield: ^0.1.7 #https://pub.dev/packages/multiselect_formfield/changelog
 
-  flutter_nordic_dfu: ^3.0.0 #https://pub.dev/packages/flutter_nordic_dfu/changelog #TODO: take a look at the docs for migrating the plugin to the V2 embedding: https://flutter.dev/go/android-plugin-migration
+  table_calendar: ^2.3.3 #https://pub.dev/packages/table_calendar/changelog #TODO: Update to 3.0.3
 
-  get_ip_address: ^0.0.5 #https://pub.dev/packages/get_ip_address/changelog
+  flutter_nordic_dfu: #^3.0.0 #https://pub.dev/packages/flutter_nordic_dfu/changelog
+    #TODO: Change to release package when updated from 3.0.0
+    git:
+      url: git@github.com:fengqiangboy/flutter-nordic-dfu.git
+      ref: master
+
+  wifi_iot: ^0.3.10 #https://pub.dev/packages/wifi_iot/changelog
 
   logger_flutter:
     #path: ../forked_packages/logger_flutter
@@ -58,21 +62,21 @@ dependencies:
       url: git@github.com:FreeSK8/logger_flutter.git
       ref: freesk8_mobile
 
-  device_info: ^1.0.0
+  device_info: ^2.0.3 #https://pub.dev/packages/device_info/changelog
 
   duration_picker: ^1.0.1
 
-  sqflite: 2.0.0+3 #https://pub.dev/packages/sqflite/changelog
+  sqflite: 2.0.1 #https://pub.dev/packages/sqflite/changelog
 
   archive: ^3.1.2 #https://pub.dev/packages/archive/changelog
 
   flutter_document_picker: ^4.0.1 #https://pub.dev/packages/flutter_document_picker/changelog
 
-  url_launcher: ^6.0.3 #https://pub.dev/packages/url_launcher/changelog
+  url_launcher: ^6.0.17 #https://pub.dev/packages/url_launcher/changelog
 
   uuid: 3.0.4 #https://pub.dev/packages/uuid/changelog
 
-  flutter_slidable: ^0.6.0 #https://pub.dev/packages/flutter_slidable/changelog
+  flutter_slidable: ^0.6.0 #https://pub.dev/packages/flutter_slidable/changelog #TODO: Update to 1.1.0
 
   signal_strength_indicator: ^0.4.0 #https://pub.dev/packages/signal_strength_indicator/changelog
 

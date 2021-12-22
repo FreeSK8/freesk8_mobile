@@ -366,7 +366,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                   ),
 
                   myArguments.currentConfiguration.multiESCMode > 1 ? MultiSelectFormField(
-                    autovalidate: false,
+                    autovalidate: AutovalidateMode.disabled,
                     title: myArguments.currentConfiguration.multiESCMode == 4 ? Text("Select CAN IDs") : Text("Select CAN ID"),
                     validator: (value) {
                       if (value == null || value.length != (myArguments.currentConfiguration.multiESCMode == 4 ? 3 : 1)) {

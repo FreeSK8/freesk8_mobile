@@ -1,3 +1,9 @@
+v0.21.2
+
+* Fix IP address displayed with TCP Bridge
+* Fix requesting location permission
+* Upgrade to Flutter 2.8.1
+
 v0.21.0
 
 * Added option to disable debug log view on shake

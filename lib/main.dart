@@ -54,7 +54,7 @@ import 'package:wakelock/wakelock.dart';
 
 import 'package:esys_flutter_share/esys_flutter_share.dart';
 
-import 'package:get_ip_address/get_ip_address.dart';
+import 'package:wifi_iot/wifi_iot.dart';
 
 import 'package:logger_flutter/logger_flutter.dart';
 
@@ -65,7 +65,7 @@ import 'package:signal_strength_indicator/signal_strength_indicator.dart';
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.21.0";
+const String freeSK8ApplicationVersion = "0.21.2";
 const String robogotchiFirmwareExpectedVersion = "0.10.2";
 
 void main() {
@@ -121,7 +121,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
   /* User's current location for map */
   var geolocator = Geolocator();
-  var locationOptions = LocationOptions(accuracy: LocationAccuracy.high, distanceFilter: 0);
+  var locationOptions = LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: 0);
 
   LatLng lastLocation;
   DateTime lastTimeLocation;
@@ -168,6 +168,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static bool isESCResponding = false;
   static List<BluetoothService> _services;
   static StreamSubscription<BluetoothDeviceState> _connectedDeviceStreamSubscription;
+  final GeolocatorPlatform _geolocatorPlatform = GeolocatorPlatform.instance;
   static StreamSubscription<Position> positionStream;
 
   MemoryImage cachedBoardAvatar;
@@ -228,7 +229,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     FileManager.clearLogFile();
 
     checkLocationPermission();
-    positionStream = geolocator.getPositionStream(locationOptions).listen(
+    positionStream = _geolocatorPlatform.getPositionStream(locationSettings: locationOptions).listen(
             (Position position) {
           if(position != null) {
             updateLocationForRoute(new LatLng(position.latitude, position.longitude));
@@ -285,9 +286,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   }
 
   Future<void> checkLocationPermission() async {
-    await Geolocator().checkGeolocationPermissionStatus();
-    if (await Geolocator().isLocationServiceEnabled() != true) {
+    if (await _geolocatorPlatform.isLocationServiceEnabled() != true) {
       genericAlert(context, "Location service unavailable", Text('Please enable location services on your mobile device'), "OK");
+    } else {
+      LocationPermission permission = await _geolocatorPlatform.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await _geolocatorPlatform.requestPermission();
+      }
     }
   }
 
@@ -571,10 +576,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     if (serverTCPSocket != null) {
       String myIP = "(address unknown)";
       try {
-        var ipAddress = IpAddress(type: RequestType.text);
-        dynamic data = await ipAddress.getIpAddress();
-        myIP = data.toString();
-      } on IpAddressException catch (exception) {
+        myIP = await WiFiForIoTPlugin.getIP();
+      } catch (exception) {
         /// Handle the exception.
         globalLogger.e(exception.message);
       }
@@ -2360,8 +2363,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: Text("No Connection"),
-              content: Text("Oops. Try connecting to your board first."),
+              title: Text("Not connected"),
+              content: Text("This feature requires a Bluetooth connection to your vehicle."),
             );
           },
         );
@@ -2384,7 +2387,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           builder: (BuildContext context) {
             return AlertDialog(
               title: Text("Robogotchi Feature"),
-              content: Text("This selection requires an active Robogotchi connection"),
+              content: Text("This feature requires an active connection with a Robogotchi."),
             );
           },
         );
@@ -2396,7 +2399,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           builder: (BuildContext context) {
             return AlertDialog(
               title: Text("Sync in progress"),
-              content: Text("This feature is restricted until the sync operation is completed"),
+              content: Text("This feature is restricted until the sync operation is completed."),
             );
           },
         );
@@ -2409,11 +2412,26 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
     var myNavChildren = [
       headerChild,
-      //getNavItem(Icons.settings, "Testies", Test.routeName),
-      //getNavItem(Icons.home, "Home", "/"),
-      //getNavItem(Icons.account_box, "RT", Second.routeName),
       aboutChild,
 
+      seriousBusinessCounter > 4 && seriousBusinessCounter < 7 ? ListTile(
+        leading: Icon(Icons.people),
+        title: Text("Brocator"),
+        onTap: () async {
+          {
+            _preNavigationTasks();
+
+            FileImage _boardAvatar;
+            if (widget.myUserSettings.settings.boardAvatarPath != null) {
+              _boardAvatar = FileImage(File("$applicationDocumentsDirectory${widget.myUserSettings.settings.boardAvatarPath}"));
+            }
+            // Wait for the navigation to return
+            await Navigator.of(context).pushNamed(Brocator.routeName, arguments: BrocatorArguments(_connectedDevice == null ? null : widget.myUserSettings.settings.boardAlias, _boardAvatar, telemetryStream.stream, theTXCharacteristic));
+
+            _postNavigationTasks();
+          }
+        },
+      ) : Container(),
 
       ListTile(
         leading: Icon(Icons.battery_charging_full),
