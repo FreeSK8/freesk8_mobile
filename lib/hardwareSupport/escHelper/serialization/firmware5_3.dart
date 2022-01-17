@@ -8,8 +8,8 @@ import '../mcConf.dart';
 
 class SerializeFirmware53 {
 
-  static const int MCCONF_SIGNATURE_FW5_3 = 3706516163;
-  static const int APPCONF_SIGNATURE_FW5_3 = 1531606261;
+  static const int MCCONF_SIGNATURE_FW5_3 = 2525666056;
+  static const int APPCONF_SIGNATURE_FW5_3 = 3733512279;
 
   APPCONF processAPPCONF(Uint8List buffer) {
     int index = 1;
@@ -34,6 +34,7 @@ class SerializeFirmware53 {
     appconfData.uavcan_esc_index = buffer[index++];
     appconfData.uavcan_raw_mode = UAVCAN_RAW_MODE.values[buffer[index++]];
     appconfData.servo_out_enabled = buffer[index++] > 0 ? true : false;
+    appconfData.uavcan_raw_rpm_max = buffer_get_float32_auto(buffer, index); index += 4;
     appconfData.kill_sw_mode = KILL_SW_MODE.values[buffer[index++]];
     appconfData.app_to_use = app_use.values[buffer[index++]];
     appconfData.app_ppm_conf.ctrl_type = ppm_control_type.values[buffer[index++]];
@@ -52,7 +53,7 @@ class SerializeFirmware53 {
     appconfData.app_ppm_conf.multi_esc = buffer[index++] > 0 ? true : false;
     appconfData.app_ppm_conf.tc = buffer[index++] > 0 ? true : false;
     appconfData.app_ppm_conf.tc_max_diff = buffer_get_float32_auto(buffer, index); index += 4;
-    appconfData.app_ppm_conf.max_erpm_for_dir = buffer_get_float32_auto(buffer, index); index += 4;
+    appconfData.app_ppm_conf.max_erpm_for_dir = buffer_get_float16(buffer, index, 1); index += 2;
     appconfData.app_ppm_conf.smart_rev_max_duty = buffer_get_float32_auto(buffer, index); index += 4;
     appconfData.app_ppm_conf.smart_rev_ramp_time = buffer_get_float32_auto(buffer, index); index += 4;
     appconfData.app_adc_conf.ctrl_type = adc_control_type.values[buffer[index++]];
@@ -200,7 +201,7 @@ class SerializeFirmware53 {
 
   ByteData serializeAPPCONF(APPCONF conf) {
     int index = 0;
-    ByteData response = new ByteData(475); //TODO: ByteData is not dynamic, setting exact size
+    ByteData response = new ByteData(477); //TODO: ByteData is not dynamic, setting exact size
     response.setUint32(index, APPCONF_SIGNATURE_FW5_3); index += 4;
 
     response.setUint8(index++, conf.controller_id);
@@ -215,6 +216,7 @@ class SerializeFirmware53 {
     response.setUint8(index++, conf.can_mode.index);
     response.setUint8(index++, conf.uavcan_esc_index);
     response.setUint8(index++, conf.uavcan_raw_mode.index);
+    response.setFloat32(index, conf.uavcan_raw_rpm_max); index += 4;
     response.setUint8(index++, conf.servo_out_enabled ? 1 : 0);
     response.setUint8(index++, conf.kill_sw_mode.index);
     response.setUint8(index++, conf.app_to_use.index);
@@ -234,7 +236,7 @@ class SerializeFirmware53 {
     response.setUint8(index++, conf.app_ppm_conf.multi_esc ? 1 : 0);
     response.setUint8(index++, conf.app_ppm_conf.tc ? 1 : 0);
     response.setFloat32(index, conf.app_ppm_conf.tc_max_diff); index += 4;
-    response.setFloat32(index, conf.app_ppm_conf.max_erpm_for_dir); index += 4;
+    response.setInt16(index, conf.app_ppm_conf.max_erpm_for_dir.toInt()); index += 2;
     response.setFloat32(index, conf.app_ppm_conf.smart_rev_max_duty); index += 4;
     response.setFloat32(index, conf.app_ppm_conf.smart_rev_ramp_time); index += 4;
     response.setUint8(index++, conf.app_adc_conf.ctrl_type.index);
@@ -439,7 +441,7 @@ class SerializeFirmware53 {
     mcconfData.hall_sl_erpm = buffer_get_float32_auto(buffer, index); index += 4;
     mcconfData.foc_current_kp = buffer_get_float32_auto(buffer, index); index += 4;
     mcconfData.foc_current_ki = buffer_get_float32_auto(buffer, index); index += 4;
-    mcconfData.foc_f_sw = buffer_get_float32_auto(buffer, index); index += 4;
+    mcconfData.foc_f_zv = buffer_get_float32_auto(buffer, index); index += 4;
     mcconfData.foc_dt_us = buffer_get_float32_auto(buffer, index); index += 4;
     mcconfData.foc_encoder_inverted = buffer[index++] > 0 ? true : false;
     mcconfData.foc_encoder_offset = buffer_get_float32_auto(buffer, index); index += 4;
@@ -458,6 +460,7 @@ class SerializeFirmware53 {
     mcconfData.foc_motor_flux_linkage = buffer_get_float32_auto(buffer, index); index += 4;
     mcconfData.foc_observer_gain = buffer_get_float32_auto(buffer, index); index += 4;
     mcconfData.foc_observer_gain_slow = buffer_get_float32_auto(buffer, index); index += 4;
+    mcconfData.foc_observer_offset = buffer_get_float16(buffer, index, 1000); index += 2;
     mcconfData.foc_duty_dowmramp_kp = buffer_get_float32_auto(buffer, index); index += 4;
     mcconfData.foc_duty_dowmramp_ki = buffer_get_float32_auto(buffer, index); index += 4;
     mcconfData.foc_openloop_rpm = buffer_get_float32_auto(buffer, index); index += 4;
@@ -505,6 +508,7 @@ class SerializeFirmware53 {
     mcconfData.foc_offsets_voltage_undriven[2] = buffer_get_float16(buffer, index, 10000); index += 2;
     mcconfData.foc_phase_filter_enable = buffer[index++] > 0 ? true : false;
     mcconfData.foc_phase_filter_max_erpm = buffer_get_float32_auto(buffer, index); index += 4;
+    mcconfData.foc_mtpa_mode = MTPA_MODE.values[buffer[index++]];
     mcconfData.foc_fw_current_max = buffer_get_float32_auto(buffer, index); index += 4;
     mcconfData.foc_fw_duty_start = buffer_get_float16(buffer, index, 10000); index += 2;
     mcconfData.foc_fw_ramp_time = buffer_get_float16(buffer, index, 1000); index += 2;
@@ -556,6 +560,7 @@ class SerializeFirmware53 {
     mcconfData.si_battery_type = BATTERY_TYPE.values[buffer[index++]];
     mcconfData.si_battery_cells = buffer[index++];
     mcconfData.si_battery_ah = buffer_get_float32_auto(buffer, index); index += 4;
+    mcconfData.si_motor_nl_current = buffer_get_float32_auto(buffer, index); index += 4;
     mcconfData.bms.type = BMS_TYPE.values[buffer[index++]];
     mcconfData.bms.t_limit_start = buffer_get_float16(buffer, index, 100); index += 2;
     mcconfData.bms.t_limit_end = buffer_get_float16(buffer, index, 100); index += 2;
@@ -569,7 +574,7 @@ class SerializeFirmware53 {
 
   ByteData serializeMCCONF(MCCONF conf) {
     int index = 0;
-    ByteData response = new ByteData(478); //TODO: ByteData is not dynamic, setting exact size
+    ByteData response = new ByteData(485); //TODO: ByteData is not dynamic, setting exact size
     response.setUint32(index, MCCONF_SIGNATURE_FW5_3); index += 4;
 
     response.setUint8(index++, conf.pwm_mode.index);
@@ -621,7 +626,7 @@ class SerializeFirmware53 {
     response.setFloat32(index, conf.hall_sl_erpm); index += 4;
     response.setFloat32(index, conf.foc_current_kp); index += 4;
     response.setFloat32(index, conf.foc_current_ki); index += 4;
-    response.setFloat32(index, conf.foc_f_sw); index += 4;
+    response.setFloat32(index, conf.foc_f_zv); index += 4;
     response.setFloat32(index, conf.foc_dt_us); index += 4;
     response.setUint8(index++, conf.foc_encoder_inverted ? 1 : 0);
     response.setFloat32(index, conf.foc_encoder_offset); index += 4;
@@ -640,6 +645,7 @@ class SerializeFirmware53 {
     response.setFloat32(index, conf.foc_motor_flux_linkage); index += 4;
     response.setFloat32(index, conf.foc_observer_gain); index += 4;
     response.setFloat32(index, conf.foc_observer_gain_slow); index += 4;
+    response.setInt16(index, (conf.foc_observer_offset * 1000).toInt()); index += 2;
     response.setFloat32(index, conf.foc_duty_dowmramp_kp); index += 4;
     response.setFloat32(index, conf.foc_duty_dowmramp_ki); index += 4;
     response.setFloat32(index, conf.foc_openloop_rpm); index += 4;
@@ -687,6 +693,7 @@ class SerializeFirmware53 {
     response.setInt16(index, (conf.foc_offsets_voltage_undriven[2] * 10000).toInt()); index += 2;
     response.setUint8(index++, conf.foc_phase_filter_enable ? 1 : 0);
     response.setFloat32(index, conf.foc_phase_filter_max_erpm); index += 4;
+    response.setUint8(index++, conf.foc_mtpa_mode.index);
     response.setFloat32(index, conf.foc_fw_current_max); index += 4;
     response.setInt16(index, (conf.foc_fw_duty_start * 10000).toInt()); index += 2;
     response.setInt16(index, (conf.foc_fw_ramp_time * 1000).toInt()); index += 2;
@@ -738,6 +745,7 @@ class SerializeFirmware53 {
     response.setUint8(index++, conf.si_battery_type.index);
     response.setUint8(index++, conf.si_battery_cells);
     response.setFloat32(index, conf.si_battery_ah); index += 4;
+    response.setFloat32(index, conf.si_motor_nl_current); index += 4;
     response.setUint8(index++, conf.bms.type.index);
     response.setInt16(index, (conf.bms.t_limit_start * 100).toInt()); index += 2;
     response.setInt16(index, (conf.bms.t_limit_end * 100).toInt()); index += 2;

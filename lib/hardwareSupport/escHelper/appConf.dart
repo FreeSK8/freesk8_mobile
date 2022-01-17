@@ -235,9 +235,9 @@ class balance_config {
   int fault_delay_switch_full; // Firmware 5.2 added
   int fault_adc_half_erpm;
   double overspeed_duty; // Firmware 5.1 only
-  double tiltback_duty;
   double tiltback_duty_angle;
   double tiltback_duty_speed;
+  double tiltback_duty;
   double tiltback_hv_angle; // Firmware 5.3 added
   double tiltback_hv_speed; // Firmware 5.3 added
   double tiltback_hv;
@@ -423,6 +423,7 @@ class APPCONF {
   CAN_MODE can_mode;
   int uavcan_esc_index;
   UAVCAN_RAW_MODE uavcan_raw_mode; // Firmware 5.2 added
+  double uavcan_raw_rpm_max; // Firmware 5.3 added
 
   // Application to use
   app_use app_to_use;
