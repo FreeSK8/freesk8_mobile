@@ -1980,7 +1980,7 @@ class InputConfigurationEditorState extends State<InputConfigurationEditor> {
 
     if(appconfSubscription == null) {
       appconfSubscription = myArguments.dataStream.listen((value) {
-        globalLogger.wtf("Stream Data Received");
+        globalLogger.i("Stream Data Received");
         setState(() {
           // Clear selections
           _selectedPPMCtrlType = null;

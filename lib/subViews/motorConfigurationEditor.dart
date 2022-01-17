@@ -953,7 +953,7 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
     // Prepare objects for use in this widget
     if(streamSubscription == null) {
       streamSubscription = myArguments.dataStream.listen((value) {
-        globalLogger.wtf("Stream Data Received");
+        globalLogger.i("Stream Data Received");
         setState(() {
           escMotorConfiguration = value;
         });
