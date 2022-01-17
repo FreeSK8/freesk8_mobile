@@ -65,7 +65,7 @@ import 'package:signal_strength_indicator/signal_strength_indicator.dart';
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.21.2";
+const String freeSK8ApplicationVersion = "0.21.3";
 const String robogotchiFirmwareExpectedVersion = "0.10.2";
 
 void main() {
