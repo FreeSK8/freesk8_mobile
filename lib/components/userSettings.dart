@@ -123,6 +123,9 @@ class UserSettings {
 
     settings.boardAvatarPath =
         prefs.getString('$currentDeviceID boardAvatarPath') ?? null;
+    //NOTE: Setting null because SharedPreferences no longer allows saving of null value
+    if (settings.boardAvatarPath == "") settings.boardAvatarPath = null;
+    globalLogger.wtf(settings.boardAvatarPath);
 
     settings.batterySeriesCount =
         prefs.getInt('$currentDeviceID batterySeriesCount') ?? 12;
@@ -155,7 +158,7 @@ class UserSettings {
     if (currentDeviceID != "defaults") {
       await prefs.setString('$currentDeviceID boardAlias', settings.boardAlias);
       await prefs.setString(
-          '$currentDeviceID boardAvatarPath', settings.boardAvatarPath);
+          '$currentDeviceID boardAvatarPath', settings.boardAvatarPath == null ? "" : settings.boardAvatarPath);
     }
 
     await prefs.setInt(
@@ -184,6 +187,7 @@ class UserSettings {
     final prefs = await SharedPreferences.getInstance();
     String avatarPath = prefs.getString('$deviceID boardAvatarPath');
 
+    if (avatarPath == "") avatarPath = null; // SharedPreferences no longer saves null value
     if (avatarPath != null) {
       avatarPath = "${(await getApplicationDocumentsDirectory()).path}$avatarPath";
     }
