@@ -322,7 +322,9 @@ class InputConfigurationEditorState extends State<InputConfigurationEditor> {
     blePacket.setUint16(packetIndex, checksum); packetIndex += 2;
     blePacket.setUint8(packetIndex, 0x03); //End of packet
 
-    sendBLEData(theTXCharacteristic, blePacket.buffer.asUint8List(), true);
+    if (!await sendBLEData(theTXCharacteristic, blePacket.buffer.asUint8List(), true) ) {
+      genericAlert(context, "Save exception", Text("Uh oh. Something went wrong. Please share the debug log with the developers"), "Shake 3 times");
+    }
 
     // Finish with this save attempt
     _writeESCInProgress = false;
@@ -1992,26 +1994,20 @@ class InputConfigurationEditorState extends State<InputConfigurationEditor> {
       });
     }
 
-    if (theTXCharacteristic == null) {
-      theTXCharacteristic = myArguments.theTXCharacteristic;
-    }
+    theTXCharacteristic = myArguments.theTXCharacteristic;
     
     if (calibrationSubscription == null) {
       calibrationSubscription = myArguments.calibrationStream.listen((value) {
-        globalLogger.wtf("Calibration Data Received ${value.adcCalibrationRunning}");
+        globalLogger.wtf("Calibration Data Received PPM Cal:${value.ppmCalibrationRunning} ADC Cal:${value.adcCalibrationRunning}");
         setState(() {
           calibrationState = value;
         });
       });
     }
 
-    if (calibrationState == null) {
-      calibrationState = myArguments.calibrationState;
-    }
+    calibrationState = myArguments.calibrationState;
+    discoveredCANDevices = myArguments.discoveredCANDevices;
 
-    if (discoveredCANDevices == null) {
-      discoveredCANDevices = myArguments.discoveredCANDevices;
-    }
     if (escInputConfiguration == null) {
       escInputConfiguration = myArguments.applicationConfiguration;
     }

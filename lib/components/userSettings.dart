@@ -125,7 +125,6 @@ class UserSettings {
         prefs.getString('$currentDeviceID boardAvatarPath') ?? null;
     //NOTE: Setting null because SharedPreferences no longer allows saving of null value
     if (settings.boardAvatarPath == "") settings.boardAvatarPath = null;
-    globalLogger.wtf(settings.boardAvatarPath);
 
     settings.batterySeriesCount =
         prefs.getInt('$currentDeviceID batterySeriesCount') ?? 12;
