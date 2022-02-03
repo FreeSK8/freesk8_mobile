@@ -393,7 +393,7 @@ class SerializeFirmware52 {
     mcconfData.hall_sl_erpm = buffer_get_float32_auto(buffer, index); index += 4;
     mcconfData.foc_current_kp = buffer_get_float32_auto(buffer, index); index += 4;
     mcconfData.foc_current_ki = buffer_get_float32_auto(buffer, index); index += 4;
-    mcconfData.foc_f_sw = buffer_get_float32_auto(buffer, index); index += 4;
+    mcconfData.foc_f_zv = buffer_get_float32_auto(buffer, index); index += 4;
     mcconfData.foc_dt_us = buffer_get_float32_auto(buffer, index); index += 4;
     mcconfData.foc_encoder_inverted = buffer[index++] > 0 ? true : false;
     mcconfData.foc_encoder_offset = buffer_get_float32_auto(buffer, index); index += 4;
@@ -554,7 +554,7 @@ class SerializeFirmware52 {
     response.setFloat32(index, conf.hall_sl_erpm); index += 4;
     response.setFloat32(index, conf.foc_current_kp); index += 4;
     response.setFloat32(index, conf.foc_current_ki); index += 4;
-    response.setFloat32(index, conf.foc_f_sw); index += 4;
+    response.setFloat32(index, conf.foc_f_zv); index += 4;
     response.setFloat32(index, conf.foc_dt_us); index += 4;
     response.setUint8(index++, conf.foc_encoder_inverted ? 1 : 0);
     response.setFloat32(index, conf.foc_encoder_offset); index += 4;

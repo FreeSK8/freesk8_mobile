@@ -275,6 +275,8 @@ Future<bool> sendBLEData(BluetoothCharacteristic txCharacteristic, Uint8List dat
         globalLogger.e("sendBLEData: Write to characteristic exhausted all attempts. Data not sent. ${txCharacteristic.toString()}");
         return Future.value(false);
       } else {
+        //TODO: Observed "write_characteristic_error, no instance of BluetoothGatt, have you connected first?" (believed to be resolved)
+        //globalLogger.wtf(err);
         continue; // Try again without incrementing bytesSent
       }
     } catch (e) {

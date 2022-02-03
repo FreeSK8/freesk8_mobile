@@ -324,7 +324,7 @@ class SmartBMSViewerState extends State<SmartBMSViewer> {
 
     if(bmsTelemetrySubscription == null) {
       bmsTelemetrySubscription = myArguments.dataStream.listen((value) {
-        globalLogger.wtf("Stream Data Received");
+        globalLogger.i("Stream Data Received");
         setState(() {
           // Update widget value
           bmsTelemetry = value;

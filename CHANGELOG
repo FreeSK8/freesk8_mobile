@@ -1,3 +1,10 @@
+v0.21.3
+
+* VESC Firmware 5.3 release supported
+* Fix null value exception from SharedPreferences
+* Fix bug when saving input and motor configurations
+* Generate alert if saving configuration fails
+
 v0.21.2
 
 * Fix IP address displayed with TCP Bridge

@@ -130,6 +130,12 @@ enum PID_RATE {
   PID_RATE_10000_HZ, // Firmware 5.3 added
 }
 
+enum MTPA_MODE{
+  MTPA_MODE_OFF, // Firmware 5.3 added
+  MTPA_MODE_IQ_TARGET, // Firmware 5.3 added
+  MTPA_MODE_IQ_MEASURED,  // Firmware 5.3 added
+}
+
 class MCCONF {
   MCCONF() {
     hall_table = List.filled(8, 0);
@@ -139,11 +145,6 @@ class MCCONF {
     foc_offsets_voltage = List.filled(3, 0); // Firmware 5.3 added
     foc_offsets_voltage_undriven = List.filled(3, 0); // Firmware 5.3 added
   }
-  // Switching and drive
-  mc_pwm_mode pwm_mode;
-  mc_comm_mode comm_mode;
-  mc_motor_type motor_type;
-  mc_sensor_mode sensor_mode;
   // Limits
   double l_current_max;
   double l_current_min;
@@ -179,6 +180,13 @@ class MCCONF {
   double lo_in_current_min;
   double lo_current_motor_max_now;
   double lo_current_motor_min_now;
+
+  //BLDC switching and drive
+  mc_pwm_mode pwm_mode;
+  mc_comm_mode comm_mode;
+  mc_motor_type motor_type;
+  mc_sensor_mode sensor_mode;
+
   // Sensorless (bldc)
   double sl_min_erpm;
   double sl_min_erpm_cycle_int_limit;
@@ -193,7 +201,7 @@ class MCCONF {
   // FOC
   double foc_current_kp;
   double foc_current_ki;
-  double foc_f_sw;
+  double foc_f_zv; // Firmware 5.3 changed from: foc_f_sw
   double foc_dt_us;
   double foc_encoder_offset;
   bool foc_encoder_inverted;
@@ -209,6 +217,7 @@ class MCCONF {
   double foc_motor_flux_linkage;
   double foc_observer_gain;
   double foc_observer_gain_slow;
+  double foc_observer_offset; // Firmware 5.3 added
   double foc_pll_kp;
   double foc_pll_ki;
   double foc_duty_dowmramp_kp;
@@ -246,6 +255,7 @@ class MCCONF {
   List<double> foc_offsets_voltage_undriven; // Firmware 5.3 added
   bool foc_phase_filter_enable; // Firmware 5.3 added
   double foc_phase_filter_max_erpm; // Firmware 5.3 added
+  MTPA_MODE foc_mtpa_mode; // Firmware 5.3 added
   // Field Weakening
   double foc_fw_current_max; // Firmware 5.3 added
   double foc_fw_duty_start; // Firmware 5.3 added
@@ -306,5 +316,7 @@ class MCCONF {
   BATTERY_TYPE si_battery_type;
   int si_battery_cells;
   double si_battery_ah;
+  double si_motor_nl_current; // Firmware 5.3 added
+  // BMS Configuration
   bms_config bms; // Firmware 5.2 added
 }

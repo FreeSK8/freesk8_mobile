@@ -250,7 +250,9 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
     blePacket.setUint16(packetIndex, checksum); packetIndex += 2;
     blePacket.setUint8(packetIndex, 0x03); //End of packet
 
-    await sendBLEData(theTXCharacteristic, blePacket.buffer.asUint8List(), true);
+    if (!await sendBLEData(theTXCharacteristic, blePacket.buffer.asUint8List(), true) ) {
+      genericAlert(context, "Save exception", Text("Uh oh. Something went wrong. Please share the debug log with the developers"), "Shake 3 times");
+    }
 
     // Finish with this save attempt
     _writeESCInProgress = false;
@@ -953,18 +955,14 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
     // Prepare objects for use in this widget
     if(streamSubscription == null) {
       streamSubscription = myArguments.dataStream.listen((value) {
-        globalLogger.wtf("Stream Data Received");
+        globalLogger.i("Stream Data Received");
         setState(() {
           escMotorConfiguration = value;
         });
       });
     }
-    if (theTXCharacteristic == null) {
-      theTXCharacteristic = myArguments.theTXCharacteristic;
-    }
-    if (discoveredCANDevices == null) {
-      discoveredCANDevices = myArguments.discoveredCANDevices;
-    }
+    theTXCharacteristic = myArguments.theTXCharacteristic;
+    discoveredCANDevices = myArguments.discoveredCANDevices;
     if (escMotorConfiguration == null) {
       escMotorConfiguration = myArguments.motorConfiguration;
     }

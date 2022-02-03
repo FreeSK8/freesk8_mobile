@@ -65,7 +65,7 @@ import 'package:signal_strength_indicator/signal_strength_indicator.dart';
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.21.2";
+const String freeSK8ApplicationVersion = "0.21.3";
 const String robogotchiFirmwareExpectedVersion = "0.10.2";
 
 void main() {
@@ -1801,7 +1801,15 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           // Publish MCCONF to potential subscriber
           mcconfStream.add(escMotorConfiguration);
 
+          //NOTE: for debug & testing
+          //ByteData serializedMcconf = escHelper.serializeMCCONF(escMotorConfiguration);
+          //MCCONF refriedMcconf = escHelper.processMCCONF(serializedMcconf.buffer.asUint8List());
+          //globalLogger.wtf("Break for MCCONF: $escMotorConfiguration");
+
           if (escMotorConfiguration.si_battery_ah == null) {
+            // Prevent init message dialogs from appearing
+            initDialogDismissed = true;
+
             // Show dialog
             showDialog(
               context: context,
@@ -1812,18 +1820,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 );
               },
             );
-          }
-          //NOTE: for debug & testing
-          //ByteData serializedMcconf = escHelper.serializeMCCONF(escMotorConfiguration);
-          //MCCONF refriedMcconf = escHelper.processMCCONF(serializedMcconf.buffer.asUint8List());
-          //globalLogger.wtf("Break for MCCONF: $escMotorConfiguration");
+          } else {
+            // Flag the reception of an init message
+            initMsgESCMotorConfig = true;
 
-          // Flag the reception of an init message
-          initMsgESCMotorConfig = true;
-
-          // Save FreeSK8 user settings from received MCCONF
-          {
-            globalLogger.d("MCCONF is updating application settings specific to this board");
+            // Save FreeSK8 user settings from received MCCONF
+            globalLogger.d("Updating application settings specific from MCCONF");
             widget.myUserSettings.settings.batterySeriesCount = escMotorConfiguration.si_battery_cells;
             switch (escMotorConfiguration.si_battery_type) {
               case BATTERY_TYPE.BATTERY_TYPE_LIIRON_2_6__3_6:
@@ -1864,6 +1866,19 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
           // Publish APPCONF to subscribers
           appconfStream.add(escApplicationConfiguration);
+
+          if (escApplicationConfiguration.imu_conf.sample_rate_hz == null) {
+            // Show dialog
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text("Incompatible ESC"),
+                  content: Text("The selected ESC did not return a valid Input Configuration"),
+                );
+              },
+            );
+          }
 
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_DETECT_APPLY_ALL_FOC.index) {
