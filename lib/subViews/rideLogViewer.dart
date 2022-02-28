@@ -1062,55 +1062,8 @@ class RideLogViewerState extends State<RideLogViewer> {
         ),
       ));
     }
-    globalLogger.d("rideLogViewer creating map polyline from ${_positionEntries.length} points");
-
-    //TODO: color polyline based on stats other than speed
-    List<Polyline> polylineList = [];
-    if (gpsLatLngMap.values.length > 0) {
-      // Sorting in case we have experienced out of order records
-      var sortedGPSMapKeysTEST = gpsLatLngMap.keys.toList()..sort();
-      LatLng lastPoint = gpsLatLngMap[sortedGPSMapKeysTEST.first];
-      sortedGPSMapKeysTEST.forEach((element) {
-        var value = gpsLatLngMap[element];
-        var key = element;
-        Color thisColor = Colors.black;
-        //TODO: Reduce number of GPS points to keep things moving on phones
-        if (calculateGPSDistance(lastPoint, value) > 0.01) {
-          // Compute color for this section of the route
-          if (escTimeSeriesMap[key] != null && escTimeSeriesMap[key].speed != null && _maxSpeed > 0.0) {
-            double normalizedSpeed = escTimeSeriesMap[key].speed.abs() / _maxSpeed;
-            thisColor = multiColorLerp(Color(0xff008032), Color(0xff004dff), Color(0xffFf0004), normalizedSpeed);
-          }
-          // Add colored polyline from last section to this one
-          polylineList.add(Polyline(points: [lastPoint, value], strokeWidth: 4, color: thisColor));
-          // Capture last point added
-          lastPoint = value;
-        }
-      });
-    }
-
-    if (gpsLatLngRejectMap.values.length > 0) {
-      // Sorting in case we have experienced out of order records
-      var sortedGPSMapKeysTEST = gpsLatLngRejectMap.keys.toList()..sort();
-      LatLng lastPoint = gpsLatLngRejectMap[sortedGPSMapKeysTEST.first];
-      sortedGPSMapKeysTEST.forEach((element) {
-        var value = gpsLatLngRejectMap[element];
-        var key = element;
-        Color thisColor = Colors.black;
-        //TODO: Reduce number of GPS points to keep things moving on phoness
-        if (calculateGPSDistance(lastPoint, value) > 0.01) {
-          // Compute color for this section of the route
-          if (escTimeSeriesMap[key] != null && escTimeSeriesMap[key].speed != null && _maxSpeed > 0.0) {
-            double normalizedSpeed = escTimeSeriesMap[key].speed.abs() / _maxSpeed;
-            thisColor = multiColorLerp(Color(0xff008032), Color(0xff004dff), Color(0xffFf0004), normalizedSpeed);
-          }
-          // Add colored polyline from last section to this one
-          polylineList.add(Polyline(points: [lastPoint, value], strokeWidth: 4, color: thisColor));
-          // Capture last point added
-          lastPoint = value;
-        }
-      });
-    }
+    globalLogger.d("rideLogViewer creating map polyline from ${_positionEntries.length} entries");
+    Polyline routePolyLine = new Polyline(points: _positionEntries, strokeWidth: 4, color: Color(0xff004dff));
 
     String distance = "N/A";
     Duration duration = Duration(seconds:0);
@@ -1402,11 +1355,13 @@ class RideLogViewerState extends State<RideLogViewer> {
                         ),
 
                         new PolylineLayerOptions(
-                            polylines: polylineList
+                            polylines: [routePolyLine],
+                            polylineCulling: true
                         ),
 
                         new MarkerLayerOptions(
-                            markers: mapMakers
+                            markers: mapMakers,
+                            usePxCache: false,
                         ),
                       ],
                     ),
@@ -1463,8 +1418,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                                 if (gpsLatLngMap.length > 0 && _mapController != null) {
                                   LatLng closestMapPoint = selectNearestGPSPoint(model.selectedDatum.first.datum.time, gpsLatLngMap);
                                   // Before redrawing the map lets move the last (user selection) marker
-                                  mapMakers.removeLast();
-                                  mapMakers.add(new Marker(
+                                  mapMakers.last = new Marker(
                                     width: 50.0,
                                     height: 50.0,
                                     point: closestMapPoint,
@@ -1477,7 +1431,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                                         backgroundColor: Colors.white
                                       )
                                     ),
-                                  ));
+                                  );
                                   _mapController.move(closestMapPoint, _mapController.zoom);
                                 }
                               }
