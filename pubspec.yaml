@@ -19,12 +19,19 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+
+  platform: ^3.1.0
+
   flutter_blue: 0.8.0 #https://pub.dev/packages/flutter_blue/changelog
   shared_preferences: 2.0.9 #https://pub.dev/packages/shared_preferences/changelog
 
   geolocator: ^8.0.1 #https://pub.dev/packages/geolocator/changelog
 
-  flutter_map: 0.14.0 #https://pub.dev/packages/flutter_map/changelog
+  flutter_map: #0.14.0 #https://pub.dev/packages/flutter_map/changelog
+    #TODO: Change to release package when updated from 0.14.0
+    git:
+      url: git@github.com:FreeSK8/flutter_map.git
+      ref: master
 
   flutter_polyline_points: 1.0.0 #https://pub.dev/packages/flutter_polyline_points/changelog
 
@@ -62,7 +69,7 @@ dependencies:
       url: git@github.com:FreeSK8/logger_flutter.git
       ref: freesk8_mobile
 
-  device_info: ^2.0.3 #https://pub.dev/packages/device_info/changelog
+  device_info_plus: ^3.2.2 #https://pub.dev/packages/device_info_plus/changelog
 
   duration_picker: ^1.0.1
 
