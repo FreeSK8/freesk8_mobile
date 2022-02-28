@@ -160,10 +160,9 @@ class RealTimeDataState extends State<RealTimeData> {
     String temperatureMosfet = widget.currentSettings.settings.useFahrenheit ? "$tempMosfet F" : "$tempMosfet C";
     String temperatureMotor = widget.currentSettings.settings.useFahrenheit ? "$tempMotor F" : "$tempMotor C";
 
-    double speedMaxFromERPM = calculateSpeedKph(widget.currentSettings.settings.maxERPM);
-    if (speedMaxFromERPM > 142) speedMaxFromERPM = 142; //~88mph
-    double speedMax = widget.currentSettings.settings.useImperial ? kphToMph(speedMaxFromERPM) : speedMaxFromERPM;
-    double speedNow = widget.currentSettings.settings.useImperial ? kphToMph(calculateSpeedKph(escTelemetry.rpm)) : calculateSpeedKph(escTelemetry.rpm);
+    double escSpeed = escTelemetry.speed;
+    if (escSpeed == null) escSpeed = 0;
+    double speedNow = widget.currentSettings.settings.useImperial ? kphToMph(calculateSpeedKph(escSpeed)) : escSpeed;
 
     double distanceTraveled = escTelemetry.tachometer_abs / 1000.0;
     if (widget.currentSettings.settings.useImperial) distanceTraveled = kmToMile(distanceTraveled);
