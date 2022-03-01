@@ -65,7 +65,7 @@ import 'package:signal_strength_indicator/signal_strength_indicator.dart';
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
-const String freeSK8ApplicationVersion = "0.21.3";
+const String freeSK8ApplicationVersion = "0.21.4";
 const String robogotchiFirmwareExpectedVersion = "0.10.2";
 
 void main() {
@@ -1619,7 +1619,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           }
           if(escFirmwareVersion == ESC_FIRMWARE.UNSUPPORTED) {
             // Stop the init message sequencer
-            _initMsgSequencer.cancel();
+            _initMsgSequencer?.cancel();
             _initMsgSequencer = null;
             initMsgSqeuencerCompleted = true;
 
@@ -1807,8 +1807,15 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           //globalLogger.wtf("Break for MCCONF: $escMotorConfiguration");
 
           if (escMotorConfiguration.si_battery_ah == null) {
-            // Prevent init message dialogs from appearing
-            initDialogDismissed = true;
+            // Stop the init message sequencer
+            _initMsgSequencer?.cancel();
+            _initMsgSequencer = null;
+            initMsgSqeuencerCompleted = true;
+
+            // Remove communicating with ESC dialog
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            }
 
             // Show dialog
             showDialog(
