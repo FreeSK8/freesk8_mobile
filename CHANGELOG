@@ -1,6 +1,8 @@
 v0.21.5
 
 * Fix Speed calculation in RealTimeData
+* Update Geolocator package
+* Upgrade to Flutter 2.10.3
 
 v0.21.4
 
