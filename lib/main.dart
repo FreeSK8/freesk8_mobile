@@ -65,11 +65,22 @@ import 'package:signal_strength_indicator/signal_strength_indicator.dart';
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
+// Flutter core
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+
 const String freeSK8ApplicationVersion = "0.21.6";
 const String robogotchiFirmwareExpectedVersion = "0.10.2";
 
+Future <void> initFirebase() async {
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+}
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  initFirebase();
   runApp(MaterialApp(
       // Title
       title: "FreeSK8",
