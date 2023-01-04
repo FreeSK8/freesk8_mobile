@@ -68,9 +68,12 @@ import 'hardwareSupport/escHelper/serialization/buffers.dart';
 // Flutter core
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+//Flutter plugins
+import 'package:firebase_auth/firebase_auth.dart';
 
 const String freeSK8ApplicationVersion = "0.21.6";
 const String robogotchiFirmwareExpectedVersion = "0.10.2";
+const String gotchiproFirmwareExpectedVersion = "0.1.0";
 
 Future <void> initFirebase() async {
   await Firebase.initializeApp(
