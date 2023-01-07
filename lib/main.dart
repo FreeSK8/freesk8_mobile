@@ -40,7 +40,7 @@ import 'components/userSettings.dart';
 import 'components/fileManager.dart';
 import 'components/autoStopHandler.dart';
 
-import 'package:flutter_blue/flutter_blue.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'subViews/robogotchiDFU.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -73,7 +73,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 const String freeSK8ApplicationVersion = "0.21.6";
 const String robogotchiFirmwareExpectedVersion = "0.10.2";
-const String gotchiproFirmwareExpectedVersion = "0.1.0";
+const String gotchiproFirmwareExpectedVersion = "1";
 
 Future <void> initFirebase() async {
   await Firebase.initializeApp(
@@ -119,7 +119,7 @@ void main() {
 
 class MyHome extends StatefulWidget {
 
-  final FlutterBlue flutterBlue = FlutterBlue.instance;
+  final FlutterBluePlus flutterBlue = FlutterBluePlus.instance;
   final List<ScanResult> bleScanResults = [];
 
   final UserSettings myUserSettings = new UserSettings();

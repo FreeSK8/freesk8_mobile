@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:esys_flutter_share/esys_flutter_share.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_blue/flutter_blue.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 import '../components/databaseAssistant.dart';
 import '../components/fileManager.dart';
@@ -67,8 +67,11 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
 
   Map<DateTime, List> _events = {};
   List _selectedEvents = [];
-  CalendarController _calendarController;
-  DateTime _selectedDay = DateTime.now();
+//  CalendarController _calendarController;
+//  DateTime _selectedDay = DateTime.now();
+  CalendarFormat _calendarFormat = CalendarFormat.twoWeeks;
+  DateTime _focusedDay = DateTime.now();
+  DateTime _selectedDay;
 
   @override
   void initState() {
@@ -82,7 +85,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
     _selectedDay = DateTime.parse(new DateFormat("yyyy-MM-dd").format(DateTime.now()));
     _listFiles(true);
 
-    _calendarController = CalendarController();
+//    _calendarController = CalendarController();
   }
 
   @override
@@ -110,6 +113,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
         }
       });
       _selectedEvents = _events[_selectedDay] ?? [];
+      //initialCalendarFormat: CalendarFormat.twoWeeks,
 
       // Set state if requested and is an appropriate time
       if (doSetState && this.mounted) setState(() {});
@@ -122,15 +126,48 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
   // Simple TableCalendar configuration (using Styles)
   Widget _buildTableCalendar() {
     return TableCalendar(
-      initialCalendarFormat: CalendarFormat.twoWeeks,
-      calendarController: _calendarController,
-      events: _events,
+      firstDay: kFirstDay,
+      lastDay: kLastDay,
+      focusedDay: _focusedDay,
+      calendarFormat: _calendarFormat,
+      selectedDayPredicate: (day) {
+        // Use `selectedDayPredicate` to determine which day is currently selected.
+        // If this returns true, then `day` will be marked as selected.
+
+        // Using `isSameDay` is recommended to disregard
+        // the time-part of compared DateTime objects.
+        return isSameDay(_selectedDay, day);
+      },
+      onDaySelected: (selectedDay, focusedDay) {
+        if (!isSameDay(_selectedDay, selectedDay)) {
+          // Call `setState()` when updating the selected day
+          setState(() {
+            _selectedDay = selectedDay;
+            _focusedDay = focusedDay;
+          });
+        }
+      },
+      onFormatChanged: (format) {
+        if (_calendarFormat != format) {
+          // Call `setState()` when updating calendar format
+          setState(() {
+            _calendarFormat = format;
+          });
+        }
+      },
+      onPageChanged: (focusedDay) {
+        // No need to call `setState()` here
+        _focusedDay = focusedDay;
+      },
+      //initialCalendarFormat: CalendarFormat.twoWeeks,
+      //calendarController: _calendarController,
+      //events: _events,
       //holidays: _holidays,
       startingDayOfWeek: StartingDayOfWeek.sunday,
       calendarStyle: CalendarStyle(
-        selectedColor: Colors.deepOrange[400],
-        todayColor: Colors.deepOrange[200],
-        markersColor: Colors.white,
+        //selectedColor: Colors.deepOrange[400],
+        //todayColor: Colors.deepOrange[200],
+        //markersColor: Colors.white,
         outsideDaysVisible: false,
       ),
       headerStyle: HeaderStyle(
@@ -142,9 +179,9 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
           borderRadius: BorderRadius.circular(16.0),
         ),
       ),
-      onDaySelected: _onDaySelected,
-      onVisibleDaysChanged: _onVisibleDaysChanged,
-      onCalendarCreated: _onCalendarCreated,
+      //onDaySelected: _onDaySelected,
+      //onVisibleDaysChanged: _onVisibleDaysChanged,
+      //onCalendarCreated: _onCalendarCreated,
     );
   }
 

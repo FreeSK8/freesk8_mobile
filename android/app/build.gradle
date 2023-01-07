@@ -54,8 +54,8 @@ android {
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig signingConfigs.debug
             // FIXME: Work-around for https://github.com/pauldemarco/flutter_blue/issues/772
-            shrinkResources false
-            minifyEnabled false
+            // shrinkResources false
+            // minifyEnabled false
         }
     }
 }

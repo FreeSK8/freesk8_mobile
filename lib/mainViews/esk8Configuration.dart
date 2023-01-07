@@ -15,7 +15,7 @@ import '../hardwareSupport/escHelper/escHelper.dart';
 
 import 'package:esys_flutter_share/esys_flutter_share.dart';
 
-import 'package:flutter_blue/flutter_blue.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 import 'package:image_picker/image_picker.dart';
 

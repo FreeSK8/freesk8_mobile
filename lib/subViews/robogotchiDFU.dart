@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_nordic_dfu/flutter_nordic_dfu.dart';
-import 'package:flutter_blue/flutter_blue.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import '../globalUtilities.dart';
 
 const String updateFileName = "Robogotchi_0.10.2"; //TODO: NOTE: Must match that of /assets/firmware/<*>.zip
@@ -15,7 +15,7 @@ class RobogotchiDFU extends StatefulWidget {
 }
 
 class RobogotchiDFUState extends State<RobogotchiDFU> with SingleTickerProviderStateMixin {
-  final FlutterBlue flutterBlue = FlutterBlue.instance;
+  final FlutterBluePlus flutterBlue = FlutterBluePlus.instance;
   StreamSubscription<ScanResult> scanSubscription;
   List<ScanResult> scanResults = <ScanResult>[];
   bool dfuRunning = false;

@@ -3,7 +3,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_blue/flutter_blue.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:freesk8_mobile/components/crc16.dart';
 import 'package:freesk8_mobile/components/userSettings.dart';
 
