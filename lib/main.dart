@@ -73,7 +73,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 const String freeSK8ApplicationVersion = "0.21.6";
 const String robogotchiFirmwareExpectedVersion = "0.10.2";
-const String gotchiproFirmwareExpectedVersion = "1";
+const String gotchiproFirmwareExpectedVersion = "2";
 
 Future <void> initFirebase() async {
   await Firebase.initializeApp(
