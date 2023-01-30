@@ -117,7 +117,7 @@ class gotchiProOTAState extends State<gotchiProOTA> with SingleTickerProviderSta
               null) {
             return;
           }
-          if (scanResult.device.name.startsWith("FreeSK8")) {
+          if (scanResult.device.name.startsWith("ESP")) {
             setState(() {
               /// add result to results if not added
               scanResults.add(scanResult);
@@ -143,7 +143,7 @@ class gotchiProOTAState extends State<gotchiProOTA> with SingleTickerProviderSta
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
-                Text("Your Robogotchi is ready! It will automatically boot in a few seconds."),
+                Text("Your gotchiPro update is complete! It will automatically boot in a few seconds."),
               ],
             ),
           ),
@@ -217,7 +217,7 @@ class gotchiProOTAState extends State<gotchiProOTA> with SingleTickerProviderSta
                     color: Colors.blue,
                   ),
                 ),
-                _deviceAddress == null ? Text("Connecting to Robogotchi") : Text("Connected to Robogotchi"),
+                _deviceAddress == null ? Text("Connecting to gotchiPro") : Text("Connected to gotchiPro"),
                 _partsTotal == null ? Container() : Text("Updating Part $_currentPart / $_partsTotal"),
                 Container(
                   padding: EdgeInsets.all(10),
@@ -260,7 +260,7 @@ class DeviceItem extends StatelessWidget {
     if (scanResult.device.name != null && scanResult.device.name.length > 0) {
       name = scanResult.device.name;
     }
-    var inOTAMode = scanResult.device.name == "FreeSK8-OTA";
+    var inOTAMode = scanResult.device.name == "ESP32";
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(8.0),

@@ -27,6 +27,7 @@ import 'subViews/focWizard.dart';
 import 'subViews/escProfileEditor.dart';
 import 'subViews/robogotchiCfgEditor.dart';
 import 'subViews/vehicleManager.dart';
+import 'subViews/gotchiProOTA.dart';
 
 import 'widgets/fileSyncViewer.dart';
 
@@ -41,6 +42,8 @@ import 'components/fileManager.dart';
 import 'components/autoStopHandler.dart';
 
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:flutter_reactive_ble/flutter_reactive_ble.dart' hide ConnectionStatus, LogLevel, ScanResult;
+
 import 'subViews/robogotchiDFU.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -95,6 +98,7 @@ void main() {
         ESCProfileEditor.routeName: (BuildContext context) => ESCProfileEditor(),
         RobogotchiCfgEditor.routeName: (BuildContext context) => RobogotchiCfgEditor(),
         RobogotchiDFU.routeName: (BuildContext context) => RobogotchiDFU(),
+        gotchiProOTA.routeName: (BuildContext context) => gotchiProOTA(),
         VehicleManager.routeName: (BuildContext context) => VehicleManager(),
         Brocator.routeName: (BuildContext context) => Brocator(),
         MotorConfigurationEditor.routeName: (BuildContext context) => MotorConfigurationEditor(),
@@ -164,6 +168,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   BLEHelper bleHelper;
   ESCHelper escHelper;
   DieBieMSHelper dieBieMSHelper;
+  final flutterReactiveBle = FlutterReactiveBle();
 
   static ESC_FIRMWARE escFirmwareVersion = ESC_FIRMWARE.UNSUPPORTED;
   static MCCONF escMotorConfiguration;
@@ -675,7 +680,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         Navigator.of(context).pop(); // Remove attempting connection dialog
 
         initDialogDismissed = false;
-
+        final mtu = await flutterReactiveBle.requestMtu(deviceId: _connectedDevice.id.toString(), mtu: 512);
+        await flutterReactiveBle.requestConnectionPriority(deviceId: _connectedDevice.id.toString(), priority: ConnectionPriority.highPerformance);await flutterReactiveBle.deinitialize();
         _changeConnectedDialogMessage("Communicating with ESC");
       }
     } catch (e) {
@@ -2095,9 +2101,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     } else if (!initMsgESCVersion) {
       // Request the ESC Firmware Packet
       globalLogger.d("_requestInitMessages: Requesting ESC Firmware Packet");
-      theTXCharacteristic.write([0x02, 0x01, 0x00, 0x00, 0x00, 0x03]).catchError((onError){
-        // No Action
-      });
+        theTXCharacteristic.write([0x02, 0x01, 0x00, 0x00, 0x00, 0x03]).catchError((onError){
+          globalLogger.e("_requestInitMessages: Error!");
+        });
+
       if (!initShowESCVersion) {
         _changeConnectedDialogMessage("Requesting ESC version");
         initShowESCVersion = true;
@@ -2640,8 +2647,70 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           }
         },
       ),
+      Divider(thickness: 3),
+
+      ListTile(
+        leading: Icon(Icons.devices),
+        title: Text("gotchiPro OTA Updater"),
+        onLongPress: (){
+          if (_connectedDevice == null) {
+            Navigator.of(context).pop();
+            // navigate to the route
+            Navigator.of(context).pushNamed(gotchiProOTA.routeName, arguments: null);
+            genericAlert(context, "Hey there 👋", Text("We are not connected to a gotchiPro which means I can't prepare it for update mode.\n\nI'll search for devices anyway but you'll probably want to turn back now."), "Ok 👍");
+          }
+        },
+        onTap: () {
+          // Don't write if not connected
+          if (menuOptionIsReady(isRobogotchiOption: true)) {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text('Ready to update?'),
+                  content: SingleChildScrollView(
+                    child: ListBody(
+                      children: <Widget>[
+                        Text('Selecting YES will put your gotchiPro into update mode.'),
+                        SizedBox(height:10),
+                        Text('This process typically takes 1-2 minutes')
+                      ],
+                    ),
+                  ),
+                  actions: <Widget>[
+                    TextButton(
+                      child: Text('No thank you.'),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                    TextButton(
+                      child: Text('YES'),
+                      onPressed: () async {
+                        await theTXLoggerCharacteristic.write(utf8.encode("otamode~")).timeout(Duration(milliseconds: 500)).whenComplete((){
+                          globalLogger.d('gotchiPro OTA Command Executed');
+
+                          Navigator.of(context).pop();
+
+                          _bleDisconnect();
+
+                          // navigate to the route
+                          Navigator.of(context).pushNamed(gotchiProOTA.routeName, arguments: null);
+                        }).catchError((e){
+                          globalLogger.e("Firmware Update: Exception: $e");
+                        });
+                      },
+                    ),
+                  ],
+                );
+              },
+            );
+          }
+        },
+      ),
 
       Divider(thickness: 3),
+
       ListTile(
         leading: Icon(Icons.share_outlined),
         title: Text(serverTCPSocket == null ? "Enable TCP Bridge" : "Disable TCP Bridge"),
