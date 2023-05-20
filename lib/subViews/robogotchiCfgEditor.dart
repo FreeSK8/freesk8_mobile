@@ -279,7 +279,9 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                         onChanged: (newValue){ setState(() {
                           myArguments.currentConfiguration.logAutoStartERPM = 6000 - newValue.toInt();
                         }); },
-                        value: 6000 - myArguments.currentConfiguration.logAutoStartERPM.toDouble(),
+                        value: (6000 - myArguments.currentConfiguration.logAutoStartERPM.toDouble())
+                            .clamp(1000, 4999)
+                            .toDouble(), // Clamping the value between min and max and casting it to double
                         min: 1000,
                         max: 4999,
                       )),

@@ -69,24 +69,26 @@ import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
 // Flutter core
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
+//import 'package:firebase_core/firebase_core.dart';
+//import 'firebase_options.dart';
 //Flutter plugins
-import 'package:firebase_auth/firebase_auth.dart';
+//import 'package:firebase_auth/firebase_auth.dart';
 
-const String freeSK8ApplicationVersion = "0.21.6";
+const String freeSK8ApplicationVersion = "0.22.0";
 const String robogotchiFirmwareExpectedVersion = "0.10.2";
-const String gotchiproFirmwareExpectedVersion = "2";
+const String gotchiproFirmwareExpectedVersion = "0";
 
+/*
 Future <void> initFirebase() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 }
+*/
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  initFirebase();
+  //initFirebase();
   runApp(MaterialApp(
       // Title
       title: "FreeSK8",
@@ -819,9 +821,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
   static DateTime dtLastLogged = DateTime.now();
 
-  final Guid uartServiceUUID = new Guid("6e400001-b5a3-f393-e0a9-e50e24dcca9e");
-  final Guid txCharacteristicUUID = new Guid("6e400002-b5a3-f393-e0a9-e50e24dcca9e");
-  final Guid rxCharacteristicUUID = new Guid("6e400003-b5a3-f393-e0a9-e50e24dcca9e");
+  final Guid uartServiceUUID            = new Guid("6e400001-b5a3-f393-e0a9-e50e24dcca9e");
+  final Guid txCharacteristicUUID       = new Guid("6e400002-b5a3-f393-e0a9-e50e24dcca9e");
+  final Guid rxCharacteristicUUID       = new Guid("6e400003-b5a3-f393-e0a9-e50e24dcca9e");
   final Guid txLoggerCharacteristicUUID = new Guid("6e400004-b5a3-f393-e0a9-e50e24dcca9e");
   final Guid rxLoggerCharacteristicUUID = new Guid("6e400005-b5a3-f393-e0a9-e50e24dcca9e");
 
