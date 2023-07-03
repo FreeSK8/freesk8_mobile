@@ -57,6 +57,7 @@ class ConnectionStatus extends StatelessWidget {
         @required this.userSettings,
         @required this.onChanged,
         this.robogotchiVersion,
+        this.gotchiproVersion,
         this.imageBoardAvatar,
         this.gotchiStatus,
         this.connectedVehicleOdometer,
@@ -73,6 +74,7 @@ class ConnectionStatus extends StatelessWidget {
   final bool active;
   final ValueChanged<bool> onChanged;
   final String robogotchiVersion;
+  final String gotchiproVersion;
   final MemoryImage imageBoardAvatar;
   final RobogotchiStatus gotchiStatus;
   final double connectedVehicleOdometer;

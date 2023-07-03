@@ -31,7 +31,8 @@ class RideLogging extends StatefulWidget {
     this.eraseOnSync,
     this.onSyncEraseSwitch,
     this.isLoggerLogging,
-    this.isRobogotchi
+    this.isRobogotchi,
+    this.isGotchiPro
   });
   final UserSettings myUserSettings;
   final BluetoothCharacteristic theTXLoggerCharacteristic;
@@ -42,7 +43,8 @@ class RideLogging extends StatefulWidget {
   final ValueChanged<bool> onSyncEraseSwitch;
   final bool isLoggerLogging;
   final bool isRobogotchi;
-
+  final bool isGotchiPro;
+  
   void _handleSyncPress() {
     onSyncPress(!syncInProgress);
   }
@@ -55,7 +57,7 @@ class RideLogging extends StatefulWidget {
 class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin {
 
   static bool showDevTools = false; // Flag to control shoting developer stuffs
-  static bool showListView = false; // Flag to control showing list view vs calendar
+  static bool showListView = true; // Flag to control showing list view vs calendar
   String temporaryLog = "";
   List<FileSystemEntity> rideLogs = [];
   List<FileStat> rideLogsFileStats = [];
@@ -369,36 +371,30 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
 
 
 
-            Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-              GestureDetector(
-                child: Row(children: [
-                  Image(image: AssetImage("assets/dri_icon.png"),height: 60),
-                  Column(children: [
-                    Text("Ride Logging", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
-                    Row(children: [
-                      showListView ? Icon(Icons.calendar_today) : Icon(Icons.view_list_sharp),
-                      Text(showListView ? "Show Calendar" : "Show List", style: TextStyle(fontSize: 20)),
-                    ],)
-                  ],)
-                ],),
-                onTap: (){
-                  setState(() {
-                    showListView = !showListView;
-                  });
-                },
-                onLongPress: () {
-                  setState(() {
-                    showDevTools = !showDevTools;
-                  });
-                },
-              ),
-
-
-
-            ],),
-
-
-
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                GestureDetector(
+                  child: Row(
+                    children: [
+                      Image(
+                          image: AssetImage("assets/dri_icon.png"),
+                          height: 60
+                      ),
+                      Text(
+                          "Ride Logging",
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
+                      ),
+                    ],
+                  ),
+                  onLongPress: () {
+                    setState(() {
+                      showDevTools = !showDevTools;
+                    });
+                  },
+                ),
+              ],
+            ),
 
             showListView ? Container() : _buildTableCalendar(),
             showListView ? Container() : SizedBox(height: 8.0),
@@ -813,6 +809,30 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                       sendBLEData(widget.theTXLoggerCharacteristic, utf8.encode("logstart~"), false);
                     }
                   }),
+
+              SizedBox(width: 5,),
+              widget.syncInProgress ? Container() : ElevatedButton(
+                  child: Text("Clear Logs"),
+                  style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.all<Color>(Colors.red),
+                  ),
+                  onPressed: () async {
+                    if (!widget.isRobogotchi) {
+                      return _alertLimitedFunctionality(context);
+                    }
+                    genericConfirmationDialog(
+                        context,
+                        TextButton(child: Text("CLEAR LOGS!"),onPressed: () async {
+                          await sendBLEData(widget.theTXLoggerCharacteristic, utf8.encode("logdeleteall~"), false); // Clear all logs
+                          Navigator.of(context).pop(true); // Close dialog
+                        }),
+                        TextButton(child: Text("NOPE!"),onPressed: (){
+                          Navigator.of(context).pop(false); // Close dialog
+                        }),
+                        "HALT!",
+                        Text("This will clear ALL logs on your Robogotchi, an irreversible action.\n\n Are you sure you want to continue?")
+                    );
+                  }),
               SizedBox(width: 5,),
               ElevatedButton(
                   child: Text(widget.syncInProgress?"Stop Sync":"Sync Logs"),
@@ -839,7 +859,6 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                       widget._handleSyncPress(); //Start or stop file sync routine
                     }
                   }),
-
 
 
               /* Most users will not want to leave the log on the robogotchi but some developers might */

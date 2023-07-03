@@ -60,7 +60,7 @@ import 'package:esys_flutter_share/esys_flutter_share.dart';
 import 'package:wifi_iot/wifi_iot.dart';
 
 import 'package:logger_flutter/logger_flutter.dart';
-
+import 'package:logger_flutter/logger_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:signal_strength_indicator/signal_strength_indicator.dart';
@@ -74,9 +74,9 @@ import 'hardwareSupport/escHelper/serialization/buffers.dart';
 //Flutter plugins
 //import 'package:firebase_auth/firebase_auth.dart';
 
-const String freeSK8ApplicationVersion = "0.22.0";
+const String freeSK8ApplicationVersion = "0.22.1";
 const String robogotchiFirmwareExpectedVersion = "0.10.2";
-const String gotchiproFirmwareExpectedVersion = "0";
+const String gotchiproFirmwareExpectedVersion = "1.4.0";
 
 /*
 Future <void> initFirebase() async {
@@ -180,6 +180,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static Uint8List escMotorConfigurationDefaults;
   static List<int> _validCANBusDeviceIDs = [];
   static String robogotchiVersion;
+  static String gotchiproVersion;
 
   static bool deviceIsConnected = false;
   static bool unexpectedDisconnect = false;
@@ -526,6 +527,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       // Reset device is a Robogotchi flag
       _deviceIsRobogotchi = false;
+      _deviceIsGotchiPro = false;
 
       // Reset current ESC motor configuration
       escMotorConfiguration = new MCCONF();
@@ -535,6 +537,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       // Reset Robogotchi version
       robogotchiVersion = null;
+      gotchiproVersion = null;
 
       // Reset is ESC responding flag
       isESCResponding = false;
@@ -545,6 +548,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       // Reset the init message sequencer
       initMsgGotchiSettime = false;
       initMsgGotchiVersion = false;
+      initMsgGotchiProVersion = false;
       initMsgESCVersion = false;
       initMsgESCMotorConfig = false;
       initMsgESCDevicesCAN = false;
@@ -848,6 +852,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static Timer _initMsgSequencer;
   static int bleTXErrorCount = 0;
   static bool _deviceIsRobogotchi = false;
+  static bool _deviceIsGotchiPro = false;
 
 
   //TODO: some logger vars that need to be in their own class
@@ -1425,7 +1430,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           catBytesRaw.addAll(value.sublist(0,receiveStr.length));
           //NOTE: File operations on iOS can slow things down, using memory buffer ^ await FileManager.writeBytesToLogFile(value.sublist(0,receiveStr.length));
 
-          //globalLogger.d("cat received ${receiveStr.length} bytes");
+          globalLogger.d("cat received ${receiveStr.length} bytes");
           setState(() {
             catBytesReceived += receiveStr.length;
           });
@@ -1520,10 +1525,26 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       else if(receiveStr.startsWith("version,")) {
         globalLogger.d("Version packet received: $receiveStr");
         List<String> values = receiveStr.split(",");
-        // Update robogotchiVersion
-        robogotchiVersion = values[1];
-        // Flag the reception of an init message
-        initMsgGotchiVersion = true;
+        
+        // Get the major version number
+        int majorVersion = int.parse(values[1].split(".")[0]);
+
+        if(majorVersion == 0) {
+          // Update robogotchiVersion
+          robogotchiVersion = values[1];
+          // Flag the reception of an init message
+          initMsgGotchiVersion = true;
+          initMsgGotchiProVersion = false;
+          _deviceIsGotchiPro = false;
+        } else if(majorVersion == 1) {
+          // Update robogotchiVersion
+          robogotchiVersion = values[1];
+          gotchiproVersion = values[1];
+          // Flag the reception of an init message
+          initMsgGotchiVersion = true;
+          initMsgGotchiProVersion = true;
+          _deviceIsGotchiPro = true;
+        }
         // Redraw UI
         setState(() {});
       }
@@ -1989,6 +2010,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_GET_DECODED_ADC.index) {
 
+      globalLogger.d("_requestInitMessages: Requesting Robogotchi version");
           double levelNow = buffer_get_float32(bleHelper.getPayload(), 1, 1000000.0);
           double voltageNow = buffer_get_float32(bleHelper.getPayload(), 5, 1000000.0);
           double level2Now = buffer_get_float32(bleHelper.getPayload(), 9, 1000000.0);
@@ -2079,6 +2101,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
   bool initMsgGotchiSettime = false;
   bool initMsgGotchiVersion = false;
+  bool initMsgGotchiProVersion = false;
   bool initMsgESCVersion = false;
   bool initMsgESCMotorConfig = false;
   bool initMsgESCDevicesCAN = false;
@@ -2150,8 +2173,43 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         Navigator.of(context).pop(); // Remove communicating with ESC dialog
       }
 
+      // Alert user if gotchiPro firmware update is expected
+      if (_deviceIsGotchiPro && gotchiproVersion != gotchiproFirmwareExpectedVersion) {
+        genericConfirmationDialog(context, TextButton(
+          child: Text("NO"),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ), TextButton(
+          child: Text("YES"),
+          onPressed: () async {
+            // Navigate to Firmware Update view
+            await theTXLoggerCharacteristic.write(utf8.encode("otamode~")).timeout(Duration(milliseconds: 500)).whenComplete((){
+              globalLogger.d('gotchiPro OTA Update Mode Command Executed');
+              Navigator.of(context).pop();
+              _bleDisconnect();
+              setState(() {
+                Navigator.of(context).pushNamed(gotchiProOTA.routeName, arguments: null);
+              });
+            }).catchError((e){
+              globalLogger.e("Firmware Update: Exception: $e");
+            });
+          },
+        ), "Update available", Column(crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text("This app works best when gotchiPro is up to date!"),
+              SizedBox(height: 15),
+              Text("Installed firmware: $gotchiproVersion"),
+              Text("Ready to install: $gotchiproFirmwareExpectedVersion"),
+              SizedBox(height: 15),
+              Text("Would you like the begin the update process now?")
+            ])
+        );
+      }
+
       // Alert user if Robogotchi firmware update is expected
-      if (_deviceIsRobogotchi && robogotchiVersion != robogotchiFirmwareExpectedVersion) {
+      else if (_deviceIsRobogotchi && !_deviceIsGotchiPro && robogotchiVersion != robogotchiFirmwareExpectedVersion) {
         genericConfirmationDialog(context, TextButton(
           child: Text("NO"),
           onPressed: () {
@@ -2184,6 +2242,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             ])
         );
       }
+
       // Alert user if this is a new device when we connected/loaded it's settings
       else if (!isConnectedDeviceKnown) {
         globalLogger.d("_requestInitMessages: Connected device is not known. Notifying user");
@@ -2673,9 +2732,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   content: SingleChildScrollView(
                     child: ListBody(
                       children: <Widget>[
-                        Text('Selecting YES will put your gotchiPro into update mode.'),
+                        Text('Selecting YES will put your gotchiPro into an automatic update mode.'),
                         SizedBox(height:10),
-                        Text('This process typically takes 1-2 minutes')
+                        Text('This process typically takes 3-4 minutes, your gotchiPro will disconnect from BLE and updated on its own, rebooting & playing a startup melody when complete. You can reconnect to the gotchiPro then.')
                       ],
                     ),
                   ),
@@ -3018,6 +3077,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 userSettings: widget.myUserSettings,
                 onChanged: _handleBLEScanState,
                 robogotchiVersion: robogotchiVersion,
+                gotchiproVersion: gotchiproVersion,
                 imageBoardAvatar: cachedBoardAvatar,
                 gotchiStatus: gotchiStatus,
                 connectedVehicleOdometer: connectedVehicleOdometer,
@@ -3042,7 +3102,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   eraseOnSync: syncEraseOnComplete,
                   onSyncEraseSwitch: _handleEraseOnSyncButton,
                   isLoggerLogging: isLoggerLogging,
-                  isRobogotchi : _deviceIsRobogotchi
+                  isRobogotchi: _deviceIsRobogotchi,
+                  isGotchiPro: _deviceIsGotchiPro,
               ),
               ESK8Configuration(
                 myUserSettings: widget.myUserSettings,
