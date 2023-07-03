@@ -76,7 +76,7 @@ import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
 const String freeSK8ApplicationVersion = "0.22.1";
 const String robogotchiFirmwareExpectedVersion = "0.10.2";
-const String gotchiproFirmwareExpectedVersion = "1.4.0";
+const String gotchiproFirmwareExpectedVersion = "1.5.0";
 
 /*
 Future <void> initFirebase() async {
