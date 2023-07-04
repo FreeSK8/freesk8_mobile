@@ -42,7 +42,7 @@ import 'components/fileManager.dart';
 import 'components/autoStopHandler.dart';
 
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'package:flutter_reactive_ble/flutter_reactive_ble.dart' hide ConnectionStatus, LogLevel, ScanResult;
+//import 'package:flutter_reactive_ble/flutter_reactive_ble.dart' hide ConnectionStatus, LogLevel, ScanResult;
 
 import 'subViews/robogotchiDFU.dart';
 import 'package:path_provider/path_provider.dart';
@@ -170,7 +170,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   BLEHelper bleHelper;
   ESCHelper escHelper;
   DieBieMSHelper dieBieMSHelper;
-  final flutterReactiveBle = FlutterReactiveBle();
+  //final flutterReactiveBle = FlutterReactiveBle();
 
   static ESC_FIRMWARE escFirmwareVersion = ESC_FIRMWARE.UNSUPPORTED;
   static MCCONF escMotorConfiguration;
@@ -686,8 +686,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         Navigator.of(context).pop(); // Remove attempting connection dialog
 
         initDialogDismissed = false;
-        final mtu = await flutterReactiveBle.requestMtu(deviceId: _connectedDevice.id.toString(), mtu: 512);
-        await flutterReactiveBle.requestConnectionPriority(deviceId: _connectedDevice.id.toString(), priority: ConnectionPriority.highPerformance);await flutterReactiveBle.deinitialize();
+        //final mtu = await flutterReactiveBle.requestMtu(deviceId: _connectedDevice.id.toString(), mtu: 512);
+        //await flutterReactiveBle.requestConnectionPriority(deviceId: _connectedDevice.id.toString(), priority: ConnectionPriority.highPerformance);await flutterReactiveBle.deinitialize();
         _changeConnectedDialogMessage("Communicating with ESC");
       }
     } catch (e) {
