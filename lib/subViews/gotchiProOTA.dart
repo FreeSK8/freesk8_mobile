@@ -189,11 +189,12 @@ class gotchiProOTAState extends State<gotchiProOTA> with SingleTickerProviderSta
         body:
         Column(children: [
           SizedBox(height:10),
-          Image(image: AssetImage("assets/robogotchi_render.png"),height: 150),
+          Image(image: AssetImage("assets/dri_about_serious.gif"),height: 180),
+          SizedBox(height:10),
           //Text("New Version: $updateFileName"),
-          Text("Discovered devices:"),
-
-          !hasDevice ? const Center( child: const Text('No devices found')) :Expanded(
+          Text("Hold on to your butts, this will take a few minutes."),
+          SizedBox(height:10),
+          !hasDevice ? const Center( child: const Text('Reconnect after you hear the Not-Mario melody play.')) :Expanded(
               child: ListView.separated(
                 padding: const EdgeInsets.all(8),
                 itemBuilder: _deviceItemBuilder,
