@@ -11,6 +11,7 @@ import './serialization/buffers.dart';
 import './serialization/firmware5_1.dart';
 import './serialization/firmware5_2.dart';
 import './serialization/firmware5_3.dart';
+import './serialization/firmware6_0.dart';
 
 import 'dataTypes.dart';
 
@@ -19,6 +20,7 @@ enum ESC_FIRMWARE {
   FW5_1,
   FW5_2,
   FW5_3,
+  FW6_0, //fw6
 }
 
 class ESCTelemetry {
@@ -145,9 +147,13 @@ class ESCHelper {
   static const int MCCONF_SIGNATURE_FW5_3 = 3706516163;
   static const int APPCONF_SIGNATURE_FW5_3 = 1531606261;
 
+  static const int MCCONF_SIGNATURE_FW6_0 = 776184161; //fw6
+  static const int APPCONF_SIGNATURE_FW6_0 = 486554156;  
+
   static SerializeFirmware51 fw51serializer = new SerializeFirmware51();
   static SerializeFirmware52 fw52serializer = new SerializeFirmware52();
   static SerializeFirmware53 fw53serializer = new SerializeFirmware53();
+  static SerializeFirmware60 fw60serializer = new SerializeFirmware60(); //fw6
 
   List<ESCFault> processFaults(int faultCount, Uint8List payload) {
     //globalLogger.wtf(payload);
@@ -254,6 +260,8 @@ class ESCHelper {
         return fw52serializer.processAPPCONF(buffer);
       case ESC_FIRMWARE.FW5_3:
         return fw53serializer.processAPPCONF(buffer);
+      case ESC_FIRMWARE.FW6_0:
+        return fw60serializer.processAPPCONF(buffer);        //fw6
       default:
         throw("unsupported ESC version");
     }
@@ -267,6 +275,8 @@ class ESCHelper {
         return fw52serializer.serializeAPPCONF(conf);
       case ESC_FIRMWARE.FW5_3:
         return fw53serializer.serializeAPPCONF(conf);
+      case ESC_FIRMWARE.FW6_0:
+        return fw60serializer.serializeAPPCONF(conf);        //fw6
       default:
         throw("unsupported ESC version");
     }
@@ -280,6 +290,8 @@ class ESCHelper {
         return fw52serializer.processMCCONF(buffer);
       case ESC_FIRMWARE.FW5_3:
         return fw53serializer.processMCCONF(buffer);
+      case ESC_FIRMWARE.FW6_0:
+        return fw60serializer.processMCCONF(buffer);        //fw6
       default:
         throw("unsupported ESC version");
     }
@@ -293,7 +305,9 @@ class ESCHelper {
         return fw52serializer.serializeMCCONF(conf);
       case ESC_FIRMWARE.FW5_3:
         return fw53serializer.serializeMCCONF(conf);
-      default:
+      case ESC_FIRMWARE.FW6_0:
+        return fw60serializer.serializeMCCONF(conf);      //fw6
+      default:      
         throw("unsupported ESC version");
     }
   }

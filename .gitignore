@@ -1,3 +1,4 @@
 firebase_options.dart
 google-services.json
 build/
+*DS_Store

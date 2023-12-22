@@ -74,9 +74,11 @@ import 'hardwareSupport/escHelper/serialization/buffers.dart';
 //Flutter plugins
 //import 'package:firebase_auth/firebase_auth.dart';
 
-const String freeSK8ApplicationVersion = "0.22.1";
+
+//release update
+const String freeSK8ApplicationVersion = "0.23.0";
 const String robogotchiFirmwareExpectedVersion = "0.10.2";
-const String gotchiproFirmwareExpectedVersion = "1.5.0";
+const String gotchiproFirmwareExpectedVersion = "1.6.0";
 
 /*
 Future <void> initFirebase() async {
@@ -246,7 +248,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         widget.bleScanResults.addAll(results);
       });
     });
-    widget.flutterBlue.setLogLevel(LogLevel.warning);
+    widget.flutterBlue.setLogLevel(LogLevel.info);
 
     FileManager.clearLogFile();
 
@@ -686,6 +688,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         Navigator.of(context).pop(); // Remove attempting connection dialog
 
         initDialogDismissed = false;
+        
+        if (Platform.isAndroid) {
+        await device.requestMtu(255);
+        }
         //final mtu = await flutterReactiveBle.requestMtu(deviceId: _connectedDevice.id.toString(), mtu: 512);
         //await flutterReactiveBle.requestConnectionPriority(deviceId: _connectedDevice.id.toString(), priority: ConnectionPriority.highPerformance);await flutterReactiveBle.deinitialize();
         _changeConnectedDialogMessage("Communicating with ESC");
@@ -1467,7 +1473,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           });
         }
       }
-      else if(receiveStr.startsWith("status,")) {
+        else if(receiveStr.startsWith("status,")) {
         //logger.d("Status packet received: $receiveStr");
         List<String> values = receiveStr.split(",");
         setState(() {
@@ -1657,6 +1663,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             escFirmwareVersion = ESC_FIRMWARE.FW5_2;
           } else if (major == 5 && minor == 3) {
             escFirmwareVersion = ESC_FIRMWARE.FW5_3;
+          } else if (major == 6 && minor == 0) {
+            escFirmwareVersion = ESC_FIRMWARE.FW6_0;            
           } else {
             escFirmwareVersion = ESC_FIRMWARE.UNSUPPORTED;
           }
@@ -2126,8 +2134,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     } else if (!initMsgESCVersion) {
       // Request the ESC Firmware Packet
       globalLogger.d("_requestInitMessages: Requesting ESC Firmware Packet");
-        theTXCharacteristic.write([0x02, 0x01, 0x00, 0x00, 0x00, 0x03]).catchError((onError){
-          globalLogger.e("_requestInitMessages: Error!");
+      theTXCharacteristic.write([0x02, 0x01, 0x00, 0x00, 0x00, 0x03]).catchError((onError){
+          globalLogger.e("_requestInitMessages: Error Requesting ESC Firmware Packet!");
         });
 
       if (!initShowESCVersion) {
@@ -2642,7 +2650,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       Divider(height: 5, thickness: 2),
       ListTile(
         leading: Icon(Icons.settings),
-        title: Text("Robogotchi Config"),
+        title: Text("Logging Config"),
         onTap: () {
           if (menuOptionIsReady(isRobogotchiOption: true)) {
             sendBLEData(theTXLoggerCharacteristic, utf8.encode("getcfg~"), false);

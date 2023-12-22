@@ -41,6 +41,22 @@ enum ppm_control_type {
   PPM_CTRL_TYPE_CURRENT_SMART_REV
 }
 
+// PPM control types fw6
+enum ppm_control_type_6 {
+  PPM_CTRL_TYPE_NONE,
+  PPM_CTRL_TYPE_CURRENT,
+  PPM_CTRL_TYPE_CURRENT_NOREV,
+  PPM_CTRL_TYPE_CURRENT_NOREV_BRAKE,
+  PPM_CTRL_TYPE_DUTY,
+  PPM_CTRL_TYPE_DUTY_NOREV,
+  PPM_CTRL_TYPE_PID,
+  PPM_CTRL_TYPE_PID_NOREV,
+  PPM_CTRL_TYPE_CURRENT_BRAKE_REV_HYST,
+  PPM_CTRL_TYPE_CURRENT_SMART_REV,
+  PPM_CTRL_TYPE_PID_POSITION_180, //fw6
+  PPM_CTRL_TYPE_PID_POSITION_360,
+}
+
 class ppm_config {
   ppm_control_type ctrl_type;
   double pid_max_erpm;
@@ -98,6 +114,8 @@ class adc_config {
   double hyst;
   double voltage_start;
   double voltage_end;
+  double voltage_min;     //fw6
+  double voltage_max;     //fw6
   double voltage_center;
   double voltage2_start;
   double voltage2_end;
@@ -105,6 +123,7 @@ class adc_config {
   SAFE_START_MODE safe_start;
   bool cc_button_inverted;
   bool rev_button_inverted;
+  int buttons;        //fw6
   bool voltage_inverted;
   bool voltage2_inverted;
   double throttle_exp;
@@ -217,10 +236,19 @@ class nrf_config {
   bool send_crc_ack;
 }
 
+enum BALANCE_PID_MODE {           //fw6
+  BALANCE_PID_MODE_ANGLE,
+  BALANCE_PID_MODE_ANGLE_RATE_CASCADE
+}
+
 class balance_config {
+  BALANCE_PID_MODE pid_mode; //fw6
   double kp;
   double ki;
   double kd;
+  double kp2; //fw6
+  double ki2; //fw6
+  double kd2; //fw6 
   int hertz;
   int loop_time_filter; // Firmware 5.3 added
   double fault_pitch;
@@ -234,6 +262,7 @@ class balance_config {
   int fault_delay_switch_half; // Firmware 5.2 added
   int fault_delay_switch_full; // Firmware 5.2 added
   int fault_adc_half_erpm;
+  bool fault_is_dual_switch; //fw6
   double overspeed_duty; // Firmware 5.1 only
   double tiltback_duty_angle;
   double tiltback_duty_speed;
@@ -266,6 +295,7 @@ class balance_config {
   int overspeed_delay; // Firmware 5.1 only
   int fault_delay; // Firmware 5.1 only
   double yaw_current_clamp;
+  double ki_limit;  //fw6
   double setpoint_pitch_filter; // Firmware 5.1 and 5.2 only
   double setpoint_target_filter; // Firmware 5.1 and 5.2 only
   double setpoint_filter_clamp; // Firmware 5.1 and 5.2 only
@@ -291,7 +321,7 @@ class balance_config {
   int turntilt_erpm_boost_end; // Firmware 5.3 added
 }
 
-// CAN status modes
+// CAN status modes fw5
 enum CAN_STATUS_MODE {
   CAN_STATUS_DISABLED,
   CAN_STATUS_1,
@@ -329,6 +359,12 @@ enum AHRS_MODE {
   AHRS_MODE_MADGWICK_FUSION, // Firmware 5.3 added
 }
 
+enum IMU_FILTER { //fw6
+  IMU_FILTER_LOW,
+  IMU_FILTER_MEDIUM,
+  IMU_FILTER_HIGH
+}
+
 class imu_config {
   imu_config() {
     accel_offsets = List.filled(3, 0);
@@ -337,7 +373,13 @@ class imu_config {
   }
   IMU_TYPE type;
   AHRS_MODE mode;
+  IMU_FILTER filter;
+  double accel_lowpass_filter_x;
+  double accel_lowpass_filter_y;
+  double accel_lowpass_filter_z;
+  double gyro_lowpass_filter;
   int sample_rate_hz;
+  bool use_magnetometer;
   double accel_confidence_decay;
   double mahony_kp;
   double mahony_ki;
@@ -367,13 +409,19 @@ class AS504x_diag { // Firmware 5.3 added
 enum CAN_MODE {
   CAN_MODE_VESC,
   CAN_MODE_UAVCAN,
-  CAN_MODE_COMM_BRIDGE
+  CAN_MODE_COMM_BRIDGE,
+  CAN_MODE_UNUSED, //fw6
 }
 
 enum UAVCAN_RAW_MODE { // Firmware 5.2 added
   UAVCAN_RAW_MODE_CURRENT,
   UAVCAN_RAW_MODE_CURRENT_NO_REV_BRAKE,
   UAVCAN_RAW_MODE_DUTY,
+}
+
+enum UAVCAN_STATUS_CURRENT_MODE {
+  UAVCAN_STATUS_CURRENT_MODE_MOTOR,
+  UAVCAN_STATUS_CURRENT_MODE_INPUT
 }
 
 enum CAN_BAUD {
@@ -411,6 +459,10 @@ class APPCONF {
   int timeout_msec;
   double timeout_brake_current;
   CAN_STATUS_MODE send_can_status;
+  int can_status_rate_1; //fw6
+  int can_status_msgs_r1; //fw6
+  int can_status_rate_2; //fw6
+  int can_status_msgs_r2; //fw6
   int send_can_status_rate_hz;
   CAN_BAUD can_baud_rate;
   bool pairing_done;
@@ -424,7 +476,7 @@ class APPCONF {
   int uavcan_esc_index;
   UAVCAN_RAW_MODE uavcan_raw_mode; // Firmware 5.2 added
   double uavcan_raw_rpm_max; // Firmware 5.3 added
-
+  UAVCAN_STATUS_CURRENT_MODE uavcan_status_current_mode;  //fw6
   // Application to use
   app_use app_to_use;
 

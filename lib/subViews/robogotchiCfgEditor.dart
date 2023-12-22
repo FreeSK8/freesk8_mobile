@@ -224,7 +224,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
               size: 35.0,
               color: Theme.of(context).accentColor,
             ),
-            Text("Config Editor"),
+            Text("Logging CFG Editor"),
           ],),
         ),
         body: SafeArea(

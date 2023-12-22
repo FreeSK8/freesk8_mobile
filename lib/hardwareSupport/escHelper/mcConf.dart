@@ -11,7 +11,11 @@ enum temp_sensor_type {
   TEMP_SENSOR_PTC_1K_100C,
   TEMP_SENSOR_KTY83_122,
   TEMP_SENSOR_NTC_100K_25C, // Firmware 5.2 added
-  TEMP_SENSOR_KTY84_130, // Firmware 5.3 added
+  TEMP_SENSOR_KTY84_130,
+  TEMP_SENSOR_NTCX,
+  TEMP_SENSOR_PTCX,
+  TEMP_SENSOR_PT1000,
+  TEMP_SENSOR_DISABLED
 }
 
 enum out_aux_mode {
@@ -45,7 +49,12 @@ enum sensor_port_mode {
   SENSOR_PORT_MODE_SINCOS,
   SENSOR_PORT_MODE_TS5700N8501,
   SENSOR_PORT_MODE_TS5700N8501_MULTITURN,
-  SENSOR_PORT_MODE_MT6816_SPI, // Firmware 5.2 added
+  SENSOR_PORT_MODE_MT6816_SPI_HW,
+  SENSOR_PORT_MODE_AS5x47U_SPI,
+  SENSOR_PORT_MODE_BISSC,
+  SENSOR_PORT_MODE_TLE5012_SSC_SW,
+  SENSOR_PORT_MODE_TLE5012_SSC_HW,
+  SENSOR_PORT_MODE_CUSTOM_ENCODER,
 }
 
 enum mc_foc_hfi_samples {
@@ -56,7 +65,9 @@ enum mc_foc_hfi_samples {
 
 enum mc_foc_observer_type{
   FOC_OBSERVER_ORTEGA_ORIGINAL,
-  FOC_OBSERVER_ORTEGA_ITERATIVE
+  FOC_OBSERVER_MXLEMMING,
+  FOC_OBSERVER_ORTEGA_LAMBDA_COMP,
+  FOC_OBSERVER_MXLEMMING_LAMBDA_COMP
 }
 
 enum mc_foc_cc_decoupling_mode {
@@ -71,7 +82,11 @@ enum mc_foc_sensor_mode {
   FOC_SENSOR_MODE_ENCODER,
   FOC_SENSOR_MODE_HALL,
   FOC_SENSOR_MODE_HFI,
-  FOC_SENSOR_MODE_HFI_START, // Firmware 5.3 added
+  FOC_SENSOR_MODE_HFI_START,
+  FOC_SENSOR_MODE_HFI_V2,
+  FOC_SENSOR_MODE_HFI_V3,
+  FOC_SENSOR_MODE_HFI_V4,
+  FOC_SENSOR_MODE_HFI_V5
 }
 
 enum mc_sensor_mode {
@@ -111,6 +126,7 @@ enum BMS_FWD_CAN_MODE {
 
 class bms_config {
   BMS_TYPE type;
+  int limit_mode;
   double t_limit_start;
   double t_limit_end;
   double soc_limit_start;
@@ -135,6 +151,19 @@ enum MTPA_MODE{
   MTPA_MODE_IQ_TARGET, // Firmware 5.3 added
   MTPA_MODE_IQ_MEASURED,  // Firmware 5.3 added
 }
+
+enum SPEED_SRC {
+SPEED_SRC_CORRECTED,
+SPEED_SRC_OBSERVER,
+}
+
+enum SAT_COMP_MODE {
+SAT_COMP_DISABLED,
+SAT_COMP_FACTOR,
+SAT_COMP_LAMBDA,
+SAT_COMP_LAMBDA_AND_FACTOR
+}
+
 
 class MCCONF {
   MCCONF() {
@@ -222,6 +251,8 @@ class MCCONF {
   double foc_pll_ki;
   double foc_duty_dowmramp_kp;
   double foc_duty_dowmramp_ki;
+  double foc_start_curr_dec;  //fw6
+  double foc_start_curr_dec_rpm;  //fw6
   double foc_openloop_rpm;
   double foc_openloop_rpm_low; // Firmware 5.2 added
   double foc_d_gain_scale_start; // Fimware 5.2 added
@@ -230,12 +261,15 @@ class MCCONF {
   double foc_sl_openloop_time;
   double foc_sl_openloop_time_lock; // Firmware 5.2 added; was foc_sl_d_current_duty in 5.1
   double foc_sl_openloop_time_ramp; // Firmware 5.2 added; was foc_sl_d_current_factor in 5.1
+  double foc_sl_openloop_boost_q; //fw6
+  double foc_sl_openloop_max_q;  //fw6
   mc_foc_sensor_mode foc_sensor_mode;
   List<int> foc_hall_table;
   double foc_hall_interp_erpm; // Firmware 5.2 added
   double foc_sl_erpm;
   bool foc_sample_v0_v7;
   bool foc_sample_high_current;
+  SAT_COMP_MODE foc_sat_comp_mode;  //fw6
   double foc_sat_comp;
   bool foc_temp_comp;
   double foc_temp_comp_base_temp;
@@ -245,6 +279,8 @@ class MCCONF {
   double foc_hfi_voltage_start;
   double foc_hfi_voltage_run;
   double foc_hfi_voltage_max;
+  double foc_hfi_gain;  //fw6
+  double foc_hfi_hyst;  //fw6
   double foc_sl_erpm_hfi;
   int foc_hfi_start_samples;
   double foc_hfi_obs_ovr_sec;
@@ -254,6 +290,7 @@ class MCCONF {
   List<double> foc_offsets_voltage; // Firmware 5.3 added
   List<double> foc_offsets_voltage_undriven; // Firmware 5.3 added
   bool foc_phase_filter_enable; // Firmware 5.3 added
+  bool foc_phase_filter_disable_fault;  //fw6
   double foc_phase_filter_max_erpm; // Firmware 5.3 added
   MTPA_MODE foc_mtpa_mode; // Firmware 5.3 added
   // Field Weakening
@@ -261,6 +298,7 @@ class MCCONF {
   double foc_fw_duty_start; // Firmware 5.3 added
   double foc_fw_ramp_time; // Firmware 5.3 added
   double foc_fw_q_current_factor; // Firmware 5.3 added
+  SPEED_SRC foc_speed_source;  //fw6
   // GPDrive
   int gpd_buffer_notify_left;
   int gpd_buffer_interpol;
@@ -297,6 +335,12 @@ class MCCONF {
   double m_duty_ramp_step;
   double m_current_backoff_gain;
   int m_encoder_counts;
+  double m_encoder_sin_offset;  //fw6>>
+  double m_encoder_sin_amp;
+  double m_encoder_cos_offset;
+  double m_encoder_cos_amp;
+  double m_encoder_sincos_filter_constant;
+  double m_encoder_sincos_phase_correction; //fw6^
   sensor_port_mode m_sensor_port_mode;
   bool m_invert_direction;
   drv8301_oc_mode m_drv8301_oc_mode;
@@ -309,6 +353,9 @@ class MCCONF {
   temp_sensor_type m_motor_temp_sens_type;
   double m_ptc_motor_coeff;
   int m_hall_extra_samples; // Firmware 5.2 added
+  int m_batt_filter_const;  //fw6
+  double m_ntcx_ptcx_temp_base; //fw6
+  double m_ntcx_ptcx_res; //fw6
   // Setup info
   int si_motor_poles;
   double si_gear_ratio;
