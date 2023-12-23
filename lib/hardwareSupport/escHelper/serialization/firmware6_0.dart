@@ -217,7 +217,7 @@ class SerializeFirmware60 { //fw6
 
   ByteData serializeAPPCONF(APPCONF conf) {
     int index = 0;
-    ByteData response = new ByteData(477); //TODO: ByteData is not dynamic, setting exact size
+    ByteData response = new ByteData(501); //TODO: ByteData is not dynamic, setting exact size
     response.setUint32(index, APPCONF_SIGNATURE_FW6_0); index += 4;
 
     response.setUint8(index++, conf.controller_id);
@@ -548,7 +548,7 @@ class SerializeFirmware60 { //fw6
     mcconfData.foc_fw_duty_start = buffer_get_float16(buffer, index, 10000); index += 2;
     mcconfData.foc_fw_ramp_time = buffer_get_float16(buffer, index, 1000); index += 2;
     mcconfData.foc_fw_q_current_factor = buffer_get_float16(buffer, index, 10000); index += 2;
-    mcconfData.foc_speed_source = SPEED_SRC.values[buffer[index++]]; //fw6
+    mcconfData.foc_speed_source = FOC_SPEED_SRC.values[buffer[index++]]; //fw6
     mcconfData.gpd_buffer_notify_left = buffer_get_int16(buffer, index); index += 2;
     mcconfData.gpd_buffer_interpol = buffer_get_int16(buffer, index); index += 2;
     mcconfData.gpd_current_filter_const = buffer_get_float16(buffer, index, 10000); index += 2;
@@ -619,7 +619,7 @@ class SerializeFirmware60 { //fw6
 
   ByteData serializeMCCONF(MCCONF conf) {
     int index = 0;
-    ByteData response = new ByteData(485); //TODO: ByteData is not dynamic, setting exact size
+    ByteData response = new ByteData(477); //TODO: ByteData is not dynamic, setting exact size
     response.setUint32(index, MCCONF_SIGNATURE_FW6_0); index += 4;
 
     response.setUint8(index++, conf.pwm_mode.index);
