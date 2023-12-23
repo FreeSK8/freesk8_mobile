@@ -9,7 +9,7 @@ enum app_use {
   APP_NUNCHUK,
   APP_NRF,
   APP_CUSTOM,
-  APP_BALANCE,
+  APP_BALANCE,  //removed in fw6.2?
   APP_PAS, // Firmware 5.2 added
   APP_ADC_PAS, // Firmware 5.2 added
 }

@@ -1664,7 +1664,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           } else if (major == 5 && minor == 3) {
             escFirmwareVersion = ESC_FIRMWARE.FW5_3;
           } else if (major == 6 && minor == 0) {
-            escFirmwareVersion = ESC_FIRMWARE.FW6_0;            
+            escFirmwareVersion = ESC_FIRMWARE.FW6_0;           
+          } else if (major == 6 && minor == 2) {
+            escFirmwareVersion = ESC_FIRMWARE.FW6_2;                
+          } else if (major == 6 && minor == 5) {
+            escFirmwareVersion = ESC_FIRMWARE.FW6_5;               
           } else {
             escFirmwareVersion = ESC_FIRMWARE.UNSUPPORTED;
           }

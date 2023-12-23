@@ -89,6 +89,18 @@ enum mc_foc_sensor_mode {
   FOC_SENSOR_MODE_HFI_V5
 }
 
+enum mc_foc_control_sample_mode {
+  FOC_CONTROL_SAMPLE_MODE_V0,
+  FOC_CONTROL_SAMPLE_MODE_V0_V7,
+  FOC_CONTROL_SAMPLE_MODE_V0_V7_INTERPOL
+}
+
+enum mc_foc_current_sample_mode {
+  FOC_CURRENT_SAMPLE_MODE_LONGEST_ZERO,
+  FOC_CURRENT_SAMPLE_MODE_ALL_SENSORS,
+  FOC_CURRENT_SAMPLE_MODE_HIGH_CURRENT
+}
+
 enum mc_sensor_mode {
   SENSOR_MODE_SENSORLESS,
   SENSOR_MODE_SENSORED,
@@ -152,9 +164,15 @@ enum MTPA_MODE{
   MTPA_MODE_IQ_MEASURED,  // Firmware 5.3 added
 }
 
-enum SPEED_SRC {
-SPEED_SRC_CORRECTED,
-SPEED_SRC_OBSERVER,
+enum FOC_SPEED_SRC {  //fw6.2
+  FOC_SPEED_SRC_CORRECTED,
+  FOC_SPEED_SRC_OBSERVER,
+}
+
+enum S_PID_SPEED_SRC {   //fw6.2
+  S_PID_SPEED_SRC_PLL,
+  S_PID_SPEED_SRC_FAST,
+  S_PID_SPEED_SRC_FASTER,
 }
 
 enum SAT_COMP_MODE {
@@ -179,6 +197,8 @@ class MCCONF {
   double l_current_min;
   double l_in_current_max;
   double l_in_current_min;
+  double l_in_current_map_start; //fw6.2
+  double l_in_current_map_filter;  //fw6.2
   double l_abs_current_max;
   double l_min_erpm;
   double l_max_erpm;
@@ -189,6 +209,8 @@ class MCCONF {
   double l_max_vin;
   double l_battery_cut_start;
   double l_battery_cut_end;
+  double l_battery_regen_cut_start; //fw6.2
+  double l_battery_regen_cut_end; //fw6.2
   bool l_slow_abs_current;
   double l_temp_fet_start;
   double l_temp_fet_end;
@@ -266,9 +288,12 @@ class MCCONF {
   mc_foc_sensor_mode foc_sensor_mode;
   List<int> foc_hall_table;
   double foc_hall_interp_erpm; // Firmware 5.2 added
+  double foc_sl_erpm_start; //fw6.2
   double foc_sl_erpm;
   bool foc_sample_v0_v7;
   bool foc_sample_high_current;
+  mc_foc_control_sample_mode foc_control_sample_mode; //fw6.2
+  mc_foc_current_sample_mode foc_current_sample_mode;   //fw6.2
   SAT_COMP_MODE foc_sat_comp_mode;  //fw6
   double foc_sat_comp;
   bool foc_temp_comp;
@@ -298,7 +323,8 @@ class MCCONF {
   double foc_fw_duty_start; // Firmware 5.3 added
   double foc_fw_ramp_time; // Firmware 5.3 added
   double foc_fw_q_current_factor; // Firmware 5.3 added
-  SPEED_SRC foc_speed_source;  //fw6
+  // SPEED_SRC foc_speed_source;  //fw6
+  FOC_SPEED_SRC foc_speed_source;  //fw6.2
   // GPDrive
   int gpd_buffer_notify_left;
   int gpd_buffer_interpol;
@@ -316,6 +342,8 @@ class MCCONF {
   double s_pid_min_erpm;
   bool s_pid_allow_braking;
   double s_pid_ramp_erpms_s; // Firmware 5.2 added
+  S_PID_SPEED_SRC s_pid_speed_source;
+  
   // Pos PID
   double p_pid_kp;
   double p_pid_ki;
