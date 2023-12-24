@@ -26,6 +26,7 @@ import 'subViews/rideLogViewer.dart';
 import 'subViews/focWizard.dart';
 import 'subViews/escProfileEditor.dart';
 import 'subViews/robogotchiCfgEditor.dart';
+import 'subViews/gotchiProCfgEditor.dart';
 import 'subViews/vehicleManager.dart';
 import 'subViews/gotchiProOTA.dart';
 
@@ -101,6 +102,7 @@ void main() {
         FOCWizard.routeName: (BuildContext context) => FOCWizard(),
         ESCProfileEditor.routeName: (BuildContext context) => ESCProfileEditor(),
         RobogotchiCfgEditor.routeName: (BuildContext context) => RobogotchiCfgEditor(),
+        gotchiProCfgEditor.routeName: (BuildContext context) => gotchiProCfgEditor(),
         RobogotchiDFU.routeName: (BuildContext context) => RobogotchiDFU(),
         gotchiProOTA.routeName: (BuildContext context) => gotchiProOTA(),
         VehicleManager.routeName: (BuildContext context) => VehicleManager(),
@@ -1559,7 +1561,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         // Parse the configuration
         List<String> values = receiveStr.split(",");
         int parseIndex = 1;
-        RobogotchiConfiguration gotchConfig = new RobogotchiConfiguration(
+        RobogotchiConfiguration gotchiConfig = new RobogotchiConfiguration(
             cfgVersion: int.tryParse(values[parseIndex++]),
             logAutoStopIdleTime: int.tryParse(values[parseIndex++]),
             logAutoStopLowVoltage: double.tryParse(values[parseIndex++]),
@@ -1578,7 +1580,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         );
 
         // Validate we received the expected cfgVersion from the module or else there could be trouble
-        if (gotchConfig.cfgVersion != 4) {
+        if (gotchiConfig.cfgVersion != 4) {
           genericAlert(
               context,
               "Version mismatch",
@@ -1593,7 +1595,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               RobogotchiCfgEditor.routeName,
               arguments: RobogotchiCfgEditorArguments(
                   txLoggerCharacteristic: theTXLoggerCharacteristic,
-                  currentConfiguration: gotchConfig,
+                  currentConfiguration: gotchiConfig,
                   discoveredCANDevices: _validCANBusDeviceIDs
               )
           );
@@ -1612,9 +1614,57 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           genericAlert(context, "oof!", Text("Setting Robogotchi configuration failed:\n\n$receiveStr"), "Help!");
         }
       }
+
+      //start gotchipro get/set config
+      else if(receiveStr.startsWith("getnetcfg,")) {
+      globalLogger.d("gotchiPro User Configuration received: $receiveStr");
+      // Parse the configuration
+      List<String> values = receiveStr.split(",");
+      int parseIndex = 1;
+      gotchiProConfiguration gotchiProConfig = new gotchiProConfiguration(
+      cfgVersion: int.tryParse(values[parseIndex++]),
+        wifi_ssid_len: int.tryParse(values[parseIndex++]),
+        wifi_ssid: values[parseIndex++],
+        wifi_pass_len: int.tryParse(values[parseIndex++]),
+        wifi_pass: values[parseIndex++],
+      );
+      // Validate we received the expected cfgVersion from the module or else there could be trouble
+      if (gotchiProConfig.cfgVersion != 1) {
+      genericAlert(
+      context,
+      "Version mismatch",
+          gotchiproVersion != gotchiproFirmwareExpectedVersion ?
+      Text("gotchiPro provided an incorrect configuration version.") :
+      Text(""),
+      "OK"
+      );
+      } else {
+      // Load the user configuration window
+      Navigator.of(context).pushNamed(
+      gotchiProCfgEditor.routeName,
+      arguments: gotchiProCfgEditorArguments(
+      txLoggerCharacteristic: theTXLoggerCharacteristic,
+      currentConfiguration: gotchiProConfig,
+      )
+      );
+      }
+      }
+      else if(receiveStr.startsWith("setnetcfg,")) {
+      globalLogger.d("gotchiPro User Configuration updated: $receiveStr");
+      // Parse the configuration
+      List<String> values = receiveStr.split(",");
+      if (values[1] == "OK") {
+      // Close gotchiPro Configuration Editor
+      Navigator.of(context).pop();
+      genericAlert(context, "Success", Text("gotchiPro configuration updated!"), "OK");
+      } else {
+      // Alert user setprocfg failed!
+      genericAlert(context, "oof!", Text("Setting gotchiPro configuration failed:\n\n$receiveStr"), "Help!");
+      }
+      }
       else {
-        ///Unexpected response
-        globalLogger.wtf("loggerReceived and unexpected response: ${new String.fromCharCodes(value)}");
+      ///Unexpected response
+      globalLogger.wtf("loggerReceived and unexpected response: ${new String.fromCharCodes(value)}");
       }
 
     });
@@ -2441,7 +2491,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     pauseRobogotchiStatus = false;
   }
 
-  /// Hamburger Menu... mmmm hamburgers
+// ########################################################### 
+// Hamburger Menu... mmmm hamburgers
+// ###########################################################  
   Drawer getNavDrawer(BuildContext context) {
     var headerChild = DrawerHeader(
         child: GestureDetector(
@@ -2650,8 +2702,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           }
         },
       ),
-
-      Divider(height: 5, thickness: 2),
       ListTile(
         leading: Icon(Icons.settings),
         title: Text("Logging Config"),
@@ -2661,6 +2711,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           }
         },
       ),
+      Divider(height: 5, thickness: 3),
       ListTile(
         leading: Icon(Icons.devices),
         title: Text("Robogotchi Updater"),
@@ -2674,7 +2725,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         },
         onTap: () {
           // Don't write if not connected
-          if (menuOptionIsReady(isRobogotchiOption: true)) {
+          if (menuOptionIsReady(isRobogotchiOption: true) && (_deviceIsGotchiPro == false)) {
             showDialog(
               context: context,
               builder: (BuildContext context) {
@@ -2720,11 +2771,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           }
         },
       ),
-      Divider(thickness: 3),
 
       ListTile(
         leading: Icon(Icons.devices),
-        title: Text("gotchiPro OTA Updater"),
+        title: Text("gotchiPro Updater"),
         onLongPress: (){
           if (_connectedDevice == null) {
             Navigator.of(context).pop();
@@ -2735,7 +2785,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         },
         onTap: () {
           // Don't write if not connected
-          if (menuOptionIsReady(isRobogotchiOption: true)) {
+          if (menuOptionIsReady(isRobogotchiOption: true) && (_deviceIsGotchiPro == true)) {
             showDialog(
               context: context,
               builder: (BuildContext context) {
@@ -2782,6 +2832,15 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         },
       ),
 
+      ListTile(
+        leading: Icon(Icons.settings),
+        title: Text("sk8net Config"),
+        onTap: () {
+          if (menuOptionIsReady(isRobogotchiOption: true) && (_deviceIsGotchiPro == true)) {
+            sendBLEData(theTXLoggerCharacteristic, utf8.encode("getnetcfg~"), false);
+          }
+        },
+      ),
       Divider(thickness: 3),
 
       ListTile(
