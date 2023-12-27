@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 53;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -406,7 +406,7 @@
 				CODE_SIGN_ENTITLEMENTS = Runner/FreeSK8.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 50;
+				CURRENT_PROJECT_VERSION = 51;
 				DEVELOPMENT_TEAM = VPZR953W7D;
 				ENABLE_BITCODE = NO;
 				FLUTTER_BUILD_NAME = 0.22.1;
@@ -426,7 +426,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/Flutter",
 				);
-				MARKETING_VERSION = 0.22.1;
+				MARKETING_VERSION = 0.23.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.derelictrobot.freesk8mobile;
 				PRODUCT_NAME = FreeSK8;
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -554,7 +554,7 @@
 				CODE_SIGN_ENTITLEMENTS = Runner/FreeSK8.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 50;
+				CURRENT_PROJECT_VERSION = 51;
 				DEVELOPMENT_TEAM = VPZR953W7D;
 				ENABLE_BITCODE = NO;
 				FLUTTER_BUILD_NAME = 0.22.1;
@@ -574,7 +574,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/Flutter",
 				);
-				MARKETING_VERSION = 0.22.1;
+				MARKETING_VERSION = 0.23.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.derelictrobot.freesk8mobile;
 				PRODUCT_NAME = FreeSK8;
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -594,7 +594,7 @@
 				CODE_SIGN_ENTITLEMENTS = Runner/FreeSK8.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 50;
+				CURRENT_PROJECT_VERSION = 51;
 				DEVELOPMENT_TEAM = VPZR953W7D;
 				ENABLE_BITCODE = NO;
 				FLUTTER_BUILD_NAME = 0.22.1;
@@ -614,7 +614,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/Flutter",
 				);
-				MARKETING_VERSION = 0.22.1;
+				MARKETING_VERSION = 0.23.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.derelictrobot.freesk8mobile;
 				PRODUCT_NAME = FreeSK8;
 				PROVISIONING_PROFILE_SPECIFIER = "";
