@@ -1,4 +1,3 @@
-
 import 'dart:typed_data';
 import 'package:flutter/cupertino.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -24,7 +23,7 @@ enum ESC_FIRMWARE {
   FW5_3,
   FW6_0, //fw6
   FW6_2, //fw6.2
-  FW6_5,  
+  FW6_5,
 }
 
 class ESCTelemetry {
@@ -104,8 +103,6 @@ class ESCProfile {
   double l_watt_max;
 }
 
-
-
 class ESCFirmware {
   ESCFirmware() {
     fw_version_major = 0;
@@ -124,10 +121,15 @@ class ESCFault {
   DateTime firstSeen;
   DateTime lastSeen;
 
-  ESCFault({this.faultCode, this.faultCount, this.escID, this.firstSeen, this.lastSeen});
+  ESCFault(
+      {this.faultCode,
+      this.faultCount,
+      this.escID,
+      this.firstSeen,
+      this.lastSeen});
 
   String toString() {
-    return "${mc_fault_code.values[this.faultCode].toString().substring(14)} was seen ${this.faultCount} time${this.faultCount!=1?"s":""} on ESC ${this.escID} at ${this.firstSeen.toString().substring(0,19)}${this.faultCount > 1 ? " until ${this.lastSeen.toString().substring(11,19)}" : ""}";
+    return "${mc_fault_code.values[this.faultCode].toString().substring(14)} was seen ${this.faultCount} time${this.faultCount != 1 ? "s" : ""} on ESC ${this.escID} at ${this.firstSeen.toString().substring(0, 19)}${this.faultCount > 1 ? " until ${this.lastSeen.toString().substring(11, 19)}" : ""}";
   }
 
   TableRow toTableRow() {
@@ -151,35 +153,44 @@ class ESCHelper {
   static const int MCCONF_SIGNATURE_FW5_3 = 3706516163;
   static const int APPCONF_SIGNATURE_FW5_3 = 1531606261;
 
-  static const int MCCONF_SIGNATURE_FW6_0 = 776184161;      //fw6
+  static const int MCCONF_SIGNATURE_FW6_0 = 776184161; //fw6
   static const int APPCONF_SIGNATURE_FW6_0 = 486554156;
 
-  static const int MCCONF_SIGNATURE_FW6_2 = 776184161;      //fw6.2
-  static const int APPCONF_SIGNATURE_FW6_2 = 486554156;    //fw6.2
+  static const int MCCONF_SIGNATURE_FW6_2 = 776184161; //fw6.2
+  static const int APPCONF_SIGNATURE_FW6_2 = 486554156; //fw6.2
 
-    static const int MCCONF_SIGNATURE_FW6_5 = 295158857;      //fw6.3
-  static const int APPCONF_SIGNATURE_FW6_5 = 2099347128;    //fw6.3
+  static const int MCCONF_SIGNATURE_FW6_5 = 295158857; //fw6.3
+  static const int APPCONF_SIGNATURE_FW6_5 = 2099347128; //fw6.3
 
   static SerializeFirmware51 fw51serializer = new SerializeFirmware51();
   static SerializeFirmware52 fw52serializer = new SerializeFirmware52();
   static SerializeFirmware53 fw53serializer = new SerializeFirmware53();
   static SerializeFirmware60 fw60serializer = new SerializeFirmware60(); //fw6
-  static SerializeFirmware62 fw62serializer = new SerializeFirmware62(); //fw6.2  
+  static SerializeFirmware62 fw62serializer = new SerializeFirmware62(); //fw6.2
   static SerializeFirmware65 fw65serializer = new SerializeFirmware65();
-
 
   List<ESCFault> processFaults(int faultCount, Uint8List payload) {
     //globalLogger.wtf(payload);
     List<ESCFault> response = [];
     int index = 0;
-    for (int i=0; i<faultCount; ++i) {
+    for (int i = 0; i < faultCount; ++i) {
       ESCFault fault = new ESCFault();
       fault.faultCode = payload[index++];
-      fault.faultCount = buffer_get_uint16(payload, index); index += 2;
-      fault.escID = buffer_get_uint16(payload, index); index += 2;
+      fault.faultCount = buffer_get_uint16(payload, index);
+      index += 2;
+      fault.escID = buffer_get_uint16(payload, index);
+      index += 2;
       index += 3; //NOTE: Alignment
-      fault.firstSeen = new DateTime.fromMillisecondsSinceEpoch(buffer_get_uint64(payload, index, Endian.little) * 1000, isUtc: true).add((DateTime.now().timeZoneOffset)); index += 8;
-      fault.lastSeen = new DateTime.fromMillisecondsSinceEpoch(buffer_get_uint64(payload, index, Endian.little) * 1000, isUtc: true).add((DateTime.now().timeZoneOffset)); index += 8;
+      fault.firstSeen = new DateTime.fromMillisecondsSinceEpoch(
+              buffer_get_uint64(payload, index, Endian.little) * 1000,
+              isUtc: true)
+          .add((DateTime.now().timeZoneOffset));
+      index += 8;
+      fault.lastSeen = new DateTime.fromMillisecondsSinceEpoch(
+              buffer_get_uint64(payload, index, Endian.little) * 1000,
+              isUtc: true)
+          .add((DateTime.now().timeZoneOffset));
+      index += 8;
       globalLogger.d("processFaults: Adding ${fault.toString()}");
       response.add(fault);
     }
@@ -192,11 +203,21 @@ class ESCHelper {
     firmwarePacket.fw_version_major = payload[index++];
     firmwarePacket.fw_version_minor = payload[index++];
 
-    Uint8List hardwareBytes = new Uint8List(30);
-    int i = 0;
-    while (payload[index] != 0) {
-      hardwareBytes[i++] = payload[index++];
+    // Determine the length of the hardware name
+    int hardwareNameLength = 0;
+    while (payload[index + hardwareNameLength] != 0) {
+      hardwareNameLength++;
     }
+
+    // Create hardwareBytes with the exact size needed
+    Uint8List hardwareBytes = new Uint8List(hardwareNameLength);
+
+    // Copy the relevant bytes from payload to hardwareBytes
+    for (int i = 0; i < hardwareNameLength; i++) {
+      hardwareBytes[i] = payload[index++];
+    }
+
+    // Convert hardwareBytes to a string
     firmwarePacket.hardware_name = new String.fromCharCodes(hardwareBytes);
 
     return firmwarePacket;
@@ -206,28 +227,50 @@ class ESCHelper {
     int index = 1;
     ESCTelemetry telemetryPacket = new ESCTelemetry();
 
-    telemetryPacket.temp_mos = buffer_get_float16(payload, index, 10.0); index += 2;
-    telemetryPacket.temp_motor = buffer_get_float16(payload, index, 10.0); index += 2;
-    telemetryPacket.current_motor = buffer_get_float32(payload, index, 100.0); index += 4;
-    telemetryPacket.current_in = buffer_get_float32(payload, index, 100.0); index += 4;
-    telemetryPacket.foc_id = buffer_get_float32(payload, index, 100.0); index += 4;
-    telemetryPacket.foc_iq = buffer_get_float32(payload, index, 100.0); index += 4;
-    telemetryPacket.duty_now = buffer_get_float16(payload, index, 1000.0); index += 2;
-    telemetryPacket.rpm = buffer_get_float32(payload, index, 1.0); index += 4;
-    telemetryPacket.v_in = buffer_get_float16(payload, index, 10.0); index += 2;
-    telemetryPacket.amp_hours = buffer_get_float32(payload, index, 10000.0); index += 4;
-    telemetryPacket.amp_hours_charged = buffer_get_float32(payload, index, 10000.0); index += 4;
-    telemetryPacket.watt_hours = buffer_get_float32(payload, index, 10000.0); index += 4;
-    telemetryPacket.watt_hours_charged = buffer_get_float32(payload, index, 10000.0); index += 4;
-    telemetryPacket.tachometer = buffer_get_int32(payload, index); index += 4;
-    telemetryPacket.tachometer_abs = buffer_get_int32(payload, index); index += 4;
+    telemetryPacket.temp_mos = buffer_get_float16(payload, index, 10.0);
+    index += 2;
+    telemetryPacket.temp_motor = buffer_get_float16(payload, index, 10.0);
+    index += 2;
+    telemetryPacket.current_motor = buffer_get_float32(payload, index, 100.0);
+    index += 4;
+    telemetryPacket.current_in = buffer_get_float32(payload, index, 100.0);
+    index += 4;
+    telemetryPacket.foc_id = buffer_get_float32(payload, index, 100.0);
+    index += 4;
+    telemetryPacket.foc_iq = buffer_get_float32(payload, index, 100.0);
+    index += 4;
+    telemetryPacket.duty_now = buffer_get_float16(payload, index, 1000.0);
+    index += 2;
+    telemetryPacket.rpm = buffer_get_float32(payload, index, 1.0);
+    index += 4;
+    telemetryPacket.v_in = buffer_get_float16(payload, index, 10.0);
+    index += 2;
+    telemetryPacket.amp_hours = buffer_get_float32(payload, index, 10000.0);
+    index += 4;
+    telemetryPacket.amp_hours_charged =
+        buffer_get_float32(payload, index, 10000.0);
+    index += 4;
+    telemetryPacket.watt_hours = buffer_get_float32(payload, index, 10000.0);
+    index += 4;
+    telemetryPacket.watt_hours_charged =
+        buffer_get_float32(payload, index, 10000.0);
+    index += 4;
+    telemetryPacket.tachometer = buffer_get_int32(payload, index);
+    index += 4;
+    telemetryPacket.tachometer_abs = buffer_get_int32(payload, index);
+    index += 4;
     telemetryPacket.fault_code = mc_fault_code.values[payload[index++]];
-    telemetryPacket.position = buffer_get_float32(payload, index, 1000000.0); index += 4;
+    telemetryPacket.position = buffer_get_float32(payload, index, 1000000.0);
+    index += 4;
     telemetryPacket.vesc_id = payload[index++];
-    telemetryPacket.temp_mos_1 = buffer_get_float16(payload, index, 10.0); index += 2;
-    telemetryPacket.temp_mos_2 = buffer_get_float16(payload, index, 10.0); index += 2;
-    telemetryPacket.temp_mos_3 = buffer_get_float16(payload, index, 10.0); index += 2;
-    telemetryPacket.vd = buffer_get_float32(payload, index, 100.0); index += 4;
+    telemetryPacket.temp_mos_1 = buffer_get_float16(payload, index, 10.0);
+    index += 2;
+    telemetryPacket.temp_mos_2 = buffer_get_float16(payload, index, 10.0);
+    index += 2;
+    telemetryPacket.temp_mos_3 = buffer_get_float16(payload, index, 10.0);
+    index += 2;
+    telemetryPacket.vd = buffer_get_float32(payload, index, 100.0);
+    index += 4;
     telemetryPacket.vq = buffer_get_float32(payload, index, 100.0);
 
     return telemetryPacket;
@@ -241,32 +284,53 @@ class ESCHelper {
     int index = 1;
     ESCTelemetry telemetryPacket = new ESCTelemetry();
 
-    telemetryPacket.temp_mos = buffer_get_float16(payload, index, 10.0); index += 2;
-    telemetryPacket.temp_motor = buffer_get_float16(payload, index, 10.0); index += 2;
-    telemetryPacket.current_motor = buffer_get_float32(payload, index, 100.0); index += 4;
-    telemetryPacket.current_in = buffer_get_float32(payload, index, 100.0); index += 4;
-    telemetryPacket.duty_now = buffer_get_float16(payload, index, 1000.0); index += 2;
-    telemetryPacket.rpm = buffer_get_float32(payload, index, 1.0); index += 4;
-    telemetryPacket.speed = buffer_get_float32(payload, index, 1000.0); index += 4;
-    telemetryPacket.v_in = buffer_get_float16(payload, index, 10.0); index += 2;
-    telemetryPacket.battery_level = buffer_get_float16(payload, index, 1000.0); index += 2;
-    telemetryPacket.amp_hours = buffer_get_float32(payload, index, 10000.0); index += 4;
-    telemetryPacket.amp_hours_charged = buffer_get_float32(payload, index, 10000.0); index += 4;
-    telemetryPacket.watt_hours = buffer_get_float32(payload, index, 10000.0); index += 4;
-    telemetryPacket.watt_hours_charged = buffer_get_float32(payload, index, 10000.0); index += 4;
-    telemetryPacket.tachometer = buffer_get_float32(payload, index, 1000.0).toInt(); index += 4;
-    telemetryPacket.tachometer_abs = buffer_get_float32(payload, index, 1000.0).toInt(); index += 4;
-    telemetryPacket.position = buffer_get_float32(payload, index, 1e6); index += 4;
+    telemetryPacket.temp_mos = buffer_get_float16(payload, index, 10.0);
+    index += 2;
+    telemetryPacket.temp_motor = buffer_get_float16(payload, index, 10.0);
+    index += 2;
+    telemetryPacket.current_motor = buffer_get_float32(payload, index, 100.0);
+    index += 4;
+    telemetryPacket.current_in = buffer_get_float32(payload, index, 100.0);
+    index += 4;
+    telemetryPacket.duty_now = buffer_get_float16(payload, index, 1000.0);
+    index += 2;
+    telemetryPacket.rpm = buffer_get_float32(payload, index, 1.0);
+    index += 4;
+    telemetryPacket.speed = buffer_get_float32(payload, index, 1000.0);
+    index += 4;
+    telemetryPacket.v_in = buffer_get_float16(payload, index, 10.0);
+    index += 2;
+    telemetryPacket.battery_level = buffer_get_float16(payload, index, 1000.0);
+    index += 2;
+    telemetryPacket.amp_hours = buffer_get_float32(payload, index, 10000.0);
+    index += 4;
+    telemetryPacket.amp_hours_charged =
+        buffer_get_float32(payload, index, 10000.0);
+    index += 4;
+    telemetryPacket.watt_hours = buffer_get_float32(payload, index, 10000.0);
+    index += 4;
+    telemetryPacket.watt_hours_charged =
+        buffer_get_float32(payload, index, 10000.0);
+    index += 4;
+    telemetryPacket.tachometer =
+        buffer_get_float32(payload, index, 1000.0).toInt();
+    index += 4;
+    telemetryPacket.tachometer_abs =
+        buffer_get_float32(payload, index, 1000.0).toInt();
+    index += 4;
+    telemetryPacket.position = buffer_get_float32(payload, index, 1e6);
+    index += 4;
     telemetryPacket.fault_code = mc_fault_code.values[payload[index++]];
     telemetryPacket.vesc_id = payload[index++];
     telemetryPacket.num_vescs = payload[index++];
-    telemetryPacket.battery_wh = buffer_get_float32(payload, index, 1000.0); index += 4;
+    telemetryPacket.battery_wh = buffer_get_float32(payload, index, 1000.0);
+    index += 4;
 
     return telemetryPacket;
   }
 
   APPCONF processAPPCONF(Uint8List buffer, ESC_FIRMWARE escFirmwareVersion) {
-    switch(escFirmwareVersion) {
+    switch (escFirmwareVersion) {
       case ESC_FIRMWARE.FW5_1:
         return fw51serializer.processAPPCONF(buffer);
       case ESC_FIRMWARE.FW5_2:
@@ -274,18 +338,18 @@ class ESCHelper {
       case ESC_FIRMWARE.FW5_3:
         return fw53serializer.processAPPCONF(buffer);
       case ESC_FIRMWARE.FW6_0:
-        return fw60serializer.processAPPCONF(buffer);        //fw6
+        return fw60serializer.processAPPCONF(buffer); //fw6
       case ESC_FIRMWARE.FW6_2:
-        return fw62serializer.processAPPCONF(buffer);        //fw6.2        
+        return fw62serializer.processAPPCONF(buffer); //fw6.2
       case ESC_FIRMWARE.FW6_5:
-        return fw65serializer.processAPPCONF(buffer);                 
+        return fw65serializer.processAPPCONF(buffer);
       default:
-        throw("unsupported ESC version");
+        throw ("unsupported ESC version");
     }
   }
 
   ByteData serializeAPPCONF(APPCONF conf, ESC_FIRMWARE escFirmwareVersion) {
-    switch(escFirmwareVersion) {
+    switch (escFirmwareVersion) {
       case ESC_FIRMWARE.FW5_1:
         return fw51serializer.serializeAPPCONF(conf);
       case ESC_FIRMWARE.FW5_2:
@@ -293,18 +357,18 @@ class ESCHelper {
       case ESC_FIRMWARE.FW5_3:
         return fw53serializer.serializeAPPCONF(conf);
       case ESC_FIRMWARE.FW6_0:
-        return fw60serializer.serializeAPPCONF(conf);        //fw6
+        return fw60serializer.serializeAPPCONF(conf); //fw6
       case ESC_FIRMWARE.FW6_2:
-        return fw62serializer.serializeAPPCONF(conf);        //fw6.2
+        return fw62serializer.serializeAPPCONF(conf); //fw6.2
       case ESC_FIRMWARE.FW6_5:
-        return fw65serializer.serializeAPPCONF(conf);         
+        return fw65serializer.serializeAPPCONF(conf);
       default:
-        throw("unsupported ESC version");
+        throw ("unsupported ESC version");
     }
   }
 
   MCCONF processMCCONF(Uint8List buffer, ESC_FIRMWARE escFirmwareVersion) {
-    switch(escFirmwareVersion) {
+    switch (escFirmwareVersion) {
       case ESC_FIRMWARE.FW5_1:
         return fw51serializer.processMCCONF(buffer);
       case ESC_FIRMWARE.FW5_2:
@@ -312,18 +376,18 @@ class ESCHelper {
       case ESC_FIRMWARE.FW5_3:
         return fw53serializer.processMCCONF(buffer);
       case ESC_FIRMWARE.FW6_0:
-        return fw60serializer.processMCCONF(buffer);        //fw6
+        return fw60serializer.processMCCONF(buffer); //fw6
       case ESC_FIRMWARE.FW6_2:
-        return fw62serializer.processMCCONF(buffer);        //fw6.2              
+        return fw62serializer.processMCCONF(buffer); //fw6.2
       case ESC_FIRMWARE.FW6_5:
-        return fw65serializer.processMCCONF(buffer);             
+        return fw65serializer.processMCCONF(buffer);
       default:
-        throw("unsupported ESC version");
+        throw ("unsupported ESC version");
     }
   }
 
   ByteData serializeMCCONF(MCCONF conf, ESC_FIRMWARE escFirmwareVersion) {
-    switch(escFirmwareVersion) {
+    switch (escFirmwareVersion) {
       case ESC_FIRMWARE.FW5_1:
         return fw51serializer.serializeMCCONF(conf);
       case ESC_FIRMWARE.FW5_2:
@@ -331,11 +395,11 @@ class ESCHelper {
       case ESC_FIRMWARE.FW5_3:
         return fw53serializer.serializeMCCONF(conf);
       case ESC_FIRMWARE.FW6_0:
-        return fw60serializer.serializeMCCONF(conf);      //fw6
+        return fw60serializer.serializeMCCONF(conf); //fw6
       case ESC_FIRMWARE.FW6_5:
-        return fw65serializer.serializeMCCONF(conf);     
-      default:      
-        throw("unsupported ESC version");
+        return fw65serializer.serializeMCCONF(conf);
+      default:
+        throw ("unsupported ESC version");
     }
   }
 
@@ -344,31 +408,47 @@ class ESCHelper {
     //globalLogger.d("getESCProfile is loading index $profileIndex");
     final prefs = await SharedPreferences.getInstance();
     ESCProfile response = new ESCProfile();
-    response.profileName = prefs.getString('profile$profileIndex name') ?? "Unnamed";
-    response.speedKmh = prefs.getDouble('profile$profileIndex speedKmh') ?? 32.0;
-    response.speedKmhRev = prefs.getDouble('profile$profileIndex speedKmhRev') ?? -32.0;
-    response.l_current_min_scale = prefs.getDouble('profile$profileIndex l_current_min_scale') ?? 1.0;
-    response.l_current_max_scale = prefs.getDouble('profile$profileIndex l_current_max_scale') ?? 1.0;
-    response.l_watt_min = prefs.getDouble('profile$profileIndex l_watt_min') ?? 0.0;
-    response.l_watt_max = prefs.getDouble('profile$profileIndex l_watt_max') ?? 0.0;
+    response.profileName =
+        prefs.getString('profile$profileIndex name') ?? "Unnamed";
+    response.speedKmh =
+        prefs.getDouble('profile$profileIndex speedKmh') ?? 32.0;
+    response.speedKmhRev =
+        prefs.getDouble('profile$profileIndex speedKmhRev') ?? -32.0;
+    response.l_current_min_scale =
+        prefs.getDouble('profile$profileIndex l_current_min_scale') ?? 1.0;
+    response.l_current_max_scale =
+        prefs.getDouble('profile$profileIndex l_current_max_scale') ?? 1.0;
+    response.l_watt_min =
+        prefs.getDouble('profile$profileIndex l_watt_min') ?? 0.0;
+    response.l_watt_max =
+        prefs.getDouble('profile$profileIndex l_watt_max') ?? 0.0;
 
     return response;
   }
+
   static Future<String> getESCProfileName(int profileIndex) async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('profile$profileIndex name') ?? "Unnamed";
   }
-  static Future<void> setESCProfile(int profileIndex, ESCProfile profile) async {
+
+  static Future<void> setESCProfile(
+      int profileIndex, ESCProfile profile) async {
     globalLogger.d("setESCProfile is saving index $profileIndex");
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('profile$profileIndex name', profile.profileName);
     await prefs.setDouble('profile$profileIndex speedKmh', profile.speedKmh);
-    await prefs.setDouble('profile$profileIndex speedKmhRev', profile.speedKmhRev);
-    await prefs.setDouble('profile$profileIndex l_current_min_scale', profile.l_current_min_scale);
-    await prefs.setDouble('profile$profileIndex l_current_max_scale', profile.l_current_max_scale);
-    await prefs.setDouble('profile$profileIndex l_watt_min', profile.l_watt_min);
-    await prefs.setDouble('profile$profileIndex l_watt_max', profile.l_watt_max);
+    await prefs.setDouble(
+        'profile$profileIndex speedKmhRev', profile.speedKmhRev);
+    await prefs.setDouble('profile$profileIndex l_current_min_scale',
+        profile.l_current_min_scale);
+    await prefs.setDouble('profile$profileIndex l_current_max_scale',
+        profile.l_current_max_scale);
+    await prefs.setDouble(
+        'profile$profileIndex l_watt_min', profile.l_watt_min);
+    await prefs.setDouble(
+        'profile$profileIndex l_watt_max', profile.l_watt_max);
   }
+
   static ESCProfile getESCProfileDefaults(int profileIndex) {
     ESCProfile profile = new ESCProfile();
     switch (profileIndex) {
@@ -385,4 +465,3 @@ class ESCHelper {
     return profile;
   }
 }
-
