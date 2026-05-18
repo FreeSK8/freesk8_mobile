@@ -222,7 +222,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
           title: Row(children: <Widget>[
             Icon( Icons.perm_data_setting,
               size: 35.0,
-              color: Theme.of(context).accentColor,
+              color: Theme.of(context).colorScheme.secondary,
             ),
             Text("Logging Config"),
           ],),

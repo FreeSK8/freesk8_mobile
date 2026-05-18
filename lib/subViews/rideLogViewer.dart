@@ -10,13 +10,13 @@ import 'package:latlong2/latlong.dart';
 import '../components/databaseAssistant.dart';
 import '../components/fileManager.dart';
 
-import 'package:charts_flutter/flutter.dart' as charts;
+import 'package:community_charts_flutter/flutter.dart' as charts;
 
 import '../components/userSettings.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 
-import 'package:esys_flutter_share/esys_flutter_share.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../hardwareSupport/escHelper/escHelper.dart';
 import '../hardwareSupport/escHelper/dataTypes.dart';
@@ -1245,7 +1245,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                       genericConfirmationDialog(context, TextButton(
                         child: Text("Copy / Share"),
                         onPressed: () {
-                          Share.text('Faults observed', shareData, 'text/plain');
+                          SharePlus.instance.share(ShareParams(text: shareData));
                         },
                       ), TextButton(
                         child: Text("Close"),
@@ -1317,7 +1317,10 @@ class RideLogViewerState extends State<RideLogViewer> {
                         fileSummary += "\nBattery Amps: ${doublePrecision(_maxAmpsBattery, 1)}";
                         fileSummary += "\nMotor Amps: ${doublePrecision(_maxAmpsMotor, 1)}";
                         fileSummary += "\nDuration: ${duration.toString().substring(0,duration.toString().lastIndexOf("."))}";
-                        await Share.file('FreeSK8Log', filename, utf8.encode(thisRideLog), 'text/csv', text: fileSummary);
+                        await SharePlus.instance.share(ShareParams(
+                          files: [XFile.fromData(utf8.encode(thisRideLog), name: filename, mimeType: 'text/csv')],
+                          text: fileSummary,
+                        ));
                       }),
                 ],),
 

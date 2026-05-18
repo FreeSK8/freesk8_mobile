@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:esys_flutter_share/esys_flutter_share.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
@@ -471,8 +471,6 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                   //Each item has dismissible wrapper
                   return Slidable(
                     key: Key(rideLogsFromDatabase[index].logFilePath.substring(rideLogsFromDatabase[index].logFilePath.lastIndexOf("/") + 1)),
-                    actionPane: SlidableDrawerActionPane(),
-                    actionExtentRatio: 0.25,
                     child: Container(
 
                       child: GestureDetector(
@@ -580,14 +578,15 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                         ),
                       ),
                     ),
-                    actions: <Widget>[
-                      Padding(
-                        padding: EdgeInsets.only(bottom:5),
-                        child: IconSlideAction(
-                            caption: 'Merge',
-                            color: Colors.blue,
+                    startActionPane: ActionPane(
+                      motion: const DrawerMotion(),
+                      extentRatio: 0.5,
+                      children: [
+                      SlidableAction(
+                            label: 'Merge',
+                            backgroundColor: Colors.blue,
                             icon: Icons.merge_type,
-                            onTap: () async {
+                            onPressed: (context) async {
                               if (index+1 == rideLogsFromDatabase.length) {
                                 globalLogger.d("Merge aborted: File is last in list");
                                 return;
@@ -705,21 +704,21 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                   genericAlert(context, "Merge exception", Text("Uh oh. Something went wrong. Please share the debug log with the developers"), "Shake 3 times");
                                 }
                               } // doMerge
-                            } // Merge onTap
+                            } // Merge onPressed
                         ),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.only(bottom:5),
-                        child: IconSlideAction(
-                          caption: 'Share',
-                          color: Colors.indigo,
+                      SlidableAction(
+                          label: 'Share',
+                          backgroundColor: Colors.indigo,
                           icon: Icons.share,
-                          onTap: () async {
+                          onPressed: (context) async {
                             try {
                               // Share file dialog
                               String fileSummary = 'Robogotchi gotchi!';
                               String fileContents = await FileManager.openLogFile(rideLogsFromDatabase[index].logFilePath);
-                              await Share.file('FreeSK8Log', "${rideLogsFromDatabase[index].logFilePath.substring(rideLogsFromDatabase[index].logFilePath.lastIndexOf("/") + 1)}", utf8.encode(fileContents), 'text/csv', text: fileSummary);
+                              await SharePlus.instance.share(ShareParams(
+                                files: [XFile.fromData(utf8.encode(fileContents), name: "${rideLogsFromDatabase[index].logFilePath.substring(rideLogsFromDatabase[index].logFilePath.lastIndexOf("/") + 1)}", mimeType: 'text/csv')],
+                                text: fileSummary,
+                              ));
                             } catch (e, stacktrace) {
                               globalLogger.e("Share exception: ${e.toString()}");
                               print(stacktrace);
@@ -727,18 +726,17 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                             }
                           },
                         ),
-                      ),
-
-
-                    ],
-                    secondaryActions: <Widget>[
-                      Padding(
-                        padding: EdgeInsets.only(bottom:5),
-                        child: IconSlideAction(
-                          caption: 'Delete',
-                          color: Colors.red,
+                      ],
+                    ),
+                    endActionPane: ActionPane(
+                      motion: const DrawerMotion(),
+                      extentRatio: 0.25,
+                      children: [
+                      SlidableAction(
+                          label: 'Delete',
+                          backgroundColor: Colors.red,
                           icon: Icons.delete,
-                          onTap: () async {
+                          onPressed: (context) async {
                             // Confirm Erase with user
                             bool doErase = await genericConfirmationDialog(
                                 context,
@@ -781,8 +779,8 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                             }
                           },
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   );
                 })),
 

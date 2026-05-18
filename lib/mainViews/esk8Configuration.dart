@@ -13,7 +13,7 @@ import '../globalUtilities.dart';
 import '../components/userSettings.dart';
 import '../hardwareSupport/escHelper/escHelper.dart';
 
-import 'package:esys_flutter_share/esys_flutter_share.dart';
+import 'package:share_plus/share_plus.dart';
 
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
@@ -21,7 +21,7 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:path_provider/path_provider.dart';
 
-import 'package:archive/archive_io.dart';
+import 'package:archive/archive.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:flutter_document_picker/flutter_document_picker.dart';
 
@@ -386,7 +386,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                   encoder.close();
 
                                   Navigator.of(context).pop(); // Remove PleaseWait dialog
-                                  await Share.file("FreeSK8 Beta Log Archive", "freesk8_beta_backup.zip", await File("${supportDirectory.path}/freesk8_beta_backup.zip").readAsBytes(), 'application/zip', text: "FreeSK8 Beta Logs");
+                                  await SharePlus.instance.share(ShareParams(
+                                    files: [XFile("${supportDirectory.path}/freesk8_beta_backup.zip")],
+                                    text: "FreeSK8 Beta Logs",
+                                  ));
 
                                 } catch (e, stacktrace) {
                                   Navigator.of(context).pop(); // Remove PleaseWait dialog
