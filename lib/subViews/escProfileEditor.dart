@@ -131,7 +131,7 @@ class ESCProfileEditorState extends State<ESCProfileEditor> {
         title: Row(children: <Widget>[
           Icon( Icons.edit,
             size: 35.0,
-            color: Theme.of(context).accentColor,
+            color: Theme.of(context).colorScheme.secondary,
           ),
           Text("ESC Profile Editor"),
         ],),

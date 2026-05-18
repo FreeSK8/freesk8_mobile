@@ -54,13 +54,12 @@ import 'package:latlong2/latlong.dart';
 
 import 'package:geolocator/geolocator.dart';
 
-import 'package:wakelock/wakelock.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
-import 'package:esys_flutter_share/esys_flutter_share.dart';
+import 'package:share_plus/share_plus.dart';
 
 import 'package:wifi_iot/wifi_iot.dart';
 
-import 'package:logger_flutter/logger_flutter.dart';
 import 'package:logger_flutter/logger_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -114,13 +113,16 @@ void main() {
       },
       theme: ThemeData(
         //TODO: Select satisfying colors for the light theme
-        brightness: Brightness.light,
-        primaryColor: Colors.pink,
-        accentColor: Colors.pinkAccent,
-        buttonColor: Colors.pinkAccent.shade100
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.pink,
+          brightness: Brightness.light,
+        ).copyWith(secondary: Colors.pinkAccent),
       ),
       darkTheme: ThemeData(
-        brightness: Brightness.dark,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.pink,
+          brightness: Brightness.dark,
+        ),
       ),
       themeMode: ThemeMode.dark, //TODO: Always using the dark mode regardless of system preference
     )
@@ -129,7 +131,6 @@ void main() {
 
 class MyHome extends StatefulWidget {
 
-  final FlutterBluePlus flutterBlue = FlutterBluePlus.instance;
   final List<ScanResult> bleScanResults = [];
 
   final UserSettings myUserSettings = new UserSettings();
@@ -144,8 +145,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   final GlobalKey<State> _keyLoader = new GlobalKey<State>();
 
   /* User's current location for map */
-  var geolocator = Geolocator();
-  var locationOptions = LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: 0);
+  var locationOptions = const LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: 0);
 
   LatLng lastLocation;
   DateTime lastTimeLocation;
@@ -193,7 +193,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static bool isConnectedDeviceKnown = false;
   static bool isESCResponding = false;
   static List<BluetoothService> _services;
-  static StreamSubscription<BluetoothDeviceState> _connectedDeviceStreamSubscription;
+  static StreamSubscription<BluetoothConnectionState> _connectedDeviceStreamSubscription;
   final GeolocatorPlatform _geolocatorPlatform = GeolocatorPlatform.instance;
   static StreamSubscription<Position> positionStream;
 
@@ -244,13 +244,13 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     });
 
     // Setup BLE scan results event listener
-    widget.flutterBlue.scanResults.listen((List<ScanResult> results) async {
+    FlutterBluePlus.scanResults.listen((List<ScanResult> results) async {
       setState(() {
         widget.bleScanResults.clear();
         widget.bleScanResults.addAll(results);
       });
     });
-    widget.flutterBlue.setLogLevel(LogLevel.info);
+    FlutterBluePlus.setLogLevel(LogLevel.info);
 
     FileManager.clearLogFile();
 
@@ -271,7 +271,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   }
 
   Future<bool> _isBLEOn(bool alertUser) async {
-    if (await widget.flutterBlue.isOn) {
+    if (await FlutterBluePlus.adapterState.first == BluetoothAdapterState.on) {
       return Future.value(true);
     } else {
       globalLogger.i("Bluetooth is not turned ON");
@@ -444,10 +444,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       widget.bleScanResults.clear(); // Clear potential previous results
       // Check if BLE is on before scanning
       if (await _isBLEOn(true)) {
-        widget.flutterBlue.startScan(withServices: new List<Guid>.from([uartServiceUUID])).catchError((onError){
+        FlutterBluePlus.startScan(withServices: List<Guid>.from([uartServiceUUID])).catchError((onError){
           // Catch errors from starting scan
           genericAlert(context, "BLE Scan Error", Text("Unable to start scanning: ${onError.toString()}"), "OK");
-          globalLogger.e("flutter_blue.startScan threw: ${onError.toString()}");
+          globalLogger.e("FlutterBluePlus.startScan threw: ${onError.toString()}");
           return;
         });
       } else {
@@ -455,7 +455,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       }
     } else {
       globalLogger.d("_handleBLEScanState: startScan was false");
-      widget.flutterBlue.stopScan();
+      FlutterBluePlus.stopScan();
     }
     setState(() {
       _scanActive = startScan;
@@ -478,7 +478,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       });
 
       // Allow the screen to sleep
-      Wakelock.disable();
+      WakelockPlus.disable();
 
       // Stop the telemetry timer
       startStopTelemetryTimer(true);
@@ -676,12 +676,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       await device.connect();
       if (!_userAborted) {
-        await widget.flutterBlue.stopScan();
+        await FlutterBluePlus.stopScan();
 
         _scanActive = false;
         _connectedDevice = device;
 
-        widget.myUserSettings.loadSettings(device.id.toString()).then((value){
+        widget.myUserSettings.loadSettings(device.remoteId.str).then((value){
           globalLogger.i("_attemptDeviceConnection::widget.myUserSettings.loadSettings(): isConnectedDeviceKnown = $value");
           isConnectedDeviceKnown = value;
         });
@@ -757,29 +757,29 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       if (result.device.name == '') continue;
 
       //If this device is known give it a special row in the list of devices
-      if (widget.myUserSettings.isDeviceKnown(result.device.id.toString())) {
+      if (widget.myUserSettings.isDeviceKnown(result.device.remoteId.str)) {
         Container element = Container(
             padding: EdgeInsets.all(5.0),
             width: MediaQuery.of(context).size.width / crossAxisCount,
             child: GestureDetector(
               onTap: () async {
-                globalLogger.d("Attempting connection to ${result.device.name} (${result.device.id}) with ${result.rssi}dB");
+                globalLogger.d("Attempting connection to ${result.device.name} (${result.device.remoteId.str}) with ${result.rssi}dB");
                 await _attemptDeviceConnection(result.device);
               },
               child:
 
               Column(
                 children: <Widget>[
-                 // Text(device.id.toString()),
+                 // Text(device.remoteId.str),
 
                   FutureBuilder<String>(
-                      future: UserSettings.getBoardAlias(result.device.id.toString()),
+                      future: UserSettings.getBoardAlias(result.device.remoteId.str),
                       builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
                         return Text(snapshot.data != null ? snapshot.data : "unnamed", textAlign: TextAlign.center,);
                       }),
                   Stack(children: [
                     FutureBuilder<String>(
-                        future: UserSettings.getBoardAvatarPath(result.device.id.toString()),
+                        future: UserSettings.getBoardAvatarPath(result.device.remoteId.str),
                         builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
                           return CircleAvatar(
                               backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.png'),
@@ -816,7 +816,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   Positioned(right: 0, bottom: 0, child: SignalStrengthIndicator.bars(value: result.rssi, minValue: -90, maxValue: -45, barCount: 5, radius: Radius.circular(1.5),),),
                 ]),
                 Text(result.device.name == '' ? '(unknown device)' : result.device.name),
-                //NOTE: this is not MAC on iOS: Text(device.id.toString()),
+                //NOTE: this is not MAC on iOS: Text(device.remoteId.str),
               ],
             )
           ),
@@ -945,9 +945,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   //TODO: ^^ move this stuff when you feel like it ^^
 
   Future<void> setupConnectedDeviceStreamListener() async {
-    _connectedDeviceStreamSubscription = _connectedDevice.state.listen((state) async {
+    _connectedDeviceStreamSubscription = _connectedDevice.connectionState.listen((state) async {
       switch (state) {
-        case BluetoothDeviceState.connected:
+        case BluetoothConnectionState.connected:
           if ( deviceHasDisconnected ){
             globalLogger.w("_connectedDeviceStreamSubscription: We have connected to the device that we were previously disconnected from");
             // We have reconnected to a device that disconnected
@@ -971,7 +971,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           }
 
           break;
-        case BluetoothDeviceState.disconnected:
+        case BluetoothConnectionState.disconnected:
           if ( deviceIsConnected  ) {
 
             globalLogger.w("_connectedDeviceStreamSubscription: WARNING: We have disconnected but FreeSK8 was expecting a connection");
@@ -1407,7 +1407,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             genericConfirmationDialog(context, TextButton(
               child: Text("Copy / Share"),
               onPressed: () {
-                Share.text(catCurrentFilename, "${e.toString()}\n\n$logFileContentsForDebugging}", 'text/plain');
+                SharePlus.instance.share(ShareParams(text: "${e.toString()}\n\n$logFileContentsForDebugging}"));
               },
             ), TextButton(
               child: Text("Close"),
@@ -1521,7 +1521,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         genericConfirmationDialog(context, TextButton(
           child: Text("Copy / Share"),
           onPressed: () {
-            Share.text('Faults observed', shareData, 'text/plain');
+            SharePlus.instance.share(ShareParams(text: shareData));
           },
         ), TextButton(
           child: Text("Close"),
@@ -2149,7 +2149,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     updateComputedVehicleStatistics(false);
 
     // Keep the device on while connected
-    Wakelock.enable();
+    WakelockPlus.enable();
 
     // Start a new log file
     FileManager.clearLogFile();

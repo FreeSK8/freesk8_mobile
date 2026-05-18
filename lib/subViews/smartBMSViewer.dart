@@ -252,7 +252,7 @@ class SmartBMSViewerState extends State<SmartBMSViewer> {
                             child: new Container(
                               decoration: new BoxDecoration(
                                 color: Colors.transparent,
-                                border: new Border.all(color: Theme.of(context).accentColor, width: 3.0),
+                                border: new Border.all(color: Theme.of(context).colorScheme.secondary, width: 3.0),
                                 borderRadius: new BorderRadius.circular(10.0),
                               ),
                             )

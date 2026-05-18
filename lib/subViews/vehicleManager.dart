@@ -8,7 +8,7 @@ import 'package:freesk8_mobile/components/userSettings.dart';
 import 'package:freesk8_mobile/globalUtilities.dart';
 import 'package:uuid/uuid.dart';
 
-import 'package:charts_flutter/flutter.dart' as charts;
+import 'package:community_charts_flutter/flutter.dart' as charts;
 
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
@@ -345,45 +345,44 @@ class VehicleManagerState extends State<VehicleManager> {
         trendSpeedWeekly.add(trendingLineSpeed);
 
 
-        // Determine actions list for Slidable
-        List<Widget> actionsList = [];
+        // Determine actions list for Slidable v4
+        List<SlidableAction> actionsList = [];
         if (myArguments.connectedDeviceID == settings[i].deviceID) {
           actionsList.add(
-              Padding(
-                padding: EdgeInsets.only(bottom:5, top: 5),
-                child: IconSlideAction(
-                    caption: 'Retire',
-                    color: Colors.blue,
-                    icon: Icons.bedtime,
-                    onTap: () async {
-                      _retireVehicle(settings[i].deviceID);
-                    } // Merge onTap
-                ),
-              )
+            SlidableAction(
+              label: 'Retire',
+              backgroundColor: Colors.blue,
+              icon: Icons.bedtime,
+              onPressed: (_) async {
+                _retireVehicle(settings[i].deviceID);
+              },
+            ),
           );
         }
         // Allow any vehicle to be adopted/recruited if we are not currently connected to a known device
         if (!currentDeviceKnown && myArguments.connectedDeviceID != null) {
           actionsList.add(
-              Padding(
-                padding: EdgeInsets.only(bottom:5, top: 5),
-                child: IconSlideAction(
-                    caption: 'Adopt',
-                    color: Colors.indigo,
-                    icon: Icons.family_restroom,
-                    onTap: () async {
-                      _recruitVehicle(settings[i].deviceID);
-                    } // Merge onTap
-                ),
-              )
+            SlidableAction(
+              label: 'Adopt',
+              backgroundColor: Colors.indigo,
+              icon: Icons.family_restroom,
+              onPressed: (_) async {
+                _recruitVehicle(settings[i].deviceID);
+              },
+            ),
           );
         }
 
         // Add a Row for each Vehicle we load
         Widget listChild = Slidable(
           key: Key("$i"),
-          actionPane: SlidableDrawerActionPane(),
-          actionExtentRatio: 0.25,
+          startActionPane: actionsList.isNotEmpty
+              ? ActionPane(
+                  motion: const DrawerMotion(),
+                  extentRatio: 0.25,
+                  children: actionsList,
+                )
+              : null,
           child: Container(
             decoration: BoxDecoration(
                 color: Theme.of(context).dialogBackgroundColor,
@@ -453,23 +452,22 @@ class VehicleManagerState extends State<VehicleManager> {
               ],
             ),),
 
-          // Computed above
-          actions: actionsList,
-
-          secondaryActions: myArguments.connectedDeviceID != settings[i].deviceID ? <Widget>[
-            // Allow any disconnected vehicle to be removed
-            Padding(
-              padding: EdgeInsets.only(bottom:5, top: 5),
-              child: IconSlideAction(
-                caption: 'Delete',
-                color: Colors.red,
-                icon: Icons.delete,
-                onTap: () async {
-                  _removeVehicle(settings[i].deviceID);
-                },
-              ),
-            ),
-          ] : <Widget>[],
+          endActionPane: myArguments.connectedDeviceID != settings[i].deviceID
+              ? ActionPane(
+                  motion: const DrawerMotion(),
+                  extentRatio: 0.25,
+                  children: [
+                    SlidableAction(
+                      label: 'Delete',
+                      backgroundColor: Colors.red,
+                      icon: Icons.delete,
+                      onPressed: (_) async {
+                        _removeVehicle(settings[i].deviceID);
+                      },
+                    ),
+                  ],
+                )
+              : null,
         );
 
         if (myArguments.connectedDeviceID == settings[i].deviceID) {

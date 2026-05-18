@@ -14,7 +14,6 @@ class gotchiProOTA extends StatefulWidget {
 }
 
 class gotchiProOTAState extends State<gotchiProOTA> with SingleTickerProviderStateMixin {
-  final FlutterBluePlus flutterBlue = FlutterBluePlus.instance;
   StreamSubscription<ScanResult> scanSubscription;
   List<ScanResult> scanResults = <ScanResult>[];
   bool otaRunning = false;
@@ -43,7 +42,7 @@ class gotchiProOTAState extends State<gotchiProOTA> with SingleTickerProviderSta
     scanSubscription?.cancel();
     scanSubscription = null;
 
-    flutterBlue.stopScan();
+    FlutterBluePlus.stopScan();
 
     super.dispose();
   }
@@ -106,13 +105,13 @@ class gotchiProOTAState extends State<gotchiProOTA> with SingleTickerProviderSta
 
   void startScan() {
     scanSubscription?.cancel();
-    flutterBlue.stopScan();
+    FlutterBluePlus.stopScan();
     setState(() {
       scanResults.clear();
-      scanSubscription = flutterBlue.scan().listen(
+      scanSubscription = FlutterBluePlus.scan().listen(
             (scanResult) {
           if (scanResults.firstWhere(
-                  (ele) => ele.device.id == scanResult.device.id,
+                  (ele) => ele.device.remoteId == scanResult.device.remoteId,
               orElse: () => null) !=
               null) {
             return;
@@ -241,7 +240,7 @@ class gotchiProOTAState extends State<gotchiProOTA> with SingleTickerProviderSta
       onPress: otaRunning
           ? null
           : () async {
-        await this.doOTA(result.device.id.id);
+        await this.doOTA(result.device.remoteId.str);
       },
     );
   }
@@ -273,7 +272,7 @@ class DeviceItem extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(inOTAMode ? "gotchiPro (ready for update)" : name),
-                  Text(scanResult.device.id.id),
+                  Text(scanResult.device.remoteId.str),
                   Text("RSSI: ${scanResult.rssi}"),
                 ],
               ),

@@ -15,7 +15,6 @@ class RobogotchiDFU extends StatefulWidget {
 }
 
 class RobogotchiDFUState extends State<RobogotchiDFU> with SingleTickerProviderStateMixin {
-  final FlutterBluePlus flutterBlue = FlutterBluePlus.instance;
   StreamSubscription<ScanResult> scanSubscription;
   List<ScanResult> scanResults = <ScanResult>[];
   bool dfuRunning = false;
@@ -44,7 +43,7 @@ class RobogotchiDFUState extends State<RobogotchiDFU> with SingleTickerProviderS
     scanSubscription?.cancel();
     scanSubscription = null;
 
-    flutterBlue.stopScan();
+    FlutterBluePlus.stopScan();
 
     super.dispose();
   }
@@ -107,13 +106,13 @@ class RobogotchiDFUState extends State<RobogotchiDFU> with SingleTickerProviderS
 
   void startScan() {
     scanSubscription?.cancel();
-    flutterBlue.stopScan();
+    FlutterBluePlus.stopScan();
     setState(() {
       scanResults.clear();
-      scanSubscription = flutterBlue.scan().listen(
+      scanSubscription = FlutterBluePlus.scan().listen(
             (scanResult) {
           if (scanResults.firstWhere(
-                  (ele) => ele.device.id == scanResult.device.id,
+                  (ele) => ele.device.remoteId == scanResult.device.remoteId,
               orElse: () => null) !=
               null) {
             return;
@@ -241,7 +240,7 @@ class RobogotchiDFUState extends State<RobogotchiDFU> with SingleTickerProviderS
       onPress: dfuRunning
           ? null
           : () async {
-        await this.doDfu(result.device.id.id);
+        await this.doDfu(result.device.remoteId.str);
       },
     );
   }
@@ -273,7 +272,7 @@ class DeviceItem extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(inDFUMode ? "Robogotchi (ready for update)" : name),
-                  Text(scanResult.device.id.id),
+                  Text(scanResult.device.remoteId.str),
                   Text("RSSI: ${scanResult.rssi}"),
                 ],
               ),

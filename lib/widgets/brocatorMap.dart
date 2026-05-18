@@ -19,7 +19,7 @@ class BrocatorMapData {
   }
   LatLng currentPosition;
   List<Marker> mapMakers = [];
-  MapController mapController = new MapController();
+  MapController mapController = MapController();
   LatLng privacyZone;
   double privacyZoneRadius;
 }
@@ -27,7 +27,7 @@ class BrocatorMapData {
 class BrocatorMap extends StatefulWidget {
   BrocatorMap({this.brocatorMapData});
   final BrocatorMapData brocatorMapData;
-  BrocatorMapState createState() => new BrocatorMapState();
+  BrocatorMapState createState() => BrocatorMapState();
 
   static const String routeName = "/brocatormap";
 }
@@ -50,39 +50,39 @@ class BrocatorMapState extends State<BrocatorMap> {
   Widget build(BuildContext context) {
     print("Build: brocatorMap");
 
-    List<LayerOptions> mapLayers = [];
-    mapLayers.add(new TileLayerOptions(
-        urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        subdomains: ['a', 'b', 'c']
+    List<Widget> mapChildren = [];
+    mapChildren.add(TileLayer(
+      urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      subdomains: const ['a', 'b', 'c'],
     ));
 
     if (widget.brocatorMapData.privacyZone != null) {
-      mapLayers.add(new CircleLayerOptions(
-          circles: [
-            CircleMarker( //radius marker
-                point: widget.brocatorMapData.privacyZone,
-                color: Colors.blue.withOpacity(0.3),
-                borderStrokeWidth: 3.0,
-                borderColor: Colors.blue,
-                useRadiusInMeter: true,
-                radius: widget.brocatorMapData.privacyZoneRadius * 1000 //kilometers to meters
-            )
-          ]
+      mapChildren.add(CircleLayer(
+        circles: [
+          CircleMarker(
+            point: widget.brocatorMapData.privacyZone,
+            color: Colors.blue.withOpacity(0.3),
+            borderStrokeWidth: 3.0,
+            borderColor: Colors.blue,
+            useRadiusInMeter: true,
+            radius: widget.brocatorMapData.privacyZoneRadius * 1000,
+          ),
+        ],
       ));
     }
 
-    //NOTE: If the markers aren't last in the mapLayers array their onTap events will not work
-    mapLayers.add(new MarkerLayerOptions(
+    //NOTE: If the markers aren't last in the children array their onTap events will not work
+    mapChildren.add(MarkerLayer(
       markers: widget.brocatorMapData.mapMakers,
     ));
 
     myMap = FlutterMap(
       mapController: widget.brocatorMapData.mapController,
-      options: new MapOptions(
-        center: widget.brocatorMapData.currentPosition,
-        zoom: 13.0,
+      options: MapOptions(
+        initialCenter: widget.brocatorMapData.currentPosition,
+        initialZoom: 13.0,
       ),
-      layers: mapLayers,
+      children: mapChildren,
     );
 
     return myMap;
