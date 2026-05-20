@@ -49,7 +49,7 @@ dependencies:
 
   flutter_nordic_dfu: #^3.0.0 #https://pub.dev/packages/flutter_nordic_dfu/changelog
     git:
-      url: git@github.com:fengqiangboy/flutter-nordic-dfu.git
+      url: https://github.com/fengqiangboy/flutter-nordic-dfu.git
       ref: master
 
   wifi_iot: ^0.3.19+2 #https://pub.dev/packages/wifi_iot/changelog
@@ -82,7 +82,7 @@ dependencies:
 
   logger_flutter:
     git:
-      url: git@github.com:FreeSK8/logger_flutter.git
+      url: https://github.com/FreeSK8/logger_flutter.git
       ref: freesk8_mobile
 
   update: ^0.3.1
