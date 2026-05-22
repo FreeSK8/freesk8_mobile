@@ -19,6 +19,8 @@ import 'package:table_calendar/table_calendar.dart';
 import 'dart:io';
 
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../blocs/preferences/preferences_cubit.dart';
 
 
 class RideLogging extends StatefulWidget {
@@ -85,7 +87,14 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
     }
 
     _selectedDay = DateTime.parse(new DateFormat("yyyy-MM-dd").format(DateTime.now()));
-    _listFiles(true);
+
+    // Load persisted sort order from cubit before the first list query
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        orderByClause = context.read<PreferencesCubit>().state.rideLogSortClause;
+        _listFiles(true);
+      }
+    });
 
 //    _calendarController = CalendarController();
   }
@@ -411,6 +420,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                   tooltip: 'Sort by Board',
                   onPressed: () {
                     orderByClause = "board_id DESC";
+                    context.read<PreferencesCubit>().setRideLogSortClause(orderByClause);
                     _listFiles(true);
                   },
                 ),
@@ -419,6 +429,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                   tooltip: 'Sort by Date',
                   onPressed: () {
                     orderByClause = "date_created DESC";
+                    context.read<PreferencesCubit>().setRideLogSortClause(orderByClause);
                     _listFiles(true);
                   },
                 ),
@@ -428,6 +439,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                   tooltip: 'Sort by Faults',
                   onPressed: () {
                     orderByClause = "fault_count DESC";
+                    context.read<PreferencesCubit>().setRideLogSortClause(orderByClause);
                     _listFiles(true);
                   },
                 ),
@@ -436,6 +448,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                   tooltip: 'Sort by Notes',
                   onPressed: () {
                     orderByClause = "length(notes) DESC";
+                    context.read<PreferencesCubit>().setRideLogSortClause(orderByClause);
                     _listFiles(true);
                   },
                 ),
@@ -444,6 +457,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                   tooltip: 'Sort by Duration',
                   onPressed: () {
                     orderByClause = "duration_seconds DESC";
+                    context.read<PreferencesCubit>().setRideLogSortClause(orderByClause);
                     _listFiles(true);
                   },
                 ),
@@ -452,6 +466,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                   tooltip: 'Sort by Power Used',
                   onPressed: () {
                     orderByClause = "watt_hours DESC, id DESC";
+                    context.read<PreferencesCubit>().setRideLogSortClause(orderByClause);
                     _listFiles(true);
                   },
                 ),
