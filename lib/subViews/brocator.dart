@@ -25,20 +25,20 @@ import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as Im;
 
 class PrivacyZone {
-  bool activated;
-  double latitude;
-  double longitude;
-  double radius;
+  bool? activated;
+  double? latitude;
+  double? longitude;
+  double? radius;
 }
 
 class Bro {
-  String alias;
-  MemoryImage avatar;
-  DateTime lastUpdated;
-  LatLng position;
-  double batteryVoltage;
-  int batteryPercentage;
-  double distanceTraveled;
+  String? alias;
+  MemoryImage? avatar;
+  DateTime? lastUpdated;
+  LatLng? position;
+  double? batteryVoltage;
+  int? batteryPercentage;
+  double? distanceTraveled;
 
   Bro({this.alias, this.avatar, this.lastUpdated, this.position, this.batteryVoltage, this.batteryPercentage, this.distanceTraveled});
   @override
@@ -75,7 +75,7 @@ class Bro {
 class BroList {
   final List<Bro> brocations;
 
-  BroList({@required this.brocations});
+  BroList({required this.brocations});
 
   factory BroList.fromJson(List<dynamic> json) {
     List<Bro> bros = [];
@@ -106,14 +106,14 @@ class Brocator extends StatefulWidget {
 
 class BrocatorState extends State<Brocator> {
   bool changesMade = false; //TODO: remove if unused
-  String myUUID;
+  String? myUUID;
   Uuid _uuid = new Uuid();
 
   bool _showSettings = false;
-  bool broadcastPosition;
+  bool? broadcastPosition;
   PrivacyZone privacyZone = new PrivacyZone();
   bool _insidePrivacyZone = true;
-  BrocatorArguments myArguments;
+  BrocatorArguments? myArguments;
 
   TextEditingController tecServer = TextEditingController();
   String serverURL = "";
@@ -123,19 +123,19 @@ class BrocatorState extends State<Brocator> {
 
   final GeolocatorPlatform _geolocatorPlatform = GeolocatorPlatform.instance;
   var locationOptions = LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: 0);
-  static StreamSubscription<Position> positionStream;
+  static StreamSubscription<Position>? positionStream;
 
-  LatLng currentLocation;
+  LatLng? currentLocation;
   Bro myBrocation = new Bro();
-  BroList myBros;
+  BroList? myBros;
   bool includeAvatar = true;
 
-  static Timer dataRequestTimer;
+  static Timer? dataRequestTimer;
 
   MapController _mapController = MapController();
 
-  static StreamSubscription<ESCTelemetry> streamSubscription;
-  BluetoothCharacteristic theTXCharacteristic;
+  static StreamSubscription<ESCTelemetry>? streamSubscription;
+  BluetoothCharacteristic? theTXCharacteristic;
 
   static ESCTelemetry myTelemetry = new ESCTelemetry();
 
@@ -411,7 +411,7 @@ class BrocatorState extends State<Brocator> {
         width: 50.0,
         height: 50.0,
         point: element.position,
-        builder: (ctx) =>
+        child:
         new Container(
           margin: EdgeInsets.fromLTRB(0, 0, 0, 0),
           child: GestureDetector(
@@ -587,8 +587,8 @@ class BrocatorState extends State<Brocator> {
                   // Center view and increase zoom
                   onTap: () {
                     // Increase map zoom level if we are already centered on this user
-                    double mapZoom = _mapController.zoom;
-                    if (_mapController.center == myBros.brocations[i].position && _mapController.zoom < 18) {
+                    double mapZoom = _mapController.camera.zoom;
+                    if (_mapController.camera.center == myBros.brocations[i].position && _mapController.camera.zoom < 18) {
                       mapZoom += 2;
                       globalLogger.d("Increasing zoom $mapZoom");
                     }

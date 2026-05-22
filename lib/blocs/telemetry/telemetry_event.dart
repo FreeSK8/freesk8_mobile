@@ -10,11 +10,11 @@ abstract class TelemetryEvent extends Equatable {
 
 class TelemetryStarted extends TelemetryEvent {
   const TelemetryStarted({this.txChar, this.rxChar, this.rxDieBieMSChar});
-  final BluetoothCharacteristic txChar;
-  final BluetoothCharacteristic rxChar;
-  final BluetoothCharacteristic rxDieBieMSChar;
+  final BluetoothCharacteristic? txChar;
+  final BluetoothCharacteristic? rxChar;
+  final BluetoothCharacteristic? rxDieBieMSChar;
   @override
-  List<Object> get props => [txChar, rxChar];
+  List<Object?> get props => [txChar, rxChar];
 }
 
 class TelemetryStopped extends TelemetryEvent {
@@ -44,15 +44,15 @@ class TelemetryBMSPacketReceived extends TelemetryEvent {
 
 class TelemetryVehicleStatsUpdated extends TelemetryEvent {
   const TelemetryVehicleStatsUpdated({this.odometer, this.consumption});
-  final double odometer;
-  final double consumption;
+  final double? odometer;
+  final double? consumption;
   @override
-  List<Object> get props => [odometer, consumption];
+  List<Object?> get props => [odometer, consumption];
 }
 
 class TelemetryLoggerStateChanged extends TelemetryEvent {
   const TelemetryLoggerStateChanged({this.isLogging});
-  final bool isLogging;
+  final bool? isLogging;
   @override
-  List<Object> get props => [isLogging];
+  List<Object?> get props => [isLogging];
 }

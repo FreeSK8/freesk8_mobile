@@ -19,17 +19,17 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:freesk8_mobile/widgets/throttleCurvePainter.dart';
 
 class InputCalibration {
-  bool ppmCalibrationStarting;
-  bool ppmCalibrationRunning;
-  int ppmValueNow;
-  int ppmMillisecondsNow;
+  bool? ppmCalibrationStarting;
+  bool? ppmCalibrationRunning;
+  int? ppmValueNow;
+  int? ppmMillisecondsNow;
 
-  bool adcCalibrationStarting;
-  bool adcCalibrationRunning;
-  double adcLevelNow;
-  double adcVoltageNow;
-  double adcLevel2Now;
-  double adcVoltage2Now;
+  bool? adcCalibrationStarting;
+  bool? adcCalibrationRunning;
+  double? adcLevelNow;
+  double? adcVoltageNow;
+  double? adcLevel2Now;
+  double? adcVoltage2Now;
 }
 
 class InputConfigurationArguments {
@@ -46,15 +46,15 @@ class InputConfigurationArguments {
 
 
   InputConfigurationArguments({
-    @required this.calibrationStream,
-    @required this.dataStream,
-    @required this.theTXCharacteristic,
-    @required this.applicationConfiguration,
-    @required this.discoveredCANDevices,
-    @required this.escFirmwareVersion,
-    @required this.notifyStopStartADCCalibrate,
-    @required this.notifyStopStartPPMCalibrate,
-    @required this.calibrationState,
+    required this.calibrationStream,
+    required this.dataStream,
+    required this.theTXCharacteristic,
+    required this.applicationConfiguration,
+    required this.discoveredCANDevices,
+    required this.escFirmwareVersion,
+    required this.notifyStopStartADCCalibrate,
+    required this.notifyStopStartPPMCalibrate,
+    required this.calibrationState,
   });
 }
 
@@ -68,19 +68,19 @@ class InputConfigurationEditor extends StatefulWidget {
 class InputConfigurationEditorState extends State<InputConfigurationEditor> {
   bool changesMade = false; //TODO: remove if unused
 
-  static InputConfigurationArguments myArguments;
+  static InputConfigurationArguments? myArguments;
 
-  static StreamSubscription<InputCalibration> calibrationSubscription;
-  static StreamSubscription<APPCONF> appconfSubscription;
-  static BluetoothCharacteristic theTXCharacteristic;
+  static StreamSubscription<InputCalibration>? calibrationSubscription;
+  static StreamSubscription<APPCONF>? appconfSubscription;
+  static BluetoothCharacteristic? theTXCharacteristic;
 
-  static APPCONF escInputConfiguration;
-  static ESC_FIRMWARE escFirmwareVersion;
+  static APPCONF? escInputConfiguration;
+  static ESC_FIRMWARE? escFirmwareVersion;
 
-  static List<int> discoveredCANDevices;
+  static List<int>? discoveredCANDevices;
 
-  int _selectedCANFwdID;
-  int _invalidCANID;
+  int? _selectedCANFwdID;
+  int? _invalidCANID;
   bool _writeESCInProgress = false;
 
   //// Balance stuff
@@ -108,8 +108,8 @@ class InputConfigurationEditorState extends State<InputConfigurationEditor> {
     //ListItem(app_use.APP_CUSTOM.index, "CUSTOM"),
     ListItem(app_use.APP_BALANCE.index, "BALANCE"),
   ];
-  List<DropdownMenuItem<ListItem>> _appModeDropdownItems;
-  ListItem _selectedAppMode;
+  List<DropdownMenuItem<ListItem>>? _appModeDropdownItems;
+  ListItem? _selectedAppMode;
 
   List<ListItem> _ppmCtrlTypeItems = [
     ListItem(ppm_control_type.PPM_CTRL_TYPE_NONE.index, "None"),
@@ -123,16 +123,16 @@ class InputConfigurationEditorState extends State<InputConfigurationEditor> {
     ListItem(ppm_control_type.PPM_CTRL_TYPE_CURRENT_BRAKE_REV_HYST.index, "Current Hysteresis Reverse with Brake"),
     ListItem(ppm_control_type.PPM_CTRL_TYPE_CURRENT_SMART_REV.index, "Current Smart Reverse"),
   ];
-  List<DropdownMenuItem<ListItem>> _ppmCtrlTypeDropdownItems;
-  ListItem _selectedPPMCtrlType;
+  List<DropdownMenuItem<ListItem>>? _ppmCtrlTypeDropdownItems;
+  ListItem? _selectedPPMCtrlType;
 
   List<ListItem> _thrExpModeItems = [
     ListItem(thr_exp_mode.THR_EXP_EXPO.index, "Exponential"),
     ListItem(thr_exp_mode.THR_EXP_NATURAL.index, "Natural"),
     ListItem(thr_exp_mode.THR_EXP_POLY.index, "Polynomial"),
   ];
-  List<DropdownMenuItem<ListItem>> _thrExpModeDropdownItems;
-  ListItem _selectedThrExpMode;
+  List<DropdownMenuItem<ListItem>>? _thrExpModeDropdownItems;
+  ListItem? _selectedThrExpMode;
 
   List<ListItem> _nunchukCtrlTypeItems = [
     ListItem(chuk_control_type.CHUK_CTRL_TYPE_NONE.index, "Off"),
@@ -140,16 +140,16 @@ class InputConfigurationEditorState extends State<InputConfigurationEditor> {
     ListItem(chuk_control_type.CHUK_CTRL_TYPE_CURRENT_NOREV.index, "Current No Reverse"),
     ListItem(chuk_control_type.CHUK_CTRL_TYPE_CURRENT_BIDIRECTIONAL.index, "Current Bidirectional"),
   ];
-  List<DropdownMenuItem<ListItem>> _nunchuckCtrlTypeDropdownItems;
-  ListItem _selectedNunchukCtrlType;
+  List<DropdownMenuItem<ListItem>>? _nunchuckCtrlTypeDropdownItems;
+  ListItem? _selectedNunchukCtrlType;
 
   List<ListItem> _thrExpModeNunchukItems = [
     ListItem(thr_exp_mode.THR_EXP_EXPO.index, "Exponential"),
     ListItem(thr_exp_mode.THR_EXP_NATURAL.index, "Natural"),
     ListItem(thr_exp_mode.THR_EXP_POLY.index, "Polynomial"),
   ];
-  List<DropdownMenuItem<ListItem>> _thrExpModeNunchukDropdownItems;
-  ListItem _selectedThrExpModeNunchuk;
+  List<DropdownMenuItem<ListItem>>? _thrExpModeNunchukDropdownItems;
+  ListItem? _selectedThrExpModeNunchuk;
 
   List<ListItem> _adcCtrlTypeItems = [
     ListItem(adc_control_type.ADC_CTRL_TYPE_NONE.index, "None"),
@@ -168,14 +168,14 @@ class InputConfigurationEditorState extends State<InputConfigurationEditor> {
     ListItem(adc_control_type.ADC_CTRL_TYPE_PID_REV_CENTER.index, "PID Speed Reverse Center"),
     ListItem(adc_control_type.ADC_CTRL_TYPE_PID_REV_BUTTON.index, "PID Speed Reverse Button"),
   ];
-  List<DropdownMenuItem<ListItem>> _adcCtrlTypeDropdownItems;
-  ListItem _selectedADCCtrlType;
+  List<DropdownMenuItem<ListItem>>? _adcCtrlTypeDropdownItems;
+  ListItem? _selectedADCCtrlType;
 
-  static Timer ppmCalibrateTimer;
+  static Timer? ppmCalibrateTimer;
   bool ppmCalibrate = false;
-  ppm_control_type ppmCalibrateControlTypeToRestore;
-  int ppmMinMS;
-  int ppmMaxMS;
+  ppm_control_type? ppmCalibrateControlTypeToRestore;
+  int? ppmMinMS;
+  int? ppmMaxMS;
   
   RangeValues _rangeSliderDiscreteValues = const RangeValues(1.5, 1.6);
 
@@ -184,17 +184,17 @@ class InputConfigurationEditorState extends State<InputConfigurationEditor> {
   bool showNunchukConfiguration = false;
   bool showBalanceConfiguration = false;
 
-  static Timer adcCalibrateTimer;
+  static Timer? adcCalibrateTimer;
   bool adcCalibrate = false;
   bool showADCConfiguration = false;
-  adc_control_type adcCalibrateControlTypeToRestore;
-  double adcMinV;
-  double adcMaxV;
-  double adcMinV2;
-  double adcMaxV2;
-  
+  adc_control_type? adcCalibrateControlTypeToRestore;
+  double? adcMinV;
+  double? adcMaxV;
+  double? adcMinV2;
+  double? adcMaxV2;
+
   //Calibration
-  InputCalibration calibrationState;
+  InputCalibration? calibrationState;
 
   @override
   void initState() {

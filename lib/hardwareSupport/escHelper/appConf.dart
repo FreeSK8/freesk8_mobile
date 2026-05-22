@@ -44,25 +44,25 @@ enum ppm_control_type {
 }
 
 class ppm_config {
-  ppm_control_type ctrl_type;
-  double pid_max_erpm;
-  double hyst;
-  double pulse_start;
-  double pulse_end;
-  double pulse_center;
-  bool median_filter;
-  SAFE_START_MODE safe_start;
-  double throttle_exp;
-  double throttle_exp_brake;
-  thr_exp_mode throttle_exp_mode;
-  double ramp_time_pos;
-  double ramp_time_neg;
-  bool multi_esc;
-  bool tc;
-  double tc_max_diff;
-  double max_erpm_for_dir;
-  double smart_rev_max_duty;
-  double smart_rev_ramp_time;
+  ppm_control_type? ctrl_type;
+  double? pid_max_erpm;
+  double? hyst;
+  double? pulse_start;
+  double? pulse_end;
+  double? pulse_center;
+  bool? median_filter;
+  SAFE_START_MODE? safe_start;
+  double? throttle_exp;
+  double? throttle_exp_brake;
+  thr_exp_mode? throttle_exp_mode;
+  double? ramp_time_pos;
+  double? ramp_time_neg;
+  bool? multi_esc;
+  bool? tc;
+  double? tc_max_diff;
+  double? max_erpm_for_dir;
+  double? smart_rev_max_duty;
+  double? smart_rev_ramp_time;
 }
 
 // ADC control types
@@ -96,31 +96,31 @@ enum pas_sensor_type { // Firmware 5.2 added
 }
 
 class adc_config {
-  adc_control_type ctrl_type;
-  double hyst;
-  double voltage_start;
-  double voltage_end;
-  double voltage_min;     //fw6
-  double voltage_max;     //fw6
-  double voltage_center;
-  double voltage2_start;
-  double voltage2_end;
-  bool use_filter;
-  SAFE_START_MODE safe_start;
-  bool cc_button_inverted;
-  bool rev_button_inverted;
-  int buttons;        //fw6
-  bool voltage_inverted;
-  bool voltage2_inverted;
-  double throttle_exp;
-  double throttle_exp_brake;
-  thr_exp_mode throttle_exp_mode;
-  double ramp_time_pos;
-  double ramp_time_neg;
-  bool multi_esc;
-  bool tc;
-  double tc_max_diff;
-  int update_rate_hz;
+  adc_control_type? ctrl_type;
+  double? hyst;
+  double? voltage_start;
+  double? voltage_end;
+  double? voltage_min;     //fw6
+  double? voltage_max;     //fw6
+  double? voltage_center;
+  double? voltage2_start;
+  double? voltage2_end;
+  bool? use_filter;
+  SAFE_START_MODE? safe_start;
+  bool? cc_button_inverted;
+  bool? rev_button_inverted;
+  int? buttons;        //fw6
+  bool? voltage_inverted;
+  bool? voltage2_inverted;
+  double? throttle_exp;
+  double? throttle_exp_brake;
+  thr_exp_mode? throttle_exp_mode;
+  double? ramp_time_pos;
+  double? ramp_time_neg;
+  bool? multi_esc;
+  bool? tc;
+  double? tc_max_diff;
+  int? update_rate_hz;
 }
 
 // Nunchuk control types
@@ -132,34 +132,34 @@ enum chuk_control_type {
 }
 
 class chuk_config {
-  chuk_control_type ctrl_type;
-  double hyst;
-  double ramp_time_pos;
-  double ramp_time_neg;
-  double stick_erpm_per_s_in_cc;
-  double throttle_exp;
-  double throttle_exp_brake;
-  thr_exp_mode throttle_exp_mode;
-  bool multi_esc;
-  bool tc;
-  double tc_max_diff;
-  bool use_smart_rev;
-  double smart_rev_max_duty;
-  double smart_rev_ramp_time;
+  chuk_control_type? ctrl_type;
+  double? hyst;
+  double? ramp_time_pos;
+  double? ramp_time_neg;
+  double? stick_erpm_per_s_in_cc;
+  double? throttle_exp;
+  double? throttle_exp_brake;
+  thr_exp_mode? throttle_exp_mode;
+  bool? multi_esc;
+  bool? tc;
+  double? tc_max_diff;
+  bool? use_smart_rev;
+  double? smart_rev_max_duty;
+  double? smart_rev_ramp_time;
 }
 
 class pas_config { // Firmware 5.2 added
-  pas_control_type ctrl_type;
-  pas_sensor_type sensor_type;
-  double current_scaling;
-  double pedal_rpm_start;
-  double pedal_rpm_end;
-  bool invert_pedal_direction;
-  int magnets;
-  bool use_filter;
-  double ramp_time_pos;
-  double ramp_time_neg;
-  int update_rate_hz;
+  pas_control_type? ctrl_type;
+  pas_sensor_type? sensor_type;
+  double? current_scaling;
+  double? pedal_rpm_start;
+  double? pedal_rpm_end;
+  bool? invert_pedal_direction;
+  int? magnets;
+  bool? use_filter;
+  double? ramp_time_pos;
+  double? ramp_time_neg;
+  int? update_rate_hz;
 }
 
 // NRF Datatypes
@@ -212,14 +212,14 @@ class nrf_config {
   nrf_config() {
     address = List.filled(3, 0);
   }
-  NRF_SPEED speed;
-  NRF_POWER power;
-  NRF_CRC crc_type;
-  NRF_RETR_DELAY retry_delay;
-  int retries;
-  int channel;
+  NRF_SPEED? speed;
+  NRF_POWER? power;
+  NRF_CRC? crc_type;
+  NRF_RETR_DELAY? retry_delay;
+  int? retries;
+  int? channel;
   List<int> address;
-  bool send_crc_ack;
+  bool? send_crc_ack;
 }
 
 enum BALANCE_PID_MODE {           //fw6
@@ -228,83 +228,83 @@ enum BALANCE_PID_MODE {           //fw6
 }
 
 class balance_config {
-  BALANCE_PID_MODE pid_mode; //fw6
-  double kp;
-  double ki;
-  double kd;
-  double kp2; //fw6
-  double ki2; //fw6
-  double kd2; //fw6 
-  int hertz;
-  int loop_time_filter; // Firmware 5.3 added
-  double fault_pitch;
-  double fault_roll;
-  double fault_duty; // Firmware 5.2 added
-  double fault_adc1;
-  double fault_adc2;
-  int fault_delay_pitch; // Firmware 5.2 added
-  int fault_delay_roll; // Firmware 5.2 added
-  int fault_delay_duty; // Firmware 5.2 added
-  int fault_delay_switch_half; // Firmware 5.2 added
-  int fault_delay_switch_full; // Firmware 5.2 added
-  int fault_adc_half_erpm;
-  bool fault_is_dual_switch; //fw6
-  double overspeed_duty; // Firmware 5.1 only
-  double tiltback_duty_angle;
-  double tiltback_duty_speed;
-  double tiltback_duty;
-  double tiltback_hv_angle; // Firmware 5.3 added
-  double tiltback_hv_speed; // Firmware 5.3 added
-  double tiltback_hv;
-  double tiltback_lv_angle; // Firmware 5.3 added
-  double tiltback_lv_speed; // Firmware 5.3 added
-  double tiltback_lv;
-  double tiltback_return_speed; // Firmware 5.3 added
-  double tiltback_constant;
-  int tiltback_constant_erpm; // Firmware 5.2 added
-  double tiltback_variable; // Firmware 5.3 added
-  double tiltback_variable_max; // Firmware 5.3 added
-  double noseangling_speed; // Firmware 5.3 added
-  double startup_pitch_tolerance;
-  double startup_roll_tolerance;
-  double startup_speed;
-  double deadzone;
-  double current_boost; // Firmware 5.1 and 5.2 only
-  bool multi_esc;
-  double yaw_kp;
-  double yaw_ki;
-  double yaw_kd;
-  double roll_steer_kp;
-  double roll_steer_erpm_kp;
-  double brake_current;
-  int brake_timeout; // Firmware 5.3 added
-  int overspeed_delay; // Firmware 5.1 only
-  int fault_delay; // Firmware 5.1 only
-  double yaw_current_clamp;
-  double ki_limit;  //fw6
-  double setpoint_pitch_filter; // Firmware 5.1 and 5.2 only
-  double setpoint_target_filter; // Firmware 5.1 and 5.2 only
-  double setpoint_filter_clamp; // Firmware 5.1 and 5.2 only
-  int kd_pt1_lowpass_frequency; // Firmware 5.2 added
-  int kd_pt1_highpass_frequency; // Firmware 5.3 added
-  double kd_biquad_lowpass; // Firmware 5.3 added
-  double kd_biquad_highpass; // Firmware 5.3 added
-  double booster_angle; // Firmware 5.3 added
-  double booster_ramp; // Firmware 5.3 added
-  double booster_current; // Firmware 5.3 added
-  double torquetilt_start_current; // Firmware 5.3 added
-  double torquetilt_angle_limit; // Firmware 5.3 added
-  double torquetilt_on_speed; // Firmware 5.3 added
-  double torquetilt_off_speed; // Firmware 5.3 added
-  double torquetilt_strength; // Firmware 5.3 added
-  double torquetilt_filter; //Firmware 5.3 added
-  double turntilt_strength; // Firmware 5.3 added
-  double turntilt_angle_limit; // Firmware 5.3 added
-  double turntilt_start_angle; // Firmware 5.3 added
-  int turntilt_start_erpm; // Firmware 5.3 added
-  double turntilt_speed; // Firmware 5.3 added
-  int turntilt_erpm_boost; // Firmware 5.3 added
-  int turntilt_erpm_boost_end; // Firmware 5.3 added
+  BALANCE_PID_MODE? pid_mode; //fw6
+  double? kp;
+  double? ki;
+  double? kd;
+  double? kp2; //fw6
+  double? ki2; //fw6
+  double? kd2; //fw6
+  int? hertz;
+  int? loop_time_filter; // Firmware 5.3 added
+  double? fault_pitch;
+  double? fault_roll;
+  double? fault_duty; // Firmware 5.2 added
+  double? fault_adc1;
+  double? fault_adc2;
+  int? fault_delay_pitch; // Firmware 5.2 added
+  int? fault_delay_roll; // Firmware 5.2 added
+  int? fault_delay_duty; // Firmware 5.2 added
+  int? fault_delay_switch_half; // Firmware 5.2 added
+  int? fault_delay_switch_full; // Firmware 5.2 added
+  int? fault_adc_half_erpm;
+  bool? fault_is_dual_switch; //fw6
+  double? overspeed_duty; // Firmware 5.1 only
+  double? tiltback_duty_angle;
+  double? tiltback_duty_speed;
+  double? tiltback_duty;
+  double? tiltback_hv_angle; // Firmware 5.3 added
+  double? tiltback_hv_speed; // Firmware 5.3 added
+  double? tiltback_hv;
+  double? tiltback_lv_angle; // Firmware 5.3 added
+  double? tiltback_lv_speed; // Firmware 5.3 added
+  double? tiltback_lv;
+  double? tiltback_return_speed; // Firmware 5.3 added
+  double? tiltback_constant;
+  int? tiltback_constant_erpm; // Firmware 5.2 added
+  double? tiltback_variable; // Firmware 5.3 added
+  double? tiltback_variable_max; // Firmware 5.3 added
+  double? noseangling_speed; // Firmware 5.3 added
+  double? startup_pitch_tolerance;
+  double? startup_roll_tolerance;
+  double? startup_speed;
+  double? deadzone;
+  double? current_boost; // Firmware 5.1 and 5.2 only
+  bool? multi_esc;
+  double? yaw_kp;
+  double? yaw_ki;
+  double? yaw_kd;
+  double? roll_steer_kp;
+  double? roll_steer_erpm_kp;
+  double? brake_current;
+  int? brake_timeout; // Firmware 5.3 added
+  int? overspeed_delay; // Firmware 5.1 only
+  int? fault_delay; // Firmware 5.1 only
+  double? yaw_current_clamp;
+  double? ki_limit;  //fw6
+  double? setpoint_pitch_filter; // Firmware 5.1 and 5.2 only
+  double? setpoint_target_filter; // Firmware 5.1 and 5.2 only
+  double? setpoint_filter_clamp; // Firmware 5.1 and 5.2 only
+  int? kd_pt1_lowpass_frequency; // Firmware 5.2 added
+  int? kd_pt1_highpass_frequency; // Firmware 5.3 added
+  double? kd_biquad_lowpass; // Firmware 5.3 added
+  double? kd_biquad_highpass; // Firmware 5.3 added
+  double? booster_angle; // Firmware 5.3 added
+  double? booster_ramp; // Firmware 5.3 added
+  double? booster_current; // Firmware 5.3 added
+  double? torquetilt_start_current; // Firmware 5.3 added
+  double? torquetilt_angle_limit; // Firmware 5.3 added
+  double? torquetilt_on_speed; // Firmware 5.3 added
+  double? torquetilt_off_speed; // Firmware 5.3 added
+  double? torquetilt_strength; // Firmware 5.3 added
+  double? torquetilt_filter; //Firmware 5.3 added
+  double? turntilt_strength; // Firmware 5.3 added
+  double? turntilt_angle_limit; // Firmware 5.3 added
+  double? turntilt_start_angle; // Firmware 5.3 added
+  int? turntilt_start_erpm; // Firmware 5.3 added
+  double? turntilt_speed; // Firmware 5.3 added
+  int? turntilt_erpm_boost; // Firmware 5.3 added
+  int? turntilt_erpm_boost_end; // Firmware 5.3 added
 }
 
 // CAN status modes fw5
@@ -357,39 +357,39 @@ class imu_config {
     gyro_offsets = List.filled(3, 0);
     gyro_offset_comp_fact = List.filled(3, 0); // Firmware 5.1 and 5.2 only
   }
-  IMU_TYPE type;
-  AHRS_MODE mode;
-  IMU_FILTER filter;
-  double accel_lowpass_filter_x;
-  double accel_lowpass_filter_y;
-  double accel_lowpass_filter_z;
-  double gyro_lowpass_filter;
-  int sample_rate_hz;
-  bool use_magnetometer;
-  double accel_confidence_decay;
-  double mahony_kp;
-  double mahony_ki;
-  double madgwick_beta;
-  double rot_roll;
-  double rot_pitch;
-  double rot_yaw;
+  IMU_TYPE? type;
+  AHRS_MODE? mode;
+  IMU_FILTER? filter;
+  double? accel_lowpass_filter_x;
+  double? accel_lowpass_filter_y;
+  double? accel_lowpass_filter_z;
+  double? gyro_lowpass_filter;
+  int? sample_rate_hz;
+  bool? use_magnetometer;
+  double? accel_confidence_decay;
+  double? mahony_kp;
+  double? mahony_ki;
+  double? madgwick_beta;
+  double? rot_roll;
+  double? rot_pitch;
+  double? rot_yaw;
   List<double> accel_offsets;
   List<double> gyro_offsets;
   List<double> gyro_offset_comp_fact; // Firmware 5.1 and 5.2 only
-  double gyro_offset_comp_clamp; // Firmware 5.1 and 5.2 only
+  double? gyro_offset_comp_clamp; // Firmware 5.1 and 5.2 only
 }
 
 class AS504x_diag { // Firmware 5.3 added
-  int is_connected;
-  int AGC_value;
-  int magnitude;
-  int is_OCF;
-  int is_COF;
-  int is_Comp_low;
-  int is_Comp_high;
-  int serial_diag_flgs;
-  int serial_magnitude;
-  int serial_error_flags;
+  int? is_connected;
+  int? AGC_value;
+  int? magnitude;
+  int? is_OCF;
+  int? is_COF;
+  int? is_Comp_low;
+  int? is_Comp_high;
+  int? serial_diag_flgs;
+  int? serial_magnitude;
+  int? serial_error_flags;
 }
 
 enum CAN_MODE {
@@ -441,30 +441,30 @@ class APPCONF {
     app_pas_conf = new pas_config();
   }
   // Settings
-  int controller_id;
-  int timeout_msec;
-  double timeout_brake_current;
-  CAN_STATUS_MODE send_can_status;
-  int can_status_rate_1; //fw6
-  int can_status_msgs_r1; //fw6
-  int can_status_rate_2; //fw6
-  int can_status_msgs_r2; //fw6
-  int send_can_status_rate_hz;
-  CAN_BAUD can_baud_rate;
-  bool pairing_done;
-  bool permanent_uart_enabled;
-  SHUTDOWN_MODE shutdown_mode;
-  bool servo_out_enabled; // Firmware 5.3 added
-  KILL_SW_MODE kill_sw_mode; // Firmware 5.3 added
+  int? controller_id;
+  int? timeout_msec;
+  double? timeout_brake_current;
+  CAN_STATUS_MODE? send_can_status;
+  int? can_status_rate_1; //fw6
+  int? can_status_msgs_r1; //fw6
+  int? can_status_rate_2; //fw6
+  int? can_status_msgs_r2; //fw6
+  int? send_can_status_rate_hz;
+  CAN_BAUD? can_baud_rate;
+  bool? pairing_done;
+  bool? permanent_uart_enabled;
+  SHUTDOWN_MODE? shutdown_mode;
+  bool? servo_out_enabled; // Firmware 5.3 added
+  KILL_SW_MODE? kill_sw_mode; // Firmware 5.3 added
 
   // CAN modes
-  CAN_MODE can_mode;
-  int uavcan_esc_index;
-  UAVCAN_RAW_MODE uavcan_raw_mode; // Firmware 5.2 added
-  double uavcan_raw_rpm_max; // Firmware 5.3 added
-  UAVCAN_STATUS_CURRENT_MODE uavcan_status_current_mode;  //fw6
+  CAN_MODE? can_mode;
+  int? uavcan_esc_index;
+  UAVCAN_RAW_MODE? uavcan_raw_mode; // Firmware 5.2 added
+  double? uavcan_raw_rpm_max; // Firmware 5.3 added
+  UAVCAN_STATUS_CURRENT_MODE? uavcan_status_current_mode;  //fw6
   // Application to use
-  app_use app_to_use;
+  app_use? app_to_use;
 
   // PPM application settings
   ppm_config app_ppm_conf;
@@ -473,7 +473,7 @@ class APPCONF {
   adc_config app_adc_conf;
 
   // UART application settings
-  int app_uart_baudrate;
+  int? app_uart_baudrate;
 
   // Nunchuk application settings
   chuk_config app_chuk_conf;

@@ -7,7 +7,7 @@ enum BLEDeviceType { unknown, robogotchi, gotchiPro, escDirect }
 abstract class BLEConnectionState extends Equatable {
   const BLEConnectionState();
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class BLEIdle extends BLEConnectionState {
@@ -18,14 +18,14 @@ class BLEScanning extends BLEConnectionState {
   const BLEScanning({this.results = const []});
   final List<ScanResult> results;
   @override
-  List<Object> get props => [results];
+  List<Object?> get props => [results];
 }
 
 class BLEConnecting extends BLEConnectionState {
   const BLEConnecting(this.device);
   final BluetoothDevice device;
   @override
-  List<Object> get props => [device];
+  List<Object?> get props => [device];
 }
 
 class BLEConnected extends BLEConnectionState {
@@ -40,27 +40,27 @@ class BLEConnected extends BLEConnectionState {
     this.deviceVersion,
   });
 
-  final BluetoothDevice device;
-  final BluetoothCharacteristic txChar;
-  final BluetoothCharacteristic rxChar;
-  final BluetoothCharacteristic txLoggerChar;
-  final BluetoothCharacteristic rxLoggerChar;
+  final BluetoothDevice? device;
+  final BluetoothCharacteristic? txChar;
+  final BluetoothCharacteristic? rxChar;
+  final BluetoothCharacteristic? txLoggerChar;
+  final BluetoothCharacteristic? rxLoggerChar;
   final BLEDeviceType deviceType;
-  final ESCFirmware firmwarePacket;
-  final String deviceVersion;
+  final ESCFirmware? firmwarePacket;
+  final String? deviceVersion;
 
   bool get isRobogotchi => deviceType == BLEDeviceType.robogotchi;
   bool get isGotchiPro => deviceType == BLEDeviceType.gotchiPro;
 
   BLEConnected copyWith({
-    BluetoothDevice device,
-    BluetoothCharacteristic txChar,
-    BluetoothCharacteristic rxChar,
-    BluetoothCharacteristic txLoggerChar,
-    BluetoothCharacteristic rxLoggerChar,
-    BLEDeviceType deviceType,
-    ESCFirmware firmwarePacket,
-    String deviceVersion,
+    BluetoothDevice? device,
+    BluetoothCharacteristic? txChar,
+    BluetoothCharacteristic? rxChar,
+    BluetoothCharacteristic? txLoggerChar,
+    BluetoothCharacteristic? rxLoggerChar,
+    BLEDeviceType? deviceType,
+    ESCFirmware? firmwarePacket,
+    String? deviceVersion,
   }) {
     return BLEConnected(
       device: device ?? this.device,
@@ -75,7 +75,7 @@ class BLEConnected extends BLEConnectionState {
   }
 
   @override
-  List<Object> get props => [device, txChar, rxChar, txLoggerChar, rxLoggerChar, deviceType, firmwarePacket, deviceVersion];
+  List<Object?> get props => [device, txChar, rxChar, txLoggerChar, rxLoggerChar, deviceType, firmwarePacket, deviceVersion];
 }
 
 class BLEDisconnecting extends BLEConnectionState {
@@ -86,12 +86,12 @@ class BLEUnexpectedDisconnect extends BLEConnectionState {
   const BLEUnexpectedDisconnect(this.device);
   final BluetoothDevice device;
   @override
-  List<Object> get props => [device];
+  List<Object?> get props => [device];
 }
 
 class BLEError extends BLEConnectionState {
   const BLEError(this.message);
   final String message;
   @override
-  List<Object> get props => [message];
+  List<Object?> get props => [message];
 }

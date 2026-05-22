@@ -22,9 +22,9 @@ import '../hardwareSupport/escHelper/escHelper.dart';
 import '../hardwareSupport/escHelper/dataTypes.dart';
 
 class RideLogViewerArguments {
-  final UserSettings userSettings;
-  final LogInfoItem logFileInfo;
-  final FileImage imageBoardAvatar;
+  final UserSettings? userSettings;
+  final LogInfoItem? logFileInfo;
+  final FileImage? imageBoardAvatar;
 
   RideLogViewerArguments(this.logFileInfo,this.userSettings, this.imageBoardAvatar);
 }
@@ -39,14 +39,14 @@ class RideLogViewer extends StatefulWidget {
 
 class RideLogViewerState extends State<RideLogViewer> {
   final GlobalKey<State> _keyLoader = new GlobalKey<State>();
-  RideLogViewerArguments myArguments;
+  RideLogViewerArguments? myArguments;
   String thisRideLog = "";
-  List<String> thisRideLogEntries;
-  List<LatLng> _positionEntries;
+  List<String>? thisRideLogEntries;
+  List<LatLng>? _positionEntries;
   MapController _mapController = new MapController();
   List<Marker> mapMakers = [];
 
-  RideLogChartData currentSelection;
+  RideLogChartData? currentSelection;
 
   PublishSubject<RideLogChartData> eventObservable = new PublishSubject();
 
@@ -704,7 +704,7 @@ class RideLogViewerState extends State<RideLogViewer> {
               width: 50.0,
               height: 50.0,
               point: _positionEntries.last,
-              builder: (ctx) =>
+              child:
               new Container(
                 margin: EdgeInsets.fromLTRB(0, 0, 0, 0),
                 child: GestureDetector(
@@ -1011,7 +1011,7 @@ class RideLogViewerState extends State<RideLogViewer> {
         width: 50.0,
         height: 50.0,
         point: selectNearestGPSPoint(_tsESCMaxBatteryAmps.time,gpsLatLngMap),
-        builder: (ctx) =>
+        child:
         new Container(
           margin: EdgeInsets.fromLTRB(0, 0, 0, 25),
           child: GestureDetector(
@@ -1030,7 +1030,7 @@ class RideLogViewerState extends State<RideLogViewer> {
         width: 50.0,
         height: 50.0,
         point: selectNearestGPSPoint(_tsESCMaxESCTemp.time,gpsLatLngMap),
-        builder: (ctx) =>
+        child:
         new Container(
           margin: EdgeInsets.fromLTRB(0, 0, 0, 25),
           child: GestureDetector(
@@ -1049,7 +1049,7 @@ class RideLogViewerState extends State<RideLogViewer> {
         width: 50.0,
         height: 50.0,
         point: selectNearestGPSPoint(_tsESCMaxSpeed.time,gpsLatLngMap),
-        builder: (ctx) =>
+        child:
         new Container(
           margin: EdgeInsets.fromLTRB(0, 0, 0, 25),
           child: GestureDetector(
@@ -1098,7 +1098,7 @@ class RideLogViewerState extends State<RideLogViewer> {
             width: 100.0,
             height: 100.0,
             point: _positionEntries.first,
-            builder: (ctx) =>
+            child:
             new Container(
               margin: EdgeInsets.fromLTRB(0, 0, 0, 50),
               child: new Image(image: AssetImage("assets/map_start.png")),
@@ -1110,7 +1110,7 @@ class RideLogViewerState extends State<RideLogViewer> {
         width: 100.0,
         height: 100.0,
         point: _positionEntries.last,
-        builder: (ctx) =>
+        child:
         new Container(
           margin: EdgeInsets.fromLTRB(30, 0, 0, 50),
           child: new Image(image: AssetImage("assets/map_end.png")),
@@ -1346,24 +1346,31 @@ class RideLogViewerState extends State<RideLogViewer> {
                   SizedBox(height: MediaQuery.of(context).size.height * 0.25,
                     child: FlutterMap(
                       mapController: _mapController,
-                      options: new MapOptions(
-                        bounds: LatLngBounds.fromPoints(_positionEntries),
-                        boundsOptions: FitBoundsOptions(padding: EdgeInsets.all(20)),
+                      options: MapOptions(
+                        initialCenter: _positionEntries.isNotEmpty
+                            ? _positionEntries[_positionEntries.length ~/ 2]
+                            : const LatLng(0, 0),
+                        initialZoom: 14,
+                        onMapReady: () {
+                          if (_positionEntries.isNotEmpty) {
+                            _mapController.fitCamera(
+                              CameraFit.bounds(
+                                bounds: LatLngBounds.fromPoints(_positionEntries),
+                                padding: const EdgeInsets.all(20),
+                              ),
+                            );
+                          }
+                        },
                       ),
-                      layers: [
-                        new TileLayerOptions(
-                            urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                            subdomains: ['a', 'b', 'c']
+                      children: [
+                        TileLayer(
+                          urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
                         ),
-
-                        new PolylineLayerOptions(
-                            polylines: [routePolyLine],
-                            polylineCulling: true
+                        PolylineLayer(
+                          polylines: [routePolyLine],
                         ),
-
-                        new MarkerLayerOptions(
-                            markers: mapMakers,
-                            usePxCache: false,
+                        MarkerLayer(
+                          markers: mapMakers,
                         ),
                       ],
                     ),
@@ -1424,7 +1431,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                                     width: 50.0,
                                     height: 50.0,
                                     point: closestMapPoint,
-                                    builder: (ctx) =>
+                                    child:
                                     new Container(
                                       margin: EdgeInsets.fromLTRB(0, 0, 0, 10),
                                       child: CircleAvatar(
@@ -1434,7 +1441,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                                       )
                                     ),
                                   );
-                                  _mapController.move(closestMapPoint, _mapController.zoom);
+                                  _mapController.move(closestMapPoint, _mapController.camera.zoom);
                                 }
                               }
                             }
@@ -1484,29 +1491,29 @@ class RideLogViewerState extends State<RideLogViewer> {
 }
 /// Simple time series data type.
 class TimeSeriesESC {
-  final DateTime time;
-  double voltage;
-  double tempMotor;
-  double tempMotor2;
-  double tempMotor3;
-  double tempMotor4;
-  double tempMosfet;
-  double tempMosfet2;
-  double tempMosfet3;
-  double tempMosfet4;
-  double dutyCycle;
-  double currentMotor;
-  double currentMotor2;
-  double currentMotor3;
-  double currentMotor4;
-  double currentInput;
-  double currentInput2;
-  double currentInput3;
-  double currentInput4;
-  double speed;
-  double distance;
-  double consumption;
-  int faultCode;
+  final DateTime? time;
+  double? voltage;
+  double? tempMotor;
+  double? tempMotor2;
+  double? tempMotor3;
+  double? tempMotor4;
+  double? tempMosfet;
+  double? tempMosfet2;
+  double? tempMosfet3;
+  double? tempMosfet4;
+  double? dutyCycle;
+  double? currentMotor;
+  double? currentMotor2;
+  double? currentMotor3;
+  double? currentMotor4;
+  double? currentInput;
+  double? currentInput2;
+  double? currentInput3;
+  double? currentInput4;
+  double? speed;
+  double? distance;
+  double? consumption;
+  int? faultCode;
 
   TimeSeriesESC({
       this.time,

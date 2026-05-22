@@ -6,7 +6,7 @@ import 'package:rxdart/rxdart.dart';
 
 class FlutterMapWidget extends StatefulWidget {
   FlutterMapWidget({this.routeTakenLocations});
-  final List<LatLng> routeTakenLocations;
+  final List<LatLng>? routeTakenLocations;
   FlutterMapWidgetState createState() => FlutterMapWidgetState();
 
   static const String routeName = "/fluttermap";

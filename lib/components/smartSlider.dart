@@ -7,12 +7,12 @@ import 'package:flutter/material.dart';
 class SmartSlider extends Slider {
 
   const SmartSlider({
-    @required this.value,
-    @required this.onChanged,
-    @required this.mini, //TODO: super().assert(value >= min && value <= max) will fail without renaming
-    @required this.maxi, //TODO: Discover a way to use min/max without failing super()'s assert
+    required this.value,
+    required this.onChanged,
+    required this.mini, //TODO: super().assert(value >= min && value <= max) will fail without renaming
+    required this.maxi, //TODO: Discover a way to use min/max without failing super()'s assert
     this.divisions,
-    @required this.label,
+    required this.label,
   })
       : assert(value != null),
         assert(mini != null),
@@ -91,7 +91,7 @@ class SmartSlider extends Slider {
   /// Typically used with [label] to show the current discrete value.
   ///
   /// If null, the slider is continuous.
-  final int divisions;
+  final int? divisions;
 
   /// A label to show above the slider when the slider is active.
   ///

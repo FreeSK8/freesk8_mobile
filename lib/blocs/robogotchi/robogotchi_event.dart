@@ -10,10 +10,10 @@ abstract class RobogotchiEvent extends Equatable {
 
 class RobogotchiConnected extends RobogotchiEvent {
   const RobogotchiConnected({this.txLoggerChar, this.isGotchiPro = false});
-  final BluetoothCharacteristic txLoggerChar;
+  final BluetoothCharacteristic? txLoggerChar;
   final bool isGotchiPro;
   @override
-  List<Object> get props => [txLoggerChar, isGotchiPro];
+  List<Object?> get props => [txLoggerChar, isGotchiPro];
 }
 
 class RobogotchiDisconnectedEvent extends RobogotchiEvent {
@@ -29,10 +29,10 @@ class RobogotchiStatusReceived extends RobogotchiEvent {
 
 class RobogotchiVersionReceived extends RobogotchiEvent {
   const RobogotchiVersionReceived({this.version, this.isGotchiPro = false});
-  final String version;
+  final String? version;
   final bool isGotchiPro;
   @override
-  List<Object> get props => [version, isGotchiPro];
+  List<Object?> get props => [version, isGotchiPro];
 }
 
 class RobogotchiInitStepCompleted extends RobogotchiEvent {

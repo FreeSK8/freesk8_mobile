@@ -21,10 +21,10 @@ class LocationPermissionDenied extends LocationState {
 
 class LocationTracking extends LocationState {
   const LocationTracking({this.current, this.route = const []});
-  final LatLng current;
+  final LatLng? current;
   final List<LatLng> route;
 
-  LocationTracking copyWith({LatLng current, List<LatLng> route}) {
+  LocationTracking copyWith({LatLng? current, List<LatLng>? route}) {
     return LocationTracking(
       current: current ?? this.current,
       route: route ?? this.route,
@@ -32,7 +32,7 @@ class LocationTracking extends LocationState {
   }
 
   @override
-  List<Object> get props => [current, route];
+  List<Object?> get props => [current, route];
 }
 
 class LocationError extends LocationState {

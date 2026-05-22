@@ -33,11 +33,11 @@ class FileSyncDownloading extends FileSyncState {
       bytesTotal > 0 ? bytesReceived / bytesTotal : 0.0;
 
   FileSyncDownloading copyWith({
-    String filename,
-    int bytesReceived,
-    int bytesTotal,
-    List<FileToSync> fileList,
-    int currentFileIndex,
+    String? filename,
+    int? bytesReceived,
+    int? bytesTotal,
+    List<FileToSync>? fileList,
+    int? currentFileIndex,
   }) {
     return FileSyncDownloading(
       filename: filename ?? this.filename,

@@ -57,8 +57,8 @@ class BLEFirmwareVersionReceived extends BLEConnectionEvent {
 
 class BLEDeviceVersionReceived extends BLEConnectionEvent {
   const BLEDeviceVersionReceived({this.version, this.isGotchiPro = false});
-  final String version;
+  final String? version;
   final bool isGotchiPro;
   @override
-  List<Object> get props => [version, isGotchiPro];
+  List<Object?> get props => [version, isGotchiPro];
 }

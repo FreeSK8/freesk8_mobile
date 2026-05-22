@@ -19,7 +19,7 @@ import 'dart:collection';
 
 import 'package:table_calendar/table_calendar.dart';
 
-void setLandscapeOrientation({bool enabled}) {
+void setLandscapeOrientation({bool? enabled}) {
   SystemChrome.setPreferredOrientations(
       enabled ? [
         DeviceOrientation.portraitUp,
@@ -199,7 +199,7 @@ prettyPrintDuration(Duration d) => d.toString().split('.').first.padLeft(8, "0")
 // RegExp for FilteringTextInputFormatter that allows only positive decimal values
 final RegExp formatPositiveDouble = RegExp(r'^[+-]?([0-9]+([.,][0-9]*)?|[.,][0-9]+)$');
 
-Uint8List simpleVESCRequest(int messageIndex, {int optionalCANID}) {
+Uint8List simpleVESCRequest(int messageIndex, {int? optionalCANID}) {
   bool sendCAN = optionalCANID != null;
   var byteData = new ByteData(sendCAN ? 8:6); //<start><payloadLen><packetID><crc1><crc2><end>
   byteData.setUint8(0, 0x02);
@@ -385,7 +385,7 @@ double doublePrecision(double val, int places) {
 class NumberTextInputFormatter extends TextInputFormatter {
   NumberTextInputFormatter({this.decimalRange}) : assert(decimalRange == null || decimalRange > 0);
 
-  final int decimalRange;
+  final int? decimalRange;
 
   @override
   TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {

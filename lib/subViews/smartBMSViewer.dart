@@ -44,10 +44,10 @@ class SmartBMSArguments {
 
 
   SmartBMSArguments({
-    @required this.dataStream,
-    @required this.theTXCharacteristic,
-    @required this.myUserSettings,
-    @required this.changeSmartBMSID,
+    required this.dataStream,
+    required this.theTXCharacteristic,
+    required this.myUserSettings,
+    required this.changeSmartBMSID,
 
 
   });
@@ -63,15 +63,15 @@ class SmartBMSViewer extends StatefulWidget {
 class SmartBMSViewerState extends State<SmartBMSViewer> {
   bool changesMade = false; //TODO: remove if unused
 
-  static SmartBMSArguments myArguments;
+  static SmartBMSArguments? myArguments;
 
-  static StreamSubscription<DieBieMSTelemetry> bmsTelemetrySubscription;
+  static StreamSubscription<DieBieMSTelemetry>? bmsTelemetrySubscription;
 
   DieBieMSTelemetry bmsTelemetry = new DieBieMSTelemetry();
 
   static int _smartBMSID = 10;
 
-  static Timer telemetryTimer;
+  static Timer? telemetryTimer;
 
   @override
   void initState() {

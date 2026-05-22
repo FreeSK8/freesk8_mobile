@@ -52,7 +52,7 @@ class ESCCANDevicesReceived extends ESCConfigEvent {
 
 class ESCRespondingChanged extends ESCConfigEvent {
   const ESCRespondingChanged({this.isResponding});
-  final bool isResponding;
+  final bool? isResponding;
   @override
-  List<Object> get props => [isResponding];
+  List<Object?> get props => [isResponding];
 }

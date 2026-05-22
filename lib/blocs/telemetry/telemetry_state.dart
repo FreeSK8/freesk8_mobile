@@ -23,23 +23,23 @@ class TelemetryActive extends TelemetryState {
     this.connectedVehicleConsumption = 0.0,
   });
 
-  final ESCTelemetry packet;
+  final ESCTelemetry? packet;
   final Map<int, ESCTelemetry> telemetryMap;
   final List<ESCFault> escFaults;
-  final DieBieMSTelemetry dieBieMS;
+  final DieBieMSTelemetry? dieBieMS;
   final bool isLoggerLogging;
   final double connectedVehicleOdometer;
   final double connectedVehicleConsumption;
 
   TelemetryActive copyWith({
-    ESCTelemetry packet,
-    Map<int, ESCTelemetry> telemetryMap,
-    List<ESCFault> escFaults,
-    DieBieMSTelemetry dieBieMS,
-    bool clearDieBieMS,
-    bool isLoggerLogging,
-    double connectedVehicleOdometer,
-    double connectedVehicleConsumption,
+    ESCTelemetry? packet,
+    Map<int, ESCTelemetry>? telemetryMap,
+    List<ESCFault>? escFaults,
+    DieBieMSTelemetry? dieBieMS,
+    bool? clearDieBieMS,
+    bool? isLoggerLogging,
+    double? connectedVehicleOdometer,
+    double? connectedVehicleConsumption,
   }) {
     return TelemetryActive(
       packet: packet ?? this.packet,
@@ -53,7 +53,7 @@ class TelemetryActive extends TelemetryState {
   }
 
   @override
-  List<Object> get props => [packet, telemetryMap, escFaults, dieBieMS, isLoggerLogging, connectedVehicleOdometer, connectedVehicleConsumption];
+  List<Object?> get props => [packet, telemetryMap, escFaults, dieBieMS, isLoggerLogging, connectedVehicleOdometer, connectedVehicleConsumption];
 }
 
 class TelemetryError extends TelemetryState {

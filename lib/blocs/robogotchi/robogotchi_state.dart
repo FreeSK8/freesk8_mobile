@@ -26,14 +26,14 @@ class RobogotchiReady extends RobogotchiState {
     this.isGotchiPro = false,
   });
 
-  final RobogotchiStatus status;
+  final RobogotchiStatus? status;
   final String version;
   final bool isGotchiPro;
 
   RobogotchiReady copyWith({
-    RobogotchiStatus status,
-    String version,
-    bool isGotchiPro,
+    RobogotchiStatus? status,
+    String? version,
+    bool? isGotchiPro,
   }) {
     return RobogotchiReady(
       status: status ?? this.status,
@@ -43,7 +43,7 @@ class RobogotchiReady extends RobogotchiState {
   }
 
   @override
-  List<Object> get props => [status, version, isGotchiPro];
+  List<Object?> get props => [status, version, isGotchiPro];
 }
 
 class RobogotchiError extends RobogotchiState {

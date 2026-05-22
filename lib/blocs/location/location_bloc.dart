@@ -15,7 +15,7 @@ class LocationBloc extends Bloc<LocationEvent, LocationState> {
     on<LocationPermissionDenied>(_onPermissionDenied);
   }
 
-  StreamSubscription<Position> _positionSubscription;
+  StreamSubscription<Position>? _positionSubscription;
 
   static const LocationSettings _locationSettings = LocationSettings(
     accuracy: LocationAccuracy.high,
@@ -79,8 +79,8 @@ class LocationBloc extends Bloc<LocationEvent, LocationState> {
 
   void _onRouteCleared(LocationRouteCleared event, Emitter<LocationState> emit) {
     if (state is LocationTracking) {
-      final current = state as LocationTracking;
-      emit(current.copyWith(route: current.current != null ? [current.current] : []));
+      final s = state as LocationTracking;
+      emit(s.copyWith(route: s.current != null ? [s.current!] : []));
     }
   }
 

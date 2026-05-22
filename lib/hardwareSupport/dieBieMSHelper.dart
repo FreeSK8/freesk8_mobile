@@ -70,7 +70,7 @@ class DieBieMSHelper {
     return latestTelemetry;
   }
   
-  DieBieMSTelemetry processTelemetry(Uint8List payload, int expectedCANID) {
+  DieBieMSTelemetry? processTelemetry(Uint8List payload, int expectedCANID) {
     int index = 1;
     DieBieMSTelemetry parsedTelemetry = new DieBieMSTelemetry();
     parsedTelemetry.packVoltage = buffer_get_float32(payload, index, 1e3); index += 4;
