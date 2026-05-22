@@ -14,17 +14,17 @@ class gotchiProOTA extends StatefulWidget {
 }
 
 class gotchiProOTAState extends State<gotchiProOTA> with SingleTickerProviderStateMixin {
-  StreamSubscription<ScanResult> scanSubscription;
+  StreamSubscription<ScanResult>? scanSubscription;
   List<ScanResult> scanResults = <ScanResult>[];
   bool otaRunning = false;
 
-  String _deviceAddress;
+  String? _deviceAddress;
   int _percent = 0;
 
-  int _currentPart;
-  int _partsTotal;
+  int? _currentPart;
+  int? _partsTotal;
 
-  AnimationController _animationController;
+  AnimationController? _animationController;
 
   @override
   void initState() {
@@ -248,11 +248,13 @@ class gotchiProOTAState extends State<gotchiProOTA> with SingleTickerProviderSta
 
 
 class DeviceItem extends StatelessWidget {
-  final ScanResult scanResult;
+  final ScanResult? scanResult;
 
-  final VoidCallback onPress;
+  final VoidCallback? onPress;
 
   DeviceItem({this.scanResult, this.onPress});
+
+
 
   @override
   Widget build(BuildContext context) {

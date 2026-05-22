@@ -38,7 +38,7 @@ class VehicleManager extends StatefulWidget {
 
 class VehicleManagerState extends State<VehicleManager> {
   bool changesMadeToVehicle = false;
-  VehicleManagerArguments myArguments;
+  VehicleManagerArguments? myArguments;
   int trendDays = 7;
   bool loadingTrends = false;
 

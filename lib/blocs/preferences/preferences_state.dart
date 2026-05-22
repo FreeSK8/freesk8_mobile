@@ -27,15 +27,15 @@ class PreferencesState extends Equatable {
       showBatteryPercentage ? 2 : showVoltsPerCell ? 1 : 0;
 
   PreferencesState copyWith({
-    bool showWhWithRegen,
-    bool showVoltsPerCell,
-    bool showBatteryPercentage,
-    bool showRangeEstimate,
-    bool hideMap,
-    bool allowFontResize,
-    double fontSizeValues,
-    String rideLogSortClause,
-    bool loaded,
+    bool? showWhWithRegen,
+    bool? showVoltsPerCell,
+    bool? showBatteryPercentage,
+    bool? showRangeEstimate,
+    bool? hideMap,
+    bool? allowFontResize,
+    double? fontSizeValues,
+    String? rideLogSortClause,
+    bool? loaded,
   }) {
     return PreferencesState(
       showWhWithRegen: showWhWithRegen ?? this.showWhWithRegen,

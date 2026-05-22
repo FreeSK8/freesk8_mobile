@@ -29,7 +29,7 @@ class ESCProfileEditorState extends State<ESCProfileEditor> {
   TextEditingController tecSpeedLimitRev = TextEditingController();
   TextEditingController tecCurrentMax = TextEditingController();
   TextEditingController tecCurrentMin = TextEditingController();
-  bool enablePowerLimit;
+  bool? enablePowerLimit;
   TextEditingController tecWattsMax = TextEditingController();
   TextEditingController tecWattsMin = TextEditingController();
 

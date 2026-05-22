@@ -27,11 +27,11 @@ class MotorConfigurationArguments {
   final ESC_FIRMWARE escFirmwareVersion;
 
   MotorConfigurationArguments({
-    @required this.dataStream,
-    @required this.theTXCharacteristic,
-    @required this.motorConfiguration,
-    @required this.discoveredCANDevices,
-    @required this.escFirmwareVersion
+    required this.dataStream,
+    required this.theTXCharacteristic,
+    required this.motorConfiguration,
+    required this.discoveredCANDevices,
+    required this.escFirmwareVersion
   });
 }
 
@@ -45,21 +45,21 @@ class MotorConfigurationEditor extends StatefulWidget {
 class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
   bool changesMade = false; //TODO: remove if unused
 
-  static MotorConfigurationArguments myArguments;
+  static MotorConfigurationArguments? myArguments;
 
-  static StreamSubscription<MCCONF> streamSubscription;
-  static BluetoothCharacteristic theTXCharacteristic;
-  static List<int> discoveredCANDevices;
+  static StreamSubscription<MCCONF>? streamSubscription;
+  static BluetoothCharacteristic? theTXCharacteristic;
+  static List<int>? discoveredCANDevices;
 
 
-  int _selectedCANFwdID;
-  int _invalidCANID;
+  int? _selectedCANFwdID;
+  int? _invalidCANID;
 
   bool _writeESCInProgress = false;
 
-  static ESC_FIRMWARE escFirmwareVersion;
-  static MCCONF escMotorConfiguration;
-  MCCONF _mcconfClipboard;
+  static ESC_FIRMWARE? escFirmwareVersion;
+  static MCCONF? escMotorConfiguration;
+  MCCONF? _mcconfClipboard;
   
   final tecBatterySeriesCount = TextEditingController();
   final tecBatteryCapacityAh = TextEditingController();

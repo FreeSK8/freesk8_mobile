@@ -16,18 +16,18 @@ class RideLogChartData {
 
 class RideLogViewChartOverlay extends StatefulWidget {
   RideLogViewChartOverlay({this.eventObservable, this.imperialDistance});
-  final PublishSubject<RideLogChartData> eventObservable;
-  final bool imperialDistance;
+  final PublishSubject<RideLogChartData>? eventObservable;
+  final bool? imperialDistance;
   RideLogViewChartOverlayState createState() => new RideLogViewChartOverlayState(this.eventObservable);
 }
 
 class RideLogViewChartOverlayState extends State<RideLogViewChartOverlay> {
 
-  DateTime selectedDateTime;
-  TimeSeriesESC selectedESCData;
+  DateTime? selectedDateTime;
+  TimeSeriesESC? selectedESCData;
 
-  StreamSubscription<RideLogChartData> subscription;
-  PublishSubject<RideLogChartData> eventObservable;
+  StreamSubscription<RideLogChartData>? subscription;
+  PublishSubject<RideLogChartData>? eventObservable;
 
   RideLogViewChartOverlayState(PublishSubject<RideLogChartData> eventObservable) {
     this.eventObservable = eventObservable;

@@ -75,7 +75,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
 //  DateTime _selectedDay = DateTime.now();
   CalendarFormat _calendarFormat = CalendarFormat.twoWeeks;
   DateTime _focusedDay = DateTime.now();
-  DateTime _selectedDay;
+  DateTime? _selectedDay;
 
   @override
   void initState() {

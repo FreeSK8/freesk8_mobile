@@ -7,7 +7,7 @@ import '../../subViews/inputConfigurationEditor.dart';
 abstract class ESCConfigState extends Equatable {
   const ESCConfigState();
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class ESCConfigInitial extends ESCConfigState {
@@ -29,22 +29,22 @@ class ESCConfigLoaded extends ESCConfigState {
     this.isResponding = false,
   });
 
-  final ESCFirmware firmware;
-  final MCCONF mcconf;
-  final APPCONF appconf;
-  final InputCalibration calibration;
+  final ESCFirmware? firmware;
+  final MCCONF? mcconf;
+  final APPCONF? appconf;
+  final InputCalibration? calibration;
   final List<int> canDevices;
-  final List<int> mcconfDefaults;
+  final List<int>? mcconfDefaults;
   final bool isResponding;
 
   ESCConfigLoaded copyWith({
-    ESCFirmware firmware,
-    MCCONF mcconf,
-    APPCONF appconf,
-    InputCalibration calibration,
-    List<int> canDevices,
-    List<int> mcconfDefaults,
-    bool isResponding,
+    ESCFirmware? firmware,
+    MCCONF? mcconf,
+    APPCONF? appconf,
+    InputCalibration? calibration,
+    List<int>? canDevices,
+    List<int>? mcconfDefaults,
+    bool? isResponding,
   }) {
     return ESCConfigLoaded(
       firmware: firmware ?? this.firmware,
@@ -58,12 +58,12 @@ class ESCConfigLoaded extends ESCConfigState {
   }
 
   @override
-  List<Object> get props => [firmware, mcconf, appconf, calibration, canDevices, isResponding];
+  List<Object?> get props => [firmware, mcconf, appconf, calibration, canDevices, isResponding];
 }
 
 class ESCConfigError extends ESCConfigState {
   const ESCConfigError(this.message);
   final String message;
   @override
-  List<Object> get props => [message];
+  List<Object?> get props => [message];
 }

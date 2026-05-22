@@ -27,13 +27,13 @@ import 'package:flutter_document_picker/flutter_document_picker.dart';
 
 class ESK8Configuration extends StatefulWidget {
   ESK8Configuration({
-    @required this.myUserSettings,
+    required this.myUserSettings,
     this.currentDevice,
     this.theTXCharacteristic,
     this.updateCachedAvatar,
     this.escFirmwareVersion,
     this.updateComputedVehicleStatistics,
-    @required this.applicationDocumentsDirectory,
+    required this.applicationDocumentsDirectory,
     this.reloadUserSettings,
     this.telemetryStream,
   });
@@ -55,7 +55,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
   final GlobalKey<State> _keyLoader = new GlobalKey<State>();
 
-  FileImage _boardAvatar;
+  FileImage? _boardAvatar;
 
   bool _showAdvanced = false;
 

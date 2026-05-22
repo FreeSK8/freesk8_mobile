@@ -65,13 +65,13 @@ class PreferencesCubit extends Cubit<PreferencesState> {
   }
 
   void increaseFontSize() {
-    final newSize = (state.fontSizeValues + 1).clamp(10.0, 50.0);
+    final newSize = (state.fontSizeValues + 1).clamp(14.0, 50.0);
     emit(state.copyWith(fontSizeValues: newSize));
     _persist();
   }
 
   void decreaseFontSize() {
-    final newSize = (state.fontSizeValues - 1).clamp(10.0, 50.0);
+    final newSize = (state.fontSizeValues - 1).clamp(14.0, 50.0);
     emit(state.copyWith(fontSizeValues: newSize));
     _persist();
   }

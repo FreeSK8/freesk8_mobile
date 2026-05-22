@@ -6,28 +6,28 @@ import 'package:sqflite/sqflite.dart';
 import '../globalUtilities.dart';
 
 class LogInfoItem {
-  final DateTime dateTime;
-  final String boardID;
-  final String boardAlias;
-  final String logFilePath;
-  final double avgMovingSpeed;
-  final double avgMovingSpeedGPS;
-  final double avgSpeed;
-  final double avgSpeedGPS;
-  final double maxSpeed;
-  final double maxSpeedGPS;
-  final double altitudeMax;
-  final double altitudeMin;
-  final double maxAmpsBattery;
-  final double maxAmpsMotors;
-  final double wattHoursTotal;
-  final double wattHoursRegenTotal;
-  final double distance;
-  final double distanceGPS;
-  final int    durationSeconds;
-  final int    faultCount;
-  final String rideName;
-  final String notes;
+  final DateTime? dateTime;
+  final String? boardID;
+  final String? boardAlias;
+  final String? logFilePath;
+  final double? avgMovingSpeed;
+  final double? avgMovingSpeedGPS;
+  final double? avgSpeed;
+  final double? avgSpeedGPS;
+  final double? maxSpeed;
+  final double? maxSpeedGPS;
+  final double? altitudeMax;
+  final double? altitudeMin;
+  final double? maxAmpsBattery;
+  final double? maxAmpsMotors;
+  final double? wattHoursTotal;
+  final double? wattHoursRegenTotal;
+  final double? distance;
+  final double? distanceGPS;
+  final int?    durationSeconds;
+  final int?    faultCount;
+  final String? rideName;
+  final String? notes;
 
   LogInfoItem({
     this.dateTime,

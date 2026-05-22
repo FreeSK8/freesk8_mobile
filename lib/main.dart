@@ -105,7 +105,7 @@ void main() {
     MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => PreferencesCubit()..loadPreferences()),
-        BlocProvider(create: (_) => LocationBloc()..add(const LocationStarted())),
+        BlocProvider(create: (_) => LocationBloc()),
         BlocProvider(create: (_) => TelemetryBloc()),
         BlocProvider(create: (_) => BLEConnectionBloc()),
         BlocProvider(create: (_) => FileSyncBloc()),
@@ -169,8 +169,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   /* User's current location for map */
   var locationOptions = const LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: 0);
 
-  LatLng lastLocation;
-  DateTime lastTimeLocation;
+  LatLng? lastLocation;
+  DateTime? lastTimeLocation;
   List<LatLng> routeTakenLocations = [];
   
   /* Testing preferences, for fun, keep a counter of how many times the app was opened */
@@ -191,36 +191,36 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
    *---A really nice renee should clean all this up---*
    */
   // Create a tab controller
-  TabController controller;
+  TabController? controller;
 
-  BLEHelper bleHelper;
-  ESCHelper escHelper;
-  DieBieMSHelper dieBieMSHelper;
+  BLEHelper? bleHelper;
+  ESCHelper? escHelper;
+  DieBieMSHelper? dieBieMSHelper;
   //final flutterReactiveBle = FlutterReactiveBle();
 
   static ESC_FIRMWARE escFirmwareVersion = ESC_FIRMWARE.UNSUPPORTED;
-  static MCCONF escMotorConfiguration;
-  static APPCONF escApplicationConfiguration;
+  static MCCONF? escMotorConfiguration;
+  static APPCONF? escApplicationConfiguration;
   static InputCalibration inputCalibration = new InputCalibration();
 
-  static Uint8List escMotorConfigurationDefaults;
+  static Uint8List? escMotorConfigurationDefaults;
   static List<int> _validCANBusDeviceIDs = [];
-  static String robogotchiVersion;
-  static String gotchiproVersion;
+  static String? robogotchiVersion;
+  static String? gotchiproVersion;
 
   static bool deviceIsConnected = false;
   static bool unexpectedDisconnect = false;
   static bool deviceHasDisconnected = false;
-  static BluetoothDevice _connectedDevice;
+  static BluetoothDevice? _connectedDevice;
   static bool isConnectedDeviceKnown = false;
   static bool isESCResponding = false;
-  static List<BluetoothService> _services;
-  static StreamSubscription<BluetoothConnectionState> _connectedDeviceStreamSubscription;
+  static List<BluetoothService>? _services;
+  static StreamSubscription<BluetoothConnectionState>? _connectedDeviceStreamSubscription;
   final GeolocatorPlatform _geolocatorPlatform = GeolocatorPlatform.instance;
-  static StreamSubscription<Position> positionStream;
+  static StreamSubscription<Position>? positionStream;
 
-  MemoryImage cachedBoardAvatar;
-  String applicationDocumentsDirectory;
+  MemoryImage? cachedBoardAvatar;
+  String? applicationDocumentsDirectory;
 
   StreamController<ESCTelemetry> telemetryStream = StreamController<ESCTelemetry>.broadcast();
   StreamController<MCCONF> mcconfStream = StreamController<MCCONF>.broadcast();
@@ -608,8 +608,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   }
 
   // TCP Socket Server
-  static ServerSocket serverTCPSocket;
-  static Socket clientTCPSocket;
+  static ServerSocket? serverTCPSocket;
+  static Socket? clientTCPSocket;
   final int tcpBridgePort = 65102;
   void disconnectTCPClient() {
     if (clientTCPSocket != null) {
@@ -866,14 +866,14 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   final Guid txLoggerCharacteristicUUID = new Guid("6e400004-b5a3-f393-e0a9-e50e24dcca9e");
   final Guid rxLoggerCharacteristicUUID = new Guid("6e400005-b5a3-f393-e0a9-e50e24dcca9e");
 
-  static BluetoothService theServiceWeWant;
-  static BluetoothCharacteristic theTXCharacteristic;
-  static BluetoothCharacteristic theRXCharacteristic;
-  static BluetoothCharacteristic theTXLoggerCharacteristic;
-  static BluetoothCharacteristic theRXLoggerCharacteristic;
-  static StreamSubscription<List<int>> escRXDataSubscription;
-  static StreamSubscription<List<int>> dieBieMSRXDataSubscription;
-  static StreamSubscription<List<int>> loggerRXDataSubscription;
+  static BluetoothService? theServiceWeWant;
+  static BluetoothCharacteristic? theTXCharacteristic;
+  static BluetoothCharacteristic? theRXCharacteristic;
+  static BluetoothCharacteristic? theTXLoggerCharacteristic;
+  static BluetoothCharacteristic? theRXLoggerCharacteristic;
+  static StreamSubscription<List<int>>? escRXDataSubscription;
+  static StreamSubscription<List<int>>? dieBieMSRXDataSubscription;
+  static StreamSubscription<List<int>>? loggerRXDataSubscription;
 
   static ESCFirmware firmwarePacket = new ESCFirmware();
   static ESCTelemetry telemetryPacket = new ESCTelemetry();
@@ -881,10 +881,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   static DieBieMSTelemetry dieBieMSTelemetry = new DieBieMSTelemetry();
   static int smartBMSCANID = 10;
   static bool _showDieBieMS = false;
-  static Timer telemetryTimer;
-  static Timer _gotchiStatusTimer;
-  static Timer _timerMonitor;
-  static Timer _initMsgSequencer;
+  static Timer? telemetryTimer;
+  static Timer? _gotchiStatusTimer;
+  static Timer? _timerMonitor;
+  static Timer? _initMsgSequencer;
   static int bleTXErrorCount = 0;
   static bool _deviceIsRobogotchi = false;
   static bool _deviceIsGotchiPro = false;
@@ -1092,7 +1092,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       await theRXLoggerCharacteristic.setNotifyValue(true);
     }
 
-    if(foundRXLogger) loggerRXDataSubscription = theRXLoggerCharacteristic.value.listen((value) async {
+    if(foundRXLogger) loggerRXDataSubscription = theRXLoggerCharacteristic.lastValueStream.listen((value) async {
       if (value.length == 0) {
         return; // Nothing to process. This happens on initial connection
       }
@@ -1699,7 +1699,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     // Setup the RX characteristic to notify on value change
     await theRXCharacteristic.setNotifyValue(true);
     // Setup the RX characteristic callback function
-    escRXDataSubscription = theRXCharacteristic.value.listen((value) {
+    escRXDataSubscription = theRXCharacteristic.lastValueStream.listen((value) {
 
       // If we have the TCP Socket server running and a client connected forward the data
       if(serverTCPSocket != null && clientTCPSocket != null) {

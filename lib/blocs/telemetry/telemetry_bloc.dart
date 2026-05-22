@@ -7,13 +7,13 @@ import 'telemetry_state.dart';
 // Private internal events used by convenience methods below
 class _TelemetryDirectUpdate extends TelemetryEvent {
   const _TelemetryDirectUpdate({this.packet, this.telemetryMap});
-  final ESCTelemetry packet;
-  final Map<int, ESCTelemetry> telemetryMap;
+  final ESCTelemetry? packet;
+  final Map<int, ESCTelemetry>? telemetryMap;
 }
 
 class _DieBieMSDirectUpdate extends TelemetryEvent {
   const _DieBieMSDirectUpdate(this.dieBieMS);
-  final DieBieMSTelemetry dieBieMS;
+  final DieBieMSTelemetry? dieBieMS;
 }
 
 class _DieBieMSClear extends TelemetryEvent {
@@ -66,9 +66,10 @@ class TelemetryBloc extends Bloc<TelemetryEvent, TelemetryState> {
 
   void _onVehicleStatsUpdated(TelemetryVehicleStatsUpdated event, Emitter<TelemetryState> emit) {
     if (state is TelemetryActive) {
-      emit((state as TelemetryActive).copyWith(
-        connectedVehicleOdometer: event.odometer,
-        connectedVehicleConsumption: event.consumption,
+      final s = state as TelemetryActive;
+      emit(s.copyWith(
+        connectedVehicleOdometer: event.odometer ?? s.connectedVehicleOdometer,
+        connectedVehicleConsumption: event.consumption ?? s.connectedVehicleConsumption,
       ));
     }
   }

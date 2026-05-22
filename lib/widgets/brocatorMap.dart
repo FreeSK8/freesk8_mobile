@@ -3,30 +3,30 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 class BrocatorMapData {
-  BrocatorMapData(
-      {
-        LatLng currentPosition,
-        List<Marker> mapMarkers,
-        MapController mapController,
-        LatLng privacyZone,
-        double privacyZoneRadius,
-      }) {
-    this.mapMakers = mapMarkers;
+  BrocatorMapData({
+    LatLng? currentPosition,
+    List<Marker>? mapMarkers,
+    MapController? mapController,
+    LatLng? privacyZone,
+    double? privacyZoneRadius,
+  }) {
+    this.mapMakers = mapMarkers ?? [];
     this.currentPosition = currentPosition;
-    this.mapController = mapController;
+    this.mapController = mapController ?? MapController();
     this.privacyZone = privacyZone;
     this.privacyZoneRadius = privacyZoneRadius;
   }
-  LatLng currentPosition;
+  LatLng? currentPosition;
   List<Marker> mapMakers = [];
   MapController mapController = MapController();
-  LatLng privacyZone;
-  double privacyZoneRadius;
+  LatLng? privacyZone;
+  double? privacyZoneRadius;
 }
 
 class BrocatorMap extends StatefulWidget {
-  BrocatorMap({this.brocatorMapData});
-  final BrocatorMapData brocatorMapData;
+  const BrocatorMap({this.brocatorMapData, Key? key}) : super(key: key);
+  final BrocatorMapData? brocatorMapData;
+  @override
   BrocatorMapState createState() => BrocatorMapState();
 
   static const String routeName = "/brocatormap";
@@ -34,7 +34,7 @@ class BrocatorMap extends StatefulWidget {
 
 class BrocatorMapState extends State<BrocatorMap> {
 
-  static FlutterMap myMap;
+  static FlutterMap? myMap;
 
   @override
   void initState() {
@@ -50,22 +50,25 @@ class BrocatorMapState extends State<BrocatorMap> {
   Widget build(BuildContext context) {
     print("Build: brocatorMap");
 
+    final data = widget.brocatorMapData;
+    if (data == null) return const SizedBox.shrink();
+
     List<Widget> mapChildren = [];
     mapChildren.add(TileLayer(
       urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
       subdomains: const ['a', 'b', 'c'],
     ));
 
-    if (widget.brocatorMapData.privacyZone != null) {
+    if (data.privacyZone != null) {
       mapChildren.add(CircleLayer(
         circles: [
           CircleMarker(
-            point: widget.brocatorMapData.privacyZone,
+            point: data.privacyZone!,
             color: Colors.blue.withOpacity(0.3),
             borderStrokeWidth: 3.0,
             borderColor: Colors.blue,
             useRadiusInMeter: true,
-            radius: widget.brocatorMapData.privacyZoneRadius * 1000,
+            radius: (data.privacyZoneRadius ?? 0) * 1000,
           ),
         ],
       ));
@@ -73,18 +76,18 @@ class BrocatorMapState extends State<BrocatorMap> {
 
     //NOTE: If the markers aren't last in the children array their onTap events will not work
     mapChildren.add(MarkerLayer(
-      markers: widget.brocatorMapData.mapMakers,
+      markers: data.mapMakers,
     ));
 
     myMap = FlutterMap(
-      mapController: widget.brocatorMapData.mapController,
+      mapController: data.mapController,
       options: MapOptions(
-        initialCenter: widget.brocatorMapData.currentPosition,
+        initialCenter: data.currentPosition ?? const LatLng(0, 0),
         initialZoom: 13.0,
       ),
       children: mapChildren,
     );
 
-    return myMap;
+    return myMap!;
   }
 }

@@ -10,10 +10,10 @@ abstract class FileSyncEvent extends Equatable {
 
 class FileSyncStarted extends FileSyncEvent {
   const FileSyncStarted({this.txLoggerChar, this.eraseOnComplete = false});
-  final BluetoothCharacteristic txLoggerChar;
+  final BluetoothCharacteristic? txLoggerChar;
   final bool eraseOnComplete;
   @override
-  List<Object> get props => [txLoggerChar, eraseOnComplete];
+  List<Object?> get props => [txLoggerChar, eraseOnComplete];
 }
 
 class FileSyncAborted extends FileSyncEvent {

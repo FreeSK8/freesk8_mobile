@@ -6,12 +6,12 @@ import 'package:flutter/material.dart';
 import '../hardwareSupport/escHelper/appConf.dart';
 
 class CurvePainter extends CustomPainter {
-  static int _paintWidth;
-  static double _exponent;
-  static double _exponentNegative;
-  static thr_exp_mode _exponentMode;
+  static int? _paintWidth;
+  static double? _exponent;
+  static double? _exponentNegative;
+  static thr_exp_mode? _exponentMode;
 
-  CurvePainter({int width, double exp, double expNegative, thr_exp_mode expMode}) {
+  CurvePainter({int? width, double? exp, double? expNegative, thr_exp_mode? expMode}) {
     _paintWidth = width;
     _exponent = exp;
     _exponentNegative = expNegative;

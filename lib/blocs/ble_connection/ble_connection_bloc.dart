@@ -25,8 +25,8 @@ class BLEConnectionBloc extends Bloc<BLEConnectionEvent, BLEConnectionState> {
     on<BLEDeviceVersionReceived>(_onDeviceVersionReceived);
   }
 
-  StreamSubscription<List<ScanResult>> _scanSubscription;
-  StreamSubscription<BluetoothConnectionState> _connectionSubscription;
+  StreamSubscription<List<ScanResult>>? _scanSubscription;
+  StreamSubscription<BluetoothConnectionState>? _connectionSubscription;
 
   Future<void> _onScanStarted(BLEScanStarted event, Emitter<BLEConnectionState> emit) async {
     emit(const BLEScanning());
@@ -34,11 +34,11 @@ class BLEConnectionBloc extends Bloc<BLEConnectionEvent, BLEConnectionState> {
     _scanSubscription = FlutterBluePlus.scanResults.listen(
       (results) => add(BLEScanResultsUpdated(results)),
     );
-    await FlutterBluePlus.startScan(
-      withServices: [Guid(_uartServiceUUID)],
-    ).catchError((e) {
+    try {
+      await FlutterBluePlus.startScan(withServices: [Guid(_uartServiceUUID)]);
+    } catch (e) {
       emit(BLEError('Scan failed: $e'));
-    });
+    }
   }
 
   Future<void> _onScanStopped(BLEScanStopped event, Emitter<BLEConnectionState> emit) async {
@@ -93,7 +93,7 @@ class BLEConnectionBloc extends Bloc<BLEConnectionEvent, BLEConnectionState> {
       }
     } else if (event.connectionState == BluetoothConnectionState.disconnected) {
       if (state is BLEConnected) {
-        emit(BLEUnexpectedDisconnect((state as BLEConnected).device));
+        emit(BLEUnexpectedDisconnect((state as BLEConnected).device!));
       } else if (state is! BLEDisconnecting && state is! BLEIdle) {
         emit(const BLEIdle());
       }
@@ -104,10 +104,10 @@ class BLEConnectionBloc extends Bloc<BLEConnectionEvent, BLEConnectionState> {
     if (state is! BLEConnected) return;
 
     final current = state as BLEConnected;
-    BluetoothCharacteristic txChar;
-    BluetoothCharacteristic rxChar;
-    BluetoothCharacteristic txLoggerChar;
-    BluetoothCharacteristic rxLoggerChar;
+    BluetoothCharacteristic? txChar;
+    BluetoothCharacteristic? rxChar;
+    BluetoothCharacteristic? txLoggerChar;
+    BluetoothCharacteristic? rxLoggerChar;
 
     for (final service in event.services) {
       if (service.uuid == Guid(_uartServiceUUID)) {

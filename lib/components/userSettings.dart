@@ -6,25 +6,25 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../globalUtilities.dart';
 
 class UserSettingsStructure {
-  bool useImperial;
-  bool useFahrenheit;
-  bool useGPSData;
+  bool? useImperial;
+  bool? useFahrenheit;
+  bool? useGPSData;
 
-  String boardAlias;
-  String boardAvatarPath;
+  String? boardAlias;
+  String? boardAvatarPath;
 
-  bool showDebugLogOnShake;
+  bool? showDebugLogOnShake;
 
-  int batterySeriesCount;
-  double batteryCellMinVoltage;
-  double batteryCellMaxVoltage;
+  int? batterySeriesCount;
+  double? batteryCellMinVoltage;
+  double? batteryCellMaxVoltage;
 
-  int wheelDiameterMillimeters;
-  int motorPoles;
-  double maxERPM;
-  double gearRatio;
+  int? wheelDiameterMillimeters;
+  int? motorPoles;
+  double? maxERPM;
+  double? gearRatio;
 
-  String deviceID;
+  String? deviceID;
 
   UserSettingsStructure();
 
@@ -66,9 +66,9 @@ class UserSettingsStructure {
 
 
 class UserSettings {
-  UserSettingsStructure settings;
-  String currentDeviceID;
-  List<String> knownDevices;
+  UserSettingsStructure? settings;
+  String? currentDeviceID;
+  List<String>? knownDevices;
 
   UserSettings({this.settings, this.currentDeviceID, this.knownDevices}) {
     settings = new UserSettingsStructure();

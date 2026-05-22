@@ -23,7 +23,7 @@ enum RobogotchiAlertReasons {
 }
 
 class RobogotchiStatus {
-  bool isLogging;
+  bool? isLogging;
   int faultCount;
   int faultCode;
   int percentFree;
@@ -49,13 +49,13 @@ class ConnectionStatus extends StatelessWidget {
 
   ConnectionStatus(
       {
-        Key key,
-        this.active: false,
+        Key? key,
+        this.active = false,
         this.bleDevicesGrid,
         this.currentDevice,
         this.currentFirmware,
-        @required this.userSettings,
-        @required this.onChanged,
+        required this.userSettings,
+        required this.onChanged,
         this.robogotchiVersion,
         this.gotchiproVersion,
         this.imageBoardAvatar,
@@ -67,21 +67,21 @@ class ConnectionStatus extends StatelessWidget {
         this.delayedTabControllerIndexChange,
       } ) : super(key: key);
 
-  final ESCFirmware currentFirmware;
+  final ESCFirmware? currentFirmware;
   final UserSettings userSettings;
-  final BluetoothDevice currentDevice;
-  final GridView bleDevicesGrid;
+  final BluetoothDevice? currentDevice;
+  final GridView? bleDevicesGrid;
   final bool active;
   final ValueChanged<bool> onChanged;
-  final String robogotchiVersion;
-  final String gotchiproVersion;
-  final MemoryImage imageBoardAvatar;
-  final RobogotchiStatus gotchiStatus;
-  final double connectedVehicleOdometer;
-  final double connectedVehicleConsumption;
-  final BluetoothCharacteristic theTXLoggerCharacteristic;
-  final bool unexpectedDisconnect;
-  final ValueChanged<int> delayedTabControllerIndexChange;
+  final String? robogotchiVersion;
+  final String? gotchiproVersion;
+  final MemoryImage? imageBoardAvatar;
+  final RobogotchiStatus? gotchiStatus;
+  final double? connectedVehicleOdometer;
+  final double? connectedVehicleConsumption;
+  final BluetoothCharacteristic? theTXLoggerCharacteristic;
+  final bool? unexpectedDisconnect;
+  final ValueChanged<int>? delayedTabControllerIndexChange;
 
   void _handleTap() {
     onChanged(!active);

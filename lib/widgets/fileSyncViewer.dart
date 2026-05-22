@@ -2,22 +2,22 @@ import 'package:flutter/material.dart';
 
 class FileToSync{
   FileToSync({this.fileName, this.fileSize});
-  String fileName;
-  int fileSize;
+  String? fileName;
+  int? fileSize;
 }
 
 class FileSyncViewerArguments {
-  final bool syncInProgress;
-  final String fileName;
-  final int fileBytesTotal;
-  final int fileBytesReceived;
-  final List<FileToSync> fileList;
+  final bool? syncInProgress;
+  final String? fileName;
+  final int? fileBytesTotal;
+  final int? fileBytesReceived;
+  final List<FileToSync>? fileList;
 
   FileSyncViewerArguments({this.syncInProgress,this.fileName,this.fileBytesReceived,this.fileBytesTotal,this.fileList});
 }
 
 class FileSyncViewer extends StatefulWidget {
-  final FileSyncViewerArguments syncStatus;
+  final FileSyncViewerArguments? syncStatus;
 
   FileSyncViewer({this.syncStatus});
 
@@ -26,16 +26,16 @@ class FileSyncViewer extends StatefulWidget {
 
 class FileSyncViewerState extends State<FileSyncViewer> {
 
-  static double bytesPerSecond;
-  static int bytesReceivedLastSecond;
-  static DateTime bytesReceivedLastUpdated;
-  static String bytesReceivedLastFile;
-  static double estimatedSecondsRemaining; //NOTE: for current file
+  static double? bytesPerSecond;
+  static int? bytesReceivedLastSecond;
+  static DateTime? bytesReceivedLastUpdated;
+  static String? bytesReceivedLastFile;
+  static double? estimatedSecondsRemaining; //NOTE: for current file
 
-  static double totalSecondsRemaining;
-  static int totalBytesRemaining;
+  static double? totalSecondsRemaining;
+  static int? totalBytesRemaining;
 
-  FileSyncViewerArguments myArguments;
+  FileSyncViewerArguments? myArguments;
   double syncIconAngle = 0.0;
 
   @override

@@ -14,12 +14,12 @@ import '../widgets/sliderThumbImage.dart';
 import 'dart:ui' as ui;
 
 class gotchiProConfiguration {
-  int wifi_ssid_len;
-  int wifi_pass_len;
-  String wifi_ssid;
-  String wifi_pass;
-  List<int> multiESCIDs;
-  int cfgVersion;
+  int? wifi_ssid_len;
+  int? wifi_pass_len;
+  String? wifi_ssid;
+  String? wifi_pass;
+  List<int>? multiESCIDs;
+  int? cfgVersion;
   gotchiProConfiguration({
     this.wifi_ssid_len,
     this.wifi_pass_len,
@@ -31,8 +31,8 @@ class gotchiProConfiguration {
 }
 
 class gotchiProCfgEditorArguments {
-  final BluetoothCharacteristic txLoggerCharacteristic;
-  final gotchiProConfiguration currentConfiguration;
+  final BluetoothCharacteristic? txLoggerCharacteristic;
+  final gotchiProConfiguration? currentConfiguration;
   gotchiProCfgEditorArguments({this.txLoggerCharacteristic, this.currentConfiguration});
 }
 
@@ -47,8 +47,8 @@ class gotchiProCfgEditor extends StatefulWidget {
 class gotchiProCfgEditorState extends State<gotchiProCfgEditor> {
 
 
-  List<DropdownMenuItem<ListItem>> _dropdownMenuItems;
-  ListItem _selectedItem;
+  List<DropdownMenuItem<ListItem>>? _dropdownMenuItems;
+  ListItem? _selectedItem;
 
   TextEditingController ssidInput = TextEditingController();
   TextEditingController passInput = TextEditingController();

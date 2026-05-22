@@ -19,7 +19,7 @@ class RealTimeData extends StatefulWidget {
 
   RealTimeData(
       { this.routeTakenLocations,
-        @required this.currentSettings,
+        required this.currentSettings,
         this.startStopTelemetryFunc,
 
         this.deviceIsConnected,
@@ -40,13 +40,13 @@ class RealTimeDataState extends State<RealTimeData> {
 
   static List<double> motorCurrentGraphPoints = [];
 
-  static double averageVoltageInput;
+  static double? averageVoltageInput;
 
-  static ESCTelemetry escTelemetry;
+  static ESCTelemetry? escTelemetry;
 
-  double batteryRemaining;
+  double? batteryRemaining;
 
-  double rangeEstimateAverage;
+  double? rangeEstimateAverage;
 
 
   double calculateSpeedKph(double eRpm) {

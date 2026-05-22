@@ -85,23 +85,23 @@ class ESCTelemetry {
   double vq;
 
   //NOTE: Extras for COMM_GET_VALUES_SETUP
-  double speed;
-  double battery_level;
-  int num_vescs;
-  double battery_wh;
+  double? speed;
+  double? battery_level;
+  int? num_vescs;
+  double? battery_wh;
 }
 
 class ESCProfile {
   ESCProfile({this.profileName});
   // For user interaction
-  String profileName;
-  double speedKmh;
-  double speedKmhRev;
+  String? profileName;
+  double? speedKmh;
+  double? speedKmhRev;
   // VESC based ESC variables :smirk:
-  double l_current_min_scale;
-  double l_current_max_scale;
-  double l_watt_min;
-  double l_watt_max;
+  double? l_current_min_scale;
+  double? l_current_max_scale;
+  double? l_watt_min;
+  double? l_watt_max;
 }
 
 
@@ -118,11 +118,11 @@ class ESCFirmware {
 }
 
 class ESCFault {
-  int faultCode;
-  int faultCount;
-  int escID;
-  DateTime firstSeen;
-  DateTime lastSeen;
+  int? faultCode;
+  int? faultCount;
+  int? escID;
+  DateTime? firstSeen;
+  DateTime? lastSeen;
 
   ESCFault({this.faultCode, this.faultCount, this.escID, this.firstSeen, this.lastSeen});
 

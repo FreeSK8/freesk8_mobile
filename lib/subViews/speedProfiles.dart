@@ -23,9 +23,9 @@ class SpeedProfileArguments {
   final UserSettings myUserSettings;
 
   SpeedProfileArguments({
-    @required this.theTXCharacteristic,
-    @required this.escMotorConfiguration,
-    @required this.myUserSettings,
+    required this.theTXCharacteristic,
+    required this.escMotorConfiguration,
+    required this.myUserSettings,
   });
 }
 
@@ -39,9 +39,9 @@ class SpeedProfilesEditor extends StatefulWidget {
 class SpeedProfilesEditorState extends State<SpeedProfilesEditor> {
   bool changesMade = false; //TODO: remove if unused
 
-  static SpeedProfileArguments myArguments;
+  static SpeedProfileArguments? myArguments;
 
-  bool _applyESCProfilePermanently;
+  bool? _applyESCProfilePermanently;
 
   @override
   void initState() {
