@@ -68,6 +68,16 @@ import 'package:signal_strength_indicator/signal_strength_indicator.dart';
 import 'components/databaseAssistant.dart';
 import 'hardwareSupport/escHelper/serialization/buffers.dart';
 
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'blocs/preferences/preferences_cubit.dart';
+import 'blocs/location/location_bloc.dart';
+import 'blocs/location/location_event.dart';
+import 'blocs/telemetry/telemetry_bloc.dart';
+import 'blocs/ble_connection/ble_connection_bloc.dart';
+import 'blocs/file_sync/file_sync_bloc.dart';
+import 'blocs/robogotchi/robogotchi_bloc.dart';
+import 'blocs/esc_config/esc_config_bloc.dart';
+
 // Flutter core
 //import 'package:firebase_core/firebase_core.dart';
 //import 'firebase_options.dart';
@@ -91,41 +101,53 @@ Future <void> initFirebase() async {
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   //initFirebase();
-  runApp(MaterialApp(
-      // Title
-      title: "FreeSK8",
-      // Home
-      home: MyHome(),
-      routes: <String, WidgetBuilder>{
-        RideLogViewer.routeName: (BuildContext context) => RideLogViewer(),
-        FOCWizard.routeName: (BuildContext context) => FOCWizard(),
-        ESCProfileEditor.routeName: (BuildContext context) => ESCProfileEditor(),
-        RobogotchiCfgEditor.routeName: (BuildContext context) => RobogotchiCfgEditor(),
-        gotchiProCfgEditor.routeName: (BuildContext context) => gotchiProCfgEditor(),
-        RobogotchiDFU.routeName: (BuildContext context) => RobogotchiDFU(),
-        gotchiProOTA.routeName: (BuildContext context) => gotchiProOTA(),
-        VehicleManager.routeName: (BuildContext context) => VehicleManager(),
-        Brocator.routeName: (BuildContext context) => Brocator(),
-        MotorConfigurationEditor.routeName: (BuildContext context) => MotorConfigurationEditor(),
-        InputConfigurationEditor.routeName: (BuildContext context) => InputConfigurationEditor(),
-        SpeedProfilesEditor.routeName: (BuildContext context) => SpeedProfilesEditor(),
-        SmartBMSViewer.routeName: (BuildContext context) => SmartBMSViewer(),
-      },
-      theme: ThemeData(
-        //TODO: Select satisfying colors for the light theme
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.pink,
-          brightness: Brightness.light,
-        ).copyWith(secondary: Colors.pinkAccent),
-      ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.pink,
-          brightness: Brightness.dark,
+  runApp(
+    MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => PreferencesCubit()..loadPreferences()),
+        BlocProvider(create: (_) => LocationBloc()..add(const LocationStarted())),
+        BlocProvider(create: (_) => TelemetryBloc()),
+        BlocProvider(create: (_) => BLEConnectionBloc()),
+        BlocProvider(create: (_) => FileSyncBloc()),
+        BlocProvider(create: (_) => RobogotchiBloc()),
+        BlocProvider(create: (_) => ESCConfigBloc()),
+      ],
+      child: MaterialApp(
+        // Title
+        title: "FreeSK8",
+        // Home
+        home: MyHome(),
+        routes: <String, WidgetBuilder>{
+          RideLogViewer.routeName: (BuildContext context) => RideLogViewer(),
+          FOCWizard.routeName: (BuildContext context) => FOCWizard(),
+          ESCProfileEditor.routeName: (BuildContext context) => ESCProfileEditor(),
+          RobogotchiCfgEditor.routeName: (BuildContext context) => RobogotchiCfgEditor(),
+          gotchiProCfgEditor.routeName: (BuildContext context) => gotchiProCfgEditor(),
+          RobogotchiDFU.routeName: (BuildContext context) => RobogotchiDFU(),
+          gotchiProOTA.routeName: (BuildContext context) => gotchiProOTA(),
+          VehicleManager.routeName: (BuildContext context) => VehicleManager(),
+          Brocator.routeName: (BuildContext context) => Brocator(),
+          MotorConfigurationEditor.routeName: (BuildContext context) => MotorConfigurationEditor(),
+          InputConfigurationEditor.routeName: (BuildContext context) => InputConfigurationEditor(),
+          SpeedProfilesEditor.routeName: (BuildContext context) => SpeedProfilesEditor(),
+          SmartBMSViewer.routeName: (BuildContext context) => SmartBMSViewer(),
+        },
+        theme: ThemeData(
+          //TODO: Select satisfying colors for the light theme
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: Colors.pink,
+            brightness: Brightness.light,
+          ).copyWith(secondary: Colors.pinkAccent),
         ),
+        darkTheme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: Colors.pink,
+            brightness: Brightness.dark,
+          ),
+        ),
+        themeMode: ThemeMode.dark, //TODO: Always using the dark mode regardless of system preference
       ),
-      themeMode: ThemeMode.dark, //TODO: Always using the dark mode regardless of system preference
-    )
+    ),
   );
 }
 
