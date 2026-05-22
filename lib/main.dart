@@ -538,6 +538,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       telemetryPacket = new ESCTelemetry();
       telemetryMap = new Map();
 
+      // Reset the TelemetryBloc back to its initial state
+      if (mounted) {
+        context.read<TelemetryBloc>().resetForDisconnect();
+      }
+
       // Reset deviceHasDisconnected flag
       deviceHasDisconnected = false;
 
@@ -1781,9 +1786,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           // Update telemetryStream for those who are subscribed
           telemetryStream.add(telemetryPacket);
 
-          if(controller.index == controllerViewRealTime) { //Only re-draw if we are on the real time data tab
-            setState(() { //Re-drawing with updated telemetry data
-            });
+          // Push to TelemetryBloc: only the real-time view's BlocBuilder rebuilds,
+          // not the whole MyHomeState widget tree.
+          if (mounted) {
+            context.read<TelemetryBloc>().updateTelemetry(telemetryPacket, telemetryMap);
           }
 
           // Watch here for all fault codes received. Populate an array with time and fault for display to user
@@ -3181,7 +3187,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               ),
               RealTimeData(
                 routeTakenLocations: routeTakenLocations,
-                telemetryMap: telemetryMap,
                 currentSettings: widget.myUserSettings,
                 startStopTelemetryFunc: startStopTelemetryTimer,
                 deviceIsConnected: deviceIsConnected,

@@ -6,6 +6,8 @@ import 'package:freesk8_mobile/hardwareSupport/escHelper/dataTypes.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../blocs/preferences/preferences_cubit.dart';
+import '../blocs/telemetry/telemetry_bloc.dart';
+import '../blocs/telemetry/telemetry_state.dart';
 import '../hardwareSupport/escHelper/escHelper.dart';
 
 import '../globalUtilities.dart';
@@ -17,7 +19,6 @@ class RealTimeData extends StatefulWidget {
 
   RealTimeData(
       { this.routeTakenLocations,
-        this.telemetryMap,
         @required this.currentSettings,
         this.startStopTelemetryFunc,
 
@@ -26,7 +27,6 @@ class RealTimeData extends StatefulWidget {
 
   final List<LatLng> routeTakenLocations;
   final UserSettings currentSettings;
-  final Map<int, ESCTelemetry> telemetryMap;
   final ValueChanged<bool> startStopTelemetryFunc;
 
   final bool deviceIsConnected;
@@ -119,11 +119,17 @@ class RealTimeDataState extends State<RealTimeData> {
     final fontSizeValues = prefs.fontSizeValues;
     final allowFontResize = prefs.allowFontResize;
 
+    // Telemetry comes from the TelemetryBloc; only this subtree rebuilds per tick
+    final telemetryState = context.watch<TelemetryBloc>().state;
+    final telemetryMap = telemetryState is TelemetryActive
+        ? telemetryState.telemetryMap
+        : const <int, ESCTelemetry>{};
+
     //TODO: Using COMM_GET_VALUE_SETUP for RT so map is not actually needed
-    if (widget.telemetryMap.length == 0) {
+    if (telemetryMap.length == 0) {
       escTelemetry = new ESCTelemetry();
     } else {
-      escTelemetry = widget.telemetryMap.values.first;
+      escTelemetry = telemetryMap.values.first;
     }
 
     double tempMosfet = widget.currentSettings.settings.useFahrenheit ? cToF(escTelemetry.temp_mos) : escTelemetry.temp_mos;
