@@ -2,6 +2,13 @@
 
 Step-by-step instructions for setting up GitHub Actions to build and sign a release APK/AAB for FreeSK8 Mobile.
 
+> **Status:** The workflow already exists at `.github/workflows/android-release.yml`
+> (builds on merge to `master`; manual `workflow_dispatch` for everything else) and
+> `android/app/build.gradle` already reads `android/key.properties` when present,
+> falling back to debug signing otherwise. The only remaining setup is the one-time
+> keystore + secrets work below (Steps 1–3, then set the `HAS_SIGNING` repo variable
+> to `true`). Steps 4+ are kept for reference — they are already implemented.
+
 ---
 
 ## Prerequisites
