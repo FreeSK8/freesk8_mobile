@@ -1124,10 +1124,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           if(syncInProgress){
             //NOTE: start by cat'ing the first file
             //When cat is complete we will call setState which will request the next file
-            catCurrentFilename = fileList.first.fileName;
-            catBytesTotal = fileList.first.fileSize;
+            catCurrentFilename = fileList.first.fileName!;
+            catBytesTotal = fileList.first.fileSize!;
             catBytesRaw.clear();
-            sendBLEData(theTXLoggerCharacteristic, utf8.encode("cat ${fileList.first.fileName}~"), false);
+            sendBLEData(theTXLoggerCharacteristic!, utf8.encode("cat ${fileList.first.fileName}~"), false);
           }else _alertLoggerTest();
           return;
         }
@@ -1140,7 +1140,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           if (fileSize > 0) fileList.add(new FileToSync(fileName: values[2], fileSize: fileSize));
         }
         syncLastACK = DateTime.now();
-        await theTXLoggerCharacteristic.write(utf8.encode("ls,${fileList.length},ack~"));
+        await theTXLoggerCharacteristic!.write(utf8.encode("ls,${fileList.length},ack~"));
       }
       else if(receiveStr.startsWith("ls,/FreeSK8Logs")){
         fileList.clear();
@@ -1148,7 +1148,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         lsInProgress = true;
         catInProgress = false;
         syncLastACK = DateTime.now();
-        await theTXLoggerCharacteristic.write(utf8.encode("ls,${fileList.length},ack~"));
+        await theTXLoggerCharacteristic!.write(utf8.encode("ls,${fileList.length},ack~"));
       }
 
       ///CAT Command
@@ -1198,26 +1198,26 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             double maxCurrentBattery = 0.0;
             double maxCurrentMotor = 0.0;
             double maxSpeedKph = 0.0;
-            double maxSpeedGPS;
-            double avgMovingSpeed;
+            double? maxSpeedGPS;
+            double? avgMovingSpeed;
             int avgMovingSpeedEntries = 0;
-            double avgMovingSpeedGPS;
+            double? avgMovingSpeedGPS;
             int avgMovingSpeedGPSEntries = 0;
-            double avgSpeed;
+            double? avgSpeed;
             int avgSpeedEntries = 0;
-            double avgSpeedGPS;
+            double? avgSpeedGPS;
             int avgSpeedGPSEntries = 0;
-            int firstESCID;
-            double distanceStart;
-            double distanceEnd;
+            int? firstESCID;
+            double? distanceStart;
+            double? distanceEnd;
             double distanceTotal;
-            double distanceTotalGPS;
-            LatLng gpsPositionPrevious;
+            double? distanceTotalGPS;
+            LatLng? gpsPositionPrevious;
             int faultCodeCount = 0;
-            double minElevation;
-            double maxElevation;
-            DateTime firstEntryTime;
-            DateTime lastEntryTime;
+            double? minElevation;
+            double? maxElevation;
+            DateTime? firstEntryTime;
+            DateTime? lastEntryTime;
             String logFileContents = await FileManager.openLogFile(savedFilePath);
             logFileContentsForDebugging = logFileContents;
 

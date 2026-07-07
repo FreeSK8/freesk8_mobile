@@ -302,7 +302,7 @@ class SmartBMSViewerState extends State<SmartBMSViewer> {
                         ]
                     ),
                     onTap: (){
-                      myArguments.changeSmartBMSID(_smartBMSID == 10 ? 11 : 10);
+                      myArguments!.changeSmartBMSID(_smartBMSID == 10 ? 11 : 10);
                     },
                   )
               )
@@ -317,13 +317,13 @@ class SmartBMSViewerState extends State<SmartBMSViewer> {
     print("Building Template");
 
     //Receive arguments building this widget
-    myArguments = ModalRoute.of(context).settings.arguments;
+    myArguments = ModalRoute.of(context)!.settings.arguments as SmartBMSArguments?;
     if(myArguments == null){
       return Container(child:Text("No Arguments"));
     }
 
     if(bmsTelemetrySubscription == null) {
-      bmsTelemetrySubscription = myArguments.dataStream.listen((value) {
+      bmsTelemetrySubscription = myArguments!.dataStream.listen((value) {
         globalLogger.i("Stream Data Received");
         setState(() {
           // Update widget value
@@ -355,7 +355,7 @@ class SmartBMSViewerState extends State<SmartBMSViewer> {
             future: _buildBody(context),
             builder: (context, AsyncSnapshot<Widget> snapshot) {
               if (snapshot.hasData) {
-                return snapshot.data;
+                return snapshot.data!;
               } else {
                 return Column(
                   mainAxisAlignment: MainAxisAlignment.center,

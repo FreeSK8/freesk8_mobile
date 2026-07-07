@@ -25,7 +25,7 @@ class FlutterMapWidgetState extends State<FlutterMapWidget> {
   Widget build(BuildContext context) {
     print("Build: flutterMapWidget");
 
-    if (widget.routeTakenLocations.length == 0)
+    if (widget.routeTakenLocations!.length == 0)
     {
       return Column(
         children: <Widget>[
@@ -41,7 +41,7 @@ class FlutterMapWidgetState extends State<FlutterMapWidget> {
 
     return FlutterMap(
       options: MapOptions(
-        initialCenter: widget.routeTakenLocations.last,
+        initialCenter: widget.routeTakenLocations!.last,
         initialZoom: 13.0,
       ),
       children: [
@@ -52,7 +52,7 @@ class FlutterMapWidgetState extends State<FlutterMapWidget> {
         PolylineLayer(
           polylines: [
             Polyline(
-              points: widget.routeTakenLocations,
+              points: widget.routeTakenLocations!,
               strokeWidth: 3,
               color: Colors.red,
               pattern: const StrokePattern.dotted(),
@@ -64,7 +64,7 @@ class FlutterMapWidgetState extends State<FlutterMapWidget> {
             Marker(
               width: 160.0,
               height: 160.0,
-              point: widget.routeTakenLocations.first,
+              point: widget.routeTakenLocations!.first,
               child: Container(
                 margin: EdgeInsets.fromLTRB(0, 0, 0, 80),
                 child: Image(image: AssetImage("assets/map_start.png")),
@@ -73,7 +73,7 @@ class FlutterMapWidgetState extends State<FlutterMapWidget> {
             Marker(
               width: 120.0,
               height: 120.0,
-              point: widget.routeTakenLocations.last,
+              point: widget.routeTakenLocations!.last,
               child: Container(
                 margin: EdgeInsets.fromLTRB(0, 0, 0, 60),
                 child: Image(image: AssetImage("assets/map_position.png")),
