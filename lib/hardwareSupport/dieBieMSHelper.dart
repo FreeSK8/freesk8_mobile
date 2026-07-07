@@ -27,30 +27,30 @@ class DieBieMSTelemetry {
     cellVoltage = [];
   }
   // DieBieMS COMM_GET_VALUES
-  double packVoltage;
-  double packCurrent;
-  int soc;
-  double cellVoltageHigh;
-  double cellVoltageAverage;
-  double cellVoltageLow;
-  double cellVoltageMismatch;
-  double loCurrentLoadVoltage;
-  double loCurrentLoadCurrent;
-  double hiCurrentLoadVoltage;
-  double hiCurrentLoadCurrent;
-  double auxVoltage;
-  double auxCurrent;
-  double tempBatteryHigh;
-  double tempBatteryAverage;
-  double tempBMSHigh;
-  double tempBMSAverage;
-  int operationalState;
-  int chargeBalanceActive;
-  int faultState;
-  int canID;
+  late double packVoltage;
+  late double packCurrent;
+  late int soc;
+  late double cellVoltageHigh;
+  late double cellVoltageAverage;
+  late double cellVoltageLow;
+  late double cellVoltageMismatch;
+  late double loCurrentLoadVoltage;
+  late double loCurrentLoadCurrent;
+  late double hiCurrentLoadVoltage;
+  late double hiCurrentLoadCurrent;
+  late double auxVoltage;
+  late double auxCurrent;
+  late double tempBatteryHigh;
+  late double tempBatteryAverage;
+  late double tempBMSHigh;
+  late double tempBMSAverage;
+  late int operationalState;
+  late int chargeBalanceActive;
+  late int faultState;
+  late int canID;
   // DieBieMS COMM_GET_BMS_CELLS
-  int noOfCells;
-  List<double> cellVoltage;
+  late int noOfCells;
+  late List<double> cellVoltage;
 }
 
 class DieBieMSHelper {

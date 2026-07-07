@@ -25,19 +25,19 @@ import '../blocs/preferences/preferences_cubit.dart';
 
 class RideLogging extends StatefulWidget {
   RideLogging({
-    this.myUserSettings,
+    required this.myUserSettings,
     this.theTXLoggerCharacteristic,
-    this.syncInProgress,
-    this.onSyncPress,
-    this.syncStatus,
-    this.eraseOnSync,
-    this.onSyncEraseSwitch,
-    this.isLoggerLogging,
-    this.isRobogotchi,
-    this.isGotchiPro
+    required this.syncInProgress,
+    required this.onSyncPress,
+    required this.syncStatus,
+    required this.eraseOnSync,
+    required this.onSyncEraseSwitch,
+    required this.isLoggerLogging,
+    required this.isRobogotchi,
+    required this.isGotchiPro
   });
   final UserSettings myUserSettings;
-  final BluetoothCharacteristic theTXLoggerCharacteristic;
+  final BluetoothCharacteristic? theTXLoggerCharacteristic;
   final bool syncInProgress;
   final ValueChanged<bool> onSyncPress;
   final FileSyncViewerArguments syncStatus;
@@ -81,7 +81,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
   void initState() {
     super.initState();
     if (widget.theTXLoggerCharacteristic != null) {
-      widget.theTXLoggerCharacteristic.write(utf8.encode("status~")).catchError((error){
+      widget.theTXLoggerCharacteristic!.write(utf8.encode("status~")).catchError((error){
         globalLogger.e("rideLogging::initState: Robogotchi status request failed. Are we connected?");
       });
     }
@@ -114,10 +114,10 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
       // Prepare data for Calendar View
       _events = {}; // Clear events before populating from database
       rideLogsFromDatabase.forEach((element) {
-        DateTime thisDate = DateTime.parse(new DateFormat("yyyy-MM-dd").format(element.dateTime.add(DateTime.now().timeZoneOffset)));
+        DateTime thisDate = DateTime.parse(new DateFormat("yyyy-MM-dd").format(element.dateTime!.add(DateTime.now().timeZoneOffset)));
         if (_events.containsKey(thisDate)) {
           //globalLogger.wtf("updating $thisDate");
-          _events[thisDate].add('${rideLogsFromDatabase.indexOf(element)}');
+          _events[thisDate]!.add('${rideLogsFromDatabase.indexOf(element)}');
         } else {
           //globalLogger.wtf("adding $thisDate");
           _events[thisDate] = ['${rideLogsFromDatabase.indexOf(element)}'];
@@ -218,11 +218,11 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                       children: <Widget>[
 
                         SizedBox(width: 50, child:
-                        FutureBuilder<String>(
-                            future: UserSettings.getBoardAvatarPath(rideLogsFromDatabase[int.parse(event)].boardID),
-                            builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+                        FutureBuilder<String?>(
+                            future: UserSettings.getBoardAvatarPath(rideLogsFromDatabase[int.parse(event)].boardID!),
+                            builder: (BuildContext context, AsyncSnapshot<String?> snapshot) {
                               return CircleAvatar(
-                                  backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.png'),
+                                  backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data!)) : AssetImage('assets/FreeSK8_Mobile.png') as ImageProvider,
                                   radius: 25,
                                   backgroundColor: Colors.white);
                             })
@@ -230,14 +230,14 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                         SizedBox(width: 10,),
 
                         Expanded(
-                          child: Text(rideLogsFromDatabase[int.parse(event)].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)),
+                          child: Text(rideLogsFromDatabase[int.parse(event)].dateTime!.add(DateTime.now().timeZoneOffset).toString().substring(0,19)),
                         ),
 
                         SizedBox(
                           width: 32,
                           child: Icon(
-                              rideLogsFromDatabase[int.parse(event)].faultCount < 1 ? Icons.check_circle_outline : Icons.error_outline,
-                              color: rideLogsFromDatabase[int.parse(event)].faultCount < 1 ? Colors.green : Colors.red),
+                              rideLogsFromDatabase[int.parse(event)].faultCount! < 1 ? Icons.check_circle_outline : Icons.error_outline,
+                              color: rideLogsFromDatabase[int.parse(event)].faultCount! < 1 ? Colors.green : Colors.red),
                         ),
 
                         /// Ride Log Note Editor
@@ -245,7 +245,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                           width: 32,
                           child: GestureDetector(
                             onTap: (){
-                              tecRideNotes.text = rideLogsFromDatabase[int.parse(event)].notes;
+                              tecRideNotes.text = rideLogsFromDatabase[int.parse(event)].notes!;
 
                               showDialog(context: context,
                                   builder: (_) => AlertDialog(
@@ -259,7 +259,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                       TextButton(
                                           onPressed: () async {
                                             // Update notes field in database
-                                            await DatabaseAssistant.dbUpdateNote(rideLogsFromDatabase[int.parse(event)].logFilePath, tecRideNotes.text);
+                                            await DatabaseAssistant.dbUpdateNote(rideLogsFromDatabase[int.parse(event)].logFilePath!, tecRideNotes.text);
                                             _listFiles(true);
                                             Navigator.of(context).pop(true);
                                           },
@@ -273,7 +273,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                   )
                               );
                             },
-                            child: Icon( rideLogsFromDatabase[int.parse(event)].notes.length > 0 ? Icons.chat : Icons.chat_bubble_outline, size: 32),
+                            child: Icon( rideLogsFromDatabase[int.parse(event)].notes!.length > 0 ? Icons.chat : Icons.chat_bubble_outline, size: 32),
                           ),
                         ),
 
@@ -287,9 +287,9 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text("${Duration(seconds: rideLogsFromDatabase[int.parse(event)].durationSeconds).toString().substring(0,Duration(seconds: rideLogsFromDatabase[int.parse(event)].durationSeconds).toString().indexOf("."))}"),
-                                rideLogsFromDatabase[int.parse(event)].distance == -1.0 || widget.myUserSettings.settings.useGPSData ? Container() : Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[int.parse(event)].distance) : rideLogsFromDatabase[int.parse(event)].distance} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}"),
-                                widget.myUserSettings.settings.useGPSData && rideLogsFromDatabase[int.parse(event)].distanceGPS != -1.0 ? Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[int.parse(event)].distanceGPS) : rideLogsFromDatabase[int.parse(event)].distanceGPS} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}") : Container(),
+                                Text("${Duration(seconds: rideLogsFromDatabase[int.parse(event)].durationSeconds!).toString().substring(0,Duration(seconds: rideLogsFromDatabase[int.parse(event)].durationSeconds!).toString().indexOf("."))}"),
+                                rideLogsFromDatabase[int.parse(event)].distance == -1.0 || widget.myUserSettings.settings.useGPSData ? Container() : Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[int.parse(event)].distance!) : rideLogsFromDatabase[int.parse(event)].distance} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}"),
+                                widget.myUserSettings.settings.useGPSData && rideLogsFromDatabase[int.parse(event)].distanceGPS != -1.0 ? Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[int.parse(event)].distanceGPS!) : rideLogsFromDatabase[int.parse(event)].distanceGPS} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}") : Container(),
                               ],
                             )
                         ),
@@ -338,7 +338,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
 
     // Fetch user settings for selected board, fallback to current settings if not found
     UserSettings selectedBoardSettings = new UserSettings();
-    if (await selectedBoardSettings.loadSettings(rideLogsFromDatabase[index].boardID) == false) {
+    if (await selectedBoardSettings.loadSettings(rideLogsFromDatabase[index].boardID!) == false) {
       globalLogger.w("WARNING: Board ID ${rideLogsFromDatabase[index].boardID} has no settings on this device!");
       selectedBoardSettings = widget.myUserSettings;
     }
@@ -348,7 +348,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
       arguments: RideLogViewerArguments(
           rideLogsFromDatabase[index],
           selectedBoardSettings,
-          selectedBoardSettings.settings.boardAvatarPath == null ? null : FileImage(File(await UserSettings.getBoardAvatarPath(rideLogsFromDatabase[index].boardID)))
+          selectedBoardSettings.settings.boardAvatarPath == null ? null : FileImage(File((await UserSettings.getBoardAvatarPath(rideLogsFromDatabase[index].boardID!))!))
       ),
     ).then((value){
       // Once finished re-list files and remove a potential snackBar item before re-draw of setState
@@ -485,7 +485,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                 itemBuilder: (BuildContext context, int index){
                   //Each item has dismissible wrapper
                   return Slidable(
-                    key: Key(rideLogsFromDatabase[index].logFilePath.substring(rideLogsFromDatabase[index].logFilePath.lastIndexOf("/") + 1)),
+                    key: Key(rideLogsFromDatabase[index].logFilePath!.substring(rideLogsFromDatabase[index].logFilePath!.lastIndexOf("/") + 1)),
                     child: Container(
 
                       child: GestureDetector(

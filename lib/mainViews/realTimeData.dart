@@ -18,11 +18,11 @@ import '../widgets/flutterMap.dart'; import 'package:latlong2/latlong.dart';
 class RealTimeData extends StatefulWidget {
 
   RealTimeData(
-      { this.routeTakenLocations,
+      { required this.routeTakenLocations,
         required this.currentSettings,
-        this.startStopTelemetryFunc,
+        required this.startStopTelemetryFunc,
 
-        this.deviceIsConnected,
+        required this.deviceIsConnected,
       });
 
   final List<LatLng> routeTakenLocations;
@@ -42,7 +42,7 @@ class RealTimeDataState extends State<RealTimeData> {
 
   static double? averageVoltageInput;
 
-  static ESCTelemetry? escTelemetry;
+  static late ESCTelemetry escTelemetry;
 
   double? batteryRemaining;
 
@@ -164,7 +164,7 @@ class RealTimeDataState extends State<RealTimeData> {
         averageVoltageInput = powerMinimum;
       } else {
         // Smooth voltage input value from ESC
-        averageVoltageInput = (0.25 * doublePrecision(escTelemetry.v_in, 1)) + (0.75 * averageVoltageInput);
+        averageVoltageInput = (0.25 * doublePrecision(escTelemetry.v_in, 1)) + (0.75 * averageVoltageInput!);
       }
     } else {
       averageVoltageInput = 0; // Set to zero when disconnected
@@ -181,24 +181,24 @@ class RealTimeDataState extends State<RealTimeData> {
 
     // Smooth battery remaining from ESC
     if (escTelemetry.battery_level != null) {
-      batteryRemaining = (0.1 * escTelemetry.battery_level * 100) + (0.9 * batteryRemaining);
-      if (batteryRemaining < 0.0) {
+      batteryRemaining = (0.1 * escTelemetry.battery_level * 100) + (0.9 * batteryRemaining!);
+      if (batteryRemaining! < 0.0) {
         globalLogger.e("Battery Remaining $batteryRemaining battery_level ${escTelemetry.battery_level} v_in ${escTelemetry.v_in}");
         batteryRemaining = 0;
       }
-      if(batteryRemaining > 100.0) {
+      if(batteryRemaining! > 100.0) {
         batteryRemaining = 100.0;
       }
     }
 
     // Estimate range
-    double rangeEstimate = (escTelemetry.battery_wh ?? 1) * (batteryRemaining / 100 ?? 1) / efficiency;
+    double rangeEstimate = (escTelemetry.battery_wh) * (batteryRemaining! / 100) / efficiency;
     if (rangeEstimateAverage == null) rangeEstimateAverage = rangeEstimate;
     if (rangeEstimate.isNaN || rangeEstimate.isInfinite) {
       rangeEstimate = 0;
       rangeEstimateAverage = 0;
     } else {
-      rangeEstimateAverage = rangeEstimate * 0.1 + rangeEstimateAverage * 0.9;
+      rangeEstimateAverage = rangeEstimate * 0.1 + rangeEstimateAverage! * 0.9;
     }
 
     Color boxBgColor = Theme.of(context).dialogBackgroundColor;
@@ -337,7 +337,7 @@ class RealTimeDataState extends State<RealTimeData> {
                     child: Text("Range")),
                 FittedBox(
                     fit: BoxFit.fitWidth,
-                    child: Text("${doublePrecision(rangeEstimateAverage, 1)} ${widget.currentSettings.settings.useImperial ? "mi": "km"}", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold), textAlign: TextAlign.center)
+                    child: Text("${doublePrecision(rangeEstimateAverage!, 1)} ${widget.currentSettings.settings.useImperial ? "mi": "km"}", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold), textAlign: TextAlign.center)
                 ),
               ],
             ) : Column(
@@ -410,7 +410,7 @@ class RealTimeDataState extends State<RealTimeData> {
                       child: Text("Battery")),
                   FittedBox(
                     fit: BoxFit.fitWidth,
-                    child: Text("${batteryRemaining.toInt()} %", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+                    child: Text("${batteryRemaining!.toInt()} %", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ) : Column(
