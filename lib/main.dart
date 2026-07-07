@@ -635,7 +635,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         myIP = await WiFiForIoTPlugin.getIP();
       } catch (exception) {
         /// Handle the exception.
-        globalLogger.e(exception.message);
+        globalLogger.e(exception.toString());
       }
       genericAlert(context, "TCP Bridge Active", Text("Connect to $myIP on port $tcpBridgePort"), "OK");
     }
@@ -701,7 +701,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                     ]));
           });
 
-      await device.connect();
+      await device.connect(license: License.nonprofit);
       if (!_userAborted) {
         await FlutterBluePlus.stopScan();
 
@@ -733,7 +733,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       device.disconnect().catchError((e){
         globalLogger.e("_attemptDeviceConnection:: While catching exception, device.disconnect() threw an exception: $e");
       });
-      if (e.code != 'already_connected') {
+      if (e is! PlatformException || e.code != 'already_connected') {
         throw e;
       }
     }

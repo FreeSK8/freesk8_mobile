@@ -39,7 +39,7 @@ dependencies:
 
   sliding_up_panel: ^2.0.0+1 #https://pub.dev/packages/sliding_up_panel/changelog
 
-  share_plus: ^10.1.4 #https://pub.dev/packages/share_plus/changelog
+  share_plus: ^13.2.0 #https://pub.dev/packages/share_plus/changelog
 
   wakelock_plus: ^1.6.1 #https://pub.dev/packages/wakelock_plus/changelog
 

@@ -5,7 +5,7 @@ import '../../widgets/fileSyncViewer.dart';
 abstract class FileSyncEvent extends Equatable {
   const FileSyncEvent();
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class FileSyncStarted extends FileSyncEvent {
@@ -24,14 +24,14 @@ class FileSyncListReceived extends FileSyncEvent {
   const FileSyncListReceived(this.files);
   final List<FileToSync> files;
   @override
-  List<Object> get props => [files];
+  List<Object?> get props => [files];
 }
 
 class FileSyncChunkReceived extends FileSyncEvent {
   const FileSyncChunkReceived(this.bytes);
   final List<int> bytes;
   @override
-  List<Object> get props => [bytes];
+  List<Object?> get props => [bytes];
 }
 
 class FileSyncFileComplete extends FileSyncEvent {
@@ -46,5 +46,5 @@ class FileSyncEraseOnCompleteToggled extends FileSyncEvent {
   const FileSyncEraseOnCompleteToggled(this.value);
   final bool value;
   @override
-  List<Object> get props => [value];
+  List<Object?> get props => [value];
 }

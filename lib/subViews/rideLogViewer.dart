@@ -10,7 +10,7 @@ import 'package:latlong2/latlong.dart';
 import '../components/databaseAssistant.dart';
 import '../components/fileManager.dart';
 
-import 'package:community_charts_flutter/flutter.dart' as charts;
+import 'package:community_charts_flutter/community_charts_flutter.dart' as charts;
 
 import '../components/userSettings.dart';
 import 'package:rxdart/rxdart.dart';
@@ -1142,7 +1142,7 @@ class RideLogViewerState extends State<RideLogViewer> {
       width: 50.0,
       height: 50.0,
       point: new LatLng(0,0),
-      builder: (ctx) =>
+      child:
       new Container(),
     ));
 

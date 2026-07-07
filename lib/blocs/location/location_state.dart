@@ -4,7 +4,7 @@ import 'package:latlong2/latlong.dart';
 abstract class LocationState extends Equatable {
   const LocationState();
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class LocationInitial extends LocationState {
@@ -39,5 +39,5 @@ class LocationError extends LocationState {
   const LocationError(this.message);
   final String message;
   @override
-  List<Object> get props => [message];
+  List<Object?> get props => [message];
 }

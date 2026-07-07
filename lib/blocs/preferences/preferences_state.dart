@@ -51,7 +51,7 @@ class PreferencesState extends Equatable {
   }
 
   @override
-  List<Object> get props => [
+  List<Object?> get props => [
         showWhWithRegen,
         showVoltsPerCell,
         showBatteryPercentage,

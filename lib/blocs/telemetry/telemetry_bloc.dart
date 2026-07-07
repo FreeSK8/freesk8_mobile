@@ -87,7 +87,7 @@ class TelemetryBloc extends Bloc<TelemetryEvent, TelemetryState> {
         telemetryMap: event.telemetryMap,
       ));
     } else {
-      emit(TelemetryActive(packet: event.packet, telemetryMap: event.telemetryMap));
+      emit(TelemetryActive(packet: event.packet, telemetryMap: event.telemetryMap ?? const {}));
     }
   }
 

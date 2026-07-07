@@ -5,7 +5,7 @@ import '../../hardwareSupport/dieBieMSHelper.dart';
 abstract class TelemetryState extends Equatable {
   const TelemetryState();
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class TelemetryInitial extends TelemetryState {
@@ -60,5 +60,5 @@ class TelemetryError extends TelemetryState {
   const TelemetryError(this.message);
   final String message;
   @override
-  List<Object> get props => [message];
+  List<Object?> get props => [message];
 }

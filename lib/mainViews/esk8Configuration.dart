@@ -21,7 +21,7 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:path_provider/path_provider.dart';
 
-import 'package:archive/archive.dart';
+import 'package:archive/archive_io.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:flutter_document_picker/flutter_document_picker.dart';
 
@@ -62,11 +62,11 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
   Future getImage(bool fromUserGallery) async {
     final documentsDirectory = await getApplicationDocumentsDirectory();
     final imagePicker = ImagePicker();
-    PickedFile temporaryImage = await imagePicker.getImage(source: fromUserGallery ? ImageSource.gallery : ImageSource.camera, maxWidth: 640, maxHeight: 640);
+    XFile? temporaryImage = await imagePicker.pickImage(source: fromUserGallery ? ImageSource.gallery : ImageSource.camera, maxWidth: 640, maxHeight: 640);
 
     if (temporaryImage != null) {
       // We have a new image, capture for display and update the settings in memory
-      String newPath = "${documentsDirectory.path}/avatars/${widget.currentDevice.id}";
+      String newPath = "${documentsDirectory.path}/avatars/${widget.currentDevice.remoteId}";
       File finalImage = await File(newPath).create(recursive: true);
       finalImage.writeAsBytesSync(await temporaryImage.readAsBytes());
       globalLogger.d("Board avatar file destination: ${finalImage.path}");
@@ -88,7 +88,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
         imageCache.clear();
         imageCache.clearLiveImages();
 
-        widget.myUserSettings.settings.boardAvatarPath = "/avatars/${widget.currentDevice.id}";
+        widget.myUserSettings.settings.boardAvatarPath = "/avatars/${widget.currentDevice.remoteId}";
         _boardAvatar = new FileImage(new File("${widget.applicationDocumentsDirectory}${widget.myUserSettings.settings.boardAvatarPath}"));
       });
     }

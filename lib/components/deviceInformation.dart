@@ -9,7 +9,7 @@ import '../globalUtilities.dart';
 class DeviceInfo {
   static final DeviceInfoPlugin deviceInfoPlugin = DeviceInfoPlugin();
 
-  static Future<Map<String, dynamic>> init() async {
+  static Future<Map<String, dynamic>?> init() async {
     Map<String, dynamic>? deviceData;
 
     try {
@@ -55,7 +55,6 @@ class DeviceInfo {
       'tags': build.tags,
       'type': build.type,
       'isPhysicalDevice': build.isPhysicalDevice,
-      'androidId': build.androidId,
       'systemFeatures': build.systemFeatures,
     };
   }
