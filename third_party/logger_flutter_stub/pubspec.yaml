@@ -1,0 +1,8 @@
+name: logger_flutter
+description: Temporary null-safe stub of logger_flutter for static analysis only.
+version: 0.8.0
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+dependencies:
+  flutter:
+    sdk: flutter

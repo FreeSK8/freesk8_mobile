@@ -4,7 +4,7 @@ import '../../mainViews/connectionStatus.dart';
 abstract class RobogotchiState extends Equatable {
   const RobogotchiState();
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class RobogotchiDisconnected extends RobogotchiState {
@@ -16,7 +16,7 @@ class RobogotchiInitializing extends RobogotchiState {
   final int stepsComplete;
   final int stepsTotal;
   @override
-  List<Object> get props => [stepsComplete, stepsTotal];
+  List<Object?> get props => [stepsComplete, stepsTotal];
 }
 
 class RobogotchiReady extends RobogotchiState {
@@ -50,5 +50,5 @@ class RobogotchiError extends RobogotchiState {
   const RobogotchiError(this.message);
   final String message;
   @override
-  List<Object> get props => [message];
+  List<Object?> get props => [message];
 }

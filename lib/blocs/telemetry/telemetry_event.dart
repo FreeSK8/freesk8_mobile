@@ -5,7 +5,7 @@ import '../../hardwareSupport/escHelper/escHelper.dart';
 abstract class TelemetryEvent extends Equatable {
   const TelemetryEvent();
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class TelemetryStarted extends TelemetryEvent {
@@ -25,21 +25,21 @@ class TelemetryPacketReceived extends TelemetryEvent {
   const TelemetryPacketReceived(this.bytes);
   final List<int> bytes;
   @override
-  List<Object> get props => [bytes];
+  List<Object?> get props => [bytes];
 }
 
 class TelemetryFaultReceived extends TelemetryEvent {
   const TelemetryFaultReceived(this.fault);
   final ESCFault fault;
   @override
-  List<Object> get props => [fault];
+  List<Object?> get props => [fault];
 }
 
 class TelemetryBMSPacketReceived extends TelemetryEvent {
   const TelemetryBMSPacketReceived(this.bytes);
   final List<int> bytes;
   @override
-  List<Object> get props => [bytes];
+  List<Object?> get props => [bytes];
 }
 
 class TelemetryVehicleStatsUpdated extends TelemetryEvent {

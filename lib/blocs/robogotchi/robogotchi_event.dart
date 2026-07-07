@@ -5,7 +5,7 @@ import '../../mainViews/connectionStatus.dart';
 abstract class RobogotchiEvent extends Equatable {
   const RobogotchiEvent();
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class RobogotchiConnected extends RobogotchiEvent {
@@ -24,7 +24,7 @@ class RobogotchiStatusReceived extends RobogotchiEvent {
   const RobogotchiStatusReceived(this.status);
   final RobogotchiStatus status;
   @override
-  List<Object> get props => [status];
+  List<Object?> get props => [status];
 }
 
 class RobogotchiVersionReceived extends RobogotchiEvent {

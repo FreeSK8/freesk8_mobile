@@ -12,7 +12,7 @@ class LocationBloc extends Bloc<LocationEvent, LocationState> {
     on<LocationUpdated>(_onUpdated);
     on<LocationRouteCleared>(_onRouteCleared);
     on<LocationPermissionGranted>(_onPermissionGranted);
-    on<LocationPermissionDenied>(_onPermissionDenied);
+    on<LocationPermissionDeniedEvent>(_onPermissionDenied);
   }
 
   StreamSubscription<Position>? _positionSubscription;
@@ -88,7 +88,7 @@ class LocationBloc extends Bloc<LocationEvent, LocationState> {
     add(const LocationStarted());
   }
 
-  void _onPermissionDenied(LocationPermissionDenied event, Emitter<LocationState> emit) {
+  void _onPermissionDenied(LocationPermissionDeniedEvent event, Emitter<LocationState> emit) {
     emit(const LocationPermissionDenied());
   }
 

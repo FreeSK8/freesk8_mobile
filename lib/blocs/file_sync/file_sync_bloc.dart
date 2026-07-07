@@ -37,9 +37,9 @@ class FileSyncBloc extends Bloc<FileSyncEvent, FileSyncState> {
     }
     final first = event.files.first;
     emit(FileSyncDownloading(
-      filename: first.fileName,
+      filename: first.fileName ?? '',
       bytesReceived: 0,
-      bytesTotal: first.fileSize,
+      bytesTotal: first.fileSize ?? 0,
       fileList: event.files,
       currentFileIndex: 0,
     ));
@@ -63,9 +63,9 @@ class FileSyncBloc extends Bloc<FileSyncEvent, FileSyncState> {
       _fileIndex = nextIndex;
       final nextFile = current.fileList[nextIndex];
       emit(FileSyncDownloading(
-        filename: nextFile.fileName,
+        filename: nextFile.fileName ?? '',
         bytesReceived: 0,
-        bytesTotal: nextFile.fileSize,
+        bytesTotal: nextFile.fileSize ?? 0,
         fileList: current.fileList,
         currentFileIndex: nextIndex,
       ));

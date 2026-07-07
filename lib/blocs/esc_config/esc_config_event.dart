@@ -7,7 +7,7 @@ import '../../subViews/inputConfigurationEditor.dart';
 abstract class ESCConfigEvent extends Equatable {
   const ESCConfigEvent();
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class ESCConfigReset extends ESCConfigEvent {
@@ -18,7 +18,7 @@ class ESCFirmwareReceived extends ESCConfigEvent {
   const ESCFirmwareReceived(this.firmware);
   final ESCFirmware firmware;
   @override
-  List<Object> get props => [firmware];
+  List<Object?> get props => [firmware];
 }
 
 class ESCMotorConfigReceived extends ESCConfigEvent {
@@ -26,28 +26,28 @@ class ESCMotorConfigReceived extends ESCConfigEvent {
   final MCCONF mcconf;
   final bool isDefaults;
   @override
-  List<Object> get props => [mcconf, isDefaults];
+  List<Object?> get props => [mcconf, isDefaults];
 }
 
 class ESCAppConfigReceived extends ESCConfigEvent {
   const ESCAppConfigReceived(this.appconf);
   final APPCONF appconf;
   @override
-  List<Object> get props => [appconf];
+  List<Object?> get props => [appconf];
 }
 
 class ESCCalibrationReceived extends ESCConfigEvent {
   const ESCCalibrationReceived(this.calibration);
   final InputCalibration calibration;
   @override
-  List<Object> get props => [calibration];
+  List<Object?> get props => [calibration];
 }
 
 class ESCCANDevicesReceived extends ESCConfigEvent {
   const ESCCANDevicesReceived(this.devices);
   final List<int> devices;
   @override
-  List<Object> get props => [devices];
+  List<Object?> get props => [devices];
 }
 
 class ESCRespondingChanged extends ESCConfigEvent {

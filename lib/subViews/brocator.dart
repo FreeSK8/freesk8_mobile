@@ -597,7 +597,7 @@ class BrocatorState extends State<Brocator> {
                   },
                   // Center view and show telemetry popup
                   onLongPress: () {
-                    _mapController.move(myBros.brocations[i].position, _mapController.zoom);
+                    _mapController.move(myBros.brocations[i].position, _mapController.camera.zoom);
                     showPopup(myBros.brocations[i]);
                   },
                   child: Container(

@@ -67,7 +67,7 @@ class BLEConnectionBloc extends Bloc<BLEConnectionEvent, BLEConnectionState> {
     );
 
     try {
-      await event.device.connect(timeout: const Duration(seconds: 15));
+      await event.device.connect(license: License.nonprofit, timeout: const Duration(seconds: 15));
     } catch (e) {
       emit(BLEError('Connection failed: $e'));
     }

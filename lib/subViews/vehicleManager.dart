@@ -8,7 +8,7 @@ import 'package:freesk8_mobile/components/userSettings.dart';
 import 'package:freesk8_mobile/globalUtilities.dart';
 import 'package:uuid/uuid.dart';
 
-import 'package:community_charts_flutter/flutter.dart' as charts;
+import 'package:community_charts_flutter/community_charts_flutter.dart' as charts;
 
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 

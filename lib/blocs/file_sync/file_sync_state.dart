@@ -4,7 +4,7 @@ import '../../widgets/fileSyncViewer.dart';
 abstract class FileSyncState extends Equatable {
   const FileSyncState();
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class FileSyncIdle extends FileSyncState {
@@ -49,26 +49,26 @@ class FileSyncDownloading extends FileSyncState {
   }
 
   @override
-  List<Object> get props => [filename, bytesReceived, bytesTotal, currentFileIndex];
+  List<Object?> get props => [filename, bytesReceived, bytesTotal, currentFileIndex];
 }
 
 class FileSyncUnpacking extends FileSyncState {
   const FileSyncUnpacking(this.filename);
   final String filename;
   @override
-  List<Object> get props => [filename];
+  List<Object?> get props => [filename];
 }
 
 class FileSyncComplete extends FileSyncState {
   const FileSyncComplete(this.filesSynced);
   final int filesSynced;
   @override
-  List<Object> get props => [filesSynced];
+  List<Object?> get props => [filesSynced];
 }
 
 class FileSyncError extends FileSyncState {
   const FileSyncError(this.message);
   final String message;
   @override
-  List<Object> get props => [message];
+  List<Object?> get props => [message];
 }
