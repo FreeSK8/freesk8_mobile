@@ -55,7 +55,7 @@ class gotchiProCfgEditorState extends State<gotchiProCfgEditor> {
 
 
   int timeToPlay = 0;
-  ui.Image sliderImage;
+  ui.Image? sliderImage;
   Future<ui.Image> load(String asset) async {
     ByteData data = await rootBundle.load(asset);
     ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
@@ -87,19 +87,19 @@ class gotchiProCfgEditorState extends State<gotchiProCfgEditor> {
     globalLogger.d("Building gotchiProCfgEditor");
 
     // Check for valid arguments while building this widget
-    gotchiProCfgEditorArguments myArguments = ModalRoute.of(context).settings.arguments;
+    gotchiProCfgEditorArguments? myArguments = ModalRoute.of(context)!.settings.arguments as gotchiProCfgEditorArguments?;
     if(myArguments == null){
       return Container(child:Text("No arguments. BUG BUG. This should not happen. Please fix?"));
     }
 
     // Add listeners to text editing controllers for value validation
     ssidInput.addListener(() {
-      myArguments.currentConfiguration.wifi_ssid = ssidInput.text;
+      myArguments.currentConfiguration!.wifi_ssid = ssidInput.text;
     });
 
     // Add listeners to text editing controllers for value validation
     passInput.addListener(() {
-      myArguments.currentConfiguration.wifi_pass = passInput.text;
+      myArguments.currentConfiguration!.wifi_pass = passInput.text;
     });
 
     return Scaffold(
@@ -167,19 +167,19 @@ class gotchiProCfgEditorState extends State<gotchiProCfgEditor> {
                       Row(mainAxisAlignment: MainAxisAlignment.center , children: <Widget>[Text("Save"),Icon(Icons.save),],),
                           onPressed: () async {
 
-                            myArguments.currentConfiguration.wifi_ssid_len = myArguments.currentConfiguration.wifi_ssid.length;
-                            myArguments.currentConfiguration.wifi_pass_len = myArguments.currentConfiguration.wifi_pass.length;
+                            myArguments.currentConfiguration!.wifi_ssid_len = myArguments.currentConfiguration!.wifi_ssid!.length;
+                            myArguments.currentConfiguration!.wifi_pass_len = myArguments.currentConfiguration!.wifi_pass!.length;
 
                             //TODO: Add Device Name to configuration
-                            String newConfigCMD = "setnetcfg,${myArguments.currentConfiguration.cfgVersion}"
-                                ",${myArguments.currentConfiguration.wifi_ssid_len}"
-                                ",${myArguments.currentConfiguration.wifi_ssid}"
-                                ",${myArguments.currentConfiguration.wifi_pass_len}"
-                                ",${myArguments.currentConfiguration.wifi_pass}~";
+                            String newConfigCMD = "setnetcfg,${myArguments.currentConfiguration!.cfgVersion}"
+                                ",${myArguments.currentConfiguration!.wifi_ssid_len}"
+                                ",${myArguments.currentConfiguration!.wifi_ssid}"
+                                ",${myArguments.currentConfiguration!.wifi_pass_len}"
+                                ",${myArguments.currentConfiguration!.wifi_pass}~";
 
                             // Save
                             globalLogger.d("Save parameters: $newConfigCMD");
-                            await myArguments.txLoggerCharacteristic.write(utf8.encode(newConfigCMD)).catchError((error){
+                            await myArguments.txLoggerCharacteristic!.write(utf8.encode(newConfigCMD)).catchError((error){
                               globalLogger.e("Save exception: ${error.toString()}");
                               // Do nothing
                               return;

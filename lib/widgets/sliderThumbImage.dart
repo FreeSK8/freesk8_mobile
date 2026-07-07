@@ -2,7 +2,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 class SliderThumbImage extends SliderComponentShape {
-  final ui.Image image;
+  final ui.Image? image;
 
   SliderThumbImage(this.image);
 
@@ -35,7 +35,7 @@ class SliderThumbImage extends SliderComponentShape {
     Paint paint = Paint()..filterQuality = FilterQuality.high;
 
     if (image != null) {
-      canvas.drawImage(image, imageOffset, paint);
+      canvas.drawImage(image!, imageOffset, paint);
     }
   }
 }

@@ -13,21 +13,21 @@ import '../widgets/sliderThumbImage.dart';
 import 'dart:ui' as ui;
 
 class RobogotchiConfiguration {
-  int logAutoStopIdleTime;
-  double logAutoStopLowVoltage;
-  int logAutoStartERPM;
-  int logIntervalHz;
-  bool logAutoEraseWhenFull;
-  int multiESCMode;
-  List<int> multiESCIDs;
-  int gpsBaudRate;
-  double alertVoltageLow;
-  double alertESCTemp;
-  double alertMotorTemp;
-  int alertStorageAtCapacity;
-  int cfgVersion;
-  int timeZoneOffsetHours;
-  int timeZoneOffsetMinutes;
+  int? logAutoStopIdleTime;
+  double? logAutoStopLowVoltage;
+  int? logAutoStartERPM;
+  int? logIntervalHz;
+  bool? logAutoEraseWhenFull;
+  int? multiESCMode;
+  List<int>? multiESCIDs;
+  int? gpsBaudRate;
+  double? alertVoltageLow;
+  double? alertESCTemp;
+  double? alertMotorTemp;
+  int? alertStorageAtCapacity;
+  int? cfgVersion;
+  int? timeZoneOffsetHours;
+  int? timeZoneOffsetMinutes;
   RobogotchiConfiguration({
     this.logAutoStopIdleTime,
     this.logAutoStopLowVoltage,
@@ -48,9 +48,9 @@ class RobogotchiConfiguration {
 }
 
 class RobogotchiCfgEditorArguments {
-  final BluetoothCharacteristic txLoggerCharacteristic;
-  final RobogotchiConfiguration currentConfiguration;
-  final List<int> discoveredCANDevices;
+  final BluetoothCharacteristic? txLoggerCharacteristic;
+  final RobogotchiConfiguration? currentConfiguration;
+  final List<int>? discoveredCANDevices;
   RobogotchiCfgEditorArguments({this.txLoggerCharacteristic, this.currentConfiguration, this.discoveredCANDevices});
 }
 
@@ -75,15 +75,15 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
     ListItem(61865984,"230400 baud"),
   ];
 
-  List<DropdownMenuItem<ListItem>> _dropdownMenuItems;
-  ListItem _selectedItem;
+  late List<DropdownMenuItem<ListItem>> _dropdownMenuItems;
+  ListItem? _selectedItem;
 
-  List _escCANIDsSelected;
+  List? _escCANIDsSelected;
   List _escCANIDs = [];
 
   TextEditingController tecLogAutoStopIdleTime = TextEditingController();
   TextEditingController tecLogAutoStopLowVoltage = TextEditingController();
-  bool  _logAutoEraseWhenFull;
+  bool?  _logAutoEraseWhenFull;
 
   TextEditingController tecAlertVoltageLow = TextEditingController();
   TextEditingController tecAlertESCTemp = TextEditingController();
@@ -92,7 +92,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
 
 
   int timeToPlay = 0;
-  ui.Image sliderImage;
+  ui.Image? sliderImage;
   Future<ui.Image> load(String asset) async {
     ByteData data = await rootBundle.load(asset);
     ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
@@ -129,19 +129,19 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
     globalLogger.d("Building RobogotchiCfgEditor");
 
     // Check for valid arguments while building this widget
-    RobogotchiCfgEditorArguments myArguments = ModalRoute.of(context).settings.arguments;
+    RobogotchiCfgEditorArguments? myArguments = ModalRoute.of(context)!.settings.arguments as RobogotchiCfgEditorArguments?;
     if(myArguments == null){
       return Container(child:Text("No arguments. BUG BUG. This should not happen. Please fix?"));
     }
     if (_logAutoEraseWhenFull == null) {
-      _logAutoEraseWhenFull = myArguments.currentConfiguration.logAutoEraseWhenFull;
+      _logAutoEraseWhenFull = myArguments.currentConfiguration!.logAutoEraseWhenFull;
     }
-    if (myArguments.discoveredCANDevices.length > 0) {
+    if (myArguments.discoveredCANDevices!.length > 0) {
       _escCANIDs.clear();
-      for (int i=0; i<myArguments.discoveredCANDevices.length; ++i) {
+      for (int i=0; i<myArguments.discoveredCANDevices!.length; ++i) {
         _escCANIDs.add({
-          "display": "ID ${myArguments.discoveredCANDevices[i]}",
-          "value": myArguments.discoveredCANDevices[i],
+          "display": "ID ${myArguments.discoveredCANDevices![i]}",
+          "value": myArguments.discoveredCANDevices![i],
         });
       }
     }
@@ -149,17 +149,17 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
     // Preselect user configured CAN IDs
     if (_escCANIDsSelected == null) {
       _escCANIDsSelected = [];
-      myArguments.currentConfiguration.multiESCIDs.forEach((element) {
-        if (element != 0 && myArguments.discoveredCANDevices.contains(element.toInt())) {
+      myArguments.currentConfiguration!.multiESCIDs!.forEach((element) {
+        if (element != 0 && myArguments.discoveredCANDevices!.contains(element.toInt())) {
           globalLogger.d("Adding user selected CAN ID: $element");
-          _escCANIDsSelected.add(element.toInt());
+          _escCANIDsSelected!.add(element.toInt());
         }
       });
     }
     // Select GPS Baud
     if (_selectedItem == null) {
       _dropdownItems.forEach((item) {
-        if (item.value == myArguments.currentConfiguration.gpsBaudRate) {
+        if (item.value == myArguments.currentConfiguration!.gpsBaudRate) {
           _selectedItem = item;
         }
       });
@@ -169,52 +169,52 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
 
     // Add listeners to text editing controllers for value validation
     tecLogAutoStopIdleTime.addListener(() {
-      myArguments.currentConfiguration.logAutoStopIdleTime = int.tryParse(tecLogAutoStopIdleTime.text).abs();
-      if (myArguments.currentConfiguration.logAutoStopIdleTime > 65534) {
+      myArguments.currentConfiguration!.logAutoStopIdleTime = int.tryParse(tecLogAutoStopIdleTime.text)!.abs();
+      if (myArguments.currentConfiguration!.logAutoStopIdleTime! > 65534) {
         setState(() {
-          myArguments.currentConfiguration.logAutoStopIdleTime = 65534;
+          myArguments.currentConfiguration!.logAutoStopIdleTime = 65534;
         });
       }
     });
     tecLogAutoStopLowVoltage.addListener(() {
-      myArguments.currentConfiguration.logAutoStopLowVoltage = double.tryParse(tecLogAutoStopLowVoltage.text.replaceFirst(',', '.')).abs();
-      if (myArguments.currentConfiguration.logAutoStopLowVoltage > 128.0) {
+      myArguments.currentConfiguration!.logAutoStopLowVoltage = double.tryParse(tecLogAutoStopLowVoltage.text.replaceFirst(',', '.'))!.abs();
+      if (myArguments.currentConfiguration!.logAutoStopLowVoltage! > 128.0) {
         setState(() {
-          myArguments.currentConfiguration.logAutoStopLowVoltage = 128.0;
+          myArguments.currentConfiguration!.logAutoStopLowVoltage = 128.0;
         });
       }
     });
     tecAlertVoltageLow.addListener(() {
-      myArguments.currentConfiguration.alertVoltageLow = doublePrecision(double.tryParse(tecAlertVoltageLow.text.replaceFirst(',', '.')).abs(), 1);
-      if (myArguments.currentConfiguration.alertVoltageLow > 128.0) {
+      myArguments.currentConfiguration!.alertVoltageLow = doublePrecision(double.tryParse(tecAlertVoltageLow.text.replaceFirst(',', '.'))!.abs(), 1);
+      if (myArguments.currentConfiguration!.alertVoltageLow! > 128.0) {
         setState(() {
-          myArguments.currentConfiguration.alertVoltageLow = 128.0;
+          myArguments.currentConfiguration!.alertVoltageLow = 128.0;
         });
       }
     });
     tecAlertESCTemp.addListener(() {
-      myArguments.currentConfiguration.alertESCTemp = doublePrecision(double.tryParse(tecAlertESCTemp.text.replaceFirst(',', '.')).abs(), 1);
-      if (myArguments.currentConfiguration.alertESCTemp > 120.0) {
+      myArguments.currentConfiguration!.alertESCTemp = doublePrecision(double.tryParse(tecAlertESCTemp.text.replaceFirst(',', '.'))!.abs(), 1);
+      if (myArguments.currentConfiguration!.alertESCTemp! > 120.0) {
         setState(() {
-          myArguments.currentConfiguration.alertESCTemp = 120.0;
+          myArguments.currentConfiguration!.alertESCTemp = 120.0;
         });
       }
     });
     tecAlertMotorTemp.addListener(() {
-      myArguments.currentConfiguration.alertMotorTemp = doublePrecision(double.tryParse(tecAlertMotorTemp.text.replaceFirst(',', '.')).abs(), 1);
-      if (myArguments.currentConfiguration.alertMotorTemp > 120.0) {
+      myArguments.currentConfiguration!.alertMotorTemp = doublePrecision(double.tryParse(tecAlertMotorTemp.text.replaceFirst(',', '.'))!.abs(), 1);
+      if (myArguments.currentConfiguration!.alertMotorTemp! > 120.0) {
         setState(() {
-          myArguments.currentConfiguration.alertMotorTemp = 120.0;
+          myArguments.currentConfiguration!.alertMotorTemp = 120.0;
         });
       }
     });
     // Set text editing controller values to arguments received
-    tecLogAutoStopIdleTime.text = myArguments.currentConfiguration.logAutoStopIdleTime.toString();
-    tecLogAutoStopLowVoltage.text = myArguments.currentConfiguration.logAutoStopLowVoltage.toString();
+    tecLogAutoStopIdleTime.text = myArguments.currentConfiguration!.logAutoStopIdleTime.toString();
+    tecLogAutoStopLowVoltage.text = myArguments.currentConfiguration!.logAutoStopLowVoltage.toString();
 
-    tecAlertVoltageLow.text = myArguments.currentConfiguration.alertVoltageLow.toString();
-    tecAlertESCTemp.text = myArguments.currentConfiguration.alertESCTemp.toString();
-    tecAlertMotorTemp.text = myArguments.currentConfiguration.alertMotorTemp.toString();
+    tecAlertVoltageLow.text = myArguments.currentConfiguration!.alertVoltageLow.toString();
+    tecAlertESCTemp.text = myArguments.currentConfiguration!.alertESCTemp.toString();
+    tecAlertMotorTemp.text = myArguments.currentConfiguration!.alertMotorTemp.toString();
 
 
     return Scaffold(
@@ -270,16 +270,16 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
 
 
                   Divider(thickness: 3),
-                  Text("Log Auto Start Sensitivity (eRPM ${myArguments.currentConfiguration.logAutoStartERPM})"),
+                  Text("Log Auto Start Sensitivity (eRPM ${myArguments.currentConfiguration!.logAutoStartERPM})"),
                   SliderTheme(
                       data: SliderTheme.of(context).copyWith(
                         thumbShape: timeToPlay == 3 ? SliderThumbImage(sliderImage) : RoundSliderThumbShape(enabledThumbRadius: 10)
                       ),
                       child: Slider(
                         onChanged: (newValue){ setState(() {
-                          myArguments.currentConfiguration.logAutoStartERPM = 6000 - newValue.toInt();
+                          myArguments.currentConfiguration!.logAutoStartERPM = 6000 - newValue.toInt();
                         }); },
-                        value: (6000 - myArguments.currentConfiguration.logAutoStartERPM.toDouble())
+                        value: (6000 - myArguments.currentConfiguration!.logAutoStartERPM!.toDouble())
                             .clamp(1000, 4999)
                             .toDouble(), // Clamping the value between min and max and casting it to double
                         min: 1000,
@@ -288,10 +288,10 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
 
 
                   Divider(thickness: 3),
-                  Text("Log Entries per Second (${myArguments.currentConfiguration.logIntervalHz}Hz)"),
-                  myArguments.currentConfiguration.multiESCMode == 2 && myArguments.currentConfiguration.logIntervalHz == 1 ?
+                  Text("Log Entries per Second (${myArguments.currentConfiguration!.logIntervalHz}Hz)"),
+                  myArguments.currentConfiguration!.multiESCMode == 2 && myArguments.currentConfiguration!.logIntervalHz == 1 ?
                     Text("⚠️ 2Hz or more is recommended with a dual ESC configuration", style: TextStyle(color: Colors.yellow)) : Container(),
-                  myArguments.currentConfiguration.multiESCMode == 4 && myArguments.currentConfiguration.logIntervalHz != 4 ?
+                  myArguments.currentConfiguration!.multiESCMode == 4 && myArguments.currentConfiguration!.logIntervalHz != 4 ?
                       Text("⚠️ 4Hz is recommended with a quad ESC configuration", style: TextStyle(color: Colors.yellow)) : Container(),
                   SliderTheme(
                       data: SliderTheme.of(context).copyWith(
@@ -299,9 +299,9 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                       ),
                       child: Slider(
                         onChanged: (newValue){ setState(() {
-                          myArguments.currentConfiguration.logIntervalHz = newValue.toInt();
+                          myArguments.currentConfiguration!.logIntervalHz = newValue.toInt();
                         }); },
-                        value: myArguments.currentConfiguration.logIntervalHz.toDouble(),
+                        value: myArguments.currentConfiguration!.logIntervalHz!.toDouble(),
                         min: 1,
                         max: 5,
                       )
@@ -326,7 +326,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                     onChanged: (newValue) {
                       setState(() {
                         _selectedItem = newValue;
-                        myArguments.currentConfiguration.gpsBaudRate = newValue.value;
+                        myArguments.currentConfiguration!.gpsBaudRate = newValue!.value;
                       });
                     },
                   )
@@ -338,10 +338,10 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                   RadioListTile(
                     title: const Text("Single ESC Mode"),
                     value: 0,
-                    groupValue: myArguments.currentConfiguration.multiESCMode,
-                    onChanged: (int value){
+                    groupValue: myArguments.currentConfiguration!.multiESCMode,
+                    onChanged: (int? value){
                       setState(() {
-                        myArguments.currentConfiguration.multiESCMode = value;
+                        myArguments.currentConfiguration!.multiESCMode = value;
                       });
                     },
                   ),
@@ -349,30 +349,30 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                   RadioListTile(
                     title: const Text("Dual ESC Mode"),
                     value: 2,
-                    groupValue: myArguments.currentConfiguration.multiESCMode,
-                    onChanged: (int value){
+                    groupValue: myArguments.currentConfiguration!.multiESCMode,
+                    onChanged: (int? value){
                       setState(() {
-                        myArguments.currentConfiguration.multiESCMode = value;
+                        myArguments.currentConfiguration!.multiESCMode = value;
                       });
                     },
                   ),
                   RadioListTile(
                     title: const Text("Quad ESC Mode"),
                     value: 4,
-                    groupValue: myArguments.currentConfiguration.multiESCMode,
-                    onChanged: (int value){
+                    groupValue: myArguments.currentConfiguration!.multiESCMode,
+                    onChanged: (int? value){
                       setState(() {
-                        myArguments.currentConfiguration.multiESCMode = value;
+                        myArguments.currentConfiguration!.multiESCMode = value;
                       });
                     },
                   ),
 
-                  myArguments.currentConfiguration.multiESCMode > 1 ? MultiSelectFormField(
+                  myArguments.currentConfiguration!.multiESCMode! > 1 ? MultiSelectFormField(
                     autovalidate: AutovalidateMode.disabled,
-                    title: myArguments.currentConfiguration.multiESCMode == 4 ? Text("Select CAN IDs") : Text("Select CAN ID"),
+                    title: myArguments.currentConfiguration!.multiESCMode == 4 ? Text("Select CAN IDs") : Text("Select CAN ID"),
                     validator: (value) {
-                      if (value == null || value.length != (myArguments.currentConfiguration.multiESCMode == 4 ? 3 : 1)) {
-                        if(myArguments.currentConfiguration.multiESCMode == 4) {
+                      if (value == null || value.length != (myArguments.currentConfiguration!.multiESCMode == 4 ? 3 : 1)) {
+                        if(myArguments.currentConfiguration!.multiESCMode == 4) {
                           return "Please select 3 ESC CAN IDs";
                         } else {
                           return "Please select 1 ESC CAN ID";
@@ -386,7 +386,7 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                     okButtonLabel: 'OK',
                     cancelButtonLabel: 'CANCEL',
                     // required: true,
-                    hintWidget: myArguments.currentConfiguration.multiESCMode == 4 ? Text("Select 3 ESC CAN IDs") : Text("Select 1 ESC CAN ID"),
+                    hintWidget: myArguments.currentConfiguration!.multiESCMode == 4 ? Text("Select 3 ESC CAN IDs") : Text("Select 1 ESC CAN ID"),
                     initialValue: _escCANIDsSelected,
                     onSaved: (value) {
                       if (value == null) return;
@@ -424,16 +424,16 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                   ),
 
                   Divider(thickness: 3),
-                  Text("Alert when Storage is at Capacity (${myArguments.currentConfiguration.alertStorageAtCapacity == 0 ? "0 = no alert" : "${myArguments.currentConfiguration.alertStorageAtCapacity}%"})"),
+                  Text("Alert when Storage is at Capacity (${myArguments.currentConfiguration!.alertStorageAtCapacity == 0 ? "0 = no alert" : "${myArguments.currentConfiguration!.alertStorageAtCapacity}%"})"),
                   SliderTheme(
                       data: SliderTheme.of(context).copyWith(
                           thumbShape: timeToPlay == 3 ? SliderThumbImage(sliderImage) : RoundSliderThumbShape(enabledThumbRadius: 10)
                       ),
                       child: Slider(
                         onChanged: (newValue){ setState(() {
-                          myArguments.currentConfiguration.alertStorageAtCapacity = newValue.toInt();
+                          myArguments.currentConfiguration!.alertStorageAtCapacity = newValue.toInt();
                         }); },
-                        value: myArguments.currentConfiguration.alertStorageAtCapacity.toDouble(),
+                        value: myArguments.currentConfiguration!.alertStorageAtCapacity!.toDouble(),
                         min: 0.0,
                         max: 90.0,
                       )
@@ -454,43 +454,43 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
                       Row(mainAxisAlignment: MainAxisAlignment.center , children: <Widget>[Text("Save"),Icon(Icons.save),],),
                           onPressed: () async {
                             // Validate user input
-                            if (myArguments.currentConfiguration.multiESCMode == 4 && _escCANIDsSelected?.length != 3) {
+                            if (myArguments.currentConfiguration!.multiESCMode == 4 && _escCANIDsSelected?.length != 3) {
                               genericAlert(context, "CAN IDs required", Text("Please select 3 CAN IDs before saving or switch to Single ESC Mode"), "OK");
                               return;
                             }
-                            if (myArguments.currentConfiguration.multiESCMode == 2 && _escCANIDsSelected?.length != 1) {
+                            if (myArguments.currentConfiguration!.multiESCMode == 2 && _escCANIDsSelected?.length != 1) {
                               genericAlert(context, "CAN ID required", Text("Please select 1 CAN ID before saving or switch to Single ESC Mode"), "OK");
                               return;
                             }
 
                             // Add GPS TimeZoneOffset
-                            myArguments.currentConfiguration.timeZoneOffsetHours = DateTime.now().timeZoneOffset.inHours;
-                            myArguments.currentConfiguration.timeZoneOffsetMinutes = DateTime.now().timeZoneOffset.inMinutes % 60;
-                            globalLogger.d("TimeZone Computation: ${myArguments.currentConfiguration.timeZoneOffsetHours} hours ${myArguments.currentConfiguration.timeZoneOffsetMinutes} minutes");
+                            myArguments.currentConfiguration!.timeZoneOffsetHours = DateTime.now().timeZoneOffset.inHours;
+                            myArguments.currentConfiguration!.timeZoneOffsetMinutes = DateTime.now().timeZoneOffset.inMinutes % 60;
+                            globalLogger.d("TimeZone Computation: ${myArguments.currentConfiguration!.timeZoneOffsetHours} hours ${myArguments.currentConfiguration!.timeZoneOffsetMinutes} minutes");
 
                             //TODO: Add Device Name to configuration
-                            String newConfigCMD = "setcfg,${myArguments.currentConfiguration.cfgVersion}"
-                                ",${myArguments.currentConfiguration.logAutoStopIdleTime}"
-                                ",${myArguments.currentConfiguration.logAutoStopLowVoltage}"
-                                ",${myArguments.currentConfiguration.logAutoStartERPM}"
-                                ",${myArguments.currentConfiguration.logIntervalHz}"
+                            String newConfigCMD = "setcfg,${myArguments.currentConfiguration!.cfgVersion}"
+                                ",${myArguments.currentConfiguration!.logAutoStopIdleTime}"
+                                ",${myArguments.currentConfiguration!.logAutoStopLowVoltage}"
+                                ",${myArguments.currentConfiguration!.logAutoStartERPM}"
+                                ",${myArguments.currentConfiguration!.logIntervalHz}"
                                 ",${_logAutoEraseWhenFull == true ? "1": "0"}"
-                                ",${myArguments.currentConfiguration.multiESCMode}"
-                                ",${_escCANIDsSelected != null && _escCANIDsSelected.length > 0 ? _escCANIDsSelected[0] : 0}"
-                                ",${_escCANIDsSelected != null && _escCANIDsSelected.length > 1 ? _escCANIDsSelected[1] : 0}"
-                                ",${_escCANIDsSelected != null && _escCANIDsSelected.length > 2 ? _escCANIDsSelected[2] : 0}"
+                                ",${myArguments.currentConfiguration!.multiESCMode}"
+                                ",${_escCANIDsSelected != null && _escCANIDsSelected!.length > 0 ? _escCANIDsSelected![0] : 0}"
+                                ",${_escCANIDsSelected != null && _escCANIDsSelected!.length > 1 ? _escCANIDsSelected![1] : 0}"
+                                ",${_escCANIDsSelected != null && _escCANIDsSelected!.length > 2 ? _escCANIDsSelected![2] : 0}"
                                 ",0"
-                                ",${myArguments.currentConfiguration.gpsBaudRate}"
-                                ",${myArguments.currentConfiguration.alertVoltageLow != null ? myArguments.currentConfiguration.alertVoltageLow : 0.0}"
-                                ",${myArguments.currentConfiguration.alertESCTemp != null ? myArguments.currentConfiguration.alertESCTemp : 0.0}"
-                                ",${myArguments.currentConfiguration.alertMotorTemp != null ? myArguments.currentConfiguration.alertMotorTemp : 0.0}"
-                                ",${myArguments.currentConfiguration.alertStorageAtCapacity}"
-                                ",${myArguments.currentConfiguration.timeZoneOffsetHours}"
-                                ",${myArguments.currentConfiguration.timeZoneOffsetMinutes}~";
+                                ",${myArguments.currentConfiguration!.gpsBaudRate}"
+                                ",${myArguments.currentConfiguration!.alertVoltageLow != null ? myArguments.currentConfiguration!.alertVoltageLow : 0.0}"
+                                ",${myArguments.currentConfiguration!.alertESCTemp != null ? myArguments.currentConfiguration!.alertESCTemp : 0.0}"
+                                ",${myArguments.currentConfiguration!.alertMotorTemp != null ? myArguments.currentConfiguration!.alertMotorTemp : 0.0}"
+                                ",${myArguments.currentConfiguration!.alertStorageAtCapacity}"
+                                ",${myArguments.currentConfiguration!.timeZoneOffsetHours}"
+                                ",${myArguments.currentConfiguration!.timeZoneOffsetMinutes}~";
 
                             // Save
                             globalLogger.d("Save parameters: $newConfigCMD");
-                            await myArguments.txLoggerCharacteristic.write(utf8.encode(newConfigCMD)).catchError((error){
+                            await myArguments.txLoggerCharacteristic!.write(utf8.encode(newConfigCMD)).catchError((error){
                               globalLogger.e("Save exception: ${error.toString()}");
                               // Do nothing
                               return;

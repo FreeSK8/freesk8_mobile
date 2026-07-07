@@ -25,10 +25,10 @@ import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as Im;
 
 class PrivacyZone {
-  bool? activated;
+  bool activated = false;
   double? latitude;
   double? longitude;
-  double? radius;
+  double radius = 2.0;
 }
 
 class Bro {
@@ -49,10 +49,10 @@ class Bro {
   Map<String, dynamic> toJson() =>
       {
         'Alias' : alias,
-        'Avatar': avatar == null ? '' : base64Encode(avatar.bytes),
-        'LastUpdate': lastUpdated.toIso8601String().substring(0,19),
-        'Latitude': position.latitude.toString(),
-        'Longitude': position.longitude.toString(),
+        'Avatar': avatar == null ? '' : base64Encode(avatar!.bytes),
+        'LastUpdate': lastUpdated!.toIso8601String().substring(0,19),
+        'Latitude': position!.latitude.toString(),
+        'Longitude': position!.longitude.toString(),
         'BatteryVoltage' : batteryVoltage,
         'BatteryPercentage' : batteryPercentage,
         'DistanceTraveled' : distanceTraveled,
@@ -89,10 +89,10 @@ class BroList {
 }
 
 class BrocatorArguments {
-  final String boardAlias;
-  final FileImage boardAvatar;
-  final Stream telemetryStream;
-  final BluetoothCharacteristic theTXCharacteristic;
+  final String? boardAlias;
+  final FileImage? boardAvatar;
+  final Stream? telemetryStream;
+  final BluetoothCharacteristic? theTXCharacteristic;
 
   BrocatorArguments(this.boardAlias, this.boardAvatar, this.telemetryStream, this.theTXCharacteristic);
 }
@@ -134,7 +134,7 @@ class BrocatorState extends State<Brocator> {
 
   MapController _mapController = MapController();
 
-  static StreamSubscription<ESCTelemetry>? streamSubscription;
+  static StreamSubscription? streamSubscription;
   BluetoothCharacteristic? theTXCharacteristic;
 
   static ESCTelemetry myTelemetry = new ESCTelemetry();
@@ -167,7 +167,7 @@ class BrocatorState extends State<Brocator> {
     myUUID = prefs.getString('brocatorUUID') ?? _uuid.v4().toString();
     broadcastPosition = prefs.getBool('broadcastBrocation') ?? false;
     serverURL = prefs.getString('brocatorServer') ?? "";
-    serverURLValid = Uri.tryParse(serverURL).isAbsolute;
+    serverURLValid = Uri.tryParse(serverURL)!.isAbsolute;
     offlineAlias = prefs.getString('brocatorAlias') ?? offlineAlias;
     privacyZone.activated = prefs.getBool('brocatorPrivacyZoneActivated') ?? false;
     privacyZone.latitude = prefs.getDouble('brocatorPrivacyZoneLatitude');
@@ -179,13 +179,13 @@ class BrocatorState extends State<Brocator> {
     //globalLogger.wtf("saving settings");
     final prefs = await SharedPreferences.getInstance();
 
-    await prefs.setString('brocatorUUID', myUUID);
-    await prefs.setBool('broadcastBrocation', broadcastPosition);
+    await prefs.setString('brocatorUUID', myUUID!);
+    await prefs.setBool('broadcastBrocation', broadcastPosition!);
     await prefs.setString('brocatorServer', serverURL);
     await prefs.setString('brocatorAlias', offlineAlias);
     await prefs.setBool('brocatorPrivacyZoneActivated', privacyZone.activated);
-    await prefs.setDouble('brocatorPrivacyZoneLatitude', privacyZone.latitude);
-    await prefs.setDouble('brocatorPrivacyZoneLongitude', privacyZone.longitude);
+    await prefs.setDouble('brocatorPrivacyZoneLatitude', privacyZone.latitude!);
+    await prefs.setDouble('brocatorPrivacyZoneLongitude', privacyZone.longitude!);
     await prefs.setDouble('brocatorPrivacyZoneRadius', privacyZone.radius);
   }
 
@@ -207,7 +207,7 @@ class BrocatorState extends State<Brocator> {
 
   Future<void> sendBrocation() async {
     if (privacyZone.activated && privacyZone.latitude != null) {
-      double distanceFromPrivacyZone = calculateGPSDistance(currentLocation, LatLng(privacyZone.latitude, privacyZone.longitude));
+      double distanceFromPrivacyZone = calculateGPSDistance(currentLocation!, LatLng(privacyZone.latitude!, privacyZone.longitude!));
       if (distanceFromPrivacyZone < privacyZone.radius) {
         print("Inside privacy zone");
         _insidePrivacyZone = true;
@@ -221,11 +221,11 @@ class BrocatorState extends State<Brocator> {
 
     //globalLogger.wtf("Sending brocation");
 
-    myBrocation.alias = myArguments.boardAlias == null ? offlineAlias : myArguments.boardAlias;
-    if (myArguments.boardAvatar != null && includeAvatar) {
+    myBrocation.alias = myArguments!.boardAlias == null ? offlineAlias : myArguments!.boardAlias;
+    if (myArguments!.boardAvatar != null && includeAvatar) {
       // Resize the current avatar to reduce bandwidth
       Im.Image image = Im.decodeImage(
-          myArguments.boardAvatar.file.readAsBytesSync());
+          myArguments!.boardAvatar!.file.readAsBytesSync())!;
       Im.Image smallerImage = Im.copyResize(image,
           width: 120); // choose the size here, it will maintain aspect ratio
 
@@ -237,7 +237,7 @@ class BrocatorState extends State<Brocator> {
       Im.Image image = Im.decodeImage(
           (await rootBundle.load('assets/FreeSK8_Mobile.png'))
               .buffer
-              .asUint8List());
+              .asUint8List())!;
       Im.Image smallerImage = Im.copyResize(image,
           width: 120); // choose the size here, it will maintain aspect ratio
 
@@ -250,19 +250,19 @@ class BrocatorState extends State<Brocator> {
 
     final response = await http.post(Uri.parse(Uri.encodeFull("${serverURL}/brocator.php")),
       body: includeAvatar ? jsonEncode(<String, dynamic>{
-        'Avatar': base64Encode(myBrocation.avatar.bytes),
+        'Avatar': base64Encode(myBrocation.avatar!.bytes),
         'UUID' : myUUID,
         'Alias' : myBrocation.alias,
-        'Latitude' : myBrocation.position.latitude,
-        'Longitude' : myBrocation.position.longitude,
+        'Latitude' : myBrocation.position!.latitude,
+        'Longitude' : myBrocation.position!.longitude,
         'BatteryVoltage' : myTelemetry.v_in,
         'BatteryPercentage' : myTelemetry.battery_level == null ? 0 : (myTelemetry.battery_level * 100).toInt(),
         'DistanceTraveled' : myTelemetry.tachometer_abs / 1000.0,
       }) : jsonEncode(<String, dynamic>{
         'UUID' : myUUID,
         'Alias' : myBrocation.alias,
-        'Latitude' : myBrocation.position.latitude,
-        'Longitude' : myBrocation.position.longitude,
+        'Latitude' : myBrocation.position!.latitude,
+        'Longitude' : myBrocation.position!.longitude,
         'BatteryVoltage' : myTelemetry.v_in,
         'BatteryPercentage' : myTelemetry.battery_level == null ? 0 : (myTelemetry.battery_level * 100).toInt(),
         'DistanceTraveled' : myTelemetry.tachometer_abs / 1000.0,
@@ -283,7 +283,7 @@ class BrocatorState extends State<Brocator> {
       return;
     }
 
-    if (broadcastPosition && currentLocation != null) {
+    if (broadcastPosition! && currentLocation != null) {
       sendBrocation();
     }
 
@@ -306,14 +306,14 @@ class BrocatorState extends State<Brocator> {
       Uint8List packet = simpleVESCRequest(COMM_PACKET_ID.COMM_GET_VALUES_SETUP.index);
 
       // Request COMM_GET_VALUES_SETUP from the ESC
-      if (!await sendBLEData(theTXCharacteristic, packet, true)) {
+      if (!await sendBLEData(theTXCharacteristic!, packet, true)) {
         globalLogger.e("_requestTelemetry() failed");
       }
     }
   }
 
   void showPopup(Bro element) {
-    Duration lastUpdated = (DateTime.now().subtract(DateTime.now().timeZoneOffset)).difference(element.lastUpdated);
+    Duration lastUpdated = (DateTime.now().subtract(DateTime.now().timeZoneOffset)).difference(element.lastUpdated!);
     String lastUpdatedString = "";
     if (lastUpdated.inSeconds < 60) {
       lastUpdatedString = "${lastUpdated.inSeconds} second${lastUpdated.inSeconds == 1 ? "": "s"}";
@@ -333,12 +333,12 @@ class BrocatorState extends State<Brocator> {
         Text("Last Updated: $lastUpdatedString ago"),
         SizedBox(height: 10),
         Icon(Icons.location_on_outlined),
-        Text("Distance: ${doublePrecision(calculateGPSDistance(currentLocation, element.position), 1)}km away"),
+        Text("Distance: ${doublePrecision(calculateGPSDistance(currentLocation!, element.position!), 1)}km away"),
         SizedBox(height: 10),
         element.batteryPercentage == 0 ? Container() : Icon(Icons.stacked_bar_chart),
         element.batteryPercentage == 0 ? Container() : Text("Vehicle Battery: ${element.batteryPercentage}%"),
         element.batteryPercentage == 0 ? Container() : Text("Vehicle Voltage: ${element.batteryVoltage}V"),
-        element.batteryPercentage == 0 ? Container() : Text("Vehicle Odometer: ${doublePrecision(element.distanceTraveled, 1)}km"),
+        element.batteryPercentage == 0 ? Container() : Text("Vehicle Odometer: ${doublePrecision(element.distanceTraveled!, 1)}km"),
       ],
     );
     genericAlert(context, "Quick Inspection", alertBody, "OK");
@@ -351,7 +351,7 @@ class BrocatorState extends State<Brocator> {
     tecServer.addListener(() {
       if (tecServer.text != serverURL) {
         serverURL = tecServer.text;
-        serverURLValid = Uri.tryParse(serverURL).isAbsolute;
+        serverURLValid = Uri.tryParse(serverURL)!.isAbsolute;
         // Save settings when URL is valid
         if (serverURLValid) {
           saveSettings();
@@ -406,11 +406,11 @@ class BrocatorState extends State<Brocator> {
     tecAlias.selection = TextSelection.fromPosition(TextPosition(offset: tecAlias.text.length));
 
     List<Marker> mapMakers = [];
-    if (myBros != null) myBros.brocations.forEach((element) {
+    if (myBros != null) myBros!.brocations.forEach((element) {
       mapMakers.add(new Marker(
         width: 50.0,
         height: 50.0,
-        point: element.position,
+        point: element.position!,
         child:
         new Container(
           margin: EdgeInsets.fromLTRB(0, 0, 0, 0),
@@ -419,7 +419,7 @@ class BrocatorState extends State<Brocator> {
               showPopup(element);
             },
             child: CircleAvatar(
-                backgroundImage: element.avatar != null ? element.avatar : AssetImage('assets/FreeSK8_Mobile.png'),
+                backgroundImage: element.avatar != null ? element.avatar : AssetImage('assets/FreeSK8_Mobile.png') as ImageProvider,
                 radius: 100,
                 backgroundColor: Colors.white),
           ),
@@ -455,14 +455,14 @@ class BrocatorState extends State<Brocator> {
 
                         SwitchListTile(
                           title: Text("Share my brocation with everyone"),
-                          value: broadcastPosition,
+                          value: broadcastPosition!,
                           onChanged: (bool newValue) {
                             setState((){
                               broadcastPosition = newValue;
                             });
                             saveSettings();
                           },
-                          secondary: Icon(broadcastPosition ? Icons.public : Icons.public_off),
+                          secondary: Icon(broadcastPosition! ? Icons.public : Icons.public_off),
                         ),
                         TextField(
                             controller: tecServer,
@@ -496,8 +496,8 @@ class BrocatorState extends State<Brocator> {
 
                         ElevatedButton(onPressed: (){
                           if (currentLocation != null) {
-                            privacyZone.latitude = currentLocation.latitude;
-                            privacyZone.longitude = currentLocation.longitude;
+                            privacyZone.latitude = currentLocation!.latitude;
+                            privacyZone.longitude = currentLocation!.longitude;
                             setState(() {
                               saveSettings();
                             });
@@ -538,7 +538,7 @@ class BrocatorState extends State<Brocator> {
                   currentPosition: currentLocation,
                   mapMarkers: mapMakers,
                   mapController: _mapController,
-                  privacyZone: privacyZone.activated ? LatLng(privacyZone.latitude, privacyZone.longitude) : null,
+                  privacyZone: privacyZone.activated ? LatLng(privacyZone.latitude!, privacyZone.longitude!) : null,
                   privacyZoneRadius: privacyZone.radius,
                 )) : Container(height: MediaQuery.of(context).size.height * 0.50, child: Text("Requesting location from mobile device"),)
         ),
@@ -568,10 +568,10 @@ class BrocatorState extends State<Brocator> {
         ),
         _showSettings ? Container() : myBros != null ? Expanded(
           child: ListView.builder(
-            itemCount: myBros.brocations.length,
+            itemCount: myBros!.brocations.length,
               itemBuilder: (context, i) {
-              Color colorCellVoltage = multiColorLerp(Colors.red, Colors.yellow, Colors.green, myBros.brocations[i].batteryPercentage / 100.0);
-              Duration lastUpdated = (DateTime.now().subtract(DateTime.now().timeZoneOffset)).difference(myBros.brocations[i].lastUpdated);
+              Color colorCellVoltage = multiColorLerp(Colors.red, Colors.yellow, Colors.green, myBros!.brocations[i].batteryPercentage! / 100.0);
+              Duration lastUpdated = (DateTime.now().subtract(DateTime.now().timeZoneOffset)).difference(myBros!.brocations[i].lastUpdated!);
               String lastUpdatedString = "";
               if (lastUpdated.inSeconds < 60) {
                 lastUpdatedString = "${lastUpdated.inSeconds} second${lastUpdated.inSeconds == 1 ? "": "s"}";
@@ -588,24 +588,24 @@ class BrocatorState extends State<Brocator> {
                   onTap: () {
                     // Increase map zoom level if we are already centered on this user
                     double mapZoom = _mapController.camera.zoom;
-                    if (_mapController.camera.center == myBros.brocations[i].position && _mapController.camera.zoom < 18) {
+                    if (_mapController.camera.center == myBros!.brocations[i].position && _mapController.camera.zoom < 18) {
                       mapZoom += 2;
                       globalLogger.d("Increasing zoom $mapZoom");
                     }
                     // Center map and set zoom
-                    _mapController.move(myBros.brocations[i].position, mapZoom);
+                    _mapController.move(myBros!.brocations[i].position!, mapZoom);
                   },
                   // Center view and show telemetry popup
                   onLongPress: () {
-                    _mapController.move(myBros.brocations[i].position, _mapController.camera.zoom);
-                    showPopup(myBros.brocations[i]);
+                    _mapController.move(myBros!.brocations[i].position!, _mapController.camera.zoom);
+                    showPopup(myBros!.brocations[i]);
                   },
                   child: Container(
                     decoration: BoxDecoration(
                         color: Theme.of(context).dialogBackgroundColor,
                         borderRadius: BorderRadius.circular(2),
 
-                        gradient: myBros.brocations[i].batteryPercentage == 0 ? null :  LinearGradient(
+                        gradient: myBros!.brocations[i].batteryPercentage == 0 ? null :  LinearGradient(
                           tileMode: TileMode.repeated,
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
@@ -621,13 +621,13 @@ class BrocatorState extends State<Brocator> {
                     child: Row(
                       children: [
                         CircleAvatar(
-                            backgroundImage: myBros.brocations[i].avatar != null ? myBros.brocations[i].avatar : AssetImage('assets/FreeSK8_Mobile.png'),
+                            backgroundImage: myBros!.brocations[i].avatar != null ? myBros!.brocations[i].avatar : AssetImage('assets/FreeSK8_Mobile.png') as ImageProvider,
                             radius: 20,
                             backgroundColor: Colors.white),
                         Spacer(),
                         Container(
                           width: MediaQuery.of(context).size.width * 0.25,
-                          child: Text(myBros.brocations[i].alias.toString(), textAlign: TextAlign.left,),
+                          child: Text(myBros!.brocations[i].alias.toString(), textAlign: TextAlign.left,),
                         ),
                         Spacer(),
                         Container(
@@ -638,7 +638,7 @@ class BrocatorState extends State<Brocator> {
                         Spacer(),
                         Container(
                           width: MediaQuery.of(context).size.width * 0.25,
-                          child: currentLocation == null ? Container() : Text("${doublePrecision(calculateGPSDistance(currentLocation, myBros.brocations[i].position), 1)}km", textAlign: TextAlign.left,),
+                          child: currentLocation == null ? Container() : Text("${doublePrecision(calculateGPSDistance(currentLocation!, myBros!.brocations[i].position!), 1)}km", textAlign: TextAlign.left,),
                         ),
 
                       ],
@@ -659,20 +659,20 @@ class BrocatorState extends State<Brocator> {
     print("Building brocator");
 
     //Receive arguments building this widget
-    myArguments = ModalRoute.of(context).settings.arguments;
+    myArguments = ModalRoute.of(context)!.settings.arguments as BrocatorArguments?;
     if(myArguments == null){
       return Container(child:Text("No Arguments"));
     }
 
     if(streamSubscription == null) {
-      streamSubscription = myArguments.telemetryStream.listen((value) {
+      streamSubscription = myArguments!.telemetryStream!.listen((value) {
         print("Brocator Telemetry Received");
         myTelemetry = value;
       });
     }
 
     if (theTXCharacteristic == null) {
-      theTXCharacteristic = myArguments.theTXCharacteristic;
+      theTXCharacteristic = myArguments!.theTXCharacteristic;
     }
 
     return new WillPopScope(
@@ -697,7 +697,7 @@ class BrocatorState extends State<Brocator> {
             future: _buildBody(context),
             builder: (context, AsyncSnapshot<Widget> snapshot) {
               if (snapshot.hasData) {
-                return snapshot.data;
+                return snapshot.data!;
               } else {
                 return Column(
                   mainAxisAlignment: MainAxisAlignment.center,
