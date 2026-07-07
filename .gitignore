@@ -1,0 +1,15 @@
+firebase_options.dart
+google-services.json
+build/
+*DS_Store
+
+# Dart/Flutter tooling artifacts
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+ios/Flutter/ephemeral/
+android/local.properties
+android/key.properties
+android/app/release.keystore
+android/.kotlin/

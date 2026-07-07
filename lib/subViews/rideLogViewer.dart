@@ -3,7 +3,6 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_map/flutter_map.dart';
 import '../globalUtilities.dart';
 import '../widgets/rideLogViewChartOverlay.dart';
@@ -11,21 +10,21 @@ import 'package:latlong2/latlong.dart';
 import '../components/databaseAssistant.dart';
 import '../components/fileManager.dart';
 
-import 'package:charts_flutter/flutter.dart' as charts;
+import 'package:community_charts_flutter/community_charts_flutter.dart' as charts;
 
 import '../components/userSettings.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 
-import 'package:esys_flutter_share/esys_flutter_share.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../hardwareSupport/escHelper/escHelper.dart';
 import '../hardwareSupport/escHelper/dataTypes.dart';
 
 class RideLogViewerArguments {
-  final UserSettings userSettings;
-  final LogInfoItem logFileInfo;
-  final FileImage imageBoardAvatar;
+  final UserSettings? userSettings;
+  final LogInfoItem? logFileInfo;
+  final FileImage? imageBoardAvatar;
 
   RideLogViewerArguments(this.logFileInfo,this.userSettings, this.imageBoardAvatar);
 }
@@ -40,16 +39,16 @@ class RideLogViewer extends StatefulWidget {
 
 class RideLogViewerState extends State<RideLogViewer> {
   final GlobalKey<State> _keyLoader = new GlobalKey<State>();
-  RideLogViewerArguments myArguments;
+  late RideLogViewerArguments myArguments;
   String thisRideLog = "";
-  List<String> thisRideLogEntries;
-  List<LatLng> _positionEntries;
+  late List<String> thisRideLogEntries;
+  late List<LatLng> _positionEntries;
   MapController _mapController = new MapController();
   List<Marker> mapMakers = [];
 
-  RideLogChartData currentSelection;
+  RideLogChartData? currentSelection;
 
-  PublishSubject<RideLogChartData> eventObservable = new PublishSubject();
+  PublishSubject<RideLogChartData?> eventObservable = new PublishSubject();
 
   /// Create time series data for chart using ESC values
   static List<charts.Series<TimeSeriesESC, DateTime>> _createChartingData( List<TimeSeriesESC> values, List<int> escIDsInLog, int faultCodeCount, bool imperialDistance ) {
@@ -60,7 +59,7 @@ class RideLogViewerState extends State<RideLogViewer> {
         chartData.add(charts.Series<TimeSeriesESC, DateTime>(
           id: 'Faults',
           colorFn: (_, __) => charts.MaterialPalette.yellow.shadeDefault.lighter,
-          domainFn: (TimeSeriesESC escData, _) => escData.time,
+          domainFn: (TimeSeriesESC escData, _) => escData.time!,
           measureFn: (TimeSeriesESC escData, _) => escData.faultCode,
           data: values,
         )// Configure our custom bar target renderer for this series.
@@ -70,7 +69,7 @@ class RideLogViewerState extends State<RideLogViewer> {
       chartData.add(charts.Series<TimeSeriesESC, DateTime>(
         id: 'Battery',
         colorFn: (_, __) => charts.MaterialPalette.blue.shadeDefault,
-        domainFn: (TimeSeriesESC escData, _) => escData.time,
+        domainFn: (TimeSeriesESC escData, _) => escData.time!,
         measureFn: (TimeSeriesESC escData, _) => escData.voltage,
         data: values,
       ));
@@ -78,7 +77,7 @@ class RideLogViewerState extends State<RideLogViewer> {
         id: 'MotorTemp',
         displayName: 'Motor Temp',
         colorFn: (_, __) => charts.MaterialPalette.red.shadeDefault,
-        domainFn: (TimeSeriesESC escData, _) => escData.time,
+        domainFn: (TimeSeriesESC escData, _) => escData.time!,
         measureFn: (TimeSeriesESC escData, _) => escData.tempMotor,
         data: values,
       ));
@@ -88,7 +87,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           id: 'Motor2Temp',
           displayName: 'Motor2 Temp',
           colorFn: (_, __) => charts.MaterialPalette.gray.shadeDefault,
-          domainFn: (TimeSeriesESC escData, _) => escData.time,
+          domainFn: (TimeSeriesESC escData, _) => escData.time!,
           measureFn: (TimeSeriesESC escData, _) => escData.tempMotor2,
           data: values,
         ));
@@ -98,7 +97,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           id: 'Motor3Temp',
           displayName: 'Motor3 Temp',
           colorFn: (_, __) => charts.MaterialPalette.red.shadeDefault,
-          domainFn: (TimeSeriesESC escData, _) => escData.time,
+          domainFn: (TimeSeriesESC escData, _) => escData.time!,
           measureFn: (TimeSeriesESC escData, _) => escData.tempMotor3,
           data: values,
         ));
@@ -106,7 +105,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           id: 'Motor4Temp',
           displayName: 'Motor4 Temp',
           colorFn: (_, __) => charts.MaterialPalette.gray.shadeDefault,
-          domainFn: (TimeSeriesESC escData, _) => escData.time,
+          domainFn: (TimeSeriesESC escData, _) => escData.time!,
           measureFn: (TimeSeriesESC escData, _) => escData.tempMotor4,
           data: values,
         ));
@@ -115,7 +114,7 @@ class RideLogViewerState extends State<RideLogViewer> {
         id: 'MosfetTemp',
         displayName: 'Mosfet Temp',
         colorFn: (_, __) => charts.MaterialPalette.deepOrange.shadeDefault,
-        domainFn: (TimeSeriesESC escData, _) => escData.time,
+        domainFn: (TimeSeriesESC escData, _) => escData.time!,
         measureFn: (TimeSeriesESC escData, _) => escData.tempMosfet,
         data: values,
       ));
@@ -124,7 +123,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           id: 'Mosfet2Temp',
           displayName: 'Mosfet2 Temp',
           colorFn: (_, __) => charts.MaterialPalette.yellow.shadeDefault,
-          domainFn: (TimeSeriesESC escData, _) => escData.time,
+          domainFn: (TimeSeriesESC escData, _) => escData.time!,
           measureFn: (TimeSeriesESC escData, _) => escData.tempMosfet2,
           data: values,
         ));
@@ -134,7 +133,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           id: 'Mosfet3Temp',
           displayName: 'Mosfet3 Temp',
           colorFn: (_, __) => charts.MaterialPalette.deepOrange.shadeDefault,
-          domainFn: (TimeSeriesESC escData, _) => escData.time,
+          domainFn: (TimeSeriesESC escData, _) => escData.time!,
           measureFn: (TimeSeriesESC escData, _) => escData.tempMosfet3,
           data: values,
         ));
@@ -142,7 +141,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           id: 'Mosfet4Temp',
           displayName: 'Mosfet4 Temp',
           colorFn: (_, __) => charts.MaterialPalette.yellow.shadeDefault,
-          domainFn: (TimeSeriesESC escData, _) => escData.time,
+          domainFn: (TimeSeriesESC escData, _) => escData.time!,
           measureFn: (TimeSeriesESC escData, _) => escData.tempMosfet4,
           data: values,
         ));
@@ -151,15 +150,15 @@ class RideLogViewerState extends State<RideLogViewer> {
         id: 'DutyCycle',
         displayName: 'Duty Cycle',
         colorFn: (_, __) => charts.MaterialPalette.green.shadeDefault,
-        domainFn: (TimeSeriesESC escData, _) => escData.time,
-        measureFn: (TimeSeriesESC escData, _) => escData.dutyCycle * 100.0,
+        domainFn: (TimeSeriesESC escData, _) => escData.time!,
+        measureFn: (TimeSeriesESC escData, _) => escData.dutyCycle! * 100.0,
         data: values,
       ));
       chartData.add(charts.Series<TimeSeriesESC, DateTime>(
         id: 'MotorCurrent',
         displayName: 'Motor Current',
         colorFn: (_, __) => charts.MaterialPalette.purple.shadeDefault,
-        domainFn: (TimeSeriesESC escData, _) => escData.time,
+        domainFn: (TimeSeriesESC escData, _) => escData.time!,
         measureFn: (TimeSeriesESC escData, _) => escData.currentMotor,
         data: values,
       ));
@@ -168,7 +167,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           id: 'Motor2Current',
           displayName: 'Motor2 Current',
           colorFn: (_, __) => charts.MaterialPalette.teal.shadeDefault,
-          domainFn: (TimeSeriesESC escData, _) => escData.time,
+          domainFn: (TimeSeriesESC escData, _) => escData.time!,
           measureFn: (TimeSeriesESC escData, _) => escData.currentMotor2,
           data: values,
         ));
@@ -178,7 +177,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           id: 'Motor3Current',
           displayName: 'Motor3 Current',
           colorFn: (_, __) => charts.MaterialPalette.purple.shadeDefault,
-          domainFn: (TimeSeriesESC escData, _) => escData.time,
+          domainFn: (TimeSeriesESC escData, _) => escData.time!,
           measureFn: (TimeSeriesESC escData, _) => escData.currentMotor3,
           data: values,
         ));
@@ -186,7 +185,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           id: 'Motor4Current',
           displayName: 'Motor4 Current',
           colorFn: (_, __) => charts.MaterialPalette.teal.shadeDefault,
-          domainFn: (TimeSeriesESC escData, _) => escData.time,
+          domainFn: (TimeSeriesESC escData, _) => escData.time!,
           measureFn: (TimeSeriesESC escData, _) => escData.currentMotor4,
           data: values,
         ));
@@ -195,7 +194,7 @@ class RideLogViewerState extends State<RideLogViewer> {
         id: 'InputCurrent',
         displayName: 'Input Current',
         colorFn: (_, __) => charts.MaterialPalette.pink.shadeDefault,
-        domainFn: (TimeSeriesESC escData, _) => escData.time,
+        domainFn: (TimeSeriesESC escData, _) => escData.time!,
         measureFn: (TimeSeriesESC escData, _) => escData.currentInput,
         data: values,
       ));
@@ -204,7 +203,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           id: 'Input2Current',
           displayName: 'Input2 Current',
           colorFn: (_, __) => charts.MaterialPalette.cyan.shadeDefault,
-          domainFn: (TimeSeriesESC escData, _) => escData.time,
+          domainFn: (TimeSeriesESC escData, _) => escData.time!,
           measureFn: (TimeSeriesESC escData, _) => escData.currentInput2,
           data: values,
         ));
@@ -214,7 +213,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           id: 'Input3Current',
           displayName: 'Input3 Current',
           colorFn: (_, __) => charts.MaterialPalette.pink.shadeDefault,
-          domainFn: (TimeSeriesESC escData, _) => escData.time,
+          domainFn: (TimeSeriesESC escData, _) => escData.time!,
           measureFn: (TimeSeriesESC escData, _) => escData.currentInput3,
           data: values,
         ));
@@ -222,7 +221,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           id: 'Input4Current',
           displayName: 'Input4 Current',
           colorFn: (_, __) => charts.MaterialPalette.cyan.shadeDefault,
-          domainFn: (TimeSeriesESC escData, _) => escData.time,
+          domainFn: (TimeSeriesESC escData, _) => escData.time!,
           measureFn: (TimeSeriesESC escData, _) => escData.currentInput4,
           data: values,
         ));
@@ -230,7 +229,7 @@ class RideLogViewerState extends State<RideLogViewer> {
       chartData.add(charts.Series<TimeSeriesESC, DateTime>(
         id: 'Speed',
         colorFn: (_, __) => charts.MaterialPalette.white,
-        domainFn: (TimeSeriesESC escData, _) => escData.time,
+        domainFn: (TimeSeriesESC escData, _) => escData.time!,
         measureFn: (TimeSeriesESC escData, _) => escData.speed,
         data: values,
       ));
@@ -239,7 +238,7 @@ class RideLogViewerState extends State<RideLogViewer> {
         id: 'Consumption',
         displayName: 'Wh/${imperialDistance ? "mile" : "km"}',
         colorFn: (_, __) => charts.MaterialPalette.yellow.shadeDefault.lighter,
-        domainFn: (TimeSeriesESC escData, _) => escData.time,
+        domainFn: (TimeSeriesESC escData, _) => escData.time!,
         measureFn: (TimeSeriesESC escData, _) => escData.consumption,
         data: values,
       ));
@@ -269,7 +268,7 @@ class RideLogViewerState extends State<RideLogViewer> {
 
   LatLng selectNearestGPSPoint(DateTime desiredTime, Map<DateTime, LatLng> gpsLatLngMap) {
     if (gpsLatLngMap[desiredTime] != null) {
-      return gpsLatLngMap[desiredTime];
+      return gpsLatLngMap[desiredTime]!;
     }
 
     for (int i=0; i<gpsLatLngMap.length; ++i) {
@@ -284,26 +283,26 @@ class RideLogViewerState extends State<RideLogViewer> {
   }
 
   void _buildDialog(String title, TimeSeriesESC eventData, DateTime logStart, bool useFahrenheit) {
-    double _batteryAmps = eventData.currentInput;
+    double? _batteryAmps = eventData.currentInput;
     if(eventData.currentInput != null && eventData.currentInput2 != null){
-      _batteryAmps = doublePrecision(eventData.currentInput + eventData.currentInput2, 1);
+      _batteryAmps = doublePrecision(eventData.currentInput! + eventData.currentInput2!, 1);
     }
     if(eventData.currentInput != null && eventData.currentInput2 != null && eventData.currentInput3 != null && eventData.currentInput4 != null){
-      _batteryAmps = doublePrecision(eventData.currentInput + eventData.currentInput2 + eventData.currentInput3 + eventData.currentInput4, 1);
+      _batteryAmps = doublePrecision(eventData.currentInput! + eventData.currentInput2! + eventData.currentInput3! + eventData.currentInput4!, 1);
     }
 
     List<TableRow> tableChildren = [];
     tableChildren.add(TableRow(children: [
       Icon(Icons.watch),
-      Text("${prettyPrintDuration(eventData.time.difference(logStart))}",
+      Text("${prettyPrintDuration(eventData.time!.difference(logStart))}",
           textAlign: TextAlign.center)]));
     tableChildren.add(TableRow(children: [
       Transform.rotate(angle: 3.14159, child: Icon(Icons.av_timer),),
-      Text("${eventData.speed}${myArguments.userSettings.settings.useImperial ? "mph" : "kph"}",
+      Text("${eventData.speed}${myArguments.userSettings!.settings.useImperial ? "mph" : "kph"}",
           textAlign: TextAlign.center)]));
     tableChildren.add(TableRow(children: [
       Icon(Icons.rotate_right),
-      Text("Duty ${(eventData.dutyCycle * 100).toInt()}%",
+      Text("Duty ${(eventData.dutyCycle! * 100).toInt()}%",
           textAlign: TextAlign.center)]));
     tableChildren.add(TableRow(children: [
       Icon(Icons.battery_charging_full),
@@ -343,12 +342,12 @@ class RideLogViewerState extends State<RideLogViewer> {
           textAlign: TextAlign.center)]));
     if (eventData.faultCode != null) tableChildren.add(TableRow(children: [
       Icon(Icons.warning_amber_outlined),
-      Text("${mc_fault_code.values[eventData.faultCode].toString().substring(14)}",
+      Text("${mc_fault_code.values[eventData.faultCode!].toString().substring(14)}",
           textAlign: TextAlign.center)]));
 
     genericAlert(context, title, Column(
       children: [
-        Text("${eventData.time.toIso8601String().substring(0,19)}"),
+        Text("${eventData.time!.toIso8601String().substring(0,19)}"),
         SizedBox(height: 10),
         Table(
             columnWidths: {
@@ -361,8 +360,8 @@ class RideLogViewerState extends State<RideLogViewer> {
     ), "OK");
   }
 
-  double processVehicleSpeed(double speedStored, double eRPM, double gearRatio, int wheelDiameterMillimeters, int motorPoles) {
-    double thisSpeed = myArguments.userSettings.settings.useImperial ? kmToMile(eRPMToKph(eRPM, gearRatio, wheelDiameterMillimeters, motorPoles)) : eRPMToKph(eRPM, gearRatio, wheelDiameterMillimeters, motorPoles);
+  double processVehicleSpeed(double? speedStored, double eRPM, double gearRatio, int wheelDiameterMillimeters, int motorPoles) {
+    double thisSpeed = myArguments.userSettings!.settings.useImperial ? kmToMile(eRPMToKph(eRPM, gearRatio, wheelDiameterMillimeters, motorPoles)) : eRPMToKph(eRPM, gearRatio, wheelDiameterMillimeters, motorPoles);
     // Check if thisSpeed is greater than the one previously stored
     if (speedStored == null || thisSpeed.abs() > speedStored.abs()) {
       // Return the greater value
@@ -382,28 +381,28 @@ class RideLogViewerState extends State<RideLogViewer> {
     double gpsDistance = 0;
     double gpsAverageSpeed = 0;
     double gpsMaxSpeed = 0;
-    DateTime gpsStartTime;
-    DateTime gpsEndTime;
+    DateTime? gpsStartTime;
+    DateTime? gpsEndTime;
     String gpsDistanceStr = "N/A";
 
     //Charting and data
     List<TimeSeriesESC> escTimeSeriesList = [];
     Map<DateTime, TimeSeriesESC> escTimeSeriesMap = new Map();
-    List<charts.Series> seriesList;
+    List<charts.Series<TimeSeriesESC, DateTime>> seriesList;
     int faultCodeCount = 0;
-    double distanceStartPrimary;
-    double distanceEndPrimary;
-    double wattHoursStartPrimary;
-    double wattHoursRegenStartPrimary;
+    double? distanceStartPrimary;
+    double? distanceEndPrimary;
+    double? wattHoursStartPrimary;
+    double? wattHoursRegenStartPrimary;
     int outOfOrderESCRecords = 0;
     int outOfOrderGPSRecords = 0;
-    String outOfOrderESCFirstMessage;
-    String outOfOrderGPSFirstMessage;
+    String? outOfOrderESCFirstMessage;
+    String? outOfOrderGPSFirstMessage;
     bool _useGPSData = false;
 
     // Fault tracking
-    DateTime lastReportedFaultDt;
-    List<charts.RangeAnnotationSegment> faultRangeAnnotations = [];
+    DateTime? lastReportedFaultDt;
+    List<charts.RangeAnnotationSegment<DateTime>> faultRangeAnnotations = [];
     List<ESCFault> faultsObserved = [];
 
     //Mapping
@@ -413,24 +412,25 @@ class RideLogViewerState extends State<RideLogViewer> {
     Map<DateTime, LatLng> gpsLatLngRejectMap = new Map();
 
     //Receive arguments building this widget
-    myArguments = ModalRoute.of(context).settings.arguments;
-    if(myArguments == null){
+    RideLogViewerArguments? arguments = ModalRoute.of(context)!.settings.arguments as RideLogViewerArguments?;
+    if(arguments == null){
       return Container();
     }
+    myArguments = arguments;
 
     // Parsed variables
     // NOTE: Start with userSettings, update values when parsing CSV header data
-    double gearRatio = myArguments.userSettings.settings.gearRatio;
-    int wheelDiameterMillimeters = myArguments.userSettings.settings.wheelDiameterMillimeters;
-    int motorPoles = myArguments.userSettings.settings.motorPoles;
+    double gearRatio = myArguments.userSettings!.settings.gearRatio;
+    int wheelDiameterMillimeters = myArguments.userSettings!.settings.wheelDiameterMillimeters;
+    int motorPoles = myArguments.userSettings!.settings.motorPoles;
     Duration timeZoneOffset = DateTime.now().timeZoneOffset;
 
     // Allow user to prefer GPS distance and speed vs the ESC
-    _useGPSData = myArguments.userSettings.settings.useGPSData;
+    _useGPSData = myArguments.userSettings!.settings.useGPSData;
 
     //Load log file from received arguments
     if( thisRideLog == "" ) {
-      FileManager.openLogFile(myArguments.logFileInfo.logFilePath).then((value){
+      FileManager.openLogFile(myArguments.logFileInfo!.logFilePath!).then((value){
         //globalLogger.wtf("opening log file");
         setState(() {
           thisRideLog = value;
@@ -493,7 +493,7 @@ class RideLogViewerState extends State<RideLogViewer> {
             gpsDistance += calculateGPSDistance(_positionEntries.last, thisPosition);
           }
           _positionEntries.add(thisPosition);
-          DateTime thisGPSTime = DateTime.tryParse(entry[0]).add(timeZoneOffset);
+          DateTime thisGPSTime = DateTime.tryParse(entry[0])!.add(timeZoneOffset);
           // Sanity check on GPS time please
           if (thisGPSTime.isBefore(DateTime(2000))) {
             globalLogger.w("rideLogViewer:thisRideLogEntry: GPS DateTime was out of bounds! ${entry[0]} -> ${thisGPSTime.toString()}");
@@ -503,7 +503,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           gpsStartTime ??= thisGPSTime;
           // Set the GPS end time to the last message parsed
           gpsEndTime = thisGPSTime;
-          double thisSpeed = double.tryParse(entry[4]);
+          double thisSpeed = double.tryParse(entry[4])!;
           gpsAverageSpeed += thisSpeed;
           if (thisSpeed > gpsMaxSpeed) {gpsMaxSpeed = thisSpeed;}
 
@@ -522,12 +522,12 @@ class RideLogViewerState extends State<RideLogViewer> {
           // Map DateTime to LatLng
           gpsLatLngMap[thisGPSTime] = thisPosition;
 
-          if (myArguments.userSettings.settings.useGPSData) {
+          if (myArguments.userSettings!.settings.useGPSData) {
             // Create TimeSeriesESC object if needed
             if (escTimeSeriesMap[thisGPSTime] == null){
               escTimeSeriesMap[thisGPSTime] = TimeSeriesESC(time: thisGPSTime, dutyCycle: 0);
             }
-            escTimeSeriesMap[thisGPSTime].speed = myArguments.userSettings.settings.useImperial ? kmToMile(thisSpeed) : thisSpeed;
+            escTimeSeriesMap[thisGPSTime]!.speed = myArguments.userSettings!.settings.useImperial ? kmToMile(thisSpeed) : thisSpeed;
           }
         }
         ///ESC Values
@@ -559,16 +559,16 @@ class RideLogViewerState extends State<RideLogViewer> {
             // If thisESCID's data has not been populated for thisDt set incrementTimeSlot to false
             switch(escIDsInLog.indexOf(thisESCID)) {
               case 0:
-                if (escTimeSeriesMap[thisDt].tempMosfet == null) incrementTimeSlot = false;
+                if (escTimeSeriesMap[thisDt]!.tempMosfet == null) incrementTimeSlot = false;
                 break;
               case 1:
-                if (escTimeSeriesMap[thisDt].tempMosfet2 == null) incrementTimeSlot = false;
+                if (escTimeSeriesMap[thisDt]!.tempMosfet2 == null) incrementTimeSlot = false;
                 break;
               case 2:
-                if (escTimeSeriesMap[thisDt].tempMosfet3 == null) incrementTimeSlot = false;
+                if (escTimeSeriesMap[thisDt]!.tempMosfet3 == null) incrementTimeSlot = false;
                 break;
               case 3:
-                if (escTimeSeriesMap[thisDt].tempMosfet4 == null) incrementTimeSlot = false;
+                if (escTimeSeriesMap[thisDt]!.tempMosfet4 == null) incrementTimeSlot = false;
                 break;
             }
             // Increment the sub second timestamp by the logging rate
@@ -588,69 +588,69 @@ class RideLogViewerState extends State<RideLogViewer> {
           switch(escIDsInLog.indexOf(thisESCID)) {
             case 0:
             // Primary ESC
-              escTimeSeriesMap[thisDt].voltage = double.tryParse(entry[3]);
-              escTimeSeriesMap[thisDt].tempMotor = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[4]), places: 1) : double.tryParse(entry[4]);
-              escTimeSeriesMap[thisDt].tempMosfet = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[5]), places: 1) : double.tryParse(entry[5]);
-              escTimeSeriesMap[thisDt].dutyCycle = double.tryParse(entry[6]);
-              escTimeSeriesMap[thisDt].currentMotor = double.tryParse(entry[7]);
-              escTimeSeriesMap[thisDt].currentInput = double.tryParse(entry[8]);
-              if (!myArguments.userSettings.settings.useGPSData) {
-                escTimeSeriesMap[thisDt].speed = processVehicleSpeed(escTimeSeriesMap[thisDt].speed, double.tryParse(entry[11]), gearRatio, wheelDiameterMillimeters, motorPoles);
+              escTimeSeriesMap[thisDt]!.voltage = double.tryParse(entry[3]);
+              escTimeSeriesMap[thisDt]!.tempMotor = myArguments.userSettings!.settings.useFahrenheit ? cToF(double.tryParse(entry[4])!, places: 1) : double.tryParse(entry[4]);
+              escTimeSeriesMap[thisDt]!.tempMosfet = myArguments.userSettings!.settings.useFahrenheit ? cToF(double.tryParse(entry[5])!, places: 1) : double.tryParse(entry[5]);
+              escTimeSeriesMap[thisDt]!.dutyCycle = double.tryParse(entry[6]);
+              escTimeSeriesMap[thisDt]!.currentMotor = double.tryParse(entry[7]);
+              escTimeSeriesMap[thisDt]!.currentInput = double.tryParse(entry[8]);
+              if (!myArguments.userSettings!.settings.useGPSData) {
+                escTimeSeriesMap[thisDt]!.speed = processVehicleSpeed(escTimeSeriesMap[thisDt]!.speed, double.tryParse(entry[11])!, gearRatio, wheelDiameterMillimeters, motorPoles);
               }
-              escTimeSeriesMap[thisDt].distance = myArguments.userSettings.settings.useImperial ? kmToMile(eDistanceToKm(double.tryParse(entry[12]), gearRatio, wheelDiameterMillimeters, motorPoles)) : eDistanceToKm(double.tryParse(entry[12]), gearRatio, wheelDiameterMillimeters, motorPoles);
+              escTimeSeriesMap[thisDt]!.distance = myArguments.userSettings!.settings.useImperial ? kmToMile(eDistanceToKm(double.tryParse(entry[12])!, gearRatio, wheelDiameterMillimeters, motorPoles)) : eDistanceToKm(double.tryParse(entry[12])!, gearRatio, wheelDiameterMillimeters, motorPoles);
               if (distanceStartPrimary == null) {
-                distanceStartPrimary = escTimeSeriesMap[thisDt].distance;
-                distanceEndPrimary = escTimeSeriesMap[thisDt].distance;
+                distanceStartPrimary = escTimeSeriesMap[thisDt]!.distance;
+                distanceEndPrimary = escTimeSeriesMap[thisDt]!.distance;
               } else {
-                distanceEndPrimary = escTimeSeriesMap[thisDt].distance;
+                distanceEndPrimary = escTimeSeriesMap[thisDt]!.distance;
               }
 
               // Compute consumption over time
               //TODO: this is only for a single ESC. This may get complicated for dual/quad. Multiplying for now
-              double wattHoursNow = double.tryParse(entry[9]);
-              double wattHoursRegenNow = double.tryParse(entry[10]);
+              double wattHoursNow = double.tryParse(entry[9])!;
+              double wattHoursRegenNow = double.tryParse(entry[10])!;
               wattHoursStartPrimary ??= wattHoursNow;
               wattHoursRegenStartPrimary ??= wattHoursRegenNow;
 
               double wattHours = (wattHoursNow - wattHoursStartPrimary) - (wattHoursRegenNow - wattHoursRegenStartPrimary);
-              double totalDistance = distanceEndPrimary - distanceStartPrimary;
+              double totalDistance = distanceEndPrimary! - distanceStartPrimary!;
               double consumption = wattHours / totalDistance;
               if (consumption.isNaN || consumption.isInfinite || totalDistance < 0.25) {
-                escTimeSeriesMap[thisDt].consumption = null;
-              } else escTimeSeriesMap[thisDt].consumption = doublePrecision(consumption, 2);
+                escTimeSeriesMap[thisDt]!.consumption = null;
+              } else escTimeSeriesMap[thisDt]!.consumption = doublePrecision(consumption, 2);
               //if (totalDistance < 0.9)
                 //print("whNow $wattHoursNow whStart $wattHoursStartPrimary whRegenNow $wattHoursRegenNow whRegenStart $wattHoursRegenStartPrimary wh $wattHours td $totalDistance consumption $consumption");
 
               break;
             case 1:
             // Second ESC in multiESC configuration
-              if (!myArguments.userSettings.settings.useGPSData) {
-                escTimeSeriesMap[thisDt].speed = processVehicleSpeed(escTimeSeriesMap[thisDt].speed, double.tryParse(entry[11]), gearRatio, wheelDiameterMillimeters, motorPoles);
+              if (!myArguments.userSettings!.settings.useGPSData) {
+                escTimeSeriesMap[thisDt]!.speed = processVehicleSpeed(escTimeSeriesMap[thisDt]!.speed, double.tryParse(entry[11])!, gearRatio, wheelDiameterMillimeters, motorPoles);
               }
-              escTimeSeriesMap[thisDt].tempMotor2 = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[4]), places: 1) : double.tryParse(entry[4]);
-              escTimeSeriesMap[thisDt].tempMosfet2 = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[5]), places: 1) : double.tryParse(entry[5]);
-              escTimeSeriesMap[thisDt].currentMotor2 = double.tryParse(entry[7]);
-              escTimeSeriesMap[thisDt].currentInput2 = double.tryParse(entry[8]);
+              escTimeSeriesMap[thisDt]!.tempMotor2 = myArguments.userSettings!.settings.useFahrenheit ? cToF(double.tryParse(entry[4])!, places: 1) : double.tryParse(entry[4]);
+              escTimeSeriesMap[thisDt]!.tempMosfet2 = myArguments.userSettings!.settings.useFahrenheit ? cToF(double.tryParse(entry[5])!, places: 1) : double.tryParse(entry[5]);
+              escTimeSeriesMap[thisDt]!.currentMotor2 = double.tryParse(entry[7]);
+              escTimeSeriesMap[thisDt]!.currentInput2 = double.tryParse(entry[8]);
               break;
             case 2:
             // Third ESC in multiESC configuration
-              if (!myArguments.userSettings.settings.useGPSData) {
-                escTimeSeriesMap[thisDt].speed = processVehicleSpeed(escTimeSeriesMap[thisDt].speed, double.tryParse(entry[11]), gearRatio, wheelDiameterMillimeters, motorPoles);
+              if (!myArguments.userSettings!.settings.useGPSData) {
+                escTimeSeriesMap[thisDt]!.speed = processVehicleSpeed(escTimeSeriesMap[thisDt]!.speed, double.tryParse(entry[11])!, gearRatio, wheelDiameterMillimeters, motorPoles);
               }
-              escTimeSeriesMap[thisDt].tempMotor3 = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[4]), places: 1) : double.tryParse(entry[4]);
-              escTimeSeriesMap[thisDt].tempMosfet3 = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[5]), places: 1) : double.tryParse(entry[5]);
-              escTimeSeriesMap[thisDt].currentMotor3 = double.tryParse(entry[7]);
-              escTimeSeriesMap[thisDt].currentInput3 = double.tryParse(entry[8]);
+              escTimeSeriesMap[thisDt]!.tempMotor3 = myArguments.userSettings!.settings.useFahrenheit ? cToF(double.tryParse(entry[4])!, places: 1) : double.tryParse(entry[4]);
+              escTimeSeriesMap[thisDt]!.tempMosfet3 = myArguments.userSettings!.settings.useFahrenheit ? cToF(double.tryParse(entry[5])!, places: 1) : double.tryParse(entry[5]);
+              escTimeSeriesMap[thisDt]!.currentMotor3 = double.tryParse(entry[7]);
+              escTimeSeriesMap[thisDt]!.currentInput3 = double.tryParse(entry[8]);
               break;
             case 3:
             // Fourth ESC in multiESC configuration
-              if (!myArguments.userSettings.settings.useGPSData) {
-                escTimeSeriesMap[thisDt].speed = processVehicleSpeed(escTimeSeriesMap[thisDt].speed, double.tryParse(entry[11]), gearRatio, wheelDiameterMillimeters, motorPoles);
+              if (!myArguments.userSettings!.settings.useGPSData) {
+                escTimeSeriesMap[thisDt]!.speed = processVehicleSpeed(escTimeSeriesMap[thisDt]!.speed, double.tryParse(entry[11])!, gearRatio, wheelDiameterMillimeters, motorPoles);
               }
-              escTimeSeriesMap[thisDt].tempMotor4 = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[4]), places: 1) : double.tryParse(entry[4]);
-              escTimeSeriesMap[thisDt].tempMosfet4 = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[5]), places: 1) : double.tryParse(entry[5]);
-              escTimeSeriesMap[thisDt].currentMotor4 = double.tryParse(entry[7]);
-              escTimeSeriesMap[thisDt].currentInput4 = double.tryParse(entry[8]);
+              escTimeSeriesMap[thisDt]!.tempMotor4 = myArguments.userSettings!.settings.useFahrenheit ? cToF(double.tryParse(entry[4])!, places: 1) : double.tryParse(entry[4]);
+              escTimeSeriesMap[thisDt]!.tempMosfet4 = myArguments.userSettings!.settings.useFahrenheit ? cToF(double.tryParse(entry[5])!, places: 1) : double.tryParse(entry[5]);
+              escTimeSeriesMap[thisDt]!.currentMotor4 = double.tryParse(entry[7]);
+              escTimeSeriesMap[thisDt]!.currentInput4 = double.tryParse(entry[8]);
               break;
             default:
             // Shit this was not supposed to happen
@@ -666,7 +666,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           ++faultCodeCount;
 
           // Parse time of event for tracking
-          DateTime thisDt = DateTime.tryParse(entry[0]).add(timeZoneOffset);
+          DateTime thisDt = DateTime.tryParse(entry[0])!.add(timeZoneOffset);
           int thisFaultCode = int.parse(entry[3]);
           int escID = int.parse(entry[4]);
 
@@ -696,7 +696,7 @@ class RideLogViewerState extends State<RideLogViewer> {
             escTimeSeriesMap[thisDt] = TimeSeriesESC(time: thisDt, dutyCycle: 0);
           }
           // Store the fault code
-          escTimeSeriesMap[thisDt].faultCode = thisFaultCode;
+          escTimeSeriesMap[thisDt]!.faultCode = thisFaultCode;
 
           // Add a map point if we have position data and the last reported fault didn't happen in the recent minute
           if (_positionEntries.length > 0 && (lastReportedFaultDt == null || thisDt.minute != lastReportedFaultDt.minute)) {
@@ -705,13 +705,13 @@ class RideLogViewerState extends State<RideLogViewer> {
               width: 50.0,
               height: 50.0,
               point: _positionEntries.last,
-              builder: (ctx) =>
+              child:
               new Container(
                 margin: EdgeInsets.fromLTRB(0, 0, 0, 0),
                 child: GestureDetector(
                   onTap: (){
-                    TimeSeriesESC _tsFault = escTimeSeriesMap[thisDt];
-                    _buildDialog("Fault", _tsFault, escTimeSeriesMap.values.first.time, myArguments.userSettings.settings.useFahrenheit);
+                    TimeSeriesESC _tsFault = escTimeSeriesMap[thisDt]!;
+                    _buildDialog("Fault", _tsFault, escTimeSeriesMap.values.first.time!, myArguments.userSettings!.settings.useFahrenheit);
                   },
                   child: Image(image: AssetImage("assets/map_fault.png")),
                 ),
@@ -731,23 +731,23 @@ class RideLogViewerState extends State<RideLogViewer> {
             gpsDistance += calculateGPSDistance(_positionEntries.last, thisPosition);
           }
           _positionEntries.add(thisPosition);
-          DateTime thisGPSTime = DateTime.tryParse(entry[0]).add(timeZoneOffset);
+          DateTime thisGPSTime = DateTime.tryParse(entry[0])!.add(timeZoneOffset);
           // Set the GPS start time if null
           gpsStartTime ??= thisGPSTime;
           // Set the GPS end time to the last message parsed
           gpsEndTime = thisGPSTime;
-          double thisSpeed = double.tryParse(entry[6]);
+          double thisSpeed = double.tryParse(entry[6])!;
           gpsAverageSpeed += thisSpeed;
           if (thisSpeed > gpsMaxSpeed) {gpsMaxSpeed = thisSpeed;}
           // Map DateTime to LatLng
           gpsLatLngMap[thisGPSTime] = thisPosition;
 
-          if (myArguments.userSettings.settings.useGPSData) {
+          if (myArguments.userSettings!.settings.useGPSData) {
             // Create TimeSeriesESC object if needed
             if (escTimeSeriesMap[thisGPSTime] == null){
               escTimeSeriesMap[thisGPSTime] = TimeSeriesESC(time: thisGPSTime, dutyCycle: 0);
             }
-            escTimeSeriesMap[thisGPSTime].speed = myArguments.userSettings.settings.useImperial ? kmToMile(thisSpeed) : thisSpeed;
+            escTimeSeriesMap[thisGPSTime]!.speed = myArguments.userSettings!.settings.useImperial ? kmToMile(thisSpeed) : thisSpeed;
           }
         }
         else if (entry[1] == "values" && entry.length >= 10) {
@@ -769,41 +769,41 @@ class RideLogViewerState extends State<RideLogViewer> {
           switch(escIDsInLog.indexOf(thisESCID)) {
             case 0:
             // Primary ESC
-              escTimeSeriesMap[thisDt].voltage = double.tryParse(entry[2]);
-              escTimeSeriesMap[thisDt].tempMotor = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[3]), places: 1) : double.tryParse(entry[3]);
-              escTimeSeriesMap[thisDt].tempMosfet = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[4]), places: 1) : double.tryParse(entry[4]);
-              escTimeSeriesMap[thisDt].dutyCycle = double.tryParse(entry[5]);
-              escTimeSeriesMap[thisDt].currentMotor = double.tryParse(entry[6]);
-              escTimeSeriesMap[thisDt].currentInput = double.tryParse(entry[7]);
-              if (!myArguments.userSettings.settings.useGPSData) escTimeSeriesMap[thisDt].speed = myArguments.userSettings.settings.useImperial ? kmToMile(eRPMToKph(double.tryParse(entry[8]), gearRatio, wheelDiameterMillimeters, motorPoles)) : eRPMToKph(double.tryParse(entry[8]), gearRatio, wheelDiameterMillimeters, motorPoles);
-              escTimeSeriesMap[thisDt].distance = myArguments.userSettings.settings.useImperial ? kmToMile(eDistanceToKm(double.tryParse(entry[9]), gearRatio, wheelDiameterMillimeters, motorPoles)) : eDistanceToKm(double.tryParse(entry[9]), gearRatio, wheelDiameterMillimeters, motorPoles);
+              escTimeSeriesMap[thisDt]!.voltage = double.tryParse(entry[2]);
+              escTimeSeriesMap[thisDt]!.tempMotor = myArguments.userSettings!.settings.useFahrenheit ? cToF(double.tryParse(entry[3])!, places: 1) : double.tryParse(entry[3]);
+              escTimeSeriesMap[thisDt]!.tempMosfet = myArguments.userSettings!.settings.useFahrenheit ? cToF(double.tryParse(entry[4])!, places: 1) : double.tryParse(entry[4]);
+              escTimeSeriesMap[thisDt]!.dutyCycle = double.tryParse(entry[5]);
+              escTimeSeriesMap[thisDt]!.currentMotor = double.tryParse(entry[6]);
+              escTimeSeriesMap[thisDt]!.currentInput = double.tryParse(entry[7]);
+              if (!myArguments.userSettings!.settings.useGPSData) escTimeSeriesMap[thisDt]!.speed = myArguments.userSettings!.settings.useImperial ? kmToMile(eRPMToKph(double.tryParse(entry[8])!, gearRatio, wheelDiameterMillimeters, motorPoles)) : eRPMToKph(double.tryParse(entry[8])!, gearRatio, wheelDiameterMillimeters, motorPoles);
+              escTimeSeriesMap[thisDt]!.distance = myArguments.userSettings!.settings.useImperial ? kmToMile(eDistanceToKm(double.tryParse(entry[9])!, gearRatio, wheelDiameterMillimeters, motorPoles)) : eDistanceToKm(double.tryParse(entry[9])!, gearRatio, wheelDiameterMillimeters, motorPoles);
               if (distanceStartPrimary == null) {
-                distanceStartPrimary = escTimeSeriesMap[thisDt].distance;
-                distanceEndPrimary = escTimeSeriesMap[thisDt].distance;
+                distanceStartPrimary = escTimeSeriesMap[thisDt]!.distance;
+                distanceEndPrimary = escTimeSeriesMap[thisDt]!.distance;
               } else {
-                distanceEndPrimary = escTimeSeriesMap[thisDt].distance;
+                distanceEndPrimary = escTimeSeriesMap[thisDt]!.distance;
               }
               break;
             case 1:
             // Second ESC in multiESC configuration
-              escTimeSeriesMap[thisDt].tempMotor2 = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[3]), places: 1) : double.tryParse(entry[3]);
-              escTimeSeriesMap[thisDt].tempMosfet2 = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[4]), places: 1) : double.tryParse(entry[4]);
-              escTimeSeriesMap[thisDt].currentMotor2 = double.tryParse(entry[6]);
-              escTimeSeriesMap[thisDt].currentInput2 = double.tryParse(entry[7]);
+              escTimeSeriesMap[thisDt]!.tempMotor2 = myArguments.userSettings!.settings.useFahrenheit ? cToF(double.tryParse(entry[3])!, places: 1) : double.tryParse(entry[3]);
+              escTimeSeriesMap[thisDt]!.tempMosfet2 = myArguments.userSettings!.settings.useFahrenheit ? cToF(double.tryParse(entry[4])!, places: 1) : double.tryParse(entry[4]);
+              escTimeSeriesMap[thisDt]!.currentMotor2 = double.tryParse(entry[6]);
+              escTimeSeriesMap[thisDt]!.currentInput2 = double.tryParse(entry[7]);
               break;
             case 2:
             // Third ESC in multiESC configuration
-              escTimeSeriesMap[thisDt].tempMotor3 = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[3]), places: 1) : double.tryParse(entry[3]);
-              escTimeSeriesMap[thisDt].tempMosfet3 = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[4]), places: 1) : double.tryParse(entry[4]);
-              escTimeSeriesMap[thisDt].currentMotor3 = double.tryParse(entry[6]);
-              escTimeSeriesMap[thisDt].currentInput3 = double.tryParse(entry[7]);
+              escTimeSeriesMap[thisDt]!.tempMotor3 = myArguments.userSettings!.settings.useFahrenheit ? cToF(double.tryParse(entry[3])!, places: 1) : double.tryParse(entry[3]);
+              escTimeSeriesMap[thisDt]!.tempMosfet3 = myArguments.userSettings!.settings.useFahrenheit ? cToF(double.tryParse(entry[4])!, places: 1) : double.tryParse(entry[4]);
+              escTimeSeriesMap[thisDt]!.currentMotor3 = double.tryParse(entry[6]);
+              escTimeSeriesMap[thisDt]!.currentInput3 = double.tryParse(entry[7]);
               break;
             case 3:
             // Fourth ESC in multiESC configuration
-              escTimeSeriesMap[thisDt].tempMotor4 = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[3]), places: 1) : double.tryParse(entry[3]);
-              escTimeSeriesMap[thisDt].tempMosfet4 = myArguments.userSettings.settings.useFahrenheit ? cToF(double.tryParse(entry[4]), places: 1) : double.tryParse(entry[4]);
-              escTimeSeriesMap[thisDt].currentMotor4 = double.tryParse(entry[6]);
-              escTimeSeriesMap[thisDt].currentInput4 = double.tryParse(entry[7]);
+              escTimeSeriesMap[thisDt]!.tempMotor4 = myArguments.userSettings!.settings.useFahrenheit ? cToF(double.tryParse(entry[3])!, places: 1) : double.tryParse(entry[3]);
+              escTimeSeriesMap[thisDt]!.tempMosfet4 = myArguments.userSettings!.settings.useFahrenheit ? cToF(double.tryParse(entry[4])!, places: 1) : double.tryParse(entry[4]);
+              escTimeSeriesMap[thisDt]!.currentMotor4 = double.tryParse(entry[6]);
+              escTimeSeriesMap[thisDt]!.currentInput4 = double.tryParse(entry[7]);
               break;
             default:
             // Shit this was not supposed to happen
@@ -828,11 +828,11 @@ class RideLogViewerState extends State<RideLogViewer> {
     // Sorting in case we have experienced out of order records
     var sortedESCMapKeysTEST = escTimeSeriesMap.keys.toList()..sort();
     sortedESCMapKeysTEST.forEach((element) {
-      var value = escTimeSeriesMap[element];
+      var value = escTimeSeriesMap[element]!;
       // Multiply consumption by number of ESCs for smooth chart line
       //TODO: This is not the most accurate way to represent consumption for multiple ESCs
       if(value.consumption != null) {
-        value.consumption *= escIDsInLog.length;
+        value.consumption = value.consumption! * escIDsInLog.length;
       }
       // Add to list
       escTimeSeriesList.add(value);
@@ -847,72 +847,72 @@ class RideLogViewerState extends State<RideLogViewer> {
     int _avgSpeedNonZeroEntries = 0;
     double _maxAmpsBattery = 0.0;
     double _maxAmpsMotor = 0.0;
-    TimeSeriesESC _tsESCMaxSpeed;
+    TimeSeriesESC? _tsESCMaxSpeed;
     double _maxESCTempObserved = -1.0;
-    TimeSeriesESC _tsESCMaxESCTemp;
-    TimeSeriesESC _tsESCMaxBatteryAmps;
-    TimeSeriesESC _tsESCMaxMotorAmps;
+    TimeSeriesESC? _tsESCMaxESCTemp;
+    TimeSeriesESC? _tsESCMaxBatteryAmps;
+    TimeSeriesESC? _tsESCMaxMotorAmps;
     for(int i=0; i<escTimeSeriesList.length;++i) {
-      if(escTimeSeriesList[i].speed != null && escTimeSeriesList[i].speed > _maxSpeed){
-        _maxSpeed = escTimeSeriesList[i].speed;
+      if(escTimeSeriesList[i].speed != null && escTimeSeriesList[i].speed! > _maxSpeed){
+        _maxSpeed = escTimeSeriesList[i].speed!;
         // Store time series moment for map point generation and data popup
         _tsESCMaxSpeed = escTimeSeriesList[i];
       }
       if (escTimeSeriesList[i].speed != null && escTimeSeriesList[i].speed != 0) {
-        _avgSpeed += escTimeSeriesList[i].speed;
+        _avgSpeed += escTimeSeriesList[i].speed!;
         ++_avgSpeedNonZeroEntries;
       }
 
       // Max Battery Current
-      if(escTimeSeriesList[i].currentInput != null && escTimeSeriesList[i].currentInput > _maxAmpsBattery){
-        _maxAmpsBattery = escTimeSeriesList[i].currentInput;
+      if(escTimeSeriesList[i].currentInput != null && escTimeSeriesList[i].currentInput! > _maxAmpsBattery){
+        _maxAmpsBattery = escTimeSeriesList[i].currentInput!;
         _tsESCMaxBatteryAmps = escTimeSeriesList[i];
       }
-      if(escTimeSeriesList[i].currentInput != null && escTimeSeriesList[i].currentInput2 != null && escTimeSeriesList[i].currentInput + escTimeSeriesList[i].currentInput2 > _maxAmpsBattery){
-        _maxAmpsBattery = doublePrecision(escTimeSeriesList[i].currentInput +  escTimeSeriesList[i].currentInput2, 1);
+      if(escTimeSeriesList[i].currentInput != null && escTimeSeriesList[i].currentInput2 != null && escTimeSeriesList[i].currentInput! + escTimeSeriesList[i].currentInput2! > _maxAmpsBattery){
+        _maxAmpsBattery = doublePrecision(escTimeSeriesList[i].currentInput! +  escTimeSeriesList[i].currentInput2!, 1);
         _tsESCMaxBatteryAmps = escTimeSeriesList[i];
       }
       if(escTimeSeriesList[i].currentInput != null && escTimeSeriesList[i].currentInput2 != null && escTimeSeriesList[i].currentInput3 != null && escTimeSeriesList[i].currentInput4 != null &&
-          escTimeSeriesList[i].currentInput + escTimeSeriesList[i].currentInput2 + escTimeSeriesList[i].currentInput3 + escTimeSeriesList[i].currentInput4 > _maxAmpsBattery){
-        _maxAmpsBattery = doublePrecision(escTimeSeriesList[i].currentInput +  escTimeSeriesList[i].currentInput2 + escTimeSeriesList[i].currentInput3 + escTimeSeriesList[i].currentInput4, 1);
+          escTimeSeriesList[i].currentInput! + escTimeSeriesList[i].currentInput2! + escTimeSeriesList[i].currentInput3! + escTimeSeriesList[i].currentInput4! > _maxAmpsBattery){
+        _maxAmpsBattery = doublePrecision(escTimeSeriesList[i].currentInput! +  escTimeSeriesList[i].currentInput2! + escTimeSeriesList[i].currentInput3! + escTimeSeriesList[i].currentInput4!, 1);
         _tsESCMaxBatteryAmps = escTimeSeriesList[i];
       }
 
       // Max Motor Current
-      if(escTimeSeriesList[i].currentMotor != null && escTimeSeriesList[i].currentMotor > _maxAmpsMotor){
-        _maxAmpsMotor = escTimeSeriesList[i].currentMotor;
+      if(escTimeSeriesList[i].currentMotor != null && escTimeSeriesList[i].currentMotor! > _maxAmpsMotor){
+        _maxAmpsMotor = escTimeSeriesList[i].currentMotor!;
         _tsESCMaxMotorAmps = escTimeSeriesList[i];
       }
-      if(escTimeSeriesList[i].currentMotor != null && escTimeSeriesList[i].currentMotor2 != null && escTimeSeriesList[i].currentMotor + escTimeSeriesList[i].currentMotor2 > _maxAmpsMotor){
-        _maxAmpsMotor = doublePrecision(escTimeSeriesList[i].currentMotor + escTimeSeriesList[i].currentMotor2, 1);
+      if(escTimeSeriesList[i].currentMotor != null && escTimeSeriesList[i].currentMotor2 != null && escTimeSeriesList[i].currentMotor! + escTimeSeriesList[i].currentMotor2! > _maxAmpsMotor){
+        _maxAmpsMotor = doublePrecision(escTimeSeriesList[i].currentMotor! + escTimeSeriesList[i].currentMotor2!, 1);
         _tsESCMaxMotorAmps = escTimeSeriesList[i];
       }
       if(escTimeSeriesList[i].currentMotor != null && escTimeSeriesList[i].currentMotor2 != null && escTimeSeriesList[i].currentMotor3 != null && escTimeSeriesList[i].currentMotor4 != null &&
-          escTimeSeriesList[i].currentMotor + escTimeSeriesList[i].currentMotor2 + escTimeSeriesList[i].currentMotor3 + escTimeSeriesList[i].currentMotor4 > _maxAmpsMotor){
-        _maxAmpsMotor = doublePrecision(escTimeSeriesList[i].currentMotor + escTimeSeriesList[i].currentMotor2 + escTimeSeriesList[i].currentMotor3 + escTimeSeriesList[i].currentMotor4, 1);
+          escTimeSeriesList[i].currentMotor! + escTimeSeriesList[i].currentMotor2! + escTimeSeriesList[i].currentMotor3! + escTimeSeriesList[i].currentMotor4! > _maxAmpsMotor){
+        _maxAmpsMotor = doublePrecision(escTimeSeriesList[i].currentMotor! + escTimeSeriesList[i].currentMotor2! + escTimeSeriesList[i].currentMotor3! + escTimeSeriesList[i].currentMotor4!, 1);
         _tsESCMaxMotorAmps = escTimeSeriesList[i];
       }
 
       // Monitor Max ESC Temp
-      if(escTimeSeriesList[i].tempMosfet != null && escTimeSeriesList[i].tempMosfet > _maxESCTempObserved){
+      if(escTimeSeriesList[i].tempMosfet != null && escTimeSeriesList[i].tempMosfet! > _maxESCTempObserved){
         // Store time series moment for map point generation and data popup
         _tsESCMaxESCTemp = escTimeSeriesList[i];
-        _maxESCTempObserved = escTimeSeriesList[i].tempMosfet;
+        _maxESCTempObserved = escTimeSeriesList[i].tempMosfet!;
       }
-      if(escTimeSeriesList[i].tempMosfet2 != null && escTimeSeriesList[i].tempMosfet2 > _maxESCTempObserved){
+      if(escTimeSeriesList[i].tempMosfet2 != null && escTimeSeriesList[i].tempMosfet2! > _maxESCTempObserved){
         // Store time series moment for map point generation and data popup
         _tsESCMaxESCTemp = escTimeSeriesList[i];
-        _maxESCTempObserved = escTimeSeriesList[i].tempMosfet2;
+        _maxESCTempObserved = escTimeSeriesList[i].tempMosfet2!;
       }
-      if(escTimeSeriesList[i].tempMosfet3 != null && escTimeSeriesList[i].tempMosfet3 > _maxESCTempObserved){
+      if(escTimeSeriesList[i].tempMosfet3 != null && escTimeSeriesList[i].tempMosfet3! > _maxESCTempObserved){
         // Store time series moment for map point generation and data popup
         _tsESCMaxESCTemp = escTimeSeriesList[i];
-        _maxESCTempObserved = escTimeSeriesList[i].tempMosfet3;
+        _maxESCTempObserved = escTimeSeriesList[i].tempMosfet3!;
       }
-      if(escTimeSeriesList[i].tempMosfet4 != null && escTimeSeriesList[i].tempMosfet4 > _maxESCTempObserved){
+      if(escTimeSeriesList[i].tempMosfet4 != null && escTimeSeriesList[i].tempMosfet4! > _maxESCTempObserved){
         // Store time series moment for map point generation and data popup
         _tsESCMaxESCTemp = escTimeSeriesList[i];
-        _maxESCTempObserved = escTimeSeriesList[i].tempMosfet4;
+        _maxESCTempObserved = escTimeSeriesList[i].tempMosfet4!;
       }
     } //iterate escTimeSeriesList
 
@@ -952,7 +952,7 @@ class RideLogViewerState extends State<RideLogViewer> {
     }
 
     // Create fault range annotations for chart
-    DateTime faultStart;
+    DateTime? faultStart;
     //int faultCode;
     escTimeSeriesList.forEach((element) {
       if (element.faultCode != null && faultStart == null){
@@ -962,8 +962,8 @@ class RideLogViewerState extends State<RideLogViewer> {
       else if (element.faultCode == null && faultStart != null) {
         // Create a new annotation
         faultRangeAnnotations.add(new charts.RangeAnnotationSegment(
-            faultStart,
-            element.time,
+            faultStart!,
+            element.time!,
             charts.RangeAnnotationAxisType.domain,
             //startLabel: '$faultCode',
             labelAnchor: charts.AnnotationLabelAnchor.end,
@@ -979,29 +979,29 @@ class RideLogViewerState extends State<RideLogViewer> {
       //NOTE: If a ride was merged but the end->start GPS positions differ the re-calculated values will be wrong
       //NOTE: Some old database entries did not have GPS avg speed, max speed and distance entries and will be -1
       /// Average Speed
-      if (myArguments.logFileInfo.avgSpeedGPS != -1.0) {
+      if (myArguments.logFileInfo!.avgSpeedGPS != -1.0) {
         // Use database statistics
-        gpsAverageSpeed = myArguments.logFileInfo.avgSpeedGPS;
+        gpsAverageSpeed = myArguments.logFileInfo!.avgSpeedGPS!;
       } else {
         // Calculate GPS statistics
         gpsAverageSpeed /= _positionEntries.length;
         gpsAverageSpeed = doublePrecision(gpsAverageSpeed, 2);
       }
       /// Distance
-      if (myArguments.logFileInfo.distanceGPS != -1.0) {
-        gpsDistanceStr = myArguments.userSettings.settings.useImperial ? "${doublePrecision(kmToMile(myArguments.logFileInfo.distanceGPS), 2)} miles" : "${doublePrecision(myArguments.logFileInfo.distanceGPS, 2)} km";
+      if (myArguments.logFileInfo!.distanceGPS != -1.0) {
+        gpsDistanceStr = myArguments.userSettings!.settings.useImperial ? "${doublePrecision(kmToMile(myArguments.logFileInfo!.distanceGPS!), 2)} miles" : "${doublePrecision(myArguments.logFileInfo!.distanceGPS!, 2)} km";
       } else {
-        gpsDistanceStr = myArguments.userSettings.settings.useImperial ? "${doublePrecision(kmToMile(gpsDistance), 2)} miles" : "${doublePrecision(gpsDistance, 2)} km";
+        gpsDistanceStr = myArguments.userSettings!.settings.useImperial ? "${doublePrecision(kmToMile(gpsDistance), 2)} miles" : "${doublePrecision(gpsDistance, 2)} km";
       }
     }
 
 
     globalLogger.d("rideLogViewer creating chart data");
     // Create charting data from ESC time series data
-    seriesList = _createChartingData(escTimeSeriesList, escIDsInLog, faultCodeCount, myArguments.userSettings.settings.useImperial);
+    seriesList = _createChartingData(escTimeSeriesList, escIDsInLog, faultCodeCount, myArguments.userSettings!.settings.useImperial);
 
     // Capture filename passed via arguments
-    String filename = myArguments.logFileInfo.logFilePath.substring(myArguments.logFileInfo.logFilePath.lastIndexOf("/") + 1);
+    String filename = myArguments.logFileInfo!.logFilePath!.substring(myArguments.logFileInfo!.logFilePath!.lastIndexOf("/") + 1);
 
 
 
@@ -1011,13 +1011,13 @@ class RideLogViewerState extends State<RideLogViewer> {
       mapMakers.add(new Marker(
         width: 50.0,
         height: 50.0,
-        point: selectNearestGPSPoint(_tsESCMaxBatteryAmps.time,gpsLatLngMap),
-        builder: (ctx) =>
+        point: selectNearestGPSPoint(_tsESCMaxBatteryAmps.time!,gpsLatLngMap),
+        child:
         new Container(
           margin: EdgeInsets.fromLTRB(0, 0, 0, 25),
           child: GestureDetector(
             onTap: (){
-              _buildDialog("Max Battery Amps", _tsESCMaxBatteryAmps, escTimeSeriesList.first.time, myArguments.userSettings.settings.useFahrenheit);
+              _buildDialog("Max Battery Amps", _tsESCMaxBatteryAmps!, escTimeSeriesList.first.time!, myArguments.userSettings!.settings.useFahrenheit);
             },
             child: Image(image: AssetImage("assets/map_max_amps.png")),
           ),
@@ -1030,13 +1030,13 @@ class RideLogViewerState extends State<RideLogViewer> {
       mapMakers.add(new Marker(
         width: 50.0,
         height: 50.0,
-        point: selectNearestGPSPoint(_tsESCMaxESCTemp.time,gpsLatLngMap),
-        builder: (ctx) =>
+        point: selectNearestGPSPoint(_tsESCMaxESCTemp.time!,gpsLatLngMap),
+        child:
         new Container(
           margin: EdgeInsets.fromLTRB(0, 0, 0, 25),
           child: GestureDetector(
             onTap: (){
-              _buildDialog("Max ESC Temperature", _tsESCMaxESCTemp, escTimeSeriesList.first.time, myArguments.userSettings.settings.useFahrenheit);
+              _buildDialog("Max ESC Temperature", _tsESCMaxESCTemp!, escTimeSeriesList.first.time!, myArguments.userSettings!.settings.useFahrenheit);
             },
             child: Image(image: AssetImage("assets/map_max_temp.png")),
           ),
@@ -1049,13 +1049,13 @@ class RideLogViewerState extends State<RideLogViewer> {
       mapMakers.add(new Marker(
         width: 50.0,
         height: 50.0,
-        point: selectNearestGPSPoint(_tsESCMaxSpeed.time,gpsLatLngMap),
-        builder: (ctx) =>
+        point: selectNearestGPSPoint(_tsESCMaxSpeed.time!,gpsLatLngMap),
+        child:
         new Container(
           margin: EdgeInsets.fromLTRB(0, 0, 0, 25),
           child: GestureDetector(
             onTap: (){
-              _buildDialog("Top Speed", _tsESCMaxSpeed, escTimeSeriesList.first.time, myArguments.userSettings.settings.useFahrenheit);
+              _buildDialog("Top Speed", _tsESCMaxSpeed!, escTimeSeriesList.first.time!, myArguments.userSettings!.settings.useFahrenheit);
             },
             child: Image(image: AssetImage("assets/map_top_speed.png")),
           ),
@@ -1068,9 +1068,9 @@ class RideLogViewerState extends State<RideLogViewer> {
     String distance = "N/A";
     Duration duration = Duration(seconds:0);
     if(escTimeSeriesList.length > 0) {
-      double totalDistance = myArguments.userSettings.settings.useImperial ? kmToMile(myArguments.logFileInfo.distance) : myArguments.logFileInfo.distance;
-      distance = myArguments.userSettings.settings.useImperial ? "$totalDistance miles" : "$totalDistance km";
-      duration = escTimeSeriesList.last.time.difference(escTimeSeriesList.first.time);
+      double totalDistance = myArguments.userSettings!.settings.useImperial ? kmToMile(myArguments.logFileInfo!.distance!) : myArguments.logFileInfo!.distance!;
+      distance = myArguments.userSettings!.settings.useImperial ? "$totalDistance miles" : "$totalDistance km";
+      duration = escTimeSeriesList.last.time!.difference(escTimeSeriesList.first.time!);
 
       // Compute average moving speed
       if (_avgSpeedNonZeroEntries > 0) {
@@ -1082,13 +1082,13 @@ class RideLogViewerState extends State<RideLogViewer> {
       _avgSpeed /= escTimeSeriesListOriginalLength;
       _avgSpeed = doublePrecision(_avgSpeed, 2);
     }
-    String maxSpeed = myArguments.userSettings.settings.useImperial ? "$_maxSpeed mph" : "$_maxSpeed kph";
-    String avgSpeed = myArguments.userSettings.settings.useImperial ? "$_avgSpeed mph" : "$_avgSpeed kph";
-    String avgSpeedMoving = myArguments.userSettings.settings.useImperial ? "$_avgSpeedMoving mph" : "$_avgSpeedMoving kph";
+    String maxSpeed = myArguments.userSettings!.settings.useImperial ? "$_maxSpeed mph" : "$_maxSpeed kph";
+    String avgSpeed = myArguments.userSettings!.settings.useImperial ? "$_avgSpeed mph" : "$_avgSpeed kph";
+    String avgSpeedMoving = myArguments.userSettings!.settings.useImperial ? "$_avgSpeedMoving mph" : "$_avgSpeedMoving kph";
 
     // Remove loading dialog since the user has no control
     if(_keyLoader.currentContext != null)
-      Navigator.of(_keyLoader.currentContext,rootNavigator: true).pop();
+      Navigator.of(_keyLoader.currentContext!,rootNavigator: true).pop();
 
     globalLogger.d("rideLogViewer statistics generated");
 
@@ -1099,7 +1099,7 @@ class RideLogViewerState extends State<RideLogViewer> {
             width: 100.0,
             height: 100.0,
             point: _positionEntries.first,
-            builder: (ctx) =>
+            child:
             new Container(
               margin: EdgeInsets.fromLTRB(0, 0, 0, 50),
               child: new Image(image: AssetImage("assets/map_start.png")),
@@ -1111,7 +1111,7 @@ class RideLogViewerState extends State<RideLogViewer> {
         width: 100.0,
         height: 100.0,
         point: _positionEntries.last,
-        builder: (ctx) =>
+        child:
         new Container(
           margin: EdgeInsets.fromLTRB(30, 0, 0, 50),
           child: new Image(image: AssetImage("assets/map_end.png")),
@@ -1121,21 +1121,21 @@ class RideLogViewerState extends State<RideLogViewer> {
 
     /// Compute consumption
     double consumption = 0;
-    double consumptionDistance;
-    if (myArguments.logFileInfo.wattHoursTotal != -1 && distanceEndPrimary != null && distanceStartPrimary != null) {
+    double? consumptionDistance;
+    if (myArguments.logFileInfo!.wattHoursTotal != -1 && distanceEndPrimary != null && distanceStartPrimary != null) {
 
       if (_useGPSData) {
-        consumptionDistance = myArguments.userSettings.settings.useImperial ? kmToMile(gpsDistance) : gpsDistance;
+        consumptionDistance = myArguments.userSettings!.settings.useImperial ? kmToMile(gpsDistance) : gpsDistance;
       } else {
-        consumptionDistance = myArguments.userSettings.settings.useImperial ? kmToMile(myArguments.logFileInfo.distance) : myArguments.logFileInfo.distance;
+        consumptionDistance = myArguments.userSettings!.settings.useImperial ? kmToMile(myArguments.logFileInfo!.distance!) : myArguments.logFileInfo!.distance!;
       }
-      consumption = (myArguments.logFileInfo.wattHoursTotal - myArguments.logFileInfo.wattHoursRegenTotal) / consumptionDistance;
+      consumption = (myArguments.logFileInfo!.wattHoursTotal! - myArguments.logFileInfo!.wattHoursRegenTotal!) / consumptionDistance;
     }
     if (consumption.isNaN || consumption.isInfinite) {
       consumption = 0;
     }
     consumption = doublePrecision(consumption, 2);
-    globalLogger.d("Consumption: wh${myArguments.logFileInfo.wattHoursTotal} whRegen${myArguments.logFileInfo.wattHoursRegenTotal} dEnd $distanceEndPrimary dStart $distanceStartPrimary compD $consumptionDistance GPS $_useGPSData imperial ${myArguments.userSettings.settings.useImperial} consumption $consumption");
+    globalLogger.d("Consumption: wh${myArguments.logFileInfo!.wattHoursTotal} whRegen${myArguments.logFileInfo!.wattHoursRegenTotal} dEnd $distanceEndPrimary dStart $distanceStartPrimary compD $consumptionDistance GPS $_useGPSData imperial ${myArguments.userSettings!.settings.useImperial} consumption $consumption");
 
     /// Add empty current position marker to the mapMarkers list
     //NOTE: Being the final entry this will be removed with user selection
@@ -1143,7 +1143,7 @@ class RideLogViewerState extends State<RideLogViewer> {
       width: 50.0,
       height: 50.0,
       point: new LatLng(0,0),
-      builder: (ctx) =>
+      child:
       new Container(),
     ));
 
@@ -1151,7 +1151,7 @@ class RideLogViewerState extends State<RideLogViewer> {
     return Scaffold(
       appBar: AppBar(
         title: Row(children: <Widget>[
-          Text(myArguments.logFileInfo.dateTime.add(timeZoneOffset).toString().substring(0,19)),
+          Text(myArguments.logFileInfo!.dateTime!.add(timeZoneOffset).toString().substring(0,19)),
           Spacer(),
           ClipRRect(
             borderRadius: new BorderRadius.circular(10),
@@ -1191,7 +1191,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                   SizedBox(width: 10,),
                   Column(children: <Widget>[
                     Text("Distance Traveled"),
-                    myArguments.userSettings.settings.useGPSData ? Icon(Icons.gps_fixed) : Icon(Icons.gps_not_fixed),
+                    myArguments.userSettings!.settings.useGPSData ? Icon(Icons.gps_fixed) : Icon(Icons.gps_not_fixed),
                     escTimeSeriesList.length > 0 ? _useGPSData ? Text(gpsDistanceStr) : Text(distance) : Text(gpsDistanceStr)
                   ],),
 
@@ -1202,10 +1202,10 @@ class RideLogViewerState extends State<RideLogViewer> {
               SizedBox(height: 12,),
               Row(mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  myArguments.logFileInfo.wattHoursTotal != -1.0 && distanceEndPrimary != null ? Column(children: <Widget>[
+                  myArguments.logFileInfo!.wattHoursTotal != -1.0 && distanceEndPrimary != null ? Column(children: <Widget>[
                     Text("${escIDsInLog.length == 1 ? "Single" : escIDsInLog.length == 2 ? "Dual" : "Quad"}"),
                     Icon(Icons.local_gas_station),
-                    Text("$consumption Wh/${myArguments.userSettings.settings.useImperial ? "mile" : "km"}")
+                    Text("$consumption Wh/${myArguments.userSettings!.settings.useImperial ? "mile" : "km"}")
                   ],) : Container(),
                   Column(children: <Widget>[
                     Text("Max Amps"),
@@ -1222,7 +1222,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                   Column(children: <Widget>[
                     Text("Duration"),
                     Icon(Icons.watch_later),
-                    Text("${prettyPrintDuration(Duration(seconds: myArguments.logFileInfo.durationSeconds))}")
+                    Text("${prettyPrintDuration(Duration(seconds: myArguments.logFileInfo!.durationSeconds!))}")
                   ],),
 
 
@@ -1246,7 +1246,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                       genericConfirmationDialog(context, TextButton(
                         child: Text("Copy / Share"),
                         onPressed: () {
-                          Share.text('Faults observed', shareData, 'text/plain');
+                          SharePlus.instance.share(ShareParams(text: shareData));
                         },
                       ), TextButton(
                         child: Text("Close"),
@@ -1288,9 +1288,9 @@ class RideLogViewerState extends State<RideLogViewer> {
                               child: Text("Delete"),
                               onPressed: () async {
                                 //Remove from Database
-                                await DatabaseAssistant.dbRemoveLog(myArguments.logFileInfo.logFilePath);
+                                await DatabaseAssistant.dbRemoveLog(myArguments.logFileInfo!.logFilePath!);
                                 //Remove from Filesystem
-                                await FileManager.eraseLogFile(myArguments.logFileInfo.logFilePath);
+                                await FileManager.eraseLogFile(myArguments.logFileInfo!.logFilePath!);
                                 Navigator.of(context).pop();
                                 Navigator.of(context).pop();
                               },
@@ -1310,15 +1310,18 @@ class RideLogViewerState extends State<RideLogViewer> {
                         fileSummary += "\nAvg Moving Speed: $avgSpeedMoving";
                         fileSummary += "\nAvg Speed: $avgSpeed";
                         fileSummary += "\nDistance: $distance";
-                        if (myArguments.logFileInfo.wattHoursTotal != -1.0 && distanceEndPrimary != null) {
-                          fileSummary += "\nConsumption: $consumption Wh/${myArguments.userSettings.settings.useImperial ? "mile" : "km"}";
-                          fileSummary += "\nWatt Hours: ${doublePrecision(myArguments.logFileInfo.wattHoursTotal, 2)}";
-                          fileSummary += "\nWatt Hours Regen: ${doublePrecision(myArguments.logFileInfo.wattHoursRegenTotal, 2)}";
+                        if (myArguments.logFileInfo!.wattHoursTotal != -1.0 && distanceEndPrimary != null) {
+                          fileSummary += "\nConsumption: $consumption Wh/${myArguments.userSettings!.settings.useImperial ? "mile" : "km"}";
+                          fileSummary += "\nWatt Hours: ${doublePrecision(myArguments.logFileInfo!.wattHoursTotal!, 2)}";
+                          fileSummary += "\nWatt Hours Regen: ${doublePrecision(myArguments.logFileInfo!.wattHoursRegenTotal!, 2)}";
                         }
                         fileSummary += "\nBattery Amps: ${doublePrecision(_maxAmpsBattery, 1)}";
                         fileSummary += "\nMotor Amps: ${doublePrecision(_maxAmpsMotor, 1)}";
                         fileSummary += "\nDuration: ${duration.toString().substring(0,duration.toString().lastIndexOf("."))}";
-                        await Share.file('FreeSK8Log', filename, utf8.encode(thisRideLog), 'text/csv', text: fileSummary);
+                        await SharePlus.instance.share(ShareParams(
+                          files: [XFile.fromData(utf8.encode(thisRideLog), name: filename, mimeType: 'text/csv')],
+                          text: fileSummary,
+                        ));
                       }),
                 ],),
 
@@ -1344,24 +1347,31 @@ class RideLogViewerState extends State<RideLogViewer> {
                   SizedBox(height: MediaQuery.of(context).size.height * 0.25,
                     child: FlutterMap(
                       mapController: _mapController,
-                      options: new MapOptions(
-                        bounds: LatLngBounds.fromPoints(_positionEntries),
-                        boundsOptions: FitBoundsOptions(padding: EdgeInsets.all(20)),
+                      options: MapOptions(
+                        initialCenter: _positionEntries.isNotEmpty
+                            ? _positionEntries[_positionEntries.length ~/ 2]
+                            : const LatLng(0, 0),
+                        initialZoom: 14,
+                        onMapReady: () {
+                          if (_positionEntries.isNotEmpty) {
+                            _mapController.fitCamera(
+                              CameraFit.bounds(
+                                bounds: LatLngBounds.fromPoints(_positionEntries),
+                                padding: const EdgeInsets.all(20),
+                              ),
+                            );
+                          }
+                        },
                       ),
-                      layers: [
-                        new TileLayerOptions(
-                            urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                            subdomains: ['a', 'b', 'c']
+                      children: [
+                        TileLayer(
+                          urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
                         ),
-
-                        new PolylineLayerOptions(
-                            polylines: [routePolyLine],
-                            polylineCulling: true
+                        PolylineLayer(
+                          polylines: [routePolyLine],
                         ),
-
-                        new MarkerLayerOptions(
-                            markers: mapMakers,
-                            usePxCache: false,
+                        MarkerLayer(
+                          markers: mapMakers,
                         ),
                       ],
                     ),
@@ -1380,7 +1390,7 @@ class RideLogViewerState extends State<RideLogViewer> {
 
                       // Customize the domainAxis tickFormatterSpec
                       domainAxis: new charts.DateTimeAxisSpec(
-                          viewport: new charts.DateTimeExtents(start: escTimeSeriesList.first.time, end: escTimeSeriesList.last.time),
+                          viewport: new charts.DateTimeExtents(start: escTimeSeriesList.first.time!, end: escTimeSeriesList.last.time!),
                           tickFormatterSpec: new charts.AutoDateTimeTickFormatterSpec(
                             minute: new charts.TimeFormatterSpec(
                               format: 'HH:mm:ss', // or even HH:mm here too
@@ -1422,17 +1432,17 @@ class RideLogViewerState extends State<RideLogViewer> {
                                     width: 50.0,
                                     height: 50.0,
                                     point: closestMapPoint,
-                                    builder: (ctx) =>
+                                    child:
                                     new Container(
                                       margin: EdgeInsets.fromLTRB(0, 0, 0, 10),
                                       child: CircleAvatar(
-                                        backgroundImage: myArguments.userSettings.settings.boardAvatarPath != null ? myArguments.imageBoardAvatar : AssetImage('assets/FreeSK8_Mobile.png'),
+                                        backgroundImage: myArguments.userSettings!.settings.boardAvatarPath != null ? myArguments.imageBoardAvatar : AssetImage('assets/FreeSK8_Mobile.png') as ImageProvider,
                                         radius: 10,
                                         backgroundColor: Colors.white
                                       )
                                     ),
                                   );
-                                  _mapController.move(closestMapPoint, _mapController.zoom);
+                                  _mapController.move(closestMapPoint, _mapController.camera.zoom);
                                 }
                               }
                             }
@@ -1460,7 +1470,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                     Positioned(
                       bottom: 21,
                       right: 5,
-                      child: RideLogViewChartOverlay(eventObservable: eventObservable, imperialDistance: myArguments.userSettings.settings.useImperial),
+                      child: RideLogViewChartOverlay(eventObservable: eventObservable, imperialDistance: myArguments.userSettings!.settings.useImperial),
                     ),
 
 
@@ -1482,29 +1492,29 @@ class RideLogViewerState extends State<RideLogViewer> {
 }
 /// Simple time series data type.
 class TimeSeriesESC {
-  final DateTime time;
-  double voltage;
-  double tempMotor;
-  double tempMotor2;
-  double tempMotor3;
-  double tempMotor4;
-  double tempMosfet;
-  double tempMosfet2;
-  double tempMosfet3;
-  double tempMosfet4;
-  double dutyCycle;
-  double currentMotor;
-  double currentMotor2;
-  double currentMotor3;
-  double currentMotor4;
-  double currentInput;
-  double currentInput2;
-  double currentInput3;
-  double currentInput4;
-  double speed;
-  double distance;
-  double consumption;
-  int faultCode;
+  final DateTime? time;
+  double? voltage;
+  double? tempMotor;
+  double? tempMotor2;
+  double? tempMotor3;
+  double? tempMotor4;
+  double? tempMosfet;
+  double? tempMosfet2;
+  double? tempMosfet3;
+  double? tempMosfet4;
+  double? dutyCycle;
+  double? currentMotor;
+  double? currentMotor2;
+  double? currentMotor3;
+  double? currentMotor4;
+  double? currentInput;
+  double? currentInput2;
+  double? currentInput3;
+  double? currentInput4;
+  double? speed;
+  double? distance;
+  double? consumption;
+  int? faultCode;
 
   TimeSeriesESC({
       this.time,

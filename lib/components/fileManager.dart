@@ -10,7 +10,7 @@ import '../components/userSettings.dart';
 
 class FileManager {
 
-  static DateTime logFileStartTime;
+  static DateTime? logFileStartTime;
 
   static Future<void> writeBytesToLogFile(List<int> bytes) async {
     final file = await _getTempLogFile();
@@ -42,11 +42,11 @@ class FileManager {
     logFileStartTime = DateTime.now();
   }
 
-  static Future<String> saveLogToDocuments({String filename, UserSettings userSettings}) async {
+  static Future<String> saveLogToDocuments({String? filename, UserSettings? userSettings}) async {
     // Get temporary log file
     final file = await _getTempLogFile();
     // Convert binary data to CSV file; Update filename if TIME_SYNC event occurs
-    final Pair<String, File> parserResult = await LogFileParser.parseFile(file, filename, userSettings);
+    final Pair<String, File> parserResult = await LogFileParser.parseFile(file, filename!, userSettings!);
     if (filename != parserResult.first) {
       globalLogger.d("fileManager::saveLogToDocuments: Filename changed from $filename to ${parserResult.first}");
     }

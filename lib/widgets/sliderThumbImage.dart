@@ -1,9 +1,8 @@
-
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 class SliderThumbImage extends SliderComponentShape {
-  final ui.Image image;
+  final ui.Image? image;
 
   SliderThumbImage(this.image);
 
@@ -14,16 +13,16 @@ class SliderThumbImage extends SliderComponentShape {
 
   @override
   void paint(PaintingContext context, Offset center,
-      {Animation<double> activationAnimation,
-        Animation<double> enableAnimation,
-        bool isDiscrete,
-        TextPainter labelPainter,
-        RenderBox parentBox,
-        SliderThemeData sliderTheme,
-        TextDirection textDirection,
-        double value,
-        double textScaleFactor,
-        Size sizeWithOverflow}) {
+      {Animation<double>? activationAnimation,
+        Animation<double>? enableAnimation,
+        bool? isDiscrete,
+        TextPainter? labelPainter,
+        RenderBox? parentBox,
+        SliderThemeData? sliderTheme,
+        TextDirection? textDirection,
+        double? value,
+        double? textScaleFactor,
+        Size? sizeWithOverflow}) {
     final canvas = context.canvas;
     final imageWidth = image?.width ?? 10;
     final imageHeight = image?.height ?? 10;
@@ -36,7 +35,7 @@ class SliderThumbImage extends SliderComponentShape {
     Paint paint = Paint()..filterQuality = FilterQuality.high;
 
     if (image != null) {
-      canvas.drawImage(image, imageOffset, paint);
+      canvas.drawImage(image!, imageOffset, paint);
     }
   }
 }

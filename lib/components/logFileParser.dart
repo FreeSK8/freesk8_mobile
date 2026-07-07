@@ -27,19 +27,19 @@ enum LOG_MSG_TYPES {
 }
 
 class LogESC {
-  DateTime dt;
-  int escID;
-  double vIn;
-  double motorTemp;
-  double mosfetTemp;
-  double dutyCycle;
-  double motorCurrent;
-  double batteryCurrent;
-  double wattHours;
-  double wattHoursRegen;
-  int eRPM;
-  int eDistance;
-  int faultCode;
+  DateTime? dt;
+  int escID = 0;
+  double vIn = 0;
+  double motorTemp = 0;
+  double mosfetTemp = 0;
+  double dutyCycle = 0;
+  double motorCurrent = 0;
+  double batteryCurrent = 0;
+  double wattHours = 0;
+  double wattHoursRegen = 0;
+  int eRPM = 0;
+  int eDistance = 0;
+  int faultCode = 0;
 
   LogESC fromValues(LogESC values) {
     this.dt = values.dt;
@@ -60,12 +60,12 @@ class LogESC {
 }
 
 class LogGPS {
-  DateTime dt;
-  int satellites;
-  double altitude;
-  double speed;
-  double latitude;
-  double longitude;
+  DateTime? dt;
+  int satellites = 0;
+  double altitude = 0;
+  double speed = 0;
+  double latitude = 0;
+  double longitude = 0;
 
   LogGPS fromValues(LogGPS values) {
     this.dt = values.dt;
@@ -196,7 +196,7 @@ class LogFileParser {
 
             if (bytes[i] == PacketEnd) {
               // Update ESC packet with delta values
-              lastESCPacket.dt = lastESCPacket.dt.add(Duration(seconds: deltaDT));
+              lastESCPacket.dt = lastESCPacket.dt!.add(Duration(seconds: deltaDT));
               lastESCPacket.escID = escID;
               lastESCPacket.vIn = doublePrecision(lastESCPacket.vIn + deltaVin, 1);
               lastESCPacket.motorTemp = doublePrecision(lastESCPacket.motorTemp + deltaMotorTemp, 1);
@@ -241,7 +241,7 @@ class LogFileParser {
             double deltaLongitude = buffer_get_int16(bytes, i, Endian.little) / 100000.0; i+=2;
             //logger.wtf("GPS DELTA Time $deltaDt Satellites $deltaSatellites Altitude $deltaAltitude Speed $deltaSpeed Latitude $deltaLatitude Longitude $deltaLongitude");
             if (bytes[i] == PacketEnd) {
-              lastGPSPacket.dt = lastGPSPacket.dt.add(Duration(seconds: deltaDt));
+              lastGPSPacket.dt = lastGPSPacket.dt!.add(Duration(seconds: deltaDt));
               lastGPSPacket.satellites += deltaSatellites;
               lastGPSPacket.altitude = doublePrecision(lastGPSPacket.altitude + deltaAltitude, 1);
               lastGPSPacket.speed = doublePrecision(lastGPSPacket.speed + deltaSpeed, 1);
@@ -275,18 +275,18 @@ class LogFileParser {
                     for (int j=0; j<parsedIndex; ++j) {
                       // Adjust time for ESC records
                       if (parsedESC[j] != null) {
-                        parsedESC[j].dt = parsedESC[j].dt.add(Duration(seconds: eventData));
+                        parsedESC[j]!.dt = parsedESC[j]!.dt!.add(Duration(seconds: eventData));
                       }
                       // Adjust time for GPS records
                       if (parsedGPS[j] != null) {
-                        parsedGPS[j].dt = parsedGPS[j].dt.add(Duration(seconds: eventData));
+                        parsedGPS[j]!.dt = parsedGPS[j]!.dt!.add(Duration(seconds: eventData));
                       }
                       // Adjust fileName with new starting time
-                      DateTime dtFromString = DateTime.tryParse(fileName);
+                      DateTime? dtFromString = DateTime.tryParse(fileName);
                       if (dtFromString == null) {
                         globalLogger.wtf("logFileParser::parseFile:TIME_SYNC: unable to parse time from filename ($fileName) checking records");
                         if (parsedESC.values.length > 0) {
-                          dtFromString = parsedESC.values.first.dt.add(Duration(seconds: eventData));
+                          dtFromString = parsedESC.values.first.dt!.add(Duration(seconds: eventData));
                           fileNameOut = dtFromString.toIso8601String();
                         } else {
                           globalLogger.wtf("logFileParser::parseFile:TIME_SYNC: No ESC records found to parse valid time. Using original filename");
@@ -320,41 +320,41 @@ class LogFileParser {
     for (int i=0; i<parsedIndex; ++i) {
       if (parsedESC[i] != null) {
         // Store ESC CSV data
-        parsedResults += "${parsedESC[i].dt.toIso8601String().substring(0,19)},"
+        parsedResults += "${parsedESC[i]!.dt!.toIso8601String().substring(0,19)},"
             "esc,"
-            "${parsedESC[i].escID},"
-            "${parsedESC[i].vIn},"
-            "${parsedESC[i].motorTemp},"
-            "${parsedESC[i].mosfetTemp},"
-            "${parsedESC[i].dutyCycle},"
-            "${parsedESC[i].motorCurrent},"
-            "${parsedESC[i].batteryCurrent},"
-            "${parsedESC[i].wattHours},"
-            "${parsedESC[i].wattHoursRegen},"
-            "${parsedESC[i].eRPM},"
-            "${parsedESC[i].eDistance},"
-            "${parsedESC[i].faultCode},"
-            "${eRPMToKph(parsedESC[i].eRPM.toDouble(), userSettings.settings.gearRatio, userSettings.settings.wheelDiameterMillimeters, userSettings.settings.motorPoles)},"
-            "${eDistanceToKm(parsedESC[i].eDistance.toDouble(), userSettings.settings.gearRatio, userSettings.settings.wheelDiameterMillimeters, userSettings.settings.motorPoles)}\n";
+            "${parsedESC[i]!.escID},"
+            "${parsedESC[i]!.vIn},"
+            "${parsedESC[i]!.motorTemp},"
+            "${parsedESC[i]!.mosfetTemp},"
+            "${parsedESC[i]!.dutyCycle},"
+            "${parsedESC[i]!.motorCurrent},"
+            "${parsedESC[i]!.batteryCurrent},"
+            "${parsedESC[i]!.wattHours},"
+            "${parsedESC[i]!.wattHoursRegen},"
+            "${parsedESC[i]!.eRPM},"
+            "${parsedESC[i]!.eDistance},"
+            "${parsedESC[i]!.faultCode},"
+            "${eRPMToKph(parsedESC[i]!.eRPM.toDouble(), userSettings.settings.gearRatio, userSettings.settings.wheelDiameterMillimeters, userSettings.settings.motorPoles)},"
+            "${eDistanceToKm(parsedESC[i]!.eDistance.toDouble(), userSettings.settings.gearRatio, userSettings.settings.wheelDiameterMillimeters, userSettings.settings.motorPoles)}\n";
 
         // Store faults on their own line
-        if (parsedESC[i].faultCode != 0) {
-          parsedResults += "${parsedESC[i].dt.toIso8601String().substring(0,19)},"
+        if (parsedESC[i]!.faultCode != 0) {
+          parsedResults += "${parsedESC[i]!.dt!.toIso8601String().substring(0,19)},"
               "err,"
-              "${mc_fault_code.values[parsedESC[i].faultCode].toString().substring(14)},"
-              "${parsedESC[i].faultCode},"
-              "${parsedESC[i].escID}\n";
+              "${mc_fault_code.values[parsedESC[i]!.faultCode].toString().substring(14)},"
+              "${parsedESC[i]!.faultCode},"
+              "${parsedESC[i]!.escID}\n";
         }
       }
       if (parsedGPS[i] != null) {
         // Store GPS CSV data
-        parsedResults += "${parsedGPS[i].dt.toIso8601String().substring(0,19)},"
+        parsedResults += "${parsedGPS[i]!.dt!.toIso8601String().substring(0,19)},"
             "gps,"
-            "${parsedGPS[i].satellites},"
-            "${parsedGPS[i].altitude},"
-            "${parsedGPS[i].speed},"
-            "${parsedGPS[i].latitude},"
-            "${parsedGPS[i].longitude}\n";
+            "${parsedGPS[i]!.satellites},"
+            "${parsedGPS[i]!.altitude},"
+            "${parsedGPS[i]!.speed},"
+            "${parsedGPS[i]!.latitude},"
+            "${parsedGPS[i]!.longitude}\n";
       }
     }
     // Write parsed CSV to filesystem

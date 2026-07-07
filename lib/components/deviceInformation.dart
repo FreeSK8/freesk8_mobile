@@ -2,14 +2,15 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 
 import 'package:device_info_plus/device_info_plus.dart';
+//import 'package:android_id/android_id.dart';
 
 import '../globalUtilities.dart';
 
 class DeviceInfo {
   static final DeviceInfoPlugin deviceInfoPlugin = DeviceInfoPlugin();
 
-  static Future<Map<String, dynamic>> init() async {
-    Map<String, dynamic> deviceData;
+  static Future<Map<String, dynamic>?> init() async {
+    Map<String, dynamic>? deviceData;
 
     try {
       if (Platform.isAndroid) {
@@ -54,7 +55,6 @@ class DeviceInfo {
       'tags': build.tags,
       'type': build.type,
       'isPhysicalDevice': build.isPhysicalDevice,
-      'androidId': build.androidId,
       'systemFeatures': build.systemFeatures,
     };
   }

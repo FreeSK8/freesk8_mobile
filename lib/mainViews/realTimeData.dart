@@ -3,8 +3,11 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:freesk8_mobile/hardwareSupport/escHelper/dataTypes.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../blocs/preferences/preferences_cubit.dart';
+import '../blocs/telemetry/telemetry_bloc.dart';
+import '../blocs/telemetry/telemetry_state.dart';
 import '../hardwareSupport/escHelper/escHelper.dart';
 
 import '../globalUtilities.dart';
@@ -15,17 +18,15 @@ import '../widgets/flutterMap.dart'; import 'package:latlong2/latlong.dart';
 class RealTimeData extends StatefulWidget {
 
   RealTimeData(
-      { this.routeTakenLocations,
-        this.telemetryMap,
-        @required this.currentSettings,
-        this.startStopTelemetryFunc,
+      { required this.routeTakenLocations,
+        required this.currentSettings,
+        required this.startStopTelemetryFunc,
 
-        this.deviceIsConnected,
+        required this.deviceIsConnected,
       });
 
   final List<LatLng> routeTakenLocations;
   final UserSettings currentSettings;
-  final Map<int, ESCTelemetry> telemetryMap;
   final ValueChanged<bool> startStopTelemetryFunc;
 
   final bool deviceIsConnected;
@@ -39,24 +40,13 @@ class RealTimeDataState extends State<RealTimeData> {
 
   static List<double> motorCurrentGraphPoints = [];
 
-  static double averageVoltageInput;
+  static double? averageVoltageInput;
 
-  static ESCTelemetry escTelemetry;
+  static late ESCTelemetry escTelemetry;
 
-  double batteryRemaining;
+  double? batteryRemaining;
 
-  double rangeEstimateAverage;
-
-  bool showWhWithRegen = true;
-  int showPowerState = 0;
-  bool showVoltsPerCell = false;
-  bool showBatteryPercentage = false;
-  bool showRangeEstimate = false;
-  bool hideMap = false;
-  bool settingsLoaded = false;
-
-  bool allowFontResize = false;
-  double fontSizeValues = 30;
+  double? rangeEstimateAverage;
 
 
   double calculateSpeedKph(double eRpm) {
@@ -98,38 +88,10 @@ class RealTimeDataState extends State<RealTimeData> {
     return double.parse((distance).toStringAsFixed(2));
   }
 
-  void loadSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    showWhWithRegen = prefs.getBool('rtShowWhWithRegen') ?? showWhWithRegen;
-    showVoltsPerCell = prefs.getBool('rtShowVoltsPerCell') ?? showVoltsPerCell;
-    showBatteryPercentage = prefs.getBool('rtShowBatteryPercentage') ?? showBatteryPercentage;
-    showRangeEstimate = prefs.getBool('rtShowRangeEstimate') ?? showRangeEstimate;
-    hideMap = prefs.getBool('rtShowMap') ?? hideMap;
-
-    Future.delayed(Duration(milliseconds: 250), (){
-      setState(() {
-        showPowerState = showBatteryPercentage ? 2 : showVoltsPerCell ? 1 : 0;
-        settingsLoaded = true;
-      });
-    });
-  }
-
-  void saveSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    await prefs.setBool('rtShowWhWithRegen', showWhWithRegen);
-    await prefs.setBool('rtShowVoltsPerCell', showVoltsPerCell);
-    await prefs.setBool('rtShowBatteryPercentage', showBatteryPercentage);
-    await prefs.setBool('rtShowRangeEstimate', showRangeEstimate);
-    await prefs.setBool('rtShowMap', hideMap);
-  }
-
   @override
   void initState() {
     super.initState();
     globalLogger.d("initState: realTimeData");
-    loadSettings();
     widget.startStopTelemetryFunc(false); //Start the telemetry timer
   }
 
@@ -142,12 +104,32 @@ class RealTimeDataState extends State<RealTimeData> {
   @override
   Widget build(BuildContext context) {
     print("Build: RealTimeData");
+    final prefs = context.watch<PreferencesCubit>().state;
+    if (!prefs.loaded) {
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [Text("Fetching preferences")],
+      );
+    }
+    final showWhWithRegen = prefs.showWhWithRegen;
+    final showRangeEstimate = prefs.showRangeEstimate;
+    final hideMap = prefs.hideMap;
+    final showVoltsPerCell = prefs.showVoltsPerCell;
+    final showBatteryPercentage = prefs.showBatteryPercentage;
+    final fontSizeValues = prefs.fontSizeValues;
+    final allowFontResize = prefs.allowFontResize;
+
+    // Telemetry comes from the TelemetryBloc; only this subtree rebuilds per tick
+    final telemetryState = context.watch<TelemetryBloc>().state;
+    final telemetryMap = telemetryState is TelemetryActive
+        ? telemetryState.telemetryMap
+        : const <int, ESCTelemetry>{};
 
     //TODO: Using COMM_GET_VALUE_SETUP for RT so map is not actually needed
-    if (widget.telemetryMap.length == 0) {
+    if (telemetryMap.length == 0) {
       escTelemetry = new ESCTelemetry();
     } else {
-      escTelemetry = widget.telemetryMap.values.first;
+      escTelemetry = telemetryMap.values.first;
     }
 
     double tempMosfet = widget.currentSettings.settings.useFahrenheit ? cToF(escTelemetry.temp_mos) : escTelemetry.temp_mos;
@@ -182,7 +164,7 @@ class RealTimeDataState extends State<RealTimeData> {
         averageVoltageInput = powerMinimum;
       } else {
         // Smooth voltage input value from ESC
-        averageVoltageInput = (0.25 * doublePrecision(escTelemetry.v_in, 1)) + (0.75 * averageVoltageInput);
+        averageVoltageInput = (0.25 * doublePrecision(escTelemetry.v_in, 1)) + (0.75 * averageVoltageInput!);
       }
     } else {
       averageVoltageInput = 0; // Set to zero when disconnected
@@ -199,24 +181,24 @@ class RealTimeDataState extends State<RealTimeData> {
 
     // Smooth battery remaining from ESC
     if (escTelemetry.battery_level != null) {
-      batteryRemaining = (0.1 * escTelemetry.battery_level * 100) + (0.9 * batteryRemaining);
-      if (batteryRemaining < 0.0) {
+      batteryRemaining = (0.1 * escTelemetry.battery_level * 100) + (0.9 * batteryRemaining!);
+      if (batteryRemaining! < 0.0) {
         globalLogger.e("Battery Remaining $batteryRemaining battery_level ${escTelemetry.battery_level} v_in ${escTelemetry.v_in}");
         batteryRemaining = 0;
       }
-      if(batteryRemaining > 100.0) {
+      if(batteryRemaining! > 100.0) {
         batteryRemaining = 100.0;
       }
     }
 
     // Estimate range
-    double rangeEstimate = (escTelemetry.battery_wh ?? 1) * (batteryRemaining / 100 ?? 1) / efficiency;
+    double rangeEstimate = (escTelemetry.battery_wh) * (batteryRemaining! / 100) / efficiency;
     if (rangeEstimateAverage == null) rangeEstimateAverage = rangeEstimate;
     if (rangeEstimate.isNaN || rangeEstimate.isInfinite) {
       rangeEstimate = 0;
       rangeEstimateAverage = 0;
     } else {
-      rangeEstimateAverage = rangeEstimate * 0.1 + rangeEstimateAverage * 0.9;
+      rangeEstimateAverage = rangeEstimate * 0.1 + rangeEstimateAverage! * 0.9;
     }
 
     Color boxBgColor = Theme.of(context).dialogBackgroundColor;
@@ -258,10 +240,7 @@ class RealTimeDataState extends State<RealTimeData> {
 
     Widget childWhTotal = GestureDetector(
       onTap: () {
-        setState(() {
-          showWhWithRegen = !showWhWithRegen;
-        });
-        saveSettings();
+        context.read<PreferencesCubit>().toggleWhWithRegen();
       },
       child: Container(
           decoration: boxDecoration,
@@ -344,10 +323,7 @@ class RealTimeDataState extends State<RealTimeData> {
 
     Widget childOdometer = GestureDetector(
         onTap: () {
-          setState(() {
-            showRangeEstimate = !showRangeEstimate;
-          });
-          saveSettings();
+          context.read<PreferencesCubit>().toggleRangeEstimate();
         },
         child: Container(
         decoration: boxDecoration,
@@ -361,7 +337,7 @@ class RealTimeDataState extends State<RealTimeData> {
                     child: Text("Range")),
                 FittedBox(
                     fit: BoxFit.fitWidth,
-                    child: Text("${doublePrecision(rangeEstimateAverage, 1)} ${widget.currentSettings.settings.useImperial ? "mi": "km"}", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold), textAlign: TextAlign.center)
+                    child: Text("${doublePrecision(rangeEstimateAverage!, 1)} ${widget.currentSettings.settings.useImperial ? "mi": "km"}", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold), textAlign: TextAlign.center)
                 ),
               ],
             ) : Column(
@@ -415,24 +391,7 @@ class RealTimeDataState extends State<RealTimeData> {
             padding: EdgeInsets.only(top: boxInnerPadding, bottom: boxInnerPadding),
             child: GestureDetector(
               onTap: () {
-                setState(() {
-                  switch (++showPowerState) {
-                    case 1:
-                      showVoltsPerCell = true;
-                      showBatteryPercentage = false;
-                      break;
-                    case 2:
-                      showVoltsPerCell = false;
-                      showBatteryPercentage = true;
-                      break;
-                    case 0:
-                    default:
-                      showVoltsPerCell = false;
-                      showBatteryPercentage = false;
-                      showPowerState = 0;
-                  }
-                });
-                saveSettings();
+                context.read<PreferencesCubit>().cyclePowerDisplay();
               },
               child: showVoltsPerCell ? Column(
                 children: [
@@ -451,7 +410,7 @@ class RealTimeDataState extends State<RealTimeData> {
                       child: Text("Battery")),
                   FittedBox(
                     fit: BoxFit.fitWidth,
-                    child: Text("${batteryRemaining.toInt()} %", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
+                    child: Text("${batteryRemaining!.toInt()} %", style: TextStyle(fontSize: fontSizeValues, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ) : Column(
@@ -531,13 +490,6 @@ class RealTimeDataState extends State<RealTimeData> {
               ],
             )));
 
-    if (settingsLoaded == false) {
-      return Column(children: [
-        Text("Fetching preferences")
-      ],
-      mainAxisAlignment: MainAxisAlignment.center,);
-    }
-
     setLandscapeOrientation(enabled: true);
 
     // Return Widget Tree
@@ -560,18 +512,14 @@ class RealTimeDataState extends State<RealTimeData> {
                         child: Column(children: [
                           GestureDetector(
                             onTap: () {
-                              setState(() {
-                                if (++fontSizeValues > 50) fontSizeValues = 50;
-                              });
+                              context.read<PreferencesCubit>().increaseFontSize();
                               globalLogger.d("Font Size: $fontSizeValues Screen W: ${MediaQuery.of(context).size.width.toInt()} H: ${MediaQuery.of(context).size.height.toInt()}");
                             },
                             child: Icon(Icons.add_circle_outline, color: Theme.of(context).dialogBackgroundColor),
                           ),
                           GestureDetector(
                             onTap: () {
-                              setState(() {
-                                if (--fontSizeValues < 14) fontSizeValues = 14;
-                              });
+                              context.read<PreferencesCubit>().decreaseFontSize();
                               globalLogger.d("Font Size: $fontSizeValues Screen W: ${MediaQuery.of(context).size.width.toInt()} H: ${MediaQuery.of(context).size.height.toInt()}");
                             },
                             child: Icon(Icons.remove_circle, color: Theme.of(context).dialogBackgroundColor),
@@ -646,10 +594,7 @@ class RealTimeDataState extends State<RealTimeData> {
           Spacer(),
           GestureDetector(
             onTap: () {
-              setState(() {
-                hideMap = !hideMap;
-              });
-              saveSettings();
+              context.read<PreferencesCubit>().toggleHideMap();
             },
             child: Container(
               decoration: BoxDecoration(
@@ -688,18 +633,14 @@ class RealTimeDataState extends State<RealTimeData> {
                         child: Row(children: [
                           GestureDetector(
                             onTap: () {
-                              setState(() {
-                                if (--fontSizeValues < 14) fontSizeValues = 14;
-                              });
+                              context.read<PreferencesCubit>().decreaseFontSize();
                               globalLogger.d("Font Size: $fontSizeValues Screen W: ${MediaQuery.of(context).size.width.toInt()} H: ${MediaQuery.of(context).size.height.toInt()}");
                             },
                             child: Icon(Icons.remove_circle, color: Theme.of(context).dialogBackgroundColor),
                           ),
                           GestureDetector(
                             onTap: () {
-                              setState(() {
-                                if (++fontSizeValues > 50) fontSizeValues = 50;
-                              });
+                              context.read<PreferencesCubit>().increaseFontSize();
                               globalLogger.d("Font Size: $fontSizeValues Screen W: ${MediaQuery.of(context).size.width.toInt()} H: ${MediaQuery.of(context).size.height.toInt()}");
                             },
                             child: Icon(Icons.add_circle_outline, color: Theme.of(context).dialogBackgroundColor),
@@ -716,9 +657,7 @@ class RealTimeDataState extends State<RealTimeData> {
                       children: [
                         escTelemetry.fault_code == mc_fault_code.FAULT_CODE_NONE ? Text("Speed") : Text("${escTelemetry.fault_code.toString().split('.')[1].substring(11)}"),
                         GestureDetector(onLongPress: (){
-                          setState(() {
-                            allowFontResize = !allowFontResize;
-                          });
+                          context.read<PreferencesCubit>().toggleAllowFontResize();
                         }, child: FittedBox(
                             fit: BoxFit.fitWidth,
                             child: Text("${doublePrecision(speedNow, 1)}", style: TextStyle(fontSize: 100, fontWeight: FontWeight.bold), textAlign: TextAlign.center)
@@ -774,10 +713,7 @@ class RealTimeDataState extends State<RealTimeData> {
             children: [
               GestureDetector(
                 onTap: () {
-                  setState(() {
-                    hideMap = !hideMap;
-                  });
-                  saveSettings();
+                  context.read<PreferencesCubit>().toggleHideMap();
                 },
                 child: Container(
                   decoration: BoxDecoration(

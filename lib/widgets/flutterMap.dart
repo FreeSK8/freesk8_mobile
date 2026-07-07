@@ -6,14 +6,14 @@ import 'package:rxdart/rxdart.dart';
 
 class FlutterMapWidget extends StatefulWidget {
   FlutterMapWidget({this.routeTakenLocations});
-  final List<LatLng> routeTakenLocations;
-  FlutterMapWidgetState createState() => new FlutterMapWidgetState();
+  final List<LatLng>? routeTakenLocations;
+  FlutterMapWidgetState createState() => FlutterMapWidgetState();
 
   static const String routeName = "/fluttermap";
 }
 
 class FlutterMapWidgetState extends State<FlutterMapWidget> {
-  var eventObservable = new PublishSubject();
+  var eventObservable = PublishSubject();
 
   @override
   void dispose() {
@@ -25,7 +25,7 @@ class FlutterMapWidgetState extends State<FlutterMapWidget> {
   Widget build(BuildContext context) {
     print("Build: flutterMapWidget");
 
-    if (widget.routeTakenLocations.length == 0)
+    if (widget.routeTakenLocations!.length == 0)
     {
       return Column(
         children: <Widget>[
@@ -39,45 +39,44 @@ class FlutterMapWidgetState extends State<FlutterMapWidget> {
     }
     eventObservable.add(widget.routeTakenLocations);
 
-    //Create polyline
-    Polyline routePolyLine = new Polyline(
-        points: widget.routeTakenLocations,
-        strokeWidth: 3,
-        color: Colors.red,
-        isDotted: true,
-    );
-
-    Marker startPosition = Marker(
-      width: 160.0,
-      height: 160.0,
-      point: widget.routeTakenLocations.first,
-      builder: (ctx) =>
-      new Container(
-        margin: EdgeInsets.fromLTRB(0, 0, 0, 80),
-        child: new Image(image: AssetImage("assets/map_start.png")),
-      ),
-    );
-
     return FlutterMap(
-      options: new MapOptions(
-        center: widget.routeTakenLocations.last,
-        zoom: 13.0,
+      options: MapOptions(
+        initialCenter: widget.routeTakenLocations!.last,
+        initialZoom: 13.0,
       ),
-      layers: [
-        new TileLayerOptions(
-            urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-            subdomains: ['a', 'b', 'c']
+      children: [
+        TileLayer(
+          urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+          subdomains: const ['a', 'b', 'c'],
         ),
-        new MarkerLayerOptions(
+        PolylineLayer(
+          polylines: [
+            Polyline(
+              points: widget.routeTakenLocations!,
+              strokeWidth: 3,
+              color: Colors.red,
+              pattern: const StrokePattern.dotted(),
+            ),
+          ],
+        ),
+        MarkerLayer(
           markers: [
-            new Marker(
+            Marker(
+              width: 160.0,
+              height: 160.0,
+              point: widget.routeTakenLocations!.first,
+              child: Container(
+                margin: EdgeInsets.fromLTRB(0, 0, 0, 80),
+                child: Image(image: AssetImage("assets/map_start.png")),
+              ),
+            ),
+            Marker(
               width: 120.0,
               height: 120.0,
-              point: widget.routeTakenLocations.last,
-              builder: (ctx) =>
-              new Container(
+              point: widget.routeTakenLocations!.last,
+              child: Container(
                 margin: EdgeInsets.fromLTRB(0, 0, 0, 60),
-                child: new Image(image: AssetImage("assets/map_position.png")),
+                child: Image(image: AssetImage("assets/map_position.png")),
               ),
             ),
           ],

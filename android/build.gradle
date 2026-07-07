@@ -1,20 +1,36 @@
-buildscript {
-    ext.kotlin_version = '1.6.0'
-    repositories {
-        google()
-        jcenter()
-    }
-
-    dependencies {
-        classpath 'com.android.tools.build:gradle:4.0.1'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-    }
-}
-
 allprojects {
     repositories {
         google()
-        jcenter()
+        mavenCentral()
+    }
+}
+
+// Compatibility shims for unmaintained pub packages under AGP 8:
+// - namespace: AGP 8 requires one per module; derive it from the manifest's
+//   package attribute (the pre-AGP8 convention).
+// - JVM targets: old plugins mix Java 1.8 with whatever Kotlin defaults to
+//   (the host JDK), which Kotlin 2.x rejects; pin both to 11 everywhere.
+subprojects {
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            def android = project.android
+            if (android.hasProperty('namespace') && android.namespace == null) {
+                def manifest = project.file('src/main/AndroidManifest.xml')
+                if (manifest.exists()) {
+                    def packageName = new groovy.xml.XmlSlurper().parse(manifest).@package.text()
+                    if (packageName) {
+                        android.namespace = packageName
+                    }
+                }
+            }
+            android.compileOptions {
+                sourceCompatibility JavaVersion.VERSION_11
+                targetCompatibility JavaVersion.VERSION_11
+            }
+        }
+        project.tasks.matching { it.name.contains('Kotlin') && it.hasProperty('kotlinOptions') }.configureEach { task ->
+            task.kotlinOptions.jvmTarget = '11'
+        }
     }
 }
 
@@ -26,6 +42,6 @@ subprojects {
     project.evaluationDependsOn(':app')
 }
 
-task clean(type: Delete) {
+tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }

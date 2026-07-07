@@ -6,12 +6,12 @@ import 'package:flutter/material.dart';
 import '../hardwareSupport/escHelper/appConf.dart';
 
 class CurvePainter extends CustomPainter {
-  static int _paintWidth;
-  static double _exponent;
-  static double _exponentNegative;
-  static thr_exp_mode _exponentMode;
+  static int? _paintWidth;
+  static double? _exponent;
+  static double? _exponentNegative;
+  static thr_exp_mode? _exponentMode;
 
-  CurvePainter({int width, double exp, double expNegative, thr_exp_mode expMode}) {
+  CurvePainter({int? width, double? exp, double? expNegative, thr_exp_mode? expMode}) {
     _paintWidth = width;
     _exponent = exp;
     _exponentNegative = expNegative;
@@ -21,7 +21,7 @@ class CurvePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     var paint = Paint();
-    paint.color = Colors.green[800];
+    paint.color = Colors.green[800]!;
     paint.style = PaintingStyle.stroke;
     paint.strokeWidth = 4.0;
 
@@ -30,8 +30,8 @@ class CurvePainter extends CustomPainter {
     List<double> x = [];
     List<double> y = [];
     for (double i = -1.0;i < 1.0001;i += 0.002) {
-      x.add(i * _paintWidth);
-      double val = throttle_curve(i, _exponent, _exponentNegative, _exponentMode);
+      x.add(i * _paintWidth!);
+      double val = throttle_curve(i, _exponent!, _exponentNegative!, _exponentMode!);
       y.add(size.height - ((val + 1) * size.height/2));
     }
 
@@ -78,7 +78,7 @@ class CurvePainter extends CustomPainter {
       if (curve >= 0.0) {
         ret = 1.0 - pow(1.0 - val_a, 1.0 + curve);
       } else {
-        ret = pow(val_a, 1.0 - curve);
+        ret = pow(val_a, 1.0 - curve).toDouble();
       }
     } else if (mode == thr_exp_mode.THR_EXP_NATURAL) { // Exponential
       if (curve.abs() < 1e-10) {

@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_blue/flutter_blue.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 import 'package:logger/logger.dart';
 
@@ -15,9 +15,13 @@ import 'package:path/path.dart' as path;
 
 import 'package:latlong2/latlong.dart';
 
-void setLandscapeOrientation({bool enabled}) {
+import 'dart:collection';
+
+import 'package:table_calendar/table_calendar.dart';
+
+void setLandscapeOrientation({bool? enabled}) {
   SystemChrome.setPreferredOrientations(
-      enabled ? [
+      enabled! ? [
         DeviceOrientation.portraitUp,
         DeviceOrientation.portraitDown,
         DeviceOrientation.landscapeLeft,
@@ -69,13 +73,13 @@ Color multiColorLerp(Color colorA, Color colorB, Color colorC, double value) {
     result = HSVColor.lerp(
         HSVColor.fromColor(colorA),
         HSVColor.fromColor(colorB),
-        value * 2).toColor();
+        value * 2)!.toColor();
   }
   else {
     result = HSVColor.lerp(
         HSVColor.fromColor(colorB),
         HSVColor.fromColor(colorC),
-        value * 2 - 1).toColor();
+        value * 2 - 1)!.toColor();
   }
   return result;
 }
@@ -195,7 +199,7 @@ prettyPrintDuration(Duration d) => d.toString().split('.').first.padLeft(8, "0")
 // RegExp for FilteringTextInputFormatter that allows only positive decimal values
 final RegExp formatPositiveDouble = RegExp(r'^[+-]?([0-9]+([.,][0-9]*)?|[.,][0-9]+)$');
 
-Uint8List simpleVESCRequest(int messageIndex, {int optionalCANID}) {
+Uint8List simpleVESCRequest(int messageIndex, {int? optionalCANID}) {
   bool sendCAN = optionalCANID != null;
   var byteData = new ByteData(sendCAN ? 8:6); //<start><payloadLen><packetID><crc1><crc2><end>
   byteData.setUint8(0, 0x02);
@@ -374,14 +378,14 @@ Future<void> genericAlert(BuildContext context, String alertTitle, Widget alertB
 }
 
 double doublePrecision(double val, int places) {
-  double mod = pow(10.0, places);
+  double mod = pow(10.0, places).toDouble();
   return ((val * mod).round().toDouble() / mod);
 }
 
 class NumberTextInputFormatter extends TextInputFormatter {
   NumberTextInputFormatter({this.decimalRange}) : assert(decimalRange == null || decimalRange > 0);
 
-  final int decimalRange;
+  final int? decimalRange;
 
   @override
   TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
@@ -414,7 +418,7 @@ class NumberTextInputFormatter extends TextInputFormatter {
       return false;
     }
 
-    return text.substring(text.indexOf('.') + 1).length <= decimalRange;
+    return text.substring(text.indexOf('.') + 1).length <= decimalRange!;
   }
 
   TextEditingValue sanitize(TextEditingValue value) {
@@ -427,3 +431,50 @@ class NumberTextInputFormatter extends TextInputFormatter {
     return TextEditingValue(text: text, selection: value.selection, composing: TextRange.empty);
   }
 }
+
+/// Example event class.
+class Event {
+  final String title;
+
+  const Event(this.title);
+
+  @override
+  String toString() => title;
+}
+
+/// Calendar Utils
+/// Example events.
+///
+/// Using a [LinkedHashMap] is highly recommended if you decide to use a map.
+final kEvents = LinkedHashMap<DateTime, List<Event>>(
+  equals: isSameDay,
+  hashCode: getHashCode,
+)..addAll(_kEventSource);
+
+final _kEventSource = Map.fromIterable(List.generate(50, (index) => index),
+    key: (item) => DateTime.utc(kFirstDay.year, kFirstDay.month, item * 5),
+    value: (item) => List.generate(
+        item % 4 + 1, (index) => Event('Event $item | ${index + 1}')))
+  ..addAll({
+    kToday: [
+      Event('Today\'s Event 1'),
+      Event('Today\'s Event 2'),
+    ],
+  });
+
+int getHashCode(DateTime key) {
+  return key.day * 1000000 + key.month * 10000 + key.year;
+}
+
+/// Returns a list of [DateTime] objects from [first] to [last], inclusive.
+List<DateTime> daysInRange(DateTime first, DateTime last) {
+  final dayCount = last.difference(first).inDays + 1;
+  return List.generate(
+    dayCount,
+        (index) => DateTime.utc(first.year, first.month, first.day + index),
+  );
+}
+
+final kToday = DateTime.now();
+final kFirstDay = DateTime(kToday.year, kToday.month - 3, kToday.day);
+final kLastDay = DateTime(kToday.year, kToday.month + 3, kToday.day);

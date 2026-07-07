@@ -4,7 +4,7 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_blue/flutter_blue.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:freesk8_mobile/components/userSettings.dart';
 
 import 'package:freesk8_mobile/globalUtilities.dart';
@@ -44,10 +44,10 @@ class SmartBMSArguments {
 
 
   SmartBMSArguments({
-    @required this.dataStream,
-    @required this.theTXCharacteristic,
-    @required this.myUserSettings,
-    @required this.changeSmartBMSID,
+    required this.dataStream,
+    required this.theTXCharacteristic,
+    required this.myUserSettings,
+    required this.changeSmartBMSID,
 
 
   });
@@ -63,15 +63,15 @@ class SmartBMSViewer extends StatefulWidget {
 class SmartBMSViewerState extends State<SmartBMSViewer> {
   bool changesMade = false; //TODO: remove if unused
 
-  static SmartBMSArguments myArguments;
+  static SmartBMSArguments? myArguments;
 
-  static StreamSubscription<DieBieMSTelemetry> bmsTelemetrySubscription;
+  static StreamSubscription? bmsTelemetrySubscription;
 
   DieBieMSTelemetry bmsTelemetry = new DieBieMSTelemetry();
 
   static int _smartBMSID = 10;
 
-  static Timer telemetryTimer;
+  static Timer? telemetryTimer;
 
   @override
   void initState() {
@@ -97,7 +97,7 @@ class SmartBMSViewerState extends State<SmartBMSViewer> {
     /// Request BMS Telemetry
     Uint8List packet = simpleVESCRequest(COMM_PACKET_ID.COMM_GET_VALUES.index, optionalCANID: _smartBMSID);
 
-    if (!await sendBLEData(myArguments.theTXCharacteristic, packet, true)) {
+    if (!await sendBLEData(myArguments!.theTXCharacteristic, packet, true)) {
       globalLogger.e("_requestTelemetry() failed");
     }
   }
@@ -236,8 +236,8 @@ class SmartBMSViewerState extends State<SmartBMSViewer> {
                                   new AlwaysStoppedAnimation<Color>(Colors.lightGreen),
                                   value: sigmoidal(
                                       bmsTelemetry.cellVoltage[index].abs(),
-                                      myArguments.myUserSettings.settings.batteryCellMinVoltage,
-                                      myArguments.myUserSettings.settings.batteryCellMaxVoltage)
+                                      myArguments!.myUserSettings.settings.batteryCellMinVoltage,
+                                      myArguments!.myUserSettings.settings.batteryCellMaxVoltage)
                               ),
                             )
                         ),
@@ -252,7 +252,7 @@ class SmartBMSViewerState extends State<SmartBMSViewer> {
                             child: new Container(
                               decoration: new BoxDecoration(
                                 color: Colors.transparent,
-                                border: new Border.all(color: Theme.of(context).accentColor, width: 3.0),
+                                border: new Border.all(color: Theme.of(context).colorScheme.secondary, width: 3.0),
                                 borderRadius: new BorderRadius.circular(10.0),
                               ),
                             )
@@ -302,7 +302,7 @@ class SmartBMSViewerState extends State<SmartBMSViewer> {
                         ]
                     ),
                     onTap: (){
-                      myArguments.changeSmartBMSID(_smartBMSID == 10 ? 11 : 10);
+                      myArguments!.changeSmartBMSID(_smartBMSID == 10 ? 11 : 10);
                     },
                   )
               )
@@ -317,13 +317,13 @@ class SmartBMSViewerState extends State<SmartBMSViewer> {
     print("Building Template");
 
     //Receive arguments building this widget
-    myArguments = ModalRoute.of(context).settings.arguments;
+    myArguments = ModalRoute.of(context)!.settings.arguments as SmartBMSArguments?;
     if(myArguments == null){
       return Container(child:Text("No Arguments"));
     }
 
     if(bmsTelemetrySubscription == null) {
-      bmsTelemetrySubscription = myArguments.dataStream.listen((value) {
+      bmsTelemetrySubscription = myArguments!.dataStream.listen((value) {
         globalLogger.i("Stream Data Received");
         setState(() {
           // Update widget value
@@ -355,7 +355,7 @@ class SmartBMSViewerState extends State<SmartBMSViewer> {
             future: _buildBody(context),
             builder: (context, AsyncSnapshot<Widget> snapshot) {
               if (snapshot.hasData) {
-                return snapshot.data;
+                return snapshot.data!;
               } else {
                 return Column(
                   mainAxisAlignment: MainAxisAlignment.center,
