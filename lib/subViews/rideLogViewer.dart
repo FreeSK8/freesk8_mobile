@@ -952,7 +952,7 @@ class RideLogViewerState extends State<RideLogViewer> {
     }
 
     // Create fault range annotations for chart
-    DateTime faultStart;
+    DateTime? faultStart;
     //int faultCode;
     escTimeSeriesList.forEach((element) {
       if (element.faultCode != null && faultStart == null){
@@ -1127,7 +1127,7 @@ class RideLogViewerState extends State<RideLogViewer> {
       if (_useGPSData) {
         consumptionDistance = myArguments.userSettings!.settings.useImperial ? kmToMile(gpsDistance) : gpsDistance;
       } else {
-        consumptionDistance = myArguments.userSettings!.settings.useImperial ? kmToMile(myArguments.logFileInfo!.distance) : myArguments.logFileInfo!.distance;
+        consumptionDistance = myArguments.userSettings!.settings.useImperial ? kmToMile(myArguments.logFileInfo!.distance!) : myArguments.logFileInfo!.distance!;
       }
       consumption = (myArguments.logFileInfo!.wattHoursTotal! - myArguments.logFileInfo!.wattHoursRegenTotal!) / consumptionDistance;
     }
