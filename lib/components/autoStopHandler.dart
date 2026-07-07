@@ -20,6 +20,9 @@ class AutoStopHandler extends WidgetsBindingObserver {
       case AppLifecycleState.resumed:
         globalLogger.d("AppLifecycleState: Resumed");
         break;
+      case AppLifecycleState.hidden:
+        globalLogger.d("AppLifecycleState: Hidden");
+        break;
     }
   }
 }

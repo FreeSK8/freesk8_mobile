@@ -1,0 +1,8 @@
+# Overrides the pre-null-safety logger_flutter git dependency with a local
+# null-safe stub so `flutter pub get` / `flutter analyze` / builds can run
+# under Dart 3. The stub renders the child passthrough only — the shake-to-show
+# debug log console is NON-FUNCTIONAL until logger_flutter is properly replaced.
+# See context.md > "Known blockers" for the replacement plan.
+dependency_overrides:
+  logger_flutter:
+    path: third_party/logger_flutter_stub

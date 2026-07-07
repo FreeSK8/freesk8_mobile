@@ -5,7 +5,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:flutter_blue/flutter_blue.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:freesk8_mobile/components/crc16.dart';
 
 import 'package:freesk8_mobile/globalUtilities.dart';
@@ -27,11 +27,11 @@ class MotorConfigurationArguments {
   final ESC_FIRMWARE escFirmwareVersion;
 
   MotorConfigurationArguments({
-    @required this.dataStream,
-    @required this.theTXCharacteristic,
-    @required this.motorConfiguration,
-    @required this.discoveredCANDevices,
-    @required this.escFirmwareVersion
+    required this.dataStream,
+    required this.theTXCharacteristic,
+    required this.motorConfiguration,
+    required this.discoveredCANDevices,
+    required this.escFirmwareVersion
   });
 }
 
@@ -45,21 +45,21 @@ class MotorConfigurationEditor extends StatefulWidget {
 class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
   bool changesMade = false; //TODO: remove if unused
 
-  static MotorConfigurationArguments myArguments;
+  static MotorConfigurationArguments? myArguments;
 
-  static StreamSubscription<MCCONF> streamSubscription;
-  static BluetoothCharacteristic theTXCharacteristic;
-  static List<int> discoveredCANDevices;
+  static StreamSubscription? streamSubscription;
+  static BluetoothCharacteristic? theTXCharacteristic;
+  static List<int>? discoveredCANDevices;
 
 
-  int _selectedCANFwdID;
-  int _invalidCANID;
+  int? _selectedCANFwdID;
+  int? _invalidCANID;
 
   bool _writeESCInProgress = false;
 
-  static ESC_FIRMWARE escFirmwareVersion;
-  static MCCONF escMotorConfiguration;
-  MCCONF _mcconfClipboard;
+  static ESC_FIRMWARE? escFirmwareVersion;
+  static MCCONF? escMotorConfiguration;
+  MCCONF? _mcconfClipboard;
   
   final tecBatterySeriesCount = TextEditingController();
   final tecBatteryCapacityAh = TextEditingController();
@@ -96,72 +96,72 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
   @override
   void initState() {
     // TextEditingController Listeners for Motor Configuration
-    tecBatterySeriesCount.addListener(() {escMotorConfiguration.si_battery_cells = int.tryParse(tecBatterySeriesCount.text); });
-    tecBatteryCapacityAh.addListener(() {escMotorConfiguration.si_battery_ah = doublePrecision(double.tryParse(tecBatteryCapacityAh.text.replaceFirst(',', '.')), 2); });
+    tecBatterySeriesCount.addListener(() {escMotorConfiguration!.si_battery_cells = int.tryParse(tecBatterySeriesCount.text)!; });
+    tecBatteryCapacityAh.addListener(() {escMotorConfiguration!.si_battery_ah = doublePrecision(double.tryParse(tecBatteryCapacityAh.text.replaceFirst(',', '.'))!, 2); });
     tecWheelDiameterMillimeters.addListener(() {
       try {
-       escMotorConfiguration.si_wheel_diameter = doublePrecision(double.tryParse(tecWheelDiameterMillimeters.text.replaceFirst(',', '.')) / 1000.0, 3);
+       escMotorConfiguration!.si_wheel_diameter = doublePrecision(double.tryParse(tecWheelDiameterMillimeters.text.replaceFirst(',', '.'))! / 1000.0, 3);
       } catch (e) {}
     });
-    tecMotorPoles.addListener(() {escMotorConfiguration.si_motor_poles = int.tryParse(tecMotorPoles.text); });
-    tecGearRatio.addListener(() {escMotorConfiguration.si_gear_ratio = doublePrecision(double.tryParse(tecGearRatio.text.replaceFirst(',', '.')), 3); });
-    tecCurrentMax.addListener(() {escMotorConfiguration.l_current_max = doublePrecision(double.tryParse(tecCurrentMax.text.replaceFirst(',', '.')), 1); });
+    tecMotorPoles.addListener(() {escMotorConfiguration!.si_motor_poles = int.tryParse(tecMotorPoles.text)!; });
+    tecGearRatio.addListener(() {escMotorConfiguration!.si_gear_ratio = doublePrecision(double.tryParse(tecGearRatio.text.replaceFirst(',', '.'))!, 3); });
+    tecCurrentMax.addListener(() {escMotorConfiguration!.l_current_max = doublePrecision(double.tryParse(tecCurrentMax.text.replaceFirst(',', '.'))!, 1); });
     tecCurrentMin.addListener(() {
-      double newValue = double.tryParse(tecCurrentMin.text.replaceFirst(',', '.'));
+      double? newValue = double.tryParse(tecCurrentMin.text.replaceFirst(',', '.'));
       if(newValue==null) newValue = 0.0; //Ensure not null
       if(newValue>0.0) newValue *= -1; //Ensure negative
-     escMotorConfiguration.l_current_min = doublePrecision(newValue, 1);
+     escMotorConfiguration!.l_current_min = doublePrecision(newValue, 1);
     });
-    tecInCurrentMax.addListener(() {escMotorConfiguration.l_in_current_max = doublePrecision(double.tryParse(tecInCurrentMax.text.replaceFirst(',', '.')), 1); });
+    tecInCurrentMax.addListener(() {escMotorConfiguration!.l_in_current_max = doublePrecision(double.tryParse(tecInCurrentMax.text.replaceFirst(',', '.'))!, 1); });
     tecInCurrentMin.addListener(() {
-      double newValue = double.tryParse(tecInCurrentMin.text.replaceFirst(',', '.'));
+      double? newValue = double.tryParse(tecInCurrentMin.text.replaceFirst(',', '.'));
       if(newValue==null) newValue = 0.0; //Ensure not null
       if(newValue>0.0) newValue *= -1; //Ensure negative
-     escMotorConfiguration.l_in_current_min = doublePrecision(newValue, 1);
+     escMotorConfiguration!.l_in_current_min = doublePrecision(newValue, 1);
     });
-    tecABSCurrentMax.addListener(() {escMotorConfiguration.l_abs_current_max = doublePrecision(double.tryParse(tecABSCurrentMax.text.replaceFirst(',', '.')), 1); });
-    tecMaxERPM.addListener(() {escMotorConfiguration.l_max_erpm = int.tryParse(tecMaxERPM.text.replaceFirst(',', '.')).toDouble(); });
+    tecABSCurrentMax.addListener(() {escMotorConfiguration!.l_abs_current_max = doublePrecision(double.tryParse(tecABSCurrentMax.text.replaceFirst(',', '.'))!, 1); });
+    tecMaxERPM.addListener(() {escMotorConfiguration!.l_max_erpm = int.tryParse(tecMaxERPM.text.replaceFirst(',', '.'))!.toDouble(); });
     tecMinERPM.addListener(() {
-      double newValue = double.tryParse(tecMinERPM.text.replaceFirst(',', '.'));
+      double? newValue = double.tryParse(tecMinERPM.text.replaceFirst(',', '.'));
       if(newValue==null) newValue = 0.0; //Ensure not null
       if(newValue>0.0) newValue *= -1; //Ensure negative
-     escMotorConfiguration.l_min_erpm = newValue;
+     escMotorConfiguration!.l_min_erpm = newValue;
     });
-    tecMinVIN.addListener(() {escMotorConfiguration.l_min_vin = doublePrecision(double.tryParse(tecMinVIN.text.replaceFirst(',', '.')), 1); });
-    tecMaxVIN.addListener(() {escMotorConfiguration.l_max_vin = doublePrecision(double.tryParse(tecMaxVIN.text.replaceFirst(',', '.')), 1); });
-    tecBatteryCutStart.addListener(() {escMotorConfiguration.l_battery_cut_start = doublePrecision(double.tryParse(tecBatteryCutStart.text.replaceFirst(',', '.')), 1); });
-    tecBatteryCutEnd.addListener(() {escMotorConfiguration.l_battery_cut_end = doublePrecision(double.tryParse(tecBatteryCutEnd.text.replaceFirst(',', '.')), 1); });
-    tecTempFETStart.addListener(() {escMotorConfiguration.l_temp_fet_start = doublePrecision(double.tryParse(tecTempFETStart.text.replaceFirst(',', '.')), 1); });
-    tecTempFETEnd.addListener(() {escMotorConfiguration.l_temp_fet_end = doublePrecision(double.tryParse(tecTempFETEnd.text.replaceFirst(',', '.')), 1); });
-    tecTempMotorStart.addListener(() {escMotorConfiguration.l_temp_motor_start = doublePrecision(double.tryParse(tecTempMotorStart.text.replaceFirst(',', '.')), 1); });
-    tecTempMotorEnd.addListener(() {escMotorConfiguration.l_temp_motor_end = doublePrecision(double.tryParse(tecTempMotorEnd.text.replaceFirst(',', '.')), 1); });
+    tecMinVIN.addListener(() {escMotorConfiguration!.l_min_vin = doublePrecision(double.tryParse(tecMinVIN.text.replaceFirst(',', '.'))!, 1); });
+    tecMaxVIN.addListener(() {escMotorConfiguration!.l_max_vin = doublePrecision(double.tryParse(tecMaxVIN.text.replaceFirst(',', '.'))!, 1); });
+    tecBatteryCutStart.addListener(() {escMotorConfiguration!.l_battery_cut_start = doublePrecision(double.tryParse(tecBatteryCutStart.text.replaceFirst(',', '.'))!, 1); });
+    tecBatteryCutEnd.addListener(() {escMotorConfiguration!.l_battery_cut_end = doublePrecision(double.tryParse(tecBatteryCutEnd.text.replaceFirst(',', '.'))!, 1); });
+    tecTempFETStart.addListener(() {escMotorConfiguration!.l_temp_fet_start = doublePrecision(double.tryParse(tecTempFETStart.text.replaceFirst(',', '.'))!, 1); });
+    tecTempFETEnd.addListener(() {escMotorConfiguration!.l_temp_fet_end = doublePrecision(double.tryParse(tecTempFETEnd.text.replaceFirst(',', '.'))!, 1); });
+    tecTempMotorStart.addListener(() {escMotorConfiguration!.l_temp_motor_start = doublePrecision(double.tryParse(tecTempMotorStart.text.replaceFirst(',', '.'))!, 1); });
+    tecTempMotorEnd.addListener(() {escMotorConfiguration!.l_temp_motor_end = doublePrecision(double.tryParse(tecTempMotorEnd.text.replaceFirst(',', '.'))!, 1); });
     tecWattMin.addListener(() {
-      double newValue = double.tryParse(tecWattMin.text.replaceFirst(',', '.'));
+      double? newValue = double.tryParse(tecWattMin.text.replaceFirst(',', '.'));
       if(newValue==null) newValue = 0.0; //Ensure not null
       if(newValue>0.0) newValue *= -1; //Ensure negative
-     escMotorConfiguration.l_watt_min = doublePrecision(newValue, 1);
+     escMotorConfiguration!.l_watt_min = doublePrecision(newValue, 1);
     });
-    tecWattMax.addListener(() {escMotorConfiguration.l_watt_max = doublePrecision(double.tryParse(tecWattMax.text.replaceFirst(',', '.')), 1); });
+    tecWattMax.addListener(() {escMotorConfiguration!.l_watt_max = doublePrecision(double.tryParse(tecWattMax.text.replaceFirst(',', '.'))!, 1); });
     tecCurrentMinScale.addListener(() {
-      double newValue = double.tryParse(tecCurrentMinScale.text.replaceFirst(',', '.'));
+      double? newValue = double.tryParse(tecCurrentMinScale.text.replaceFirst(',', '.'));
       if(newValue==null) newValue = 0.0; //Ensure not null
       if(newValue>1.0) newValue = 1.0; //Ensure under 1.0
       if(newValue<0.0) newValue = 0.0; //Ensure greater than 0.0
-     escMotorConfiguration.l_current_min_scale = doublePrecision(newValue, 2);
+     escMotorConfiguration!.l_current_min_scale = doublePrecision(newValue, 2);
     });
     tecCurrentMaxScale.addListener(() {
-      double newValue = double.tryParse(tecCurrentMaxScale.text.replaceFirst(',', '.'));
+      double? newValue = double.tryParse(tecCurrentMaxScale.text.replaceFirst(',', '.'));
       if(newValue==null) newValue = 0.0; //Ensure not null
       if(newValue>1.0) newValue = 1.0; //Ensure under 1.0
       if(newValue<0.0) newValue = 0.0; //Ensure greater than 0.0
-     escMotorConfiguration.l_current_max_scale = doublePrecision(newValue, 2);
+     escMotorConfiguration!.l_current_max_scale = doublePrecision(newValue, 2);
     });
     tecDutyStart.addListener(() {
-      double newValue = double.tryParse(tecDutyStart.text.replaceFirst(',', '.'));
+      double? newValue = double.tryParse(tecDutyStart.text.replaceFirst(',', '.'));
       if(newValue==null) newValue = 0.0; //Ensure not null
       if(newValue>1.0) newValue = 1.0; //Ensure under 1.0
       if(newValue<0.0) newValue = 0.0; //Ensure greater than 0.0
-     escMotorConfiguration.l_duty_start = doublePrecision(newValue, 2);
+     escMotorConfiguration!.l_duty_start = doublePrecision(newValue, 2);
     });
     super.initState();
   }
@@ -202,17 +202,17 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
     super.dispose();
   }
 
-  void requestMCCONF({int optionalCANID}) async {
+  void requestMCCONF({int? optionalCANID}) async {
     Uint8List packet = simpleVESCRequest(COMM_PACKET_ID.COMM_GET_MCCONF.index, optionalCANID: optionalCANID);
 
     // Request MCCONF from the ESC
     globalLogger.i("requestMCCONF: requesting motor configuration");
-    if (!await sendBLEData(theTXCharacteristic, packet, false)) {
+    if (!await sendBLEData(theTXCharacteristic!, packet, false)) {
       globalLogger.e("requestMCCONF: failed to request motor configuration");
     }
   }
 
-  void saveMCCONF(int optionalCANID) async {
+  void saveMCCONF(int? optionalCANID) async {
     if (_writeESCInProgress) {
       globalLogger.w("WARNING: esk8Configuration: saveMCCONF: _writeESCInProgress is true. Save aborted.");
       return;
@@ -221,7 +221,7 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
     // Protect from interrupting a previous write attempt
     _writeESCInProgress = true;
     ESCHelper escHelper = new ESCHelper();
-    ByteData serializedMcconf = escHelper.serializeMCCONF(escMotorConfiguration, escFirmwareVersion);
+    ByteData serializedMcconf = escHelper.serializeMCCONF(escMotorConfiguration!, escFirmwareVersion!);
 
     // Compute sizes and track buffer position
     int packetIndex = 0;
@@ -250,7 +250,7 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
     blePacket.setUint16(packetIndex, checksum); packetIndex += 2;
     blePacket.setUint8(packetIndex, 0x03); //End of packet
 
-    if (!await sendBLEData(theTXCharacteristic, blePacket.buffer.asUint8List(), true) ) {
+    if (!await sendBLEData(theTXCharacteristic!, blePacket.buffer.asUint8List(), true) ) {
       genericAlert(context, "Save exception", Text("Uh oh. Something went wrong. Please share the debug log with the developers"), "Shake 3 times");
     }
 
@@ -260,7 +260,7 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
 
   Future<Widget> _buildBody(BuildContext context) async {
     // Check if we are building with an invalid motor configuration (signature mismatch)
-    if (escMotorConfiguration == null || escMotorConfiguration.si_battery_ah == null) {
+    if (escMotorConfiguration == null || escMotorConfiguration!.si_battery_ah == null) {
       // Invalid MCCONF received
       _invalidCANID = _selectedCANFwdID; // Store invalid ID
       _selectedCANFwdID = null; // Clear selected CAN device
@@ -285,38 +285,38 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
     }
 
     // Prepare text editing controllers
-    tecBatterySeriesCount.text =escMotorConfiguration.si_battery_cells.toString();
+    tecBatterySeriesCount.text =escMotorConfiguration!.si_battery_cells.toString();
     tecBatterySeriesCount.selection = TextSelection.fromPosition(TextPosition(offset: tecBatterySeriesCount.text.length));
-    tecBatteryCapacityAh.text = doublePrecision(escMotorConfiguration.si_battery_ah,2).toString();
+    tecBatteryCapacityAh.text = doublePrecision(escMotorConfiguration!.si_battery_ah,2).toString();
     tecBatteryCapacityAh.selection = TextSelection.fromPosition(TextPosition(offset: tecBatteryCapacityAh.text.length));
-    tecWheelDiameterMillimeters.text = doublePrecision(escMotorConfiguration.si_wheel_diameter * 1000.0, 3).toInt().toString();
+    tecWheelDiameterMillimeters.text = doublePrecision(escMotorConfiguration!.si_wheel_diameter * 1000.0, 3).toInt().toString();
     tecWheelDiameterMillimeters.selection = TextSelection.fromPosition(TextPosition(offset: tecWheelDiameterMillimeters.text.length));
-    tecMotorPoles.text =escMotorConfiguration.si_motor_poles.toString();
+    tecMotorPoles.text =escMotorConfiguration!.si_motor_poles.toString();
     tecMotorPoles.selection = TextSelection.fromPosition(TextPosition(offset: tecMotorPoles.text.length));
-    tecGearRatio.text = doublePrecision(escMotorConfiguration.si_gear_ratio, 3).toString();
+    tecGearRatio.text = doublePrecision(escMotorConfiguration!.si_gear_ratio, 3).toString();
     tecGearRatio.selection = TextSelection.fromPosition(TextPosition(offset: tecGearRatio.text.length));
 
     // Populate text editing controllers
-    tecCurrentMax.text = doublePrecision(escMotorConfiguration.l_current_max, 1).toString();
-    tecCurrentMin.text = doublePrecision(escMotorConfiguration.l_current_min, 1).toString();
-    tecInCurrentMax.text = doublePrecision(escMotorConfiguration.l_in_current_max, 1).toString();
-    tecInCurrentMin.text = doublePrecision(escMotorConfiguration.l_in_current_min, 1).toString();
-    tecABSCurrentMax.text = doublePrecision(escMotorConfiguration.l_abs_current_max, 1).toString();
-    tecMaxERPM.text =escMotorConfiguration.l_max_erpm.toInt().toString();
-    tecMinERPM.text =escMotorConfiguration.l_min_erpm.toInt().toString();
-    tecMinVIN.text = doublePrecision(escMotorConfiguration.l_min_vin, 1).toString();
-    tecMaxVIN.text = doublePrecision(escMotorConfiguration.l_max_vin, 1).toString();
-    tecBatteryCutStart.text = doublePrecision(escMotorConfiguration.l_battery_cut_start, 1).toString();
-    tecBatteryCutEnd.text = doublePrecision(escMotorConfiguration.l_battery_cut_end, 1).toString();
-    tecTempFETStart.text = doublePrecision(escMotorConfiguration.l_temp_fet_start, 1).toString();
-    tecTempFETEnd.text = doublePrecision(escMotorConfiguration.l_temp_fet_end, 1).toString();
-    tecTempMotorStart.text = doublePrecision(escMotorConfiguration.l_temp_motor_start, 1).toString();
-    tecTempMotorEnd.text = doublePrecision(escMotorConfiguration.l_temp_motor_end, 1).toString();
-    tecWattMin.text = doublePrecision(escMotorConfiguration.l_watt_min, 1).toString();
-    tecWattMax.text = doublePrecision(escMotorConfiguration.l_watt_max, 1).toString();
-    tecCurrentMinScale.text = doublePrecision(escMotorConfiguration.l_current_min_scale, 2).toString();
-    tecCurrentMaxScale.text = doublePrecision(escMotorConfiguration.l_current_max_scale, 2).toString();
-    tecDutyStart.text = doublePrecision(escMotorConfiguration.l_duty_start, 2).toString();
+    tecCurrentMax.text = doublePrecision(escMotorConfiguration!.l_current_max, 1).toString();
+    tecCurrentMin.text = doublePrecision(escMotorConfiguration!.l_current_min, 1).toString();
+    tecInCurrentMax.text = doublePrecision(escMotorConfiguration!.l_in_current_max, 1).toString();
+    tecInCurrentMin.text = doublePrecision(escMotorConfiguration!.l_in_current_min, 1).toString();
+    tecABSCurrentMax.text = doublePrecision(escMotorConfiguration!.l_abs_current_max, 1).toString();
+    tecMaxERPM.text =escMotorConfiguration!.l_max_erpm.toInt().toString();
+    tecMinERPM.text =escMotorConfiguration!.l_min_erpm.toInt().toString();
+    tecMinVIN.text = doublePrecision(escMotorConfiguration!.l_min_vin, 1).toString();
+    tecMaxVIN.text = doublePrecision(escMotorConfiguration!.l_max_vin, 1).toString();
+    tecBatteryCutStart.text = doublePrecision(escMotorConfiguration!.l_battery_cut_start, 1).toString();
+    tecBatteryCutEnd.text = doublePrecision(escMotorConfiguration!.l_battery_cut_end, 1).toString();
+    tecTempFETStart.text = doublePrecision(escMotorConfiguration!.l_temp_fet_start, 1).toString();
+    tecTempFETEnd.text = doublePrecision(escMotorConfiguration!.l_temp_fet_end, 1).toString();
+    tecTempMotorStart.text = doublePrecision(escMotorConfiguration!.l_temp_motor_start, 1).toString();
+    tecTempMotorEnd.text = doublePrecision(escMotorConfiguration!.l_temp_motor_end, 1).toString();
+    tecWattMin.text = doublePrecision(escMotorConfiguration!.l_watt_min, 1).toString();
+    tecWattMax.text = doublePrecision(escMotorConfiguration!.l_watt_max, 1).toString();
+    tecCurrentMinScale.text = doublePrecision(escMotorConfiguration!.l_current_min_scale, 2).toString();
+    tecCurrentMaxScale.text = doublePrecision(escMotorConfiguration!.l_current_max_scale, 2).toString();
+    tecDutyStart.text = doublePrecision(escMotorConfiguration!.l_duty_start, 2).toString();
 
     // Set cursor position to end of text editing controllers
     tecCurrentMax.selection = TextSelection.fromPosition(TextPosition(offset: tecCurrentMax.text.length));
@@ -370,7 +370,7 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
                     height: 50,
                     child: GridView.builder(
                       primary: false,
-                      itemCount: discoveredCANDevices.length + 1, //NOTE: +1 to add the Direct ESC
+                      itemCount: discoveredCANDevices!.length + 1, //NOTE: +1 to add the Direct ESC
                       gridDelegate: new SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, childAspectRatio: 2, crossAxisSpacing: 1, mainAxisSpacing: 1),
                       itemBuilder: (BuildContext context, int index) {
                         if (index == 0) {
@@ -417,11 +417,11 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
                           );
                         }
                         bool isCANIDSelected = false;
-                        if (_selectedCANFwdID == discoveredCANDevices[index-1]) {
+                        if (_selectedCANFwdID == discoveredCANDevices![index-1]) {
                           isCANIDSelected = true;
                         }
                         String invalidDevice = "";
-                        if (_invalidCANID == discoveredCANDevices[index-1]) {
+                        if (_invalidCANID == discoveredCANDevices![index-1]) {
                           invalidDevice = " (Invalid)";
                         }
                         return new Card(
@@ -445,9 +445,9 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
                                           ));
                                     });
                                   } else {
-                                    if (_invalidCANID != discoveredCANDevices[index-1]) {
+                                    if (_invalidCANID != discoveredCANDevices![index-1]) {
                                       setState(() {
-                                        _selectedCANFwdID = discoveredCANDevices[index-1];
+                                        _selectedCANFwdID = discoveredCANDevices![index-1];
                                         // Request MCCONF from CAN device
                                         requestMCCONF(optionalCANID: _selectedCANFwdID);
                                         ScaffoldMessenger
@@ -466,7 +466,7 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
 
 
 
-                                    new Center(child: Text("${discoveredCANDevices[index-1]}${isCANIDSelected?" (Active)":""}$invalidDevice", style: TextStyle(fontSize: 12)),),
+                                    new Center(child: Text("${discoveredCANDevices![index-1]}${isCANIDSelected?" (Active)":""}$invalidDevice", style: TextStyle(fontSize: 12)),),
                                     new ClipRRect(
                                         borderRadius: new BorderRadius.circular(10),
                                         child: new Container(
@@ -504,14 +504,14 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
                   //Text("${escMotorConfiguration.sensor_mode}"),
 
                   SwitchListTile(
-                    title: Text("Reverse Motor (${escMotorConfiguration.m_invert_direction})"),
-                    value:escMotorConfiguration.m_invert_direction,
-                    onChanged: (bool newValue) { setState((){escMotorConfiguration.m_invert_direction = newValue;}); },
+                    title: Text("Reverse Motor (${escMotorConfiguration!.m_invert_direction})"),
+                    value:escMotorConfiguration!.m_invert_direction,
+                    onChanged: (bool newValue) { setState((){escMotorConfiguration!.m_invert_direction = newValue;}); },
                     secondary: const Icon(Icons.sync),
                   ),
 
                   DropdownButton(
-                      value:escMotorConfiguration.si_battery_type.index,
+                      value:escMotorConfiguration!.si_battery_type.index,
                       items: [
                         DropdownMenuItem(
                           child: Text("Battery Type: Li-ion 3.0/4.2V"),
@@ -528,12 +528,12 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
                       ],
                       onChanged: (value) {
                         setState(() {
-                          escMotorConfiguration.si_battery_type = BATTERY_TYPE.values[value];
+                          escMotorConfiguration!.si_battery_type = BATTERY_TYPE.values[value!];
                         });
                       }),
 
                   DropdownButton(
-                      value:escMotorConfiguration.foc_sensor_mode.index,
+                      value:escMotorConfiguration!.foc_sensor_mode.index,
                       items: [
                         DropdownMenuItem(
                           child: Text("FOC_SENSOR_MODE_SENSORLESS"),
@@ -554,7 +554,7 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
                       ],
                       onChanged: (value) {
                         setState(() {
-                          escMotorConfiguration.foc_sensor_mode = mc_foc_sensor_mode.values[value];
+                          escMotorConfiguration!.foc_sensor_mode = mc_foc_sensor_mode.values[value!];
                         });
                       }),
 
@@ -836,32 +836,32 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
                           onPressed: () {
                             if (_mcconfClipboard != null) {
                               // Paste editor values to current motor configuration
-                              escMotorConfiguration.si_battery_type = _mcconfClipboard.si_battery_type;
-                              escMotorConfiguration.si_battery_cells = _mcconfClipboard.si_battery_cells;
-                              escMotorConfiguration.si_battery_ah = _mcconfClipboard.si_battery_ah;
-                              escMotorConfiguration.si_wheel_diameter = _mcconfClipboard.si_wheel_diameter;
-                              escMotorConfiguration.si_motor_poles = _mcconfClipboard.si_motor_poles;
-                              escMotorConfiguration.si_gear_ratio = _mcconfClipboard.si_gear_ratio;
-                              escMotorConfiguration.l_current_max = _mcconfClipboard.l_current_max;
-                              escMotorConfiguration.l_current_min = _mcconfClipboard.l_current_min;
-                              escMotorConfiguration.l_in_current_max = _mcconfClipboard.l_in_current_max;
-                              escMotorConfiguration.l_in_current_min = _mcconfClipboard.l_in_current_min;
-                              escMotorConfiguration.l_abs_current_max = _mcconfClipboard.l_abs_current_max;
-                              escMotorConfiguration.l_max_erpm = _mcconfClipboard.l_max_erpm;
-                              escMotorConfiguration.l_min_erpm = _mcconfClipboard.l_min_erpm;
-                              escMotorConfiguration.l_min_vin = _mcconfClipboard.l_min_vin;
-                              escMotorConfiguration.l_max_vin = _mcconfClipboard.l_max_vin;
-                              escMotorConfiguration.l_battery_cut_start = _mcconfClipboard.l_battery_cut_start;
-                              escMotorConfiguration.l_battery_cut_end = _mcconfClipboard.l_battery_cut_end;
-                              escMotorConfiguration.l_temp_fet_start = _mcconfClipboard.l_temp_fet_start;
-                              escMotorConfiguration.l_temp_fet_end = _mcconfClipboard.l_temp_fet_end;
-                              escMotorConfiguration.l_temp_motor_start = _mcconfClipboard.l_temp_motor_start;
-                              escMotorConfiguration.l_temp_motor_end = _mcconfClipboard.l_temp_motor_end;
-                              escMotorConfiguration.l_watt_min = _mcconfClipboard.l_watt_min;
-                              escMotorConfiguration.l_watt_max = _mcconfClipboard.l_watt_max;
-                              escMotorConfiguration.l_current_min_scale = _mcconfClipboard.l_current_min_scale;
-                              escMotorConfiguration.l_current_max_scale = _mcconfClipboard.l_current_max_scale;
-                              escMotorConfiguration.l_duty_start = _mcconfClipboard.l_duty_start;
+                              escMotorConfiguration!.si_battery_type = _mcconfClipboard!.si_battery_type;
+                              escMotorConfiguration!.si_battery_cells = _mcconfClipboard!.si_battery_cells;
+                              escMotorConfiguration!.si_battery_ah = _mcconfClipboard!.si_battery_ah;
+                              escMotorConfiguration!.si_wheel_diameter = _mcconfClipboard!.si_wheel_diameter;
+                              escMotorConfiguration!.si_motor_poles = _mcconfClipboard!.si_motor_poles;
+                              escMotorConfiguration!.si_gear_ratio = _mcconfClipboard!.si_gear_ratio;
+                              escMotorConfiguration!.l_current_max = _mcconfClipboard!.l_current_max;
+                              escMotorConfiguration!.l_current_min = _mcconfClipboard!.l_current_min;
+                              escMotorConfiguration!.l_in_current_max = _mcconfClipboard!.l_in_current_max;
+                              escMotorConfiguration!.l_in_current_min = _mcconfClipboard!.l_in_current_min;
+                              escMotorConfiguration!.l_abs_current_max = _mcconfClipboard!.l_abs_current_max;
+                              escMotorConfiguration!.l_max_erpm = _mcconfClipboard!.l_max_erpm;
+                              escMotorConfiguration!.l_min_erpm = _mcconfClipboard!.l_min_erpm;
+                              escMotorConfiguration!.l_min_vin = _mcconfClipboard!.l_min_vin;
+                              escMotorConfiguration!.l_max_vin = _mcconfClipboard!.l_max_vin;
+                              escMotorConfiguration!.l_battery_cut_start = _mcconfClipboard!.l_battery_cut_start;
+                              escMotorConfiguration!.l_battery_cut_end = _mcconfClipboard!.l_battery_cut_end;
+                              escMotorConfiguration!.l_temp_fet_start = _mcconfClipboard!.l_temp_fet_start;
+                              escMotorConfiguration!.l_temp_fet_end = _mcconfClipboard!.l_temp_fet_end;
+                              escMotorConfiguration!.l_temp_motor_start = _mcconfClipboard!.l_temp_motor_start;
+                              escMotorConfiguration!.l_temp_motor_end = _mcconfClipboard!.l_temp_motor_end;
+                              escMotorConfiguration!.l_watt_min = _mcconfClipboard!.l_watt_min;
+                              escMotorConfiguration!.l_watt_max = _mcconfClipboard!.l_watt_max;
+                              escMotorConfiguration!.l_current_min_scale = _mcconfClipboard!.l_current_min_scale;
+                              escMotorConfiguration!.l_current_max_scale = _mcconfClipboard!.l_current_max_scale;
+                              escMotorConfiguration!.l_duty_start = _mcconfClipboard!.l_duty_start;
                               // Notify User
                               setState(() {
                                 ScaffoldMessenger
@@ -927,7 +927,7 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
                             }
                             setState(() {
                               // navigate to the route
-                              Navigator.of(context).pushNamed(FOCWizard.routeName, arguments: FOCWizardArguments(theTXCharacteristic, null));
+                              Navigator.of(context).pushNamed(FOCWizard.routeName, arguments: FOCWizardArguments(theTXCharacteristic!, null));
                             });
                           })
 
@@ -948,25 +948,25 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
     print("Building MotorConfigurationEditor");
 
     //Receive arguments building this widget
-    myArguments = ModalRoute.of(context).settings.arguments;
+    myArguments = ModalRoute.of(context)!.settings.arguments as MotorConfigurationArguments?;
     if(myArguments == null){
       return Container(child:Text("No Arguments"));
     }
     // Prepare objects for use in this widget
     if(streamSubscription == null) {
-      streamSubscription = myArguments.dataStream.listen((value) {
+      streamSubscription = myArguments!.dataStream.listen((value) {
         globalLogger.i("Stream Data Received");
         setState(() {
           escMotorConfiguration = value;
         });
       });
     }
-    theTXCharacteristic = myArguments.theTXCharacteristic;
-    discoveredCANDevices = myArguments.discoveredCANDevices;
+    theTXCharacteristic = myArguments!.theTXCharacteristic;
+    discoveredCANDevices = myArguments!.discoveredCANDevices;
     if (escMotorConfiguration == null) {
-      escMotorConfiguration = myArguments.motorConfiguration;
+      escMotorConfiguration = myArguments!.motorConfiguration;
     }
-    escFirmwareVersion = myArguments.escFirmwareVersion;
+    escFirmwareVersion = myArguments!.escFirmwareVersion;
 
     
     return new WillPopScope(
@@ -993,7 +993,7 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
             future: _buildBody(context),
             builder: (context, AsyncSnapshot<Widget> snapshot) {
               if (snapshot.hasData) {
-                return snapshot.data;
+                return snapshot.data!;
               } else {
                 return Column(
                   mainAxisAlignment: MainAxisAlignment.center,

@@ -5,10 +5,7 @@
 #   - Pull requests do NOT build automatically — trigger manually from the
 #     Actions tab (workflow_dispatch) against the PR branch when needed.
 #
-# NOTE: This bootstrap copy on master is dispatch-only — master's current
-# code predates the Flutter 3 migration and cannot build. PR #34 carries
-# the full version with the push-to-master trigger; it takes over on merge.
-#
+
 # See CI_GUIDE.md for keystore/secret setup. Until the signing secrets are
 # configured this workflow produces a debug-signed release APK artifact.
 

@@ -13,9 +13,9 @@ import '../globalUtilities.dart';
 import '../components/userSettings.dart';
 import '../hardwareSupport/escHelper/escHelper.dart';
 
-import 'package:esys_flutter_share/esys_flutter_share.dart';
+import 'package:share_plus/share_plus.dart';
 
-import 'package:flutter_blue/flutter_blue.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 import 'package:image_picker/image_picker.dart';
 
@@ -27,27 +27,27 @@ import 'package:flutter_document_picker/flutter_document_picker.dart';
 
 class ESK8Configuration extends StatefulWidget {
   ESK8Configuration({
-    @required this.myUserSettings,
+    required this.myUserSettings,
     this.currentDevice,
     this.theTXCharacteristic,
     this.updateCachedAvatar,
     this.escFirmwareVersion,
     this.updateComputedVehicleStatistics,
-    @required this.applicationDocumentsDirectory,
+    required this.applicationDocumentsDirectory,
     this.reloadUserSettings,
     this.telemetryStream,
   });
   final UserSettings myUserSettings;
-  final BluetoothDevice currentDevice;
-  final BluetoothCharacteristic theTXCharacteristic;
-  final ValueChanged<bool> updateCachedAvatar;
-  final ESC_FIRMWARE escFirmwareVersion;
-  final ValueChanged<bool> updateComputedVehicleStatistics;
+  final BluetoothDevice? currentDevice;
+  final BluetoothCharacteristic? theTXCharacteristic;
+  final ValueChanged<bool>? updateCachedAvatar;
+  final ESC_FIRMWARE? escFirmwareVersion;
+  final ValueChanged<bool>? updateComputedVehicleStatistics;
   final String applicationDocumentsDirectory;
-  final ValueChanged<bool> reloadUserSettings;
+  final ValueChanged<bool>? reloadUserSettings;
 
 
-  final Stream telemetryStream;
+  final Stream? telemetryStream;
   ESK8ConfigurationState createState() => new ESK8ConfigurationState();
 }
 
@@ -55,18 +55,18 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
   final GlobalKey<State> _keyLoader = new GlobalKey<State>();
 
-  FileImage _boardAvatar;
+  FileImage? _boardAvatar;
 
   bool _showAdvanced = false;
 
   Future getImage(bool fromUserGallery) async {
     final documentsDirectory = await getApplicationDocumentsDirectory();
     final imagePicker = ImagePicker();
-    PickedFile temporaryImage = await imagePicker.getImage(source: fromUserGallery ? ImageSource.gallery : ImageSource.camera, maxWidth: 640, maxHeight: 640);
+    XFile? temporaryImage = await imagePicker.pickImage(source: fromUserGallery ? ImageSource.gallery : ImageSource.camera, maxWidth: 640, maxHeight: 640);
 
     if (temporaryImage != null) {
       // We have a new image, capture for display and update the settings in memory
-      String newPath = "${documentsDirectory.path}/avatars/${widget.currentDevice.id}";
+      String newPath = "${documentsDirectory.path}/avatars/${widget.currentDevice!.remoteId}";
       File finalImage = await File(newPath).create(recursive: true);
       finalImage.writeAsBytesSync(await temporaryImage.readAsBytes());
       globalLogger.d("Board avatar file destination: ${finalImage.path}");
@@ -88,7 +88,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
         imageCache.clear();
         imageCache.clearLiveImages();
 
-        widget.myUserSettings.settings.boardAvatarPath = "/avatars/${widget.currentDevice.id}";
+        widget.myUserSettings.settings.boardAvatarPath = "/avatars/${widget.currentDevice!.remoteId}";
         _boardAvatar = new FileImage(new File("${widget.applicationDocumentsDirectory}${widget.myUserSettings.settings.boardAvatarPath}"));
       });
     }
@@ -249,7 +249,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
 
                   SizedBox(width: 15),
                   CircleAvatar(
-                      backgroundImage: _boardAvatar != null ? _boardAvatar : AssetImage('assets/FreeSK8_Mobile.png'),
+                      backgroundImage: _boardAvatar != null ? _boardAvatar : AssetImage('assets/FreeSK8_Mobile.png') as ImageProvider,
                       radius: 100,
                       backgroundColor: Colors.white)
 
@@ -281,10 +281,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                           await widget.myUserSettings.saveSettings();
 
                           // Update cached avatar
-                          widget.updateCachedAvatar(true);
+                          widget.updateCachedAvatar!(true);
 
                           // Recompute statistics in case we change measurement units
-                          widget.updateComputedVehicleStatistics(false);
+                          widget.updateComputedVehicleStatistics!(false);
 
                         } catch (e) {
                           globalLogger.e("Save Settings Exception $e");
@@ -386,7 +386,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                   encoder.close();
 
                                   Navigator.of(context).pop(); // Remove PleaseWait dialog
-                                  await Share.file("FreeSK8 Beta Log Archive", "freesk8_beta_backup.zip", await File("${supportDirectory.path}/freesk8_beta_backup.zip").readAsBytes(), 'application/zip', text: "FreeSK8 Beta Logs");
+                                  await SharePlus.instance.share(ShareParams(
+                                    files: [XFile("${supportDirectory.path}/freesk8_beta_backup.zip")],
+                                    text: "FreeSK8 Beta Logs",
+                                  ));
 
                                 } catch (e, stacktrace) {
                                   Navigator.of(context).pop(); // Remove PleaseWait dialog
@@ -413,14 +416,15 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                     allowedMimeTypes: ["application/zip"],
                                   );
 
-                                  String result = await FlutterDocumentPicker.openDocument(params: params);
+                                  String? result = await FlutterDocumentPicker.openDocument(params: params);
                                   globalLogger.d("Import Data: User imported file: $result");
 
                                   if (result == null) {
                                     Navigator.of(context).pop(); // Remove PleaseWait dialog
-                                    return ScaffoldMessenger
+                                    ScaffoldMessenger
                                         .of(context)
                                         .showSnackBar(SnackBar(content: Text("Import Aborted: No File Specified")));
+                                    return;
                                   }
 
                                   // Read the Zip file from disk.
@@ -448,9 +452,10 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                   final String importSettingsFilePath = "${documentsDirectory.path}/freesk8_beta_userSettings.json";
                                   if (!File(importSettingsFilePath).existsSync()) {
                                     Navigator.of(context).pop(); // Remove PleaseWait dialog
-                                    return ScaffoldMessenger
+                                    ScaffoldMessenger
                                         .of(context)
                                         .showSnackBar(SnackBar(content: Text("Invalid Import File Selected")));
+                                    return;
                                   }
 
                                   // Import UserSettings
@@ -497,7 +502,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                 // If changes were made the result of the Navigation will be true and we'll want to reload the user settings
                                 if (result == true) {
                                   // Request the user settings to be reloaded
-                                  widget.reloadUserSettings(result);
+                                  widget.reloadUserSettings!(result as bool);
                                 }
                               }),
 

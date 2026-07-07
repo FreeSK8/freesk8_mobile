@@ -1,8 +1,8 @@
 import 'dart:convert';
 
-import 'package:esys_flutter_share/esys_flutter_share.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_blue/flutter_blue.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 import '../components/databaseAssistant.dart';
 import '../components/fileManager.dart';
@@ -19,22 +19,25 @@ import 'package:table_calendar/table_calendar.dart';
 import 'dart:io';
 
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../blocs/preferences/preferences_cubit.dart';
 
 
 class RideLogging extends StatefulWidget {
   RideLogging({
-    this.myUserSettings,
+    required this.myUserSettings,
     this.theTXLoggerCharacteristic,
-    this.syncInProgress,
-    this.onSyncPress,
-    this.syncStatus,
-    this.eraseOnSync,
-    this.onSyncEraseSwitch,
-    this.isLoggerLogging,
-    this.isRobogotchi
+    required this.syncInProgress,
+    required this.onSyncPress,
+    required this.syncStatus,
+    required this.eraseOnSync,
+    required this.onSyncEraseSwitch,
+    required this.isLoggerLogging,
+    required this.isRobogotchi,
+    required this.isGotchiPro
   });
   final UserSettings myUserSettings;
-  final BluetoothCharacteristic theTXLoggerCharacteristic;
+  final BluetoothCharacteristic? theTXLoggerCharacteristic;
   final bool syncInProgress;
   final ValueChanged<bool> onSyncPress;
   final FileSyncViewerArguments syncStatus;
@@ -42,7 +45,8 @@ class RideLogging extends StatefulWidget {
   final ValueChanged<bool> onSyncEraseSwitch;
   final bool isLoggerLogging;
   final bool isRobogotchi;
-
+  final bool isGotchiPro;
+  
   void _handleSyncPress() {
     onSyncPress(!syncInProgress);
   }
@@ -55,7 +59,7 @@ class RideLogging extends StatefulWidget {
 class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin {
 
   static bool showDevTools = false; // Flag to control shoting developer stuffs
-  static bool showListView = false; // Flag to control showing list view vs calendar
+  static bool showListView = true; // Flag to control showing list view vs calendar
   String temporaryLog = "";
   List<FileSystemEntity> rideLogs = [];
   List<FileStat> rideLogsFileStats = [];
@@ -67,22 +71,32 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
 
   Map<DateTime, List> _events = {};
   List _selectedEvents = [];
-  CalendarController _calendarController;
-  DateTime _selectedDay = DateTime.now();
+//  CalendarController _calendarController;
+//  DateTime _selectedDay = DateTime.now();
+  CalendarFormat _calendarFormat = CalendarFormat.twoWeeks;
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
 
   @override
   void initState() {
     super.initState();
     if (widget.theTXLoggerCharacteristic != null) {
-      widget.theTXLoggerCharacteristic.write(utf8.encode("status~")).catchError((error){
+      widget.theTXLoggerCharacteristic!.write(utf8.encode("status~")).catchError((error){
         globalLogger.e("rideLogging::initState: Robogotchi status request failed. Are we connected?");
       });
     }
 
     _selectedDay = DateTime.parse(new DateFormat("yyyy-MM-dd").format(DateTime.now()));
-    _listFiles(true);
 
-    _calendarController = CalendarController();
+    // Load persisted sort order from cubit before the first list query
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        orderByClause = context.read<PreferencesCubit>().state.rideLogSortClause;
+        _listFiles(true);
+      }
+    });
+
+//    _calendarController = CalendarController();
   }
 
   @override
@@ -100,16 +114,17 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
       // Prepare data for Calendar View
       _events = {}; // Clear events before populating from database
       rideLogsFromDatabase.forEach((element) {
-        DateTime thisDate = DateTime.parse(new DateFormat("yyyy-MM-dd").format(element.dateTime.add(DateTime.now().timeZoneOffset)));
+        DateTime thisDate = DateTime.parse(new DateFormat("yyyy-MM-dd").format(element.dateTime!.add(DateTime.now().timeZoneOffset)));
         if (_events.containsKey(thisDate)) {
           //globalLogger.wtf("updating $thisDate");
-          _events[thisDate].add('${rideLogsFromDatabase.indexOf(element)}');
+          _events[thisDate]!.add('${rideLogsFromDatabase.indexOf(element)}');
         } else {
           //globalLogger.wtf("adding $thisDate");
           _events[thisDate] = ['${rideLogsFromDatabase.indexOf(element)}'];
         }
       });
       _selectedEvents = _events[_selectedDay] ?? [];
+      //initialCalendarFormat: CalendarFormat.twoWeeks,
 
       // Set state if requested and is an appropriate time
       if (doSetState && this.mounted) setState(() {});
@@ -122,15 +137,48 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
   // Simple TableCalendar configuration (using Styles)
   Widget _buildTableCalendar() {
     return TableCalendar(
-      initialCalendarFormat: CalendarFormat.twoWeeks,
-      calendarController: _calendarController,
-      events: _events,
+      firstDay: kFirstDay,
+      lastDay: kLastDay,
+      focusedDay: _focusedDay,
+      calendarFormat: _calendarFormat,
+      selectedDayPredicate: (day) {
+        // Use `selectedDayPredicate` to determine which day is currently selected.
+        // If this returns true, then `day` will be marked as selected.
+
+        // Using `isSameDay` is recommended to disregard
+        // the time-part of compared DateTime objects.
+        return isSameDay(_selectedDay, day);
+      },
+      onDaySelected: (selectedDay, focusedDay) {
+        if (!isSameDay(_selectedDay, selectedDay)) {
+          // Call `setState()` when updating the selected day
+          setState(() {
+            _selectedDay = selectedDay;
+            _focusedDay = focusedDay;
+          });
+        }
+      },
+      onFormatChanged: (format) {
+        if (_calendarFormat != format) {
+          // Call `setState()` when updating calendar format
+          setState(() {
+            _calendarFormat = format;
+          });
+        }
+      },
+      onPageChanged: (focusedDay) {
+        // No need to call `setState()` here
+        _focusedDay = focusedDay;
+      },
+      //initialCalendarFormat: CalendarFormat.twoWeeks,
+      //calendarController: _calendarController,
+      //events: _events,
       //holidays: _holidays,
       startingDayOfWeek: StartingDayOfWeek.sunday,
       calendarStyle: CalendarStyle(
-        selectedColor: Colors.deepOrange[400],
-        todayColor: Colors.deepOrange[200],
-        markersColor: Colors.white,
+        //selectedColor: Colors.deepOrange[400],
+        //todayColor: Colors.deepOrange[200],
+        //markersColor: Colors.white,
         outsideDaysVisible: false,
       ),
       headerStyle: HeaderStyle(
@@ -142,9 +190,9 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
           borderRadius: BorderRadius.circular(16.0),
         ),
       ),
-      onDaySelected: _onDaySelected,
-      onVisibleDaysChanged: _onVisibleDaysChanged,
-      onCalendarCreated: _onCalendarCreated,
+      //onDaySelected: _onDaySelected,
+      //onVisibleDaysChanged: _onVisibleDaysChanged,
+      //onCalendarCreated: _onCalendarCreated,
     );
   }
 
@@ -170,11 +218,11 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                       children: <Widget>[
 
                         SizedBox(width: 50, child:
-                        FutureBuilder<String>(
-                            future: UserSettings.getBoardAvatarPath(rideLogsFromDatabase[int.parse(event)].boardID),
-                            builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+                        FutureBuilder<String?>(
+                            future: UserSettings.getBoardAvatarPath(rideLogsFromDatabase[int.parse(event)].boardID!),
+                            builder: (BuildContext context, AsyncSnapshot<String?> snapshot) {
                               return CircleAvatar(
-                                  backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.png'),
+                                  backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data!)) : AssetImage('assets/FreeSK8_Mobile.png') as ImageProvider,
                                   radius: 25,
                                   backgroundColor: Colors.white);
                             })
@@ -182,14 +230,14 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                         SizedBox(width: 10,),
 
                         Expanded(
-                          child: Text(rideLogsFromDatabase[int.parse(event)].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)),
+                          child: Text(rideLogsFromDatabase[int.parse(event)].dateTime!.add(DateTime.now().timeZoneOffset).toString().substring(0,19)),
                         ),
 
                         SizedBox(
                           width: 32,
                           child: Icon(
-                              rideLogsFromDatabase[int.parse(event)].faultCount < 1 ? Icons.check_circle_outline : Icons.error_outline,
-                              color: rideLogsFromDatabase[int.parse(event)].faultCount < 1 ? Colors.green : Colors.red),
+                              rideLogsFromDatabase[int.parse(event)].faultCount! < 1 ? Icons.check_circle_outline : Icons.error_outline,
+                              color: rideLogsFromDatabase[int.parse(event)].faultCount! < 1 ? Colors.green : Colors.red),
                         ),
 
                         /// Ride Log Note Editor
@@ -197,7 +245,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                           width: 32,
                           child: GestureDetector(
                             onTap: (){
-                              tecRideNotes.text = rideLogsFromDatabase[int.parse(event)].notes;
+                              tecRideNotes.text = rideLogsFromDatabase[int.parse(event)].notes!;
 
                               showDialog(context: context,
                                   builder: (_) => AlertDialog(
@@ -211,7 +259,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                       TextButton(
                                           onPressed: () async {
                                             // Update notes field in database
-                                            await DatabaseAssistant.dbUpdateNote(rideLogsFromDatabase[int.parse(event)].logFilePath, tecRideNotes.text);
+                                            await DatabaseAssistant.dbUpdateNote(rideLogsFromDatabase[int.parse(event)].logFilePath!, tecRideNotes.text);
                                             _listFiles(true);
                                             Navigator.of(context).pop(true);
                                           },
@@ -225,7 +273,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                   )
                               );
                             },
-                            child: Icon( rideLogsFromDatabase[int.parse(event)].notes.length > 0 ? Icons.chat : Icons.chat_bubble_outline, size: 32),
+                            child: Icon( rideLogsFromDatabase[int.parse(event)].notes!.length > 0 ? Icons.chat : Icons.chat_bubble_outline, size: 32),
                           ),
                         ),
 
@@ -239,9 +287,9 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text("${Duration(seconds: rideLogsFromDatabase[int.parse(event)].durationSeconds).toString().substring(0,Duration(seconds: rideLogsFromDatabase[int.parse(event)].durationSeconds).toString().indexOf("."))}"),
-                                rideLogsFromDatabase[int.parse(event)].distance == -1.0 || widget.myUserSettings.settings.useGPSData ? Container() : Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[int.parse(event)].distance) : rideLogsFromDatabase[int.parse(event)].distance} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}"),
-                                widget.myUserSettings.settings.useGPSData && rideLogsFromDatabase[int.parse(event)].distanceGPS != -1.0 ? Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[int.parse(event)].distanceGPS) : rideLogsFromDatabase[int.parse(event)].distanceGPS} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}") : Container(),
+                                Text("${Duration(seconds: rideLogsFromDatabase[int.parse(event)].durationSeconds!).toString().substring(0,Duration(seconds: rideLogsFromDatabase[int.parse(event)].durationSeconds!).toString().indexOf("."))}"),
+                                rideLogsFromDatabase[int.parse(event)].distance == -1.0 || widget.myUserSettings.settings.useGPSData ? Container() : Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[int.parse(event)].distance!) : rideLogsFromDatabase[int.parse(event)].distance} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}"),
+                                widget.myUserSettings.settings.useGPSData && rideLogsFromDatabase[int.parse(event)].distanceGPS != -1.0 ? Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[int.parse(event)].distanceGPS!) : rideLogsFromDatabase[int.parse(event)].distanceGPS} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}") : Container(),
                               ],
                             )
                         ),
@@ -290,7 +338,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
 
     // Fetch user settings for selected board, fallback to current settings if not found
     UserSettings selectedBoardSettings = new UserSettings();
-    if (await selectedBoardSettings.loadSettings(rideLogsFromDatabase[index].boardID) == false) {
+    if (await selectedBoardSettings.loadSettings(rideLogsFromDatabase[index].boardID!) == false) {
       globalLogger.w("WARNING: Board ID ${rideLogsFromDatabase[index].boardID} has no settings on this device!");
       selectedBoardSettings = widget.myUserSettings;
     }
@@ -300,7 +348,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
       arguments: RideLogViewerArguments(
           rideLogsFromDatabase[index],
           selectedBoardSettings,
-          selectedBoardSettings.settings.boardAvatarPath == null ? null : FileImage(File(await UserSettings.getBoardAvatarPath(rideLogsFromDatabase[index].boardID)))
+          selectedBoardSettings.settings.boardAvatarPath == null ? null : FileImage(File((await UserSettings.getBoardAvatarPath(rideLogsFromDatabase[index].boardID!))!))
       ),
     ).then((value){
       // Once finished re-list files and remove a potential snackBar item before re-draw of setState
@@ -332,36 +380,30 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
 
 
 
-            Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-              GestureDetector(
-                child: Row(children: [
-                  Image(image: AssetImage("assets/dri_icon.png"),height: 60),
-                  Column(children: [
-                    Text("Ride Logging", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
-                    Row(children: [
-                      showListView ? Icon(Icons.calendar_today) : Icon(Icons.view_list_sharp),
-                      Text(showListView ? "Show Calendar" : "Show List", style: TextStyle(fontSize: 20)),
-                    ],)
-                  ],)
-                ],),
-                onTap: (){
-                  setState(() {
-                    showListView = !showListView;
-                  });
-                },
-                onLongPress: () {
-                  setState(() {
-                    showDevTools = !showDevTools;
-                  });
-                },
-              ),
-
-
-
-            ],),
-
-
-
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                GestureDetector(
+                  child: Row(
+                    children: [
+                      Image(
+                          image: AssetImage("assets/dri_icon.png"),
+                          height: 60
+                      ),
+                      Text(
+                          "Ride Logging",
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)
+                      ),
+                    ],
+                  ),
+                  onLongPress: () {
+                    setState(() {
+                      showDevTools = !showDevTools;
+                    });
+                  },
+                ),
+              ],
+            ),
 
             showListView ? Container() : _buildTableCalendar(),
             showListView ? Container() : SizedBox(height: 8.0),
@@ -378,6 +420,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                   tooltip: 'Sort by Board',
                   onPressed: () {
                     orderByClause = "board_id DESC";
+                    context.read<PreferencesCubit>().setRideLogSortClause(orderByClause);
                     _listFiles(true);
                   },
                 ),
@@ -386,6 +429,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                   tooltip: 'Sort by Date',
                   onPressed: () {
                     orderByClause = "date_created DESC";
+                    context.read<PreferencesCubit>().setRideLogSortClause(orderByClause);
                     _listFiles(true);
                   },
                 ),
@@ -395,6 +439,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                   tooltip: 'Sort by Faults',
                   onPressed: () {
                     orderByClause = "fault_count DESC";
+                    context.read<PreferencesCubit>().setRideLogSortClause(orderByClause);
                     _listFiles(true);
                   },
                 ),
@@ -403,6 +448,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                   tooltip: 'Sort by Notes',
                   onPressed: () {
                     orderByClause = "length(notes) DESC";
+                    context.read<PreferencesCubit>().setRideLogSortClause(orderByClause);
                     _listFiles(true);
                   },
                 ),
@@ -411,6 +457,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                   tooltip: 'Sort by Duration',
                   onPressed: () {
                     orderByClause = "duration_seconds DESC";
+                    context.read<PreferencesCubit>().setRideLogSortClause(orderByClause);
                     _listFiles(true);
                   },
                 ),
@@ -419,6 +466,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                   tooltip: 'Sort by Power Used',
                   onPressed: () {
                     orderByClause = "watt_hours DESC, id DESC";
+                    context.read<PreferencesCubit>().setRideLogSortClause(orderByClause);
                     _listFiles(true);
                   },
                 ),
@@ -437,9 +485,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                 itemBuilder: (BuildContext context, int index){
                   //Each item has dismissible wrapper
                   return Slidable(
-                    key: Key(rideLogsFromDatabase[index].logFilePath.substring(rideLogsFromDatabase[index].logFilePath.lastIndexOf("/") + 1)),
-                    actionPane: SlidableDrawerActionPane(),
-                    actionExtentRatio: 0.25,
+                    key: Key(rideLogsFromDatabase[index].logFilePath!.substring(rideLogsFromDatabase[index].logFilePath!.lastIndexOf("/") + 1)),
                     child: Container(
 
                       child: GestureDetector(
@@ -462,12 +508,12 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                     children: <Widget>[
                                       SizedBox(width: 5,),
                                       SizedBox(width: 50, child:
-                                      FutureBuilder<String>(
-                                          future: UserSettings.getBoardAvatarPath(rideLogsFromDatabase[index].boardID),
-                                          builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+                                      FutureBuilder<String?>(
+                                          future: UserSettings.getBoardAvatarPath(rideLogsFromDatabase[index].boardID!),
+                                          builder: (BuildContext context, AsyncSnapshot<String?> snapshot) {
                                             if (snapshot.hasData) {
                                               return CircleAvatar(
-                                                  backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.png'),
+                                                  backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data!)) : AssetImage('assets/FreeSK8_Mobile.png') as ImageProvider,
                                                   radius: 25,
                                                   backgroundColor: Colors.white);
                                             }
@@ -477,14 +523,14 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                       SizedBox(width: 10,),
 
                                       Expanded(
-                                        child: Text(rideLogsFromDatabase[index].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)),
+                                        child: Text(rideLogsFromDatabase[index].dateTime!.add(DateTime.now().timeZoneOffset).toString().substring(0,19)),
                                       ),
 
                                       SizedBox(
                                         width: 32,
                                         child: Icon(
-                                            rideLogsFromDatabase[index].faultCount < 1 ? Icons.check_circle_outline : Icons.error_outline,
-                                            color: rideLogsFromDatabase[index].faultCount < 1 ? Colors.green : Colors.red),
+                                            rideLogsFromDatabase[index].faultCount! < 1 ? Icons.check_circle_outline : Icons.error_outline,
+                                            color: rideLogsFromDatabase[index].faultCount! < 1 ? Colors.green : Colors.red),
                                       ),
 
                                       /// Ride Log Note Editor
@@ -492,7 +538,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                         width: 32,
                                         child: GestureDetector(
                                           onTap: (){
-                                            tecRideNotes.text = rideLogsFromDatabase[index].notes;
+                                            tecRideNotes.text = rideLogsFromDatabase[index].notes!;
 
                                             showDialog(context: context,
                                                 builder: (_) =>  AlertDialog(
@@ -506,7 +552,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                                     TextButton(
                                                         onPressed: () async {
                                                           // Update notes field in database
-                                                          await DatabaseAssistant.dbUpdateNote(rideLogsFromDatabase[index].logFilePath, tecRideNotes.text);
+                                                          await DatabaseAssistant.dbUpdateNote(rideLogsFromDatabase[index].logFilePath!, tecRideNotes.text);
                                                           _listFiles(true);
                                                           Navigator.of(context).pop(true);
                                                         },
@@ -520,7 +566,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                                 )
                                             );
                                           },
-                                          child: Icon( rideLogsFromDatabase[index].notes.length > 0 ? Icons.chat : Icons.chat_bubble_outline, size: 32),
+                                          child: Icon( rideLogsFromDatabase[index].notes!.length > 0 ? Icons.chat : Icons.chat_bubble_outline, size: 32),
                                         ),
                                       ),
 
@@ -533,9 +579,9 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                             mainAxisAlignment: MainAxisAlignment.center,
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              Text("${Duration(seconds: rideLogsFromDatabase[index].durationSeconds).toString().substring(0,Duration(seconds: rideLogsFromDatabase[index].durationSeconds).toString().indexOf("."))}"),
-                                              rideLogsFromDatabase[index].distance == -1.0 || widget.myUserSettings.settings.useGPSData ? Container() : Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[index].distance) : rideLogsFromDatabase[index].distance} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}"),
-                                              widget.myUserSettings.settings.useGPSData && rideLogsFromDatabase[index].distanceGPS != -1.0 ? Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[index].distanceGPS) : rideLogsFromDatabase[index].distanceGPS} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}") : Container(),
+                                              Text("${Duration(seconds: rideLogsFromDatabase[index].durationSeconds!).toString().substring(0,Duration(seconds: rideLogsFromDatabase[index].durationSeconds!).toString().indexOf("."))}"),
+                                              rideLogsFromDatabase[index].distance == -1.0 || widget.myUserSettings.settings.useGPSData ? Container() : Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[index].distance!) : rideLogsFromDatabase[index].distance} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}"),
+                                              widget.myUserSettings.settings.useGPSData && rideLogsFromDatabase[index].distanceGPS != -1.0 ? Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[index].distanceGPS!) : rideLogsFromDatabase[index].distanceGPS} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}") : Container(),
                                             ],
                                           )
                                       ),
@@ -547,14 +593,15 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                         ),
                       ),
                     ),
-                    actions: <Widget>[
-                      Padding(
-                        padding: EdgeInsets.only(bottom:5),
-                        child: IconSlideAction(
-                            caption: 'Merge',
-                            color: Colors.blue,
+                    startActionPane: ActionPane(
+                      motion: const DrawerMotion(),
+                      extentRatio: 0.5,
+                      children: [
+                      SlidableAction(
+                            label: 'Merge',
+                            backgroundColor: Colors.blue,
                             icon: Icons.merge_type,
-                            onTap: () async {
+                            onPressed: (context) async {
                               if (index+1 == rideLogsFromDatabase.length) {
                                 globalLogger.d("Merge aborted: File is last in list");
                                 return;
@@ -565,7 +612,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                               }
 
                               // Confirm Merge with user
-                              int mergedDurationSeconds = rideLogsFromDatabase[index].dateTime.difference(rideLogsFromDatabase[index+1].dateTime).inSeconds + rideLogsFromDatabase[index].durationSeconds;
+                              int mergedDurationSeconds = rideLogsFromDatabase[index].dateTime!.difference(rideLogsFromDatabase[index+1].dateTime!).inSeconds + rideLogsFromDatabase[index].durationSeconds!;
                               bool doMerge = await genericConfirmationDialog(
                                   context,
                                   TextButton(
@@ -583,14 +630,14 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                       Text("Select merge to combine this file with the previous"),
                                       SizedBox(height: 15),
                                       Text("${rideLogsFromDatabase[index].boardAlias}"),
-                                      Text("${rideLogsFromDatabase[index].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}"),
-                                      Text("${prettyPrintDuration(Duration(seconds: rideLogsFromDatabase[index].durationSeconds))}"),
+                                      Text("${rideLogsFromDatabase[index].dateTime!.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}"),
+                                      Text("${prettyPrintDuration(Duration(seconds: rideLogsFromDatabase[index].durationSeconds!))}"),
 
                                       SizedBox(height: 15),
                                       Text("Previous File:", style: TextStyle(fontWeight: FontWeight.bold)),
                                       Text("${rideLogsFromDatabase[index+1].boardAlias}"),
-                                      Text("${rideLogsFromDatabase[index+1].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}"),
-                                      Text("${prettyPrintDuration(Duration(seconds: rideLogsFromDatabase[index+1].durationSeconds))}"),
+                                      Text("${rideLogsFromDatabase[index+1].dateTime!.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}"),
+                                      Text("${prettyPrintDuration(Duration(seconds: rideLogsFromDatabase[index+1].durationSeconds!))}"),
 
                                       SizedBox(height: 15),
                                       mergedDurationSeconds > 7200 ? Icon(Icons.warning_amber_outlined, color: Colors.yellowAccent,) : Container(),
@@ -602,7 +649,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                 // Show dialog to prevent user input
                                 await Dialogs.showPleaseWaitDialog(context, _keyLoader).timeout(Duration(milliseconds: 500)).catchError((error){});
                                 try {
-                                  globalLogger.d("Log Merge Confirmed. Files: ${rideLogsFromDatabase[index].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}, ${rideLogsFromDatabase[index+1].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}");
+                                  globalLogger.d("Log Merge Confirmed. Files: ${rideLogsFromDatabase[index].dateTime!.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}, ${rideLogsFromDatabase[index+1].dateTime!.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}");
                                   final documentsDirectory = await getApplicationDocumentsDirectory();
                                   // Get later file contents and statistics
                                   String fileContents = File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").readAsStringSync();
@@ -615,49 +662,49 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                   double avgSpeedGPS = -1.0;
                                   // avgMovingSpeedGPS may be -1.0 from either entry
                                   if (statsEarlier.avgMovingSpeedGPS != -1.0 && statsLater.avgMovingSpeedGPS != -1.0) {
-                                    avgMovingSpeedGPS = doublePrecision(statsEarlier.avgMovingSpeedGPS + statsLater.avgMovingSpeedGPS / 2, 2);
+                                    avgMovingSpeedGPS = doublePrecision(statsEarlier.avgMovingSpeedGPS! + statsLater.avgMovingSpeedGPS! / 2, 2);
                                   } else if (statsEarlier.avgMovingSpeedGPS != -1.0) {
-                                    avgMovingSpeedGPS = statsEarlier.avgMovingSpeedGPS;
+                                    avgMovingSpeedGPS = statsEarlier.avgMovingSpeedGPS!;
                                   } else if (statsLater.avgMovingSpeedGPS != -1.0) {
-                                    avgMovingSpeedGPS = statsLater.avgMovingSpeedGPS;
+                                    avgMovingSpeedGPS = statsLater.avgMovingSpeedGPS!;
                                   }
                                   // gpsAvgSpeed may be -1.0 from either entry
                                   if (statsEarlier.avgSpeedGPS != -1.0 && statsLater.avgSpeedGPS != -1.0) {
-                                    avgSpeedGPS = doublePrecision(statsEarlier.avgSpeedGPS + statsLater.avgSpeedGPS / 2, 2);
+                                    avgSpeedGPS = doublePrecision(statsEarlier.avgSpeedGPS! + statsLater.avgSpeedGPS! / 2, 2);
                                   } else if (statsEarlier.avgSpeedGPS != -1.0) {
-                                    avgSpeedGPS = statsEarlier.avgSpeedGPS;
+                                    avgSpeedGPS = statsEarlier.avgSpeedGPS!;
                                   } else if (statsLater.avgSpeedGPS != -1.0) {
-                                    avgSpeedGPS = statsLater.avgSpeedGPS;
+                                    avgSpeedGPS = statsLater.avgSpeedGPS!;
                                   }
                                   LogInfoItem newStatistics = new LogInfoItem(
                                       dateTime: statsEarlier.dateTime,
                                       boardID: statsEarlier.boardID,
                                       boardAlias: statsEarlier.boardAlias,
                                       logFilePath: statsEarlier.logFilePath,
-                                      avgMovingSpeed: doublePrecision(statsEarlier.avgMovingSpeed + statsLater.avgMovingSpeed / 2, 2),
+                                      avgMovingSpeed: doublePrecision(statsEarlier.avgMovingSpeed! + statsLater.avgMovingSpeed! / 2, 2),
                                       avgMovingSpeedGPS: avgMovingSpeedGPS,
-                                      avgSpeed: doublePrecision(statsEarlier.avgSpeed + statsLater.avgSpeed / 2, 2),
+                                      avgSpeed: doublePrecision(statsEarlier.avgSpeed! + statsLater.avgSpeed! / 2, 2),
                                       avgSpeedGPS: avgSpeedGPS,
-                                      maxSpeed: statsEarlier.maxSpeed > statsLater.maxSpeed ? statsEarlier.maxSpeed : statsLater.maxSpeed,
-                                      maxSpeedGPS: statsEarlier.maxSpeedGPS > statsLater.maxSpeedGPS ? statsEarlier.maxSpeedGPS : statsLater.maxSpeedGPS,
-                                      altitudeMax: statsEarlier.altitudeMax > statsLater.altitudeMax ? statsEarlier.altitudeMax : statsLater.altitudeMax,
-                                      altitudeMin: statsEarlier.altitudeMin < statsLater.altitudeMin ? statsEarlier.altitudeMin : statsLater.altitudeMin,
-                                      maxAmpsBattery: statsEarlier.maxAmpsBattery > statsLater.maxAmpsBattery ? statsEarlier.maxAmpsBattery : statsLater.maxAmpsBattery,
-                                      maxAmpsMotors: statsEarlier.maxAmpsMotors > statsLater.maxAmpsMotors ? statsEarlier.maxAmpsMotors : statsLater.maxAmpsMotors,
-                                      wattHoursTotal: _addDoubleUnlessNegativeOne(statsEarlier.wattHoursTotal, statsLater.wattHoursTotal),
-                                      wattHoursRegenTotal: _addDoubleUnlessNegativeOne(statsEarlier.wattHoursRegenTotal, statsLater.wattHoursRegenTotal),
-                                      distance: _addDoubleUnlessNegativeOne(statsEarlier.distance, statsLater.distance),
-                                      distanceGPS: _addDoubleUnlessNegativeOne(statsEarlier.distanceGPS, statsLater.distanceGPS),
-                                      durationSeconds: statsLater.dateTime.difference(statsEarlier.dateTime).inSeconds + statsLater.durationSeconds,
-                                      faultCount: statsEarlier.faultCount + statsLater.faultCount,
+                                      maxSpeed: statsEarlier.maxSpeed! > statsLater.maxSpeed! ? statsEarlier.maxSpeed : statsLater.maxSpeed,
+                                      maxSpeedGPS: statsEarlier.maxSpeedGPS! > statsLater.maxSpeedGPS! ? statsEarlier.maxSpeedGPS : statsLater.maxSpeedGPS,
+                                      altitudeMax: statsEarlier.altitudeMax! > statsLater.altitudeMax! ? statsEarlier.altitudeMax : statsLater.altitudeMax,
+                                      altitudeMin: statsEarlier.altitudeMin! < statsLater.altitudeMin! ? statsEarlier.altitudeMin : statsLater.altitudeMin,
+                                      maxAmpsBattery: statsEarlier.maxAmpsBattery! > statsLater.maxAmpsBattery! ? statsEarlier.maxAmpsBattery : statsLater.maxAmpsBattery,
+                                      maxAmpsMotors: statsEarlier.maxAmpsMotors! > statsLater.maxAmpsMotors! ? statsEarlier.maxAmpsMotors : statsLater.maxAmpsMotors,
+                                      wattHoursTotal: _addDoubleUnlessNegativeOne(statsEarlier.wattHoursTotal!, statsLater.wattHoursTotal!),
+                                      wattHoursRegenTotal: _addDoubleUnlessNegativeOne(statsEarlier.wattHoursRegenTotal!, statsLater.wattHoursRegenTotal!),
+                                      distance: _addDoubleUnlessNegativeOne(statsEarlier.distance!, statsLater.distance!),
+                                      distanceGPS: _addDoubleUnlessNegativeOne(statsEarlier.distanceGPS!, statsLater.distanceGPS!),
+                                      durationSeconds: statsLater.dateTime!.difference(statsEarlier.dateTime!).inSeconds + statsLater.durationSeconds!,
+                                      faultCount: statsEarlier.faultCount! + statsLater.faultCount!,
                                       rideName: statsEarlier.rideName,
-                                      notes: statsEarlier.notes.length > statsLater.notes.length ? statsEarlier.notes : statsLater.notes
+                                      notes: statsEarlier.notes!.length > statsLater.notes!.length ? statsEarlier.notes : statsLater.notes
                                   );
                                   await DatabaseAssistant.dbUpdateLog(newStatistics); // Update database entry
                                   rideLogsFromDatabase[index+1] = newStatistics; // Update in memory
 
                                   // Remove later file from database and filesystem
-                                  await DatabaseAssistant.dbRemoveLog(rideLogsFromDatabase[index].logFilePath);
+                                  await DatabaseAssistant.dbRemoveLog(rideLogsFromDatabase[index].logFilePath!);
                                   //Remove from Filesystem
                                   File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").deleteSync();
                                   setState(() {
@@ -672,21 +719,21 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                   genericAlert(context, "Merge exception", Text("Uh oh. Something went wrong. Please share the debug log with the developers"), "Shake 3 times");
                                 }
                               } // doMerge
-                            } // Merge onTap
+                            } // Merge onPressed
                         ),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.only(bottom:5),
-                        child: IconSlideAction(
-                          caption: 'Share',
-                          color: Colors.indigo,
+                      SlidableAction(
+                          label: 'Share',
+                          backgroundColor: Colors.indigo,
                           icon: Icons.share,
-                          onTap: () async {
+                          onPressed: (context) async {
                             try {
                               // Share file dialog
                               String fileSummary = 'Robogotchi gotchi!';
-                              String fileContents = await FileManager.openLogFile(rideLogsFromDatabase[index].logFilePath);
-                              await Share.file('FreeSK8Log', "${rideLogsFromDatabase[index].logFilePath.substring(rideLogsFromDatabase[index].logFilePath.lastIndexOf("/") + 1)}", utf8.encode(fileContents), 'text/csv', text: fileSummary);
+                              String fileContents = await FileManager.openLogFile(rideLogsFromDatabase[index].logFilePath!);
+                              await SharePlus.instance.share(ShareParams(
+                                files: [XFile.fromData(utf8.encode(fileContents), name: "${rideLogsFromDatabase[index].logFilePath!.substring(rideLogsFromDatabase[index].logFilePath!.lastIndexOf("/") + 1)}", mimeType: 'text/csv')],
+                                text: fileSummary,
+                              ));
                             } catch (e, stacktrace) {
                               globalLogger.e("Share exception: ${e.toString()}");
                               print(stacktrace);
@@ -694,18 +741,17 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                             }
                           },
                         ),
-                      ),
-
-
-                    ],
-                    secondaryActions: <Widget>[
-                      Padding(
-                        padding: EdgeInsets.only(bottom:5),
-                        child: IconSlideAction(
-                          caption: 'Delete',
-                          color: Colors.red,
+                      ],
+                    ),
+                    endActionPane: ActionPane(
+                      motion: const DrawerMotion(),
+                      extentRatio: 0.25,
+                      children: [
+                      SlidableAction(
+                          label: 'Delete',
+                          backgroundColor: Colors.red,
                           icon: Icons.delete,
-                          onTap: () async {
+                          onPressed: (context) async {
                             // Confirm Erase with user
                             bool doErase = await genericConfirmationDialog(
                                 context,
@@ -724,8 +770,8 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                     Text("Are you sure you wish to permanently erase this item?"),
                                     SizedBox(height: 15),
                                     Text("${rideLogsFromDatabase[index].boardAlias}"),
-                                    Text("${rideLogsFromDatabase[index].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}"),
-                                    Text("${prettyPrintDuration(Duration(seconds: rideLogsFromDatabase[index].durationSeconds))}"),
+                                    Text("${rideLogsFromDatabase[index].dateTime!.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}"),
+                                    Text("${prettyPrintDuration(Duration(seconds: rideLogsFromDatabase[index].durationSeconds!))}"),
                                   ],
                                 )
                             );
@@ -733,7 +779,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                               try {
                                 final documentsDirectory = await getApplicationDocumentsDirectory();
                                 // Remove the item from the database and rideLogs array
-                                await DatabaseAssistant.dbRemoveLog(rideLogsFromDatabase[index].logFilePath);
+                                await DatabaseAssistant.dbRemoveLog(rideLogsFromDatabase[index].logFilePath!);
                                 //Remove from Filesystem
                                 File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").deleteSync();
                               } catch (e, stacktrace) {
@@ -748,12 +794,12 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                             }
                           },
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   );
                 })),
 
-            widget.syncStatus.syncInProgress?Row(
+            widget.syncStatus.syncInProgress! ? Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 FileSyncViewer(syncStatus: widget.syncStatus,),
@@ -771,10 +817,34 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                       return _alertLimitedFunctionality(context);
                     }
                     if (widget.isLoggerLogging) {
-                      sendBLEData(widget.theTXLoggerCharacteristic, utf8.encode("logstop~"), false);
+                      sendBLEData(widget.theTXLoggerCharacteristic!, utf8.encode("logstop~"), false);
                     } else if (!widget.syncInProgress) {
-                      sendBLEData(widget.theTXLoggerCharacteristic, utf8.encode("logstart~"), false);
+                      sendBLEData(widget.theTXLoggerCharacteristic!, utf8.encode("logstart~"), false);
                     }
+                  }),
+
+              SizedBox(width: 5,),
+              widget.syncInProgress ? Container() : ElevatedButton(
+                  child: Text("Clear Logs"),
+                  style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.all<Color>(Colors.red),
+                  ),
+                  onPressed: () async {
+                    if (!widget.isRobogotchi) {
+                      return _alertLimitedFunctionality(context);
+                    }
+                    genericConfirmationDialog(
+                        context,
+                        TextButton(child: Text("CLEAR LOGS!"),onPressed: () async {
+                          await sendBLEData(widget.theTXLoggerCharacteristic!, utf8.encode("logdeleteall~"), false); // Clear all logs
+                          Navigator.of(context).pop(true); // Close dialog
+                        }),
+                        TextButton(child: Text("NOPE!"),onPressed: (){
+                          Navigator.of(context).pop(false); // Close dialog
+                        }),
+                        "HALT!",
+                        Text("This will clear ALL logs on your Robogotchi, an irreversible action.\n\n Are you sure you want to continue?")
+                    );
                   }),
               SizedBox(width: 5,),
               ElevatedButton(
@@ -791,7 +861,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                             Navigator.of(context).pop(false); // Close dialog
                           }),
                           TextButton(child: Text("Stop N Sync"),onPressed: () async {
-                            await sendBLEData(widget.theTXLoggerCharacteristic, utf8.encode("logstop~"), false); // Stop logging
+                            await sendBLEData(widget.theTXLoggerCharacteristic!, utf8.encode("logstop~"), false); // Stop logging
                             widget._handleSyncPress(); // Start sync routine
                             Navigator.of(context).pop(true); // Close dialog
                           }),
@@ -802,7 +872,6 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                       widget._handleSyncPress(); //Start or stop file sync routine
                     }
                   }),
-
 
 
               /* Most users will not want to leave the log on the robogotchi but some developers might */
@@ -858,7 +927,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
 
     tableChildren.add(TableRow(children: [
       Icon(Icons.watch),
-      Text("${prettyPrintDuration(Duration(seconds: logEntry.durationSeconds))}",
+      Text("${prettyPrintDuration(Duration(seconds: logEntry.durationSeconds!))}",
           textAlign: TextAlign.center)]));
 
     // Show GPS distance if requested and available
@@ -866,12 +935,12 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
     if (widget.myUserSettings.settings.useGPSData) {
       if (logEntry.distanceGPS != -1.0) tableChildren.add(TableRow(children: [
         Icon(Icons.flag),
-        Text("${useImperial ? kmToMile(logEntry.distanceGPS) : logEntry.distanceGPS} ${useImperial ? "mi" : "km"}",
+        Text("${useImperial ? kmToMile(logEntry.distanceGPS!) : logEntry.distanceGPS} ${useImperial ? "mi" : "km"}",
             textAlign: TextAlign.center)]));
     } else {
       if (logEntry.distance != -1.0) tableChildren.add(TableRow(children: [
         Icon(Icons.flag_outlined),
-        Text("${useImperial ? kmToMile(logEntry.distance) : logEntry.distance} ${useImperial ? "mi" : "km"}",
+        Text("${useImperial ? kmToMile(logEntry.distance!) : logEntry.distance} ${useImperial ? "mi" : "km"}",
             textAlign: TextAlign.center)]));
     }
 
@@ -881,12 +950,12 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
     if (widget.myUserSettings.settings.useGPSData) {
       if (logEntry.maxSpeedGPS != -1.0) tableChildren.add(TableRow(children: [
         Transform.rotate(angle: 3.14159, child: Icon(Icons.av_timer),),
-        Text("${useImperial ? kmToMile(logEntry.maxSpeedGPS) : logEntry.maxSpeedGPS} ${useImperial ? "mph" : "kph"}",
+        Text("${useImperial ? kmToMile(logEntry.maxSpeedGPS!) : logEntry.maxSpeedGPS} ${useImperial ? "mph" : "kph"}",
             textAlign: TextAlign.center)]));
     } else {
       tableChildren.add(TableRow(children: [
         Transform.rotate(angle: 3.14159, child: Icon(Icons.av_timer),),
-        Text("${useImperial ? kmToMile(logEntry.maxSpeed) : logEntry.maxSpeed} ${useImperial ? "mph" : "kph"}",
+        Text("${useImperial ? kmToMile(logEntry.maxSpeed!) : logEntry.maxSpeed} ${useImperial ? "mph" : "kph"}",
             textAlign: TextAlign.center)]));
     }
 
@@ -911,7 +980,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
 
     if (logEntry.altitudeMax != -1.0) tableChildren.add(TableRow(children: [
       Icon(Icons.show_chart),
-      Text("${doublePrecision(logEntry.altitudeMax - logEntry.altitudeMin, 2)} meters",
+      Text("${doublePrecision(logEntry.altitudeMax! - logEntry.altitudeMin!, 2)} meters",
           textAlign: TextAlign.center)]));
 
     tableChildren.add(TableRow(children: [
@@ -921,7 +990,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
 
     genericAlert(context, title, Column(
       children: [
-        Text("${logEntry.dateTime.toIso8601String().substring(0,19)}"),
+        Text("${logEntry.dateTime!.toIso8601String().substring(0,19)}"),
         SizedBox(height: 10),
         Table(
             columnWidths: {

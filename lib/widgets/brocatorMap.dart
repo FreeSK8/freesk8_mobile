@@ -3,38 +3,38 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 class BrocatorMapData {
-  BrocatorMapData(
-      {
-        LatLng currentPosition,
-        List<Marker> mapMarkers,
-        MapController mapController,
-        LatLng privacyZone,
-        double privacyZoneRadius,
-      }) {
-    this.mapMakers = mapMarkers;
+  BrocatorMapData({
+    LatLng? currentPosition,
+    List<Marker>? mapMarkers,
+    MapController? mapController,
+    LatLng? privacyZone,
+    double? privacyZoneRadius,
+  }) {
+    this.mapMakers = mapMarkers ?? [];
     this.currentPosition = currentPosition;
-    this.mapController = mapController;
+    this.mapController = mapController ?? MapController();
     this.privacyZone = privacyZone;
     this.privacyZoneRadius = privacyZoneRadius;
   }
-  LatLng currentPosition;
+  LatLng? currentPosition;
   List<Marker> mapMakers = [];
-  MapController mapController = new MapController();
-  LatLng privacyZone;
-  double privacyZoneRadius;
+  MapController mapController = MapController();
+  LatLng? privacyZone;
+  double? privacyZoneRadius;
 }
 
 class BrocatorMap extends StatefulWidget {
-  BrocatorMap({this.brocatorMapData});
-  final BrocatorMapData brocatorMapData;
-  BrocatorMapState createState() => new BrocatorMapState();
+  const BrocatorMap({this.brocatorMapData, Key? key}) : super(key: key);
+  final BrocatorMapData? brocatorMapData;
+  @override
+  BrocatorMapState createState() => BrocatorMapState();
 
   static const String routeName = "/brocatormap";
 }
 
 class BrocatorMapState extends State<BrocatorMap> {
 
-  static FlutterMap myMap;
+  static FlutterMap? myMap;
 
   @override
   void initState() {
@@ -50,41 +50,44 @@ class BrocatorMapState extends State<BrocatorMap> {
   Widget build(BuildContext context) {
     print("Build: brocatorMap");
 
-    List<LayerOptions> mapLayers = [];
-    mapLayers.add(new TileLayerOptions(
-        urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        subdomains: ['a', 'b', 'c']
+    final data = widget.brocatorMapData;
+    if (data == null) return const SizedBox.shrink();
+
+    List<Widget> mapChildren = [];
+    mapChildren.add(TileLayer(
+      urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      subdomains: const ['a', 'b', 'c'],
     ));
 
-    if (widget.brocatorMapData.privacyZone != null) {
-      mapLayers.add(new CircleLayerOptions(
-          circles: [
-            CircleMarker( //radius marker
-                point: widget.brocatorMapData.privacyZone,
-                color: Colors.blue.withOpacity(0.3),
-                borderStrokeWidth: 3.0,
-                borderColor: Colors.blue,
-                useRadiusInMeter: true,
-                radius: widget.brocatorMapData.privacyZoneRadius * 1000 //kilometers to meters
-            )
-          ]
+    if (data.privacyZone != null) {
+      mapChildren.add(CircleLayer(
+        circles: [
+          CircleMarker(
+            point: data.privacyZone!,
+            color: Colors.blue.withOpacity(0.3),
+            borderStrokeWidth: 3.0,
+            borderColor: Colors.blue,
+            useRadiusInMeter: true,
+            radius: (data.privacyZoneRadius ?? 0) * 1000,
+          ),
+        ],
       ));
     }
 
-    //NOTE: If the markers aren't last in the mapLayers array their onTap events will not work
-    mapLayers.add(new MarkerLayerOptions(
-      markers: widget.brocatorMapData.mapMakers,
+    //NOTE: If the markers aren't last in the children array their onTap events will not work
+    mapChildren.add(MarkerLayer(
+      markers: data.mapMakers,
     ));
 
     myMap = FlutterMap(
-      mapController: widget.brocatorMapData.mapController,
-      options: new MapOptions(
-        center: widget.brocatorMapData.currentPosition,
-        zoom: 13.0,
+      mapController: data.mapController,
+      options: MapOptions(
+        initialCenter: data.currentPosition ?? const LatLng(0, 0),
+        initialZoom: 13.0,
       ),
-      layers: mapLayers,
+      children: mapChildren,
     );
 
-    return myMap;
+    return myMap!;
   }
 }

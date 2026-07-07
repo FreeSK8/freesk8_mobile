@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_blue/flutter_blue.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 import '../hardwareSupport/escHelper/escHelper.dart';
 
@@ -29,7 +29,7 @@ class ESCProfileEditorState extends State<ESCProfileEditor> {
   TextEditingController tecSpeedLimitRev = TextEditingController();
   TextEditingController tecCurrentMax = TextEditingController();
   TextEditingController tecCurrentMin = TextEditingController();
-  bool enablePowerLimit;
+  bool? enablePowerLimit;
   TextEditingController tecWattsMax = TextEditingController();
   TextEditingController tecWattsMin = TextEditingController();
 
@@ -55,7 +55,7 @@ class ESCProfileEditorState extends State<ESCProfileEditor> {
     print("Building ESCProfileEditor");
 
     // Check for valid arguments while building this widget
-    ESCProfileEditorArguments myArguments = ModalRoute.of(context).settings.arguments;
+    ESCProfileEditorArguments? myArguments = ModalRoute.of(context)!.settings.arguments as ESCProfileEditorArguments?;
     if(myArguments == null){
       return Container(child:Text("No arguments. BUG BUG."));
     }
@@ -71,7 +71,7 @@ class ESCProfileEditorState extends State<ESCProfileEditor> {
       }
     });
     tecSpeedLimitFwd.addListener(() {
-      myArguments.profile.speedKmh = myArguments.useImperial ? mileToKm(double.tryParse(tecSpeedLimitFwd.text)) : double.tryParse(tecSpeedLimitFwd.text);
+      myArguments.profile.speedKmh = myArguments.useImperial ? mileToKm(double.tryParse(tecSpeedLimitFwd.text)!) : double.tryParse(tecSpeedLimitFwd.text)!;
       if (myArguments.profile.speedKmh > 256) {
         setState(() {
           myArguments.profile.speedKmh = 256;
@@ -79,7 +79,7 @@ class ESCProfileEditorState extends State<ESCProfileEditor> {
       }
     });
     tecSpeedLimitRev.addListener(() {
-      myArguments.profile.speedKmhRev = myArguments.useImperial ? mileToKm(double.tryParse(tecSpeedLimitRev.text)) : double.tryParse(tecSpeedLimitRev.text);
+      myArguments.profile.speedKmhRev = myArguments.useImperial ? mileToKm(double.tryParse(tecSpeedLimitRev.text)!) : double.tryParse(tecSpeedLimitRev.text)!;
       if (myArguments.profile.speedKmhRev > 0.0) {
         setState(() {
           myArguments.profile.speedKmhRev = -myArguments.profile.speedKmhRev;
@@ -87,7 +87,7 @@ class ESCProfileEditorState extends State<ESCProfileEditor> {
       }
     });
     tecCurrentMax.addListener(() {
-      double userInput = double.tryParse(tecCurrentMax.text) / 100; //TODO: null / 0
+      double userInput = double.tryParse(tecCurrentMax.text)! / 100; //TODO: null / 0
       myArguments.profile.l_current_max_scale =  userInput;
       if(userInput < 0.0 || userInput > 1.0) {
         setState(() {
@@ -96,7 +96,7 @@ class ESCProfileEditorState extends State<ESCProfileEditor> {
       }
     });
     tecCurrentMin.addListener(() {
-      double userInput = double.tryParse(tecCurrentMin.text) / 100; //TODO: null / 0
+      double userInput = double.tryParse(tecCurrentMin.text)! / 100; //TODO: null / 0
       myArguments.profile.l_current_min_scale =  userInput;
       if(userInput < 0.0 || userInput > 1.0) {
         setState(() {
@@ -104,9 +104,9 @@ class ESCProfileEditorState extends State<ESCProfileEditor> {
         });
       }
     });
-    tecWattsMax.addListener(() { myArguments.profile.l_watt_max = double.tryParse(tecWattsMax.text); });
+    tecWattsMax.addListener(() { myArguments.profile.l_watt_max = double.tryParse(tecWattsMax.text)!; });
     tecWattsMin.addListener(() {
-      myArguments.profile.l_watt_min = double.tryParse(tecWattsMin.text);
+      myArguments.profile.l_watt_min = double.tryParse(tecWattsMin.text)!;
       // Watts regenerated must be a negative value
       if (myArguments.profile.l_watt_min > 0.0) {
         setState(() {
@@ -131,7 +131,7 @@ class ESCProfileEditorState extends State<ESCProfileEditor> {
         title: Row(children: <Widget>[
           Icon( Icons.edit,
             size: 35.0,
-            color: Theme.of(context).accentColor,
+            color: Theme.of(context).colorScheme.secondary,
           ),
           Text("ESC Profile Editor"),
         ],),

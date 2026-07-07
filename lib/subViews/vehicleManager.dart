@@ -8,12 +8,12 @@ import 'package:freesk8_mobile/components/userSettings.dart';
 import 'package:freesk8_mobile/globalUtilities.dart';
 import 'package:uuid/uuid.dart';
 
-import 'package:charts_flutter/flutter.dart' as charts;
+import 'package:community_charts_flutter/community_charts_flutter.dart' as charts;
 
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class VehicleManagerArguments {
-  final String connectedDeviceID;
+  final String? connectedDeviceID;
 
   VehicleManagerArguments(this.connectedDeviceID);
 }
@@ -22,9 +22,9 @@ class VehicleManagerArguments {
 class DataTrend {
   final int index;
   final double distance;
-  final double energy;
-  final double duration;
-  final double speed;
+  final double? energy;
+  final double? duration;
+  final double? speed;
 
   DataTrend(this.index, this.distance, this.energy, this.duration, this.speed);
 }
@@ -38,7 +38,7 @@ class VehicleManager extends StatefulWidget {
 
 class VehicleManagerState extends State<VehicleManager> {
   bool changesMadeToVehicle = false;
-  VehicleManagerArguments myArguments;
+  VehicleManagerArguments? myArguments;
   int trendDays = 7;
   bool loadingTrends = false;
 
@@ -83,7 +83,7 @@ class VehicleManagerState extends State<VehicleManager> {
       child: Text("YES"),
       onPressed: () async {
         Navigator.of(context).pop();
-        String newID = myArguments.connectedDeviceID;
+        String newID = myArguments!.connectedDeviceID!;
         await DatabaseAssistant.dbAssociateVehicle(deviceID, newID);
         await UserSettings.associateDevice(deviceID, newID);
         setState(() {});
@@ -193,7 +193,7 @@ class VehicleManagerState extends State<VehicleManager> {
   }
 
   /// Create carting series
-  static List<charts.Series<DataTrend, int>> _createDataFromGroup(List<String> deviceNames, List<List<double>> dataGroup) {
+  static List<charts.Series<DataTrend, int>> _createDataFromGroup(List<String?> deviceNames, List<List<double>> dataGroup) {
 
 
     double groupAverage = _averageGroup(dataGroup);
@@ -216,7 +216,7 @@ class VehicleManagerState extends State<VehicleManager> {
       charts.Color thisColor = charts.ColorUtil.fromDartColor(Color(googleChartsDefaultColors[i]));
       response.add(
         new charts.Series<DataTrend, int>(
-          id: deviceNames[i],
+          id: deviceNames[i]!,
           colorFn: (_, __) => thisColor,
           domainFn: (DataTrend trend, _) => trend.index,
           measureFn: (DataTrend trend, _) => trend.distance,
@@ -232,10 +232,10 @@ class VehicleManagerState extends State<VehicleManager> {
     Widget bodyWidget;
 
     List<Widget> listChildren = [];
-    List<String> deviceNames = [];
+    List<String?> deviceNames = [];
     List<String> knownDevices = await UserSettings.getKnownDevices();
-    bool currentDeviceKnown = knownDevices.contains(myArguments.connectedDeviceID);
-    globalLogger.w("connected device is in known devices? $currentDeviceKnown Connected device: ${myArguments.connectedDeviceID}");
+    bool currentDeviceKnown = knownDevices.contains(myArguments!.connectedDeviceID);
+    globalLogger.w("connected device is in known devices? $currentDeviceKnown Connected device: ${myArguments!.connectedDeviceID}");
 
     listChildren.add(SizedBox(height: 10));
     listChildren.add(
@@ -252,10 +252,10 @@ class VehicleManagerState extends State<VehicleManager> {
                   Radio(
                     value: 1,
                     groupValue: trendDays,
-                    onChanged: (int value){
+                    onChanged: (int? value){
                       setState(() {
                         loadingTrends = true;
-                        trendDays = value;
+                        trendDays = value!;
                       });
                     },
                   ),
@@ -264,10 +264,10 @@ class VehicleManagerState extends State<VehicleManager> {
                   Radio(
                     value: 7,
                     groupValue: trendDays,
-                    onChanged: (int value){
+                    onChanged: (int? value){
                       setState(() {
                         loadingTrends = true;
-                        trendDays = value;
+                        trendDays = value!;
                       });
                     },
                   ),
@@ -276,10 +276,10 @@ class VehicleManagerState extends State<VehicleManager> {
                   Radio(
                     value: 30,
                     groupValue: trendDays,
-                    onChanged: (int value){
+                    onChanged: (int? value){
                       setState(() {
                         loadingTrends = true;
-                        trendDays = value;
+                        trendDays = value!;
                       });
                     },
                   ),
@@ -296,7 +296,7 @@ class VehicleManagerState extends State<VehicleManager> {
             ])
     );
 
-    if (!currentDeviceKnown && myArguments.connectedDeviceID != null) {
+    if (!currentDeviceKnown && myArguments!.connectedDeviceID != null) {
       listChildren.add(Center(child: Text("Warning, connected device does not belong to a vehicle!", style: TextStyle(color: Colors.yellow),),));
       listChildren.add(Center(child: Text("Please adopt a vehicle below", style: TextStyle(color: Colors.yellow),),));
     }
@@ -345,45 +345,44 @@ class VehicleManagerState extends State<VehicleManager> {
         trendSpeedWeekly.add(trendingLineSpeed);
 
 
-        // Determine actions list for Slidable
-        List<Widget> actionsList = [];
-        if (myArguments.connectedDeviceID == settings[i].deviceID) {
+        // Determine actions list for Slidable v4
+        List<SlidableAction> actionsList = [];
+        if (myArguments!.connectedDeviceID == settings[i].deviceID) {
           actionsList.add(
-              Padding(
-                padding: EdgeInsets.only(bottom:5, top: 5),
-                child: IconSlideAction(
-                    caption: 'Retire',
-                    color: Colors.blue,
-                    icon: Icons.bedtime,
-                    onTap: () async {
-                      _retireVehicle(settings[i].deviceID);
-                    } // Merge onTap
-                ),
-              )
+            SlidableAction(
+              label: 'Retire',
+              backgroundColor: Colors.blue,
+              icon: Icons.bedtime,
+              onPressed: (_) async {
+                _retireVehicle(settings[i].deviceID);
+              },
+            ),
           );
         }
         // Allow any vehicle to be adopted/recruited if we are not currently connected to a known device
-        if (!currentDeviceKnown && myArguments.connectedDeviceID != null) {
+        if (!currentDeviceKnown && myArguments!.connectedDeviceID != null) {
           actionsList.add(
-              Padding(
-                padding: EdgeInsets.only(bottom:5, top: 5),
-                child: IconSlideAction(
-                    caption: 'Adopt',
-                    color: Colors.indigo,
-                    icon: Icons.family_restroom,
-                    onTap: () async {
-                      _recruitVehicle(settings[i].deviceID);
-                    } // Merge onTap
-                ),
-              )
+            SlidableAction(
+              label: 'Adopt',
+              backgroundColor: Colors.indigo,
+              icon: Icons.family_restroom,
+              onPressed: (_) async {
+                _recruitVehicle(settings[i].deviceID);
+              },
+            ),
           );
         }
 
         // Add a Row for each Vehicle we load
         Widget listChild = Slidable(
           key: Key("$i"),
-          actionPane: SlidableDrawerActionPane(),
-          actionExtentRatio: 0.25,
+          startActionPane: actionsList.isNotEmpty
+              ? ActionPane(
+                  motion: const DrawerMotion(),
+                  extentRatio: 0.25,
+                  children: actionsList,
+                )
+              : null,
           child: Container(
             decoration: BoxDecoration(
                 color: Theme.of(context).dialogBackgroundColor,
@@ -394,11 +393,11 @@ class VehicleManagerState extends State<VehicleManager> {
               children: [
                 SizedBox(width: 5),
                 //TODO: Editable board avatar
-                FutureBuilder<String>(
+                FutureBuilder<String?>(
                     future: UserSettings.getBoardAvatarPath(knownDevices[i]),
-                    builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+                    builder: (BuildContext context, AsyncSnapshot<String?> snapshot) {
                       return CircleAvatar(
-                          backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.png'),
+                          backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data!)) : AssetImage('assets/FreeSK8_Mobile.png') as ImageProvider,
                           radius: 42,
                           backgroundColor: Colors.white);
                     }),
@@ -413,7 +412,7 @@ class VehicleManagerState extends State<VehicleManager> {
                   Row(children: [
 
                     // Show if the listed device is the one we are connected to
-                    myArguments.connectedDeviceID == settings[i].deviceID ? Icon(Icons.bluetooth_connected, color: Colors.grey) : Container(),
+                    myArguments!.connectedDeviceID == settings[i].deviceID ? Icon(Icons.bluetooth_connected, color: Colors.grey) : Container(),
                     // Show if vehicle has been retired from service
                     settings[i].deviceID.startsWith("R*") ? Icon(Icons.bedtime_outlined, color: Colors.grey) : Container(),
 
@@ -453,26 +452,25 @@ class VehicleManagerState extends State<VehicleManager> {
               ],
             ),),
 
-          // Computed above
-          actions: actionsList,
-
-          secondaryActions: myArguments.connectedDeviceID != settings[i].deviceID ? <Widget>[
-            // Allow any disconnected vehicle to be removed
-            Padding(
-              padding: EdgeInsets.only(bottom:5, top: 5),
-              child: IconSlideAction(
-                caption: 'Delete',
-                color: Colors.red,
-                icon: Icons.delete,
-                onTap: () async {
-                  _removeVehicle(settings[i].deviceID);
-                },
-              ),
-            ),
-          ] : <Widget>[],
+          endActionPane: myArguments!.connectedDeviceID != settings[i].deviceID
+              ? ActionPane(
+                  motion: const DrawerMotion(),
+                  extentRatio: 0.25,
+                  children: [
+                    SlidableAction(
+                      label: 'Delete',
+                      backgroundColor: Colors.red,
+                      icon: Icons.delete,
+                      onPressed: (_) async {
+                        _removeVehicle(settings[i].deviceID);
+                      },
+                    ),
+                  ],
+                )
+              : null,
         );
 
-        if (myArguments.connectedDeviceID == settings[i].deviceID) {
+        if (myArguments!.connectedDeviceID == settings[i].deviceID) {
           // This item is the connected device
           // Add it to the top
           listChildren.insert(2, listChild);
@@ -529,7 +527,7 @@ class VehicleManagerState extends State<VehicleManager> {
     print("Building vehicleManager");
 
     //Receive arguments building this widget
-    myArguments = ModalRoute.of(context).settings.arguments;
+    myArguments = ModalRoute.of(context)!.settings.arguments as VehicleManagerArguments?;
     if(myArguments == null){
       return Container(child:Text("No Arguments"));
     }
@@ -555,7 +553,7 @@ class VehicleManagerState extends State<VehicleManager> {
             future: _buildBody(context),
             builder: (context, AsyncSnapshot<Widget> snapshot) {
               if (snapshot.hasData && !loadingTrends) {
-                return snapshot.data;
+                return snapshot.data!;
               } else {
                 return Column(
                   mainAxisAlignment: MainAxisAlignment.center,

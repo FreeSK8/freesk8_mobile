@@ -6,28 +6,28 @@ import 'package:sqflite/sqflite.dart';
 import '../globalUtilities.dart';
 
 class LogInfoItem {
-  final DateTime dateTime;
-  final String boardID;
-  final String boardAlias;
-  final String logFilePath;
-  final double avgMovingSpeed;
-  final double avgMovingSpeedGPS;
-  final double avgSpeed;
-  final double avgSpeedGPS;
-  final double maxSpeed;
-  final double maxSpeedGPS;
-  final double altitudeMax;
-  final double altitudeMin;
-  final double maxAmpsBattery;
-  final double maxAmpsMotors;
-  final double wattHoursTotal;
-  final double wattHoursRegenTotal;
-  final double distance;
-  final double distanceGPS;
-  final int    durationSeconds;
-  final int    faultCount;
-  final String rideName;
-  final String notes;
+  final DateTime? dateTime;
+  final String? boardID;
+  final String? boardAlias;
+  final String? logFilePath;
+  final double? avgMovingSpeed;
+  final double? avgMovingSpeedGPS;
+  final double? avgSpeed;
+  final double? avgSpeedGPS;
+  final double? maxSpeed;
+  final double? maxSpeedGPS;
+  final double? altitudeMax;
+  final double? altitudeMin;
+  final double? maxAmpsBattery;
+  final double? maxAmpsMotors;
+  final double? wattHoursTotal;
+  final double? wattHoursRegenTotal;
+  final double? distance;
+  final double? distanceGPS;
+  final int?    durationSeconds;
+  final int?    faultCount;
+  final String? rideName;
+  final String? notes;
 
   LogInfoItem({
     this.dateTime,
@@ -58,7 +58,7 @@ class LogInfoItem {
   // The keys correspond to the names of the columns in the database.
   Map<String, dynamic> toMap() {
     return {
-      'date_time' : dateTime.millisecondsSinceEpoch / 1000,
+      'date_time' : dateTime!.millisecondsSinceEpoch / 1000,
       'board_id' : boardID,
       'board_alias' : boardAlias,
       'log_file_path' : logFilePath, //NOTE: relative path as iOS updates will create new container UUIDs

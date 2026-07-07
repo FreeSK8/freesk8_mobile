@@ -6,25 +6,25 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../globalUtilities.dart';
 
 class UserSettingsStructure {
-  bool useImperial;
-  bool useFahrenheit;
-  bool useGPSData;
+  bool useImperial = false;
+  bool useFahrenheit = false;
+  bool useGPSData = false;
 
-  String boardAlias;
-  String boardAvatarPath;
+  String boardAlias = "Unnamed";
+  String? boardAvatarPath; // null = no avatar chosen
 
-  bool showDebugLogOnShake;
+  bool showDebugLogOnShake = true;
 
-  int batterySeriesCount;
-  double batteryCellMinVoltage;
-  double batteryCellMaxVoltage;
+  int batterySeriesCount = 12;
+  double batteryCellMinVoltage = 3.2;
+  double batteryCellMaxVoltage = 4.2;
 
-  int wheelDiameterMillimeters;
-  int motorPoles;
-  double maxERPM;
-  double gearRatio;
+  int wheelDiameterMillimeters = 110;
+  int motorPoles = 14;
+  double maxERPM = 100000;
+  double gearRatio = 4.0;
 
-  String deviceID;
+  String deviceID = "defaults";
 
   UserSettingsStructure();
 
@@ -66,15 +66,11 @@ class UserSettingsStructure {
 
 
 class UserSettings {
-  UserSettingsStructure settings;
-  String currentDeviceID;
-  List<String> knownDevices;
+  UserSettingsStructure settings = UserSettingsStructure();
+  String currentDeviceID = "defaults";
+  List<String> knownDevices = [];
 
-  UserSettings({this.settings, this.currentDeviceID, this.knownDevices}) {
-    settings = new UserSettingsStructure();
-    knownDevices = [];
-    currentDeviceID = "defaults";
-  }
+  UserSettings();
 
   bool isKnownDevice() {
     return knownDevices.contains(currentDeviceID);
@@ -109,9 +105,7 @@ class UserSettings {
     final prefs = await SharedPreferences.getInstance();
 
     // Don't set knownDevices to null - This will happen if there are no saved ESCs hardware IDs on the device
-    knownDevices =
-    prefs.getStringList('knownDevices') != null ? prefs.getStringList(
-        'knownDevices') : knownDevices;
+    knownDevices = prefs.getStringList('knownDevices') ?? knownDevices;
 
     settings.useImperial = prefs.getBool('useImperial') ?? false;
     settings.useFahrenheit = prefs.getBool('useFahrenheit') ?? false;
@@ -122,7 +116,7 @@ class UserSettings {
         prefs.getString('$currentDeviceID boardAlias') ?? "Unnamed";
 
     settings.boardAvatarPath =
-        prefs.getString('$currentDeviceID boardAvatarPath') ?? null;
+        prefs.getString('$currentDeviceID boardAvatarPath');
     //NOTE: Setting null because SharedPreferences no longer allows saving of null value
     if (settings.boardAvatarPath == "") settings.boardAvatarPath = null;
 
@@ -157,7 +151,7 @@ class UserSettings {
     if (currentDeviceID != "defaults") {
       await prefs.setString('$currentDeviceID boardAlias', settings.boardAlias);
       await prefs.setString(
-          '$currentDeviceID boardAvatarPath', settings.boardAvatarPath == null ? "" : settings.boardAvatarPath);
+          '$currentDeviceID boardAvatarPath', settings.boardAvatarPath ?? "");
     }
 
     await prefs.setInt(
@@ -182,9 +176,9 @@ class UserSettings {
   }
 
   ///Helper methods for FutureBuilders
-  static Future<String> getBoardAvatarPath(String deviceID) async {
+  static Future<String?> getBoardAvatarPath(String deviceID) async {
     final prefs = await SharedPreferences.getInstance();
-    String avatarPath = prefs.getString('$deviceID boardAvatarPath');
+    String? avatarPath = prefs.getString('$deviceID boardAvatarPath');
 
     if (avatarPath == "") avatarPath = null; // SharedPreferences no longer saves null value
     if (avatarPath != null) {
@@ -194,17 +188,14 @@ class UserSettings {
     return avatarPath;
   }
 
-  static Future<String> getBoardAlias(String deviceID) async {
+  static Future<String?> getBoardAlias(String deviceID) async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('$deviceID boardAlias') ?? null;
+    return prefs.getString('$deviceID boardAlias');
   }
 
   static Future<List<String>> getKnownDevices() async {
     final prefs = await SharedPreferences.getInstance();
-    var knownDevices =
-    prefs.getStringList('knownDevices') != null ? prefs.getStringList(
-        'knownDevices') : [];
-    return knownDevices;
+    return prefs.getStringList('knownDevices') ?? [];
   }
 
   static Future<bool> removeDevice(String deviceID) async {
@@ -220,7 +211,7 @@ class UserSettings {
     await prefs.remove('$deviceID maxERPM');
     await prefs.remove('$deviceID gearRatio');
 
-    List<String> knownDevices = prefs.getStringList('knownDevices') != null ? prefs.getStringList('knownDevices') : [];
+    List<String> knownDevices = prefs.getStringList('knownDevices') ?? [];
     knownDevices.remove(deviceID);
     globalLogger.d("Removing $deviceID from known devices $knownDevices");
     await prefs.setStringList('knownDevices', knownDevices);
@@ -232,7 +223,7 @@ class UserSettings {
 
     // Setup new device with old device values
     await prefs.setString('$newDeviceID boardAlias', prefs.getString('$deviceID boardAlias') ?? "Unnamed");
-    await prefs.setString('$newDeviceID boardAvatarPath', prefs.getString('$deviceID boardAvatarPath') ?? null);
+    await prefs.setString('$newDeviceID boardAvatarPath', prefs.getString('$deviceID boardAvatarPath') ?? "");
     await prefs.setInt('$newDeviceID batterySeriesCount', prefs.getInt('$deviceID batterySeriesCount') ?? 12);
     await prefs.setDouble('$newDeviceID batteryCellMinVoltage', prefs.getDouble('$deviceID batteryCellMinVoltage') ?? 3.2);
     await prefs.setDouble('$newDeviceID batteryCellMaxVoltage', prefs.getDouble('$deviceID batteryCellMaxVoltage') ?? 4.2);
@@ -241,7 +232,7 @@ class UserSettings {
     await prefs.setDouble('$newDeviceID maxERPM', prefs.getDouble('$deviceID maxERPM') ?? 100000);
     await prefs.setDouble('$newDeviceID gearRatio', prefs.getDouble('$deviceID gearRatio') ?? 4.0);
 
-    List<String> knownDevices = prefs.getStringList('knownDevices') != null ? prefs.getStringList('knownDevices') : [];
+    List<String> knownDevices = prefs.getStringList('knownDevices') ?? [];
     knownDevices.add(newDeviceID);
     globalLogger.d("Adding $newDeviceID to known devices $knownDevices");
     await prefs.setStringList('knownDevices', knownDevices);
@@ -260,7 +251,7 @@ class UserSettings {
         prefs.getString('$deviceID boardAlias') ?? "Unnamed";
 
     settings.boardAvatarPath =
-        prefs.getString('$deviceID boardAvatarPath') ?? null;
+        prefs.getString('$deviceID boardAvatarPath');
 
     settings.batterySeriesCount =
         prefs.getInt('$deviceID batterySeriesCount') ?? 12;
@@ -287,7 +278,7 @@ Future<File> exportSettings(String filePath) async {
 
   exportFile.writeAsStringSync("[");
 
-  List<String> knownDevices = prefs.getStringList('knownDevices');
+  List<String> knownDevices = prefs.getStringList('knownDevices') ?? [];
   for (int i=0; i<knownDevices.length; ++i) {
     await settings.loadSettings(knownDevices[i]);
     //globalLogger.wtf(settings.settings.toString());

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 class Test extends StatefulWidget {
   Test({this.textInput});
-  final Widget textInput;
+  final Widget? textInput;
   TestState createState() => new TestState();
 
   static const String routeName = "/testies";

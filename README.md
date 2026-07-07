@@ -51,7 +51,7 @@ navigate the sources.
 |       └ escProfileEditor
 |       └ focWizard
 |       └ rideLogViewer
-|       └ robogotchiCfgEditor
+|       └ robogotchiCfgEditor (aka Logging Config Editor)
 |       └ robogotchiDFU
 └ /widgets
     └ Custom widgets that are used in the application
@@ -60,7 +60,7 @@ navigate the sources.
 <!-- LICENSE -->
 ## License
 
-(C) Copyright 2021 - FreeSK8 Foundation NPO
+(C) Copyright 2020-2024+ - Derelict Robot Industries & FreeSK8 Foundation
 
 **Licensed under GNU General Public License v3.0**
 
