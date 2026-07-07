@@ -45,12 +45,12 @@ class FOCWizardState extends State<FOCWizard> {
     super.initState();
     loadESCDefaults = false;
     tecBatteryCurrentRegen.addListener(() {
-      focDetectMinBatteryAmps = double.tryParse(tecBatteryCurrentRegen.text.replaceFirst(',', '.')); //Try parse so we don't throw
+      focDetectMinBatteryAmps = double.tryParse(tecBatteryCurrentRegen.text.replaceFirst(',', '.')) ?? 0.0; //Try parse so we don't throw
       if(focDetectMinBatteryAmps==null) focDetectMinBatteryAmps = 0.0; //Ensure not null
       if(focDetectMinBatteryAmps>0.0) focDetectMinBatteryAmps *= -1; //Ensure negative
     });
     tecBatteryCurrentOutput.addListener(() {
-      focDetectMaxBatteryAmps = double.tryParse(tecBatteryCurrentOutput.text.replaceFirst(',', '.')); //Try parse so we don't throw
+      focDetectMaxBatteryAmps = double.tryParse(tecBatteryCurrentOutput.text.replaceFirst(',', '.')) ?? 0.0; //Try parse so we don't throw
       if(focDetectMaxBatteryAmps==null) focDetectMaxBatteryAmps = 0.0; //Ensure not null
     });
   }
@@ -69,7 +69,7 @@ class FOCWizardState extends State<FOCWizard> {
     const int numberOfSteps = 3;
 
     //Receive arguments building this widget
-    FOCWizardArguments myArguments = ModalRoute.of(context).settings.arguments;
+    FOCWizardArguments? myArguments = ModalRoute.of(context)!.settings.arguments as FOCWizardArguments?;
     if(myArguments == null){
       return Container(child:Text("No arguments. BUG BUG."));
     }

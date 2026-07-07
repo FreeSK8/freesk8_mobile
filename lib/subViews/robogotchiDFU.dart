@@ -15,17 +15,17 @@ class RobogotchiDFU extends StatefulWidget {
 }
 
 class RobogotchiDFUState extends State<RobogotchiDFU> with SingleTickerProviderStateMixin {
-  StreamSubscription<ScanResult> scanSubscription;
+  StreamSubscription<ScanResult>? scanSubscription;
   List<ScanResult> scanResults = <ScanResult>[];
   bool dfuRunning = false;
 
-  String _deviceAddress;
+  String? _deviceAddress;
   int _percent = 0;
 
-  int _currentPart;
-  int _partsTotal;
+  int? _currentPart;
+  int? _partsTotal;
 
-  AnimationController _animationController;
+  late AnimationController _animationController;
 
   @override
   void initState() {
@@ -39,7 +39,7 @@ class RobogotchiDFUState extends State<RobogotchiDFU> with SingleTickerProviderS
 
   @override
   void dispose() {
-    _animationController?.dispose();
+    _animationController.dispose();
     scanSubscription?.cancel();
     scanSubscription = null;
 
@@ -111,8 +111,8 @@ class RobogotchiDFUState extends State<RobogotchiDFU> with SingleTickerProviderS
       scanResults.clear();
       scanSubscription = FlutterBluePlus.scan().listen(
             (scanResult) {
-          if (scanResults.firstWhere(
-                  (ele) => ele.device.remoteId == scanResult.device.remoteId,
+          if (scanResults.cast<ScanResult?>().firstWhere(
+                  (ele) => ele!.device.remoteId == scanResult.device.remoteId,
               orElse: () => null) !=
               null) {
             return;
@@ -248,19 +248,19 @@ class RobogotchiDFUState extends State<RobogotchiDFU> with SingleTickerProviderS
 
 
 class DeviceItem extends StatelessWidget {
-  final ScanResult scanResult;
+  final ScanResult? scanResult;
 
-  final VoidCallback onPress;
+  final VoidCallback? onPress;
 
   DeviceItem({this.scanResult, this.onPress});
 
   @override
   Widget build(BuildContext context) {
     var name = "Unknown";
-    if (scanResult.device.name != null && scanResult.device.name.length > 0) {
-      name = scanResult.device.name;
+    if (scanResult!.device.name != null && scanResult!.device.name.length > 0) {
+      name = scanResult!.device.name;
     }
-    var inDFUMode = scanResult.device.name == "FreeSK8-DFU";
+    var inDFUMode = scanResult!.device.name == "FreeSK8-DFU";
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -272,8 +272,8 @@ class DeviceItem extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(inDFUMode ? "Robogotchi (ready for update)" : name),
-                  Text(scanResult.device.remoteId.str),
-                  Text("RSSI: ${scanResult.rssi}"),
+                  Text(scanResult!.device.remoteId.str),
+                  Text("RSSI: ${scanResult!.rssi}"),
                 ],
               ),
             ),

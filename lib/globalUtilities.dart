@@ -21,7 +21,7 @@ import 'package:table_calendar/table_calendar.dart';
 
 void setLandscapeOrientation({bool? enabled}) {
   SystemChrome.setPreferredOrientations(
-      enabled ? [
+      enabled! ? [
         DeviceOrientation.portraitUp,
         DeviceOrientation.portraitDown,
         DeviceOrientation.landscapeLeft,
@@ -73,13 +73,13 @@ Color multiColorLerp(Color colorA, Color colorB, Color colorC, double value) {
     result = HSVColor.lerp(
         HSVColor.fromColor(colorA),
         HSVColor.fromColor(colorB),
-        value * 2).toColor();
+        value * 2)!.toColor();
   }
   else {
     result = HSVColor.lerp(
         HSVColor.fromColor(colorB),
         HSVColor.fromColor(colorC),
-        value * 2 - 1).toColor();
+        value * 2 - 1)!.toColor();
   }
   return result;
 }
@@ -378,7 +378,7 @@ Future<void> genericAlert(BuildContext context, String alertTitle, Widget alertB
 }
 
 double doublePrecision(double val, int places) {
-  double mod = pow(10.0, places);
+  double mod = pow(10.0, places).toDouble();
   return ((val * mod).round().toDouble() / mod);
 }
 
@@ -418,7 +418,7 @@ class NumberTextInputFormatter extends TextInputFormatter {
       return false;
     }
 
-    return text.substring(text.indexOf('.') + 1).length <= decimalRange;
+    return text.substring(text.indexOf('.') + 1).length <= decimalRange!;
   }
 
   TextEditingValue sanitize(TextEditingValue value) {

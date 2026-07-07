@@ -65,7 +65,7 @@ class SmartBMSViewerState extends State<SmartBMSViewer> {
 
   static SmartBMSArguments? myArguments;
 
-  static StreamSubscription<DieBieMSTelemetry>? bmsTelemetrySubscription;
+  static StreamSubscription? bmsTelemetrySubscription;
 
   DieBieMSTelemetry bmsTelemetry = new DieBieMSTelemetry();
 
@@ -97,7 +97,7 @@ class SmartBMSViewerState extends State<SmartBMSViewer> {
     /// Request BMS Telemetry
     Uint8List packet = simpleVESCRequest(COMM_PACKET_ID.COMM_GET_VALUES.index, optionalCANID: _smartBMSID);
 
-    if (!await sendBLEData(myArguments.theTXCharacteristic, packet, true)) {
+    if (!await sendBLEData(myArguments!.theTXCharacteristic, packet, true)) {
       globalLogger.e("_requestTelemetry() failed");
     }
   }
@@ -236,8 +236,8 @@ class SmartBMSViewerState extends State<SmartBMSViewer> {
                                   new AlwaysStoppedAnimation<Color>(Colors.lightGreen),
                                   value: sigmoidal(
                                       bmsTelemetry.cellVoltage[index].abs(),
-                                      myArguments.myUserSettings.settings.batteryCellMinVoltage,
-                                      myArguments.myUserSettings.settings.batteryCellMaxVoltage)
+                                      myArguments!.myUserSettings.settings.batteryCellMinVoltage,
+                                      myArguments!.myUserSettings.settings.batteryCellMaxVoltage)
                               ),
                             )
                         ),
