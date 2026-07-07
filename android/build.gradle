@@ -5,9 +5,11 @@ allprojects {
     }
 }
 
-// AGP 8 requires every module to declare a namespace. Several unmaintained
-// pub packages predate that requirement; derive it from their manifest's
-// package attribute (the pre-AGP8 convention) so they still build.
+// Compatibility shims for unmaintained pub packages under AGP 8:
+// - namespace: AGP 8 requires one per module; derive it from the manifest's
+//   package attribute (the pre-AGP8 convention).
+// - JVM targets: old plugins mix Java 1.8 with whatever Kotlin defaults to
+//   (the host JDK), which Kotlin 2.x rejects; pin both to 11 everywhere.
 subprojects {
     afterEvaluate { project ->
         if (project.hasProperty('android')) {
@@ -21,6 +23,13 @@ subprojects {
                     }
                 }
             }
+            android.compileOptions {
+                sourceCompatibility JavaVersion.VERSION_11
+                targetCompatibility JavaVersion.VERSION_11
+            }
+        }
+        project.tasks.matching { it.name.contains('Kotlin') && it.hasProperty('kotlinOptions') }.configureEach { task ->
+            task.kotlinOptions.jvmTarget = '11'
         }
     }
 }
