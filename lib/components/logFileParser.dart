@@ -28,18 +28,18 @@ enum LOG_MSG_TYPES {
 
 class LogESC {
   DateTime? dt;
-  int? escID;
-  double? vIn;
-  double? motorTemp;
-  double? mosfetTemp;
-  double? dutyCycle;
-  double? motorCurrent;
-  double? batteryCurrent;
-  double? wattHours;
-  double? wattHoursRegen;
-  int? eRPM;
-  int? eDistance;
-  int? faultCode;
+  int escID = 0;
+  double vIn = 0;
+  double motorTemp = 0;
+  double mosfetTemp = 0;
+  double dutyCycle = 0;
+  double motorCurrent = 0;
+  double batteryCurrent = 0;
+  double wattHours = 0;
+  double wattHoursRegen = 0;
+  int eRPM = 0;
+  int eDistance = 0;
+  int faultCode = 0;
 
   LogESC fromValues(LogESC values) {
     this.dt = values.dt;
@@ -61,11 +61,11 @@ class LogESC {
 
 class LogGPS {
   DateTime? dt;
-  int? satellites;
-  double? altitude;
-  double? speed;
-  double? latitude;
-  double? longitude;
+  int satellites = 0;
+  double altitude = 0;
+  double speed = 0;
+  double latitude = 0;
+  double longitude = 0;
 
   LogGPS fromValues(LogGPS values) {
     this.dt = values.dt;

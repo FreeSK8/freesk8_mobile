@@ -28,103 +28,69 @@ enum ESC_FIRMWARE {
 }
 
 class ESCTelemetry {
-  ESCTelemetry() {
-    v_in = 0;
-    temp_mos = 0;
-    temp_mos_1 = 0;
-    temp_mos_2 = 0;
-    temp_mos_3 = 0;
-    temp_motor = 0;
-    current_motor = 0;
-    current_in = 0;
-    foc_id = 0;
-    foc_iq = 0;
-    rpm = 0;
-    duty_now = 0;
-    amp_hours = 0;
-    amp_hours_charged = 0;
-    watt_hours = 0;
-    watt_hours_charged = 0;
-    tachometer = 0;
-    tachometer_abs = 0;
-    position = 0;
-    vesc_id = 0;
-    vd = 0;
-    vq = 0;
-    fault_code = mc_fault_code.FAULT_CODE_NONE;
-
-    //NOTE: Extras for COMM_GET_VALUES_SETUP
-    speed = null;
-    battery_level = null;
-    num_vescs = null;
-    battery_wh = null;
-  }
+  ESCTelemetry();
   //FW 5
-  double v_in;
-  double temp_mos;
-  double temp_mos_1;
-  double temp_mos_2;
-  double temp_mos_3;
-  double temp_motor;
-  double current_motor;
-  double current_in;
-  double foc_id;
-  double foc_iq;
-  double rpm;
-  double duty_now;
-  double amp_hours;
-  double amp_hours_charged;
-  double watt_hours;
-  double watt_hours_charged;
-  int tachometer;
-  int tachometer_abs;
-  double position;
-  mc_fault_code fault_code;
-  int vesc_id;
-  double vd;
-  double vq;
+  double v_in = 0;
+  double temp_mos = 0;
+  double temp_mos_1 = 0;
+  double temp_mos_2 = 0;
+  double temp_mos_3 = 0;
+  double temp_motor = 0;
+  double current_motor = 0;
+  double current_in = 0;
+  double foc_id = 0;
+  double foc_iq = 0;
+  double rpm = 0;
+  double duty_now = 0;
+  double amp_hours = 0;
+  double amp_hours_charged = 0;
+  double watt_hours = 0;
+  double watt_hours_charged = 0;
+  int tachometer = 0;
+  int tachometer_abs = 0;
+  double position = 0;
+  mc_fault_code fault_code = mc_fault_code.FAULT_CODE_NONE;
+  int vesc_id = 0;
+  double vd = 0;
+  double vq = 0;
 
   //NOTE: Extras for COMM_GET_VALUES_SETUP
-  double? speed;
-  double? battery_level;
-  int? num_vescs;
-  double? battery_wh;
+  double speed = 0;
+  double battery_level = 0;
+  int num_vescs = 0;
+  double battery_wh = 0;
 }
 
 class ESCProfile {
-  ESCProfile({this.profileName});
+  ESCProfile({this.profileName = "Unnamed"});
   // For user interaction
-  String? profileName;
-  double? speedKmh;
-  double? speedKmhRev;
+  String profileName;
+  double speedKmh = 32.0;
+  double speedKmhRev = -32.0;
   // VESC based ESC variables :smirk:
-  double? l_current_min_scale;
-  double? l_current_max_scale;
-  double? l_watt_min;
-  double? l_watt_max;
+  double l_current_min_scale = 1.0;
+  double l_current_max_scale = 1.0;
+  double l_watt_min = 0.0;
+  double l_watt_max = 0.0;
 }
 
 
 
 class ESCFirmware {
-  ESCFirmware() {
-    fw_version_major = 0;
-    fw_version_minor = 0;
-    hardware_name = "loading...";
-  }
-  int fw_version_major;
-  int fw_version_minor;
-  String hardware_name;
+  ESCFirmware();
+  int fw_version_major = 0;
+  int fw_version_minor = 0;
+  String hardware_name = "loading...";
 }
 
 class ESCFault {
-  int? faultCode;
-  int? faultCount;
-  int? escID;
+  int faultCode = 0;
+  int faultCount = 0;
+  int escID = 0;
   DateTime? firstSeen;
   DateTime? lastSeen;
 
-  ESCFault({this.faultCode, this.faultCount, this.escID, this.firstSeen, this.lastSeen});
+  ESCFault({this.faultCode = 0, this.faultCount = 0, this.escID = 0, this.firstSeen, this.lastSeen});
 
   String toString() {
     return "${mc_fault_code.values[this.faultCode].toString().substring(14)} was seen ${this.faultCount} time${this.faultCount!=1?"s":""} on ESC ${this.escID} at ${this.firstSeen.toString().substring(0,19)}${this.faultCount > 1 ? " until ${this.lastSeen.toString().substring(11,19)}" : ""}";

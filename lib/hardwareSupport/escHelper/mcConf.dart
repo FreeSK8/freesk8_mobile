@@ -137,13 +137,13 @@ enum BMS_FWD_CAN_MODE {
 }
 
 class bms_config {
-  BMS_TYPE? type;
-  int? limit_mode;
-  double? t_limit_start;
-  double? t_limit_end;
-  double? soc_limit_start;
-  double? soc_limit_end;
-  BMS_FWD_CAN_MODE? fwd_can_mode; // Firmware 5.3 added
+  BMS_TYPE type = BMS_TYPE.BMS_TYPE_NONE;
+  int limit_mode = 0;
+  double t_limit_start = 0;
+  double t_limit_end = 0;
+  double soc_limit_start = 0;
+  double soc_limit_end = 0;
+  BMS_FWD_CAN_MODE fwd_can_mode = BMS_FWD_CAN_MODE.BMS_FWD_CAN_MODE_DISABLED; // Firmware 5.3 added
 }
 
 enum PID_RATE {
@@ -184,214 +184,206 @@ SAT_COMP_LAMBDA_AND_FACTOR
 
 
 class MCCONF {
-  MCCONF() {
-    hall_table = List.filled(8, 0);
-    foc_hall_table = List.filled(8, 0);
-    bms = new bms_config();
-    foc_offsets_current = List.filled(3, 0); // Firmware 5.3 added
-    foc_offsets_voltage = List.filled(3, 0); // Firmware 5.3 added
-    foc_offsets_voltage_undriven = List.filled(3, 0); // Firmware 5.3 added
-  }
   // Limits
-  double? l_current_max;
-  double? l_current_min;
-  double? l_in_current_max;
-  double? l_in_current_min;
-  double? l_in_current_map_start; //fw6.2
-  double? l_in_current_map_filter;  //fw6.2
-  double? l_abs_current_max;
-  double? l_min_erpm;
-  double? l_max_erpm;
-  double? l_erpm_start;
-  double? l_max_erpm_fbrake;
-  double? l_max_erpm_fbrake_cc;
-  double? l_min_vin;
-  double? l_max_vin;
-  double? l_battery_cut_start;
-  double? l_battery_cut_end;
-  double? l_battery_regen_cut_start; //fw6.2
-  double? l_battery_regen_cut_end; //fw6.2
-  bool? l_slow_abs_current;
-  double? l_temp_fet_start;
-  double? l_temp_fet_end;
-  double? l_temp_motor_start;
-  double? l_temp_motor_end;
-  double? l_temp_accel_dec;
-  double? l_min_duty;
-  double? l_max_duty;
-  double? l_watt_max;
-  double? l_watt_min;
-  double? l_current_max_scale;
-  double? l_current_min_scale;
-  double? l_duty_start;
+  double l_current_max = 0;
+  double l_current_min = 0;
+  double l_in_current_max = 0;
+  double l_in_current_min = 0;
+  double l_in_current_map_start = 0; //fw6.2
+  double l_in_current_map_filter = 0;  //fw6.2
+  double l_abs_current_max = 0;
+  double l_min_erpm = 0;
+  double l_max_erpm = 0;
+  double l_erpm_start = 0;
+  double l_max_erpm_fbrake = 0;
+  double l_max_erpm_fbrake_cc = 0;
+  double l_min_vin = 0;
+  double l_max_vin = 0;
+  double l_battery_cut_start = 0;
+  double l_battery_cut_end = 0;
+  double l_battery_regen_cut_start = 0; //fw6.2
+  double l_battery_regen_cut_end = 0; //fw6.2
+  bool l_slow_abs_current = false;
+  double l_temp_fet_start = 0;
+  double l_temp_fet_end = 0;
+  double l_temp_motor_start = 0;
+  double l_temp_motor_end = 0;
+  double l_temp_accel_dec = 0;
+  double l_min_duty = 0;
+  double l_max_duty = 0;
+  double l_watt_max = 0;
+  double l_watt_min = 0;
+  double l_current_max_scale = 0;
+  double l_current_min_scale = 0;
+  double l_duty_start = 0;
   // Overridden limits (Computed during runtime)
-  double? lo_current_max;
-  double? lo_current_min;
-  double? lo_in_current_max;
-  double? lo_in_current_min;
-  double? lo_current_motor_max_now;
-  double? lo_current_motor_min_now;
+  double lo_current_max = 0;
+  double lo_current_min = 0;
+  double lo_in_current_max = 0;
+  double lo_in_current_min = 0;
+  double lo_current_motor_max_now = 0;
+  double lo_current_motor_min_now = 0;
 
   //BLDC switching and drive
-  mc_pwm_mode? pwm_mode;
-  mc_comm_mode? comm_mode;
-  mc_motor_type? motor_type;
-  mc_sensor_mode? sensor_mode;
+  mc_pwm_mode pwm_mode = mc_pwm_mode.PWM_MODE_NONSYNCHRONOUS_HISW;
+  mc_comm_mode comm_mode = mc_comm_mode.COMM_MODE_INTEGRATE;
+  mc_motor_type motor_type = mc_motor_type.MOTOR_TYPE_BLDC;
+  mc_sensor_mode sensor_mode = mc_sensor_mode.SENSOR_MODE_SENSORLESS;
 
   // Sensorless (bldc)
-  double? sl_min_erpm;
-  double? sl_min_erpm_cycle_int_limit;
-  double? sl_max_fullbreak_current_dir_change;
-  double? sl_cycle_int_limit;
-  double? sl_phase_advance_at_br;
-  double? sl_cycle_int_rpm_br;
-  double? sl_bemf_coupling_k;
+  double sl_min_erpm = 0;
+  double sl_min_erpm_cycle_int_limit = 0;
+  double sl_max_fullbreak_current_dir_change = 0;
+  double sl_cycle_int_limit = 0;
+  double sl_phase_advance_at_br = 0;
+  double sl_cycle_int_rpm_br = 0;
+  double sl_bemf_coupling_k = 0;
   // Hall sensor
-  List<int> hall_table;
-  double? hall_sl_erpm;
+  List<int> hall_table = List.filled(8, 0);
+  double hall_sl_erpm = 0;
   // FOC
-  double? foc_current_kp;
-  double? foc_current_ki;
-  double? foc_f_zv; // Firmware 5.3 changed from: foc_f_sw
-  double? foc_dt_us;
-  double? foc_encoder_offset;
-  bool? foc_encoder_inverted;
-  double? foc_encoder_ratio;
-  double? foc_encoder_sin_offset;
-  double? foc_encoder_sin_gain;
-  double? foc_encoder_cos_offset;
-  double? foc_encoder_cos_gain;
-  double? foc_encoder_sincos_filter_constant;
-  double? foc_motor_l;
-  double? foc_motor_ld_lq_diff; // Firmware 5.2 added
-  double? foc_motor_r;
-  double? foc_motor_flux_linkage;
-  double? foc_observer_gain;
-  double? foc_observer_gain_slow;
-  double? foc_observer_offset; // Firmware 5.3 added
-  double? foc_pll_kp;
-  double? foc_pll_ki;
-  double? foc_duty_dowmramp_kp;
-  double? foc_duty_dowmramp_ki;
-  double? foc_start_curr_dec;  //fw6
-  double? foc_start_curr_dec_rpm;  //fw6
-  double? foc_openloop_rpm;
-  double? foc_openloop_rpm_low; // Firmware 5.2 added
-  double? foc_d_gain_scale_start; // Fimware 5.2 added
-  double? foc_d_gain_scale_max_mod; // Firmware 5.2 added
-  double? foc_sl_openloop_hyst;
-  double? foc_sl_openloop_time;
-  double? foc_sl_openloop_time_lock; // Firmware 5.2 added; was foc_sl_d_current_duty in 5.1
-  double? foc_sl_openloop_time_ramp; // Firmware 5.2 added; was foc_sl_d_current_factor in 5.1
-  double? foc_sl_openloop_boost_q; //fw6
-  double? foc_sl_openloop_max_q;  //fw6
-  mc_foc_sensor_mode? foc_sensor_mode;
-  List<int> foc_hall_table;
-  double? foc_hall_interp_erpm; // Firmware 5.2 added
-  double? foc_sl_erpm_start; //fw6.2
-  double? foc_sl_erpm;
-  bool? foc_sample_v0_v7;
-  bool? foc_sample_high_current;
-  mc_foc_control_sample_mode? foc_control_sample_mode; //fw6.2
-  mc_foc_current_sample_mode? foc_current_sample_mode;   //fw6.2
-  SAT_COMP_MODE? foc_sat_comp_mode;  //fw6
-  double? foc_sat_comp;
-  bool? foc_temp_comp;
-  double? foc_temp_comp_base_temp;
-  double? foc_current_filter_const;
-  mc_foc_cc_decoupling_mode? foc_cc_decoupling;
-  mc_foc_observer_type? foc_observer_type;
-  double? foc_hfi_voltage_start;
-  double? foc_hfi_voltage_run;
-  double? foc_hfi_voltage_max;
-  double? foc_hfi_gain;  //fw6
-  double? foc_hfi_hyst;  //fw6
-  double? foc_sl_erpm_hfi;
-  int? foc_hfi_start_samples;
-  double? foc_hfi_obs_ovr_sec;
-  mc_foc_hfi_samples? foc_hfi_samples;
-  bool? foc_offsets_cal_on_boot;
-  List<double> foc_offsets_current; // Firmware 5.3 added
-  List<double> foc_offsets_voltage; // Firmware 5.3 added
-  List<double> foc_offsets_voltage_undriven; // Firmware 5.3 added
-  bool? foc_phase_filter_enable; // Firmware 5.3 added
-  bool? foc_phase_filter_disable_fault;  //fw6
-  double? foc_phase_filter_max_erpm; // Firmware 5.3 added
-  MTPA_MODE? foc_mtpa_mode; // Firmware 5.3 added
+  double foc_current_kp = 0;
+  double foc_current_ki = 0;
+  double foc_f_zv = 0; // Firmware 5.3 changed from: foc_f_sw
+  double foc_dt_us = 0;
+  double foc_encoder_offset = 0;
+  bool foc_encoder_inverted = false;
+  double foc_encoder_ratio = 0;
+  double foc_encoder_sin_offset = 0;
+  double foc_encoder_sin_gain = 0;
+  double foc_encoder_cos_offset = 0;
+  double foc_encoder_cos_gain = 0;
+  double foc_encoder_sincos_filter_constant = 0;
+  double foc_motor_l = 0;
+  double foc_motor_ld_lq_diff = 0; // Firmware 5.2 added
+  double foc_motor_r = 0;
+  double foc_motor_flux_linkage = 0;
+  double foc_observer_gain = 0;
+  double foc_observer_gain_slow = 0;
+  double foc_observer_offset = 0; // Firmware 5.3 added
+  double foc_pll_kp = 0;
+  double foc_pll_ki = 0;
+  double foc_duty_dowmramp_kp = 0;
+  double foc_duty_dowmramp_ki = 0;
+  double foc_start_curr_dec = 0;  //fw6
+  double foc_start_curr_dec_rpm = 0;  //fw6
+  double foc_openloop_rpm = 0;
+  double foc_openloop_rpm_low = 0; // Firmware 5.2 added
+  double foc_d_gain_scale_start = 0; // Fimware 5.2 added
+  double foc_d_gain_scale_max_mod = 0; // Firmware 5.2 added
+  double foc_sl_openloop_hyst = 0;
+  double foc_sl_openloop_time = 0;
+  double foc_sl_openloop_time_lock = 0; // Firmware 5.2 added; was foc_sl_d_current_duty in 5.1
+  double foc_sl_openloop_time_ramp = 0; // Firmware 5.2 added; was foc_sl_d_current_factor in 5.1
+  double foc_sl_openloop_boost_q = 0; //fw6
+  double foc_sl_openloop_max_q = 0;  //fw6
+  mc_foc_sensor_mode foc_sensor_mode = mc_foc_sensor_mode.FOC_SENSOR_MODE_SENSORLESS;
+  List<int> foc_hall_table = List.filled(8, 0);
+  double foc_hall_interp_erpm = 0; // Firmware 5.2 added
+  double foc_sl_erpm_start = 0; //fw6.2
+  double foc_sl_erpm = 0;
+  bool foc_sample_v0_v7 = false;
+  bool foc_sample_high_current = false;
+  mc_foc_control_sample_mode foc_control_sample_mode = mc_foc_control_sample_mode.FOC_CONTROL_SAMPLE_MODE_V0; //fw6.2
+  mc_foc_current_sample_mode foc_current_sample_mode = mc_foc_current_sample_mode.FOC_CURRENT_SAMPLE_MODE_LONGEST_ZERO;   //fw6.2
+  SAT_COMP_MODE foc_sat_comp_mode = SAT_COMP_MODE.SAT_COMP_DISABLED;  //fw6
+  double foc_sat_comp = 0;
+  bool foc_temp_comp = false;
+  double foc_temp_comp_base_temp = 0;
+  double foc_current_filter_const = 0;
+  mc_foc_cc_decoupling_mode foc_cc_decoupling = mc_foc_cc_decoupling_mode.FOC_CC_DECOUPLING_DISABLED;
+  mc_foc_observer_type foc_observer_type = mc_foc_observer_type.FOC_OBSERVER_ORTEGA_ORIGINAL;
+  double foc_hfi_voltage_start = 0;
+  double foc_hfi_voltage_run = 0;
+  double foc_hfi_voltage_max = 0;
+  double foc_hfi_gain = 0;  //fw6
+  double foc_hfi_hyst = 0;  //fw6
+  double foc_sl_erpm_hfi = 0;
+  int foc_hfi_start_samples = 0;
+  double foc_hfi_obs_ovr_sec = 0;
+  mc_foc_hfi_samples foc_hfi_samples = mc_foc_hfi_samples.HFI_SAMPLES_8;
+  bool foc_offsets_cal_on_boot = false;
+  List<double> foc_offsets_current = List.filled(3, 0); // Firmware 5.3 added
+  List<double> foc_offsets_voltage = List.filled(3, 0); // Firmware 5.3 added
+  List<double> foc_offsets_voltage_undriven = List.filled(3, 0); // Firmware 5.3 added
+  bool foc_phase_filter_enable = false; // Firmware 5.3 added
+  bool foc_phase_filter_disable_fault = false;  //fw6
+  double foc_phase_filter_max_erpm = 0; // Firmware 5.3 added
+  MTPA_MODE foc_mtpa_mode = MTPA_MODE.MTPA_MODE_OFF; // Firmware 5.3 added
   // Field Weakening
-  double? foc_fw_current_max; // Firmware 5.3 added
-  double? foc_fw_duty_start; // Firmware 5.3 added
-  double? foc_fw_ramp_time; // Firmware 5.3 added
-  double? foc_fw_q_current_factor; // Firmware 5.3 added
+  double foc_fw_current_max = 0; // Firmware 5.3 added
+  double foc_fw_duty_start = 0; // Firmware 5.3 added
+  double foc_fw_ramp_time = 0; // Firmware 5.3 added
+  double foc_fw_q_current_factor = 0; // Firmware 5.3 added
   // SPEED_SRC foc_speed_source;  //fw6
-  FOC_SPEED_SRC? foc_speed_source;  //fw6.2
+  FOC_SPEED_SRC foc_speed_source = FOC_SPEED_SRC.FOC_SPEED_SRC_CORRECTED;  //fw6.2
   // GPDrive
-  int? gpd_buffer_notify_left;
-  int? gpd_buffer_interpol;
-  double? gpd_current_filter_const;
-  double? gpd_current_kp;
-  double? gpd_current_ki;
+  int gpd_buffer_notify_left = 0;
+  int gpd_buffer_interpol = 0;
+  double gpd_current_filter_const = 0;
+  double gpd_current_kp = 0;
+  double gpd_current_ki = 0;
 
-  PID_RATE? sp_pid_loop_rate; // Firmware 5.3 added
+  PID_RATE sp_pid_loop_rate = PID_RATE.PID_RATE_25_HZ; // Firmware 5.3 added
 
   // Speed PID
-  double? s_pid_kp;
-  double? s_pid_ki;
-  double? s_pid_kd;
-  double? s_pid_kd_filter;
-  double? s_pid_min_erpm;
-  bool? s_pid_allow_braking;
-  double? s_pid_ramp_erpms_s; // Firmware 5.2 added
-  S_PID_SPEED_SRC? s_pid_speed_source;
+  double s_pid_kp = 0;
+  double s_pid_ki = 0;
+  double s_pid_kd = 0;
+  double s_pid_kd_filter = 0;
+  double s_pid_min_erpm = 0;
+  bool s_pid_allow_braking = false;
+  double s_pid_ramp_erpms_s = 0; // Firmware 5.2 added
+  S_PID_SPEED_SRC s_pid_speed_source = S_PID_SPEED_SRC.S_PID_SPEED_SRC_PLL;
 
   // Pos PID
-  double? p_pid_kp;
-  double? p_pid_ki;
-  double? p_pid_kd;
-  double? p_pid_kd_proc; // Firmware 5.3 added
-  double? p_pid_kd_filter;
-  double? p_pid_ang_div;
-  double? p_pid_gain_dec_angle; // Firmware 5.3 added
-  double? p_pid_offset; // Firmware 5.3 added
+  double p_pid_kp = 0;
+  double p_pid_ki = 0;
+  double p_pid_kd = 0;
+  double p_pid_kd_proc = 0; // Firmware 5.3 added
+  double p_pid_kd_filter = 0;
+  double p_pid_ang_div = 0;
+  double p_pid_gain_dec_angle = 0; // Firmware 5.3 added
+  double p_pid_offset = 0; // Firmware 5.3 added
   // Current controller
-  double? cc_startup_boost_duty;
-  double? cc_min_current;
-  double? cc_gain;
-  double? cc_ramp_step_max;
+  double cc_startup_boost_duty = 0;
+  double cc_min_current = 0;
+  double cc_gain = 0;
+  double cc_ramp_step_max = 0;
   // Misc
-  int? m_fault_stop_time_ms;
-  double? m_duty_ramp_step;
-  double? m_current_backoff_gain;
-  int? m_encoder_counts;
-  double? m_encoder_sin_offset;  //fw6>>
-  double? m_encoder_sin_amp;
-  double? m_encoder_cos_offset;
-  double? m_encoder_cos_amp;
-  double? m_encoder_sincos_filter_constant;
-  double? m_encoder_sincos_phase_correction; //fw6^
-  sensor_port_mode? m_sensor_port_mode;
-  bool? m_invert_direction;
-  drv8301_oc_mode? m_drv8301_oc_mode;
-  int? m_drv8301_oc_adj;
-  double? m_bldc_f_sw_min;
-  double? m_bldc_f_sw_max;
-  double? m_dc_f_sw;
-  double? m_ntc_motor_beta;
-  out_aux_mode? m_out_aux_mode;
-  temp_sensor_type? m_motor_temp_sens_type;
-  double? m_ptc_motor_coeff;
-  int? m_hall_extra_samples; // Firmware 5.2 added
-  int? m_batt_filter_const;  //fw6
-  double? m_ntcx_ptcx_temp_base; //fw6
-  double? m_ntcx_ptcx_res; //fw6
+  int m_fault_stop_time_ms = 0;
+  double m_duty_ramp_step = 0;
+  double m_current_backoff_gain = 0;
+  int m_encoder_counts = 0;
+  double m_encoder_sin_offset = 0;  //fw6>>
+  double m_encoder_sin_amp = 0;
+  double m_encoder_cos_offset = 0;
+  double m_encoder_cos_amp = 0;
+  double m_encoder_sincos_filter_constant = 0;
+  double m_encoder_sincos_phase_correction = 0; //fw6^
+  sensor_port_mode m_sensor_port_mode = sensor_port_mode.SENSOR_PORT_MODE_HALL;
+  bool m_invert_direction = false;
+  drv8301_oc_mode m_drv8301_oc_mode = drv8301_oc_mode.DRV8301_OC_LIMIT;
+  int m_drv8301_oc_adj = 0;
+  double m_bldc_f_sw_min = 0;
+  double m_bldc_f_sw_max = 0;
+  double m_dc_f_sw = 0;
+  double m_ntc_motor_beta = 0;
+  out_aux_mode m_out_aux_mode = out_aux_mode.OUT_AUX_MODE_OFF;
+  temp_sensor_type m_motor_temp_sens_type = temp_sensor_type.TEMP_SENSOR_NTC_10K_25C;
+  double m_ptc_motor_coeff = 0;
+  int m_hall_extra_samples = 0; // Firmware 5.2 added
+  int m_batt_filter_const = 0;  //fw6
+  double m_ntcx_ptcx_temp_base = 0; //fw6
+  double m_ntcx_ptcx_res = 0; //fw6
   // Setup info
-  int? si_motor_poles;
-  double? si_gear_ratio;
-  double? si_wheel_diameter;
-  BATTERY_TYPE? si_battery_type;
-  int? si_battery_cells;
-  double? si_battery_ah;
-  double? si_motor_nl_current; // Firmware 5.3 added
+  int si_motor_poles = 0;
+  double si_gear_ratio = 0;
+  double si_wheel_diameter = 0;
+  BATTERY_TYPE si_battery_type = BATTERY_TYPE.BATTERY_TYPE_LIION_3_0__4_2;
+  int si_battery_cells = 0;
+  double si_battery_ah = 0;
+  double si_motor_nl_current = 0; // Firmware 5.3 added
   // BMS Configuration
-  bms_config bms; // Firmware 5.2 added
+  bms_config bms = new bms_config(); // Firmware 5.2 added
 }
