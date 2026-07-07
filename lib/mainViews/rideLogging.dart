@@ -508,12 +508,12 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                     children: <Widget>[
                                       SizedBox(width: 5,),
                                       SizedBox(width: 50, child:
-                                      FutureBuilder<String>(
-                                          future: UserSettings.getBoardAvatarPath(rideLogsFromDatabase[index].boardID),
-                                          builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+                                      FutureBuilder<String?>(
+                                          future: UserSettings.getBoardAvatarPath(rideLogsFromDatabase[index].boardID!),
+                                          builder: (BuildContext context, AsyncSnapshot<String?> snapshot) {
                                             if (snapshot.hasData) {
                                               return CircleAvatar(
-                                                  backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.png'),
+                                                  backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data!)) : AssetImage('assets/FreeSK8_Mobile.png') as ImageProvider,
                                                   radius: 25,
                                                   backgroundColor: Colors.white);
                                             }
@@ -523,14 +523,14 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                       SizedBox(width: 10,),
 
                                       Expanded(
-                                        child: Text(rideLogsFromDatabase[index].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)),
+                                        child: Text(rideLogsFromDatabase[index].dateTime!.add(DateTime.now().timeZoneOffset).toString().substring(0,19)),
                                       ),
 
                                       SizedBox(
                                         width: 32,
                                         child: Icon(
-                                            rideLogsFromDatabase[index].faultCount < 1 ? Icons.check_circle_outline : Icons.error_outline,
-                                            color: rideLogsFromDatabase[index].faultCount < 1 ? Colors.green : Colors.red),
+                                            rideLogsFromDatabase[index].faultCount! < 1 ? Icons.check_circle_outline : Icons.error_outline,
+                                            color: rideLogsFromDatabase[index].faultCount! < 1 ? Colors.green : Colors.red),
                                       ),
 
                                       /// Ride Log Note Editor
@@ -538,7 +538,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                         width: 32,
                                         child: GestureDetector(
                                           onTap: (){
-                                            tecRideNotes.text = rideLogsFromDatabase[index].notes;
+                                            tecRideNotes.text = rideLogsFromDatabase[index].notes!;
 
                                             showDialog(context: context,
                                                 builder: (_) =>  AlertDialog(
@@ -552,7 +552,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                                     TextButton(
                                                         onPressed: () async {
                                                           // Update notes field in database
-                                                          await DatabaseAssistant.dbUpdateNote(rideLogsFromDatabase[index].logFilePath, tecRideNotes.text);
+                                                          await DatabaseAssistant.dbUpdateNote(rideLogsFromDatabase[index].logFilePath!, tecRideNotes.text);
                                                           _listFiles(true);
                                                           Navigator.of(context).pop(true);
                                                         },
@@ -566,7 +566,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                                 )
                                             );
                                           },
-                                          child: Icon( rideLogsFromDatabase[index].notes.length > 0 ? Icons.chat : Icons.chat_bubble_outline, size: 32),
+                                          child: Icon( rideLogsFromDatabase[index].notes!.length > 0 ? Icons.chat : Icons.chat_bubble_outline, size: 32),
                                         ),
                                       ),
 
@@ -579,9 +579,9 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                             mainAxisAlignment: MainAxisAlignment.center,
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              Text("${Duration(seconds: rideLogsFromDatabase[index].durationSeconds).toString().substring(0,Duration(seconds: rideLogsFromDatabase[index].durationSeconds).toString().indexOf("."))}"),
-                                              rideLogsFromDatabase[index].distance == -1.0 || widget.myUserSettings.settings.useGPSData ? Container() : Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[index].distance) : rideLogsFromDatabase[index].distance} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}"),
-                                              widget.myUserSettings.settings.useGPSData && rideLogsFromDatabase[index].distanceGPS != -1.0 ? Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[index].distanceGPS) : rideLogsFromDatabase[index].distanceGPS} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}") : Container(),
+                                              Text("${Duration(seconds: rideLogsFromDatabase[index].durationSeconds!).toString().substring(0,Duration(seconds: rideLogsFromDatabase[index].durationSeconds!).toString().indexOf("."))}"),
+                                              rideLogsFromDatabase[index].distance == -1.0 || widget.myUserSettings.settings.useGPSData ? Container() : Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[index].distance!) : rideLogsFromDatabase[index].distance} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}"),
+                                              widget.myUserSettings.settings.useGPSData && rideLogsFromDatabase[index].distanceGPS != -1.0 ? Text("${widget.myUserSettings.settings.useImperial ? kmToMile(rideLogsFromDatabase[index].distanceGPS!) : rideLogsFromDatabase[index].distanceGPS} ${widget.myUserSettings.settings.useImperial ? "mi" : "km"}") : Container(),
                                             ],
                                           )
                                       ),
@@ -612,7 +612,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                               }
 
                               // Confirm Merge with user
-                              int mergedDurationSeconds = rideLogsFromDatabase[index].dateTime.difference(rideLogsFromDatabase[index+1].dateTime).inSeconds + rideLogsFromDatabase[index].durationSeconds;
+                              int mergedDurationSeconds = rideLogsFromDatabase[index].dateTime!.difference(rideLogsFromDatabase[index+1].dateTime!).inSeconds + rideLogsFromDatabase[index].durationSeconds!;
                               bool doMerge = await genericConfirmationDialog(
                                   context,
                                   TextButton(
@@ -630,14 +630,14 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                       Text("Select merge to combine this file with the previous"),
                                       SizedBox(height: 15),
                                       Text("${rideLogsFromDatabase[index].boardAlias}"),
-                                      Text("${rideLogsFromDatabase[index].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}"),
-                                      Text("${prettyPrintDuration(Duration(seconds: rideLogsFromDatabase[index].durationSeconds))}"),
+                                      Text("${rideLogsFromDatabase[index].dateTime!.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}"),
+                                      Text("${prettyPrintDuration(Duration(seconds: rideLogsFromDatabase[index].durationSeconds!))}"),
 
                                       SizedBox(height: 15),
                                       Text("Previous File:", style: TextStyle(fontWeight: FontWeight.bold)),
                                       Text("${rideLogsFromDatabase[index+1].boardAlias}"),
-                                      Text("${rideLogsFromDatabase[index+1].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}"),
-                                      Text("${prettyPrintDuration(Duration(seconds: rideLogsFromDatabase[index+1].durationSeconds))}"),
+                                      Text("${rideLogsFromDatabase[index+1].dateTime!.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}"),
+                                      Text("${prettyPrintDuration(Duration(seconds: rideLogsFromDatabase[index+1].durationSeconds!))}"),
 
                                       SizedBox(height: 15),
                                       mergedDurationSeconds > 7200 ? Icon(Icons.warning_amber_outlined, color: Colors.yellowAccent,) : Container(),
@@ -649,7 +649,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                 // Show dialog to prevent user input
                                 await Dialogs.showPleaseWaitDialog(context, _keyLoader).timeout(Duration(milliseconds: 500)).catchError((error){});
                                 try {
-                                  globalLogger.d("Log Merge Confirmed. Files: ${rideLogsFromDatabase[index].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}, ${rideLogsFromDatabase[index+1].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}");
+                                  globalLogger.d("Log Merge Confirmed. Files: ${rideLogsFromDatabase[index].dateTime!.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}, ${rideLogsFromDatabase[index+1].dateTime!.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}");
                                   final documentsDirectory = await getApplicationDocumentsDirectory();
                                   // Get later file contents and statistics
                                   String fileContents = File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").readAsStringSync();
@@ -662,49 +662,49 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                   double avgSpeedGPS = -1.0;
                                   // avgMovingSpeedGPS may be -1.0 from either entry
                                   if (statsEarlier.avgMovingSpeedGPS != -1.0 && statsLater.avgMovingSpeedGPS != -1.0) {
-                                    avgMovingSpeedGPS = doublePrecision(statsEarlier.avgMovingSpeedGPS + statsLater.avgMovingSpeedGPS / 2, 2);
+                                    avgMovingSpeedGPS = doublePrecision(statsEarlier.avgMovingSpeedGPS! + statsLater.avgMovingSpeedGPS! / 2, 2);
                                   } else if (statsEarlier.avgMovingSpeedGPS != -1.0) {
-                                    avgMovingSpeedGPS = statsEarlier.avgMovingSpeedGPS;
+                                    avgMovingSpeedGPS = statsEarlier.avgMovingSpeedGPS!;
                                   } else if (statsLater.avgMovingSpeedGPS != -1.0) {
-                                    avgMovingSpeedGPS = statsLater.avgMovingSpeedGPS;
+                                    avgMovingSpeedGPS = statsLater.avgMovingSpeedGPS!;
                                   }
                                   // gpsAvgSpeed may be -1.0 from either entry
                                   if (statsEarlier.avgSpeedGPS != -1.0 && statsLater.avgSpeedGPS != -1.0) {
-                                    avgSpeedGPS = doublePrecision(statsEarlier.avgSpeedGPS + statsLater.avgSpeedGPS / 2, 2);
+                                    avgSpeedGPS = doublePrecision(statsEarlier.avgSpeedGPS! + statsLater.avgSpeedGPS! / 2, 2);
                                   } else if (statsEarlier.avgSpeedGPS != -1.0) {
-                                    avgSpeedGPS = statsEarlier.avgSpeedGPS;
+                                    avgSpeedGPS = statsEarlier.avgSpeedGPS!;
                                   } else if (statsLater.avgSpeedGPS != -1.0) {
-                                    avgSpeedGPS = statsLater.avgSpeedGPS;
+                                    avgSpeedGPS = statsLater.avgSpeedGPS!;
                                   }
                                   LogInfoItem newStatistics = new LogInfoItem(
                                       dateTime: statsEarlier.dateTime,
                                       boardID: statsEarlier.boardID,
                                       boardAlias: statsEarlier.boardAlias,
                                       logFilePath: statsEarlier.logFilePath,
-                                      avgMovingSpeed: doublePrecision(statsEarlier.avgMovingSpeed + statsLater.avgMovingSpeed / 2, 2),
+                                      avgMovingSpeed: doublePrecision(statsEarlier.avgMovingSpeed! + statsLater.avgMovingSpeed! / 2, 2),
                                       avgMovingSpeedGPS: avgMovingSpeedGPS,
-                                      avgSpeed: doublePrecision(statsEarlier.avgSpeed + statsLater.avgSpeed / 2, 2),
+                                      avgSpeed: doublePrecision(statsEarlier.avgSpeed! + statsLater.avgSpeed! / 2, 2),
                                       avgSpeedGPS: avgSpeedGPS,
-                                      maxSpeed: statsEarlier.maxSpeed > statsLater.maxSpeed ? statsEarlier.maxSpeed : statsLater.maxSpeed,
-                                      maxSpeedGPS: statsEarlier.maxSpeedGPS > statsLater.maxSpeedGPS ? statsEarlier.maxSpeedGPS : statsLater.maxSpeedGPS,
-                                      altitudeMax: statsEarlier.altitudeMax > statsLater.altitudeMax ? statsEarlier.altitudeMax : statsLater.altitudeMax,
-                                      altitudeMin: statsEarlier.altitudeMin < statsLater.altitudeMin ? statsEarlier.altitudeMin : statsLater.altitudeMin,
-                                      maxAmpsBattery: statsEarlier.maxAmpsBattery > statsLater.maxAmpsBattery ? statsEarlier.maxAmpsBattery : statsLater.maxAmpsBattery,
-                                      maxAmpsMotors: statsEarlier.maxAmpsMotors > statsLater.maxAmpsMotors ? statsEarlier.maxAmpsMotors : statsLater.maxAmpsMotors,
-                                      wattHoursTotal: _addDoubleUnlessNegativeOne(statsEarlier.wattHoursTotal, statsLater.wattHoursTotal),
-                                      wattHoursRegenTotal: _addDoubleUnlessNegativeOne(statsEarlier.wattHoursRegenTotal, statsLater.wattHoursRegenTotal),
-                                      distance: _addDoubleUnlessNegativeOne(statsEarlier.distance, statsLater.distance),
-                                      distanceGPS: _addDoubleUnlessNegativeOne(statsEarlier.distanceGPS, statsLater.distanceGPS),
-                                      durationSeconds: statsLater.dateTime.difference(statsEarlier.dateTime).inSeconds + statsLater.durationSeconds,
-                                      faultCount: statsEarlier.faultCount + statsLater.faultCount,
+                                      maxSpeed: statsEarlier.maxSpeed! > statsLater.maxSpeed! ? statsEarlier.maxSpeed : statsLater.maxSpeed,
+                                      maxSpeedGPS: statsEarlier.maxSpeedGPS! > statsLater.maxSpeedGPS! ? statsEarlier.maxSpeedGPS : statsLater.maxSpeedGPS,
+                                      altitudeMax: statsEarlier.altitudeMax! > statsLater.altitudeMax! ? statsEarlier.altitudeMax : statsLater.altitudeMax,
+                                      altitudeMin: statsEarlier.altitudeMin! < statsLater.altitudeMin! ? statsEarlier.altitudeMin : statsLater.altitudeMin,
+                                      maxAmpsBattery: statsEarlier.maxAmpsBattery! > statsLater.maxAmpsBattery! ? statsEarlier.maxAmpsBattery : statsLater.maxAmpsBattery,
+                                      maxAmpsMotors: statsEarlier.maxAmpsMotors! > statsLater.maxAmpsMotors! ? statsEarlier.maxAmpsMotors : statsLater.maxAmpsMotors,
+                                      wattHoursTotal: _addDoubleUnlessNegativeOne(statsEarlier.wattHoursTotal!, statsLater.wattHoursTotal!),
+                                      wattHoursRegenTotal: _addDoubleUnlessNegativeOne(statsEarlier.wattHoursRegenTotal!, statsLater.wattHoursRegenTotal!),
+                                      distance: _addDoubleUnlessNegativeOne(statsEarlier.distance!, statsLater.distance!),
+                                      distanceGPS: _addDoubleUnlessNegativeOne(statsEarlier.distanceGPS!, statsLater.distanceGPS!),
+                                      durationSeconds: statsLater.dateTime!.difference(statsEarlier.dateTime!).inSeconds + statsLater.durationSeconds!,
+                                      faultCount: statsEarlier.faultCount! + statsLater.faultCount!,
                                       rideName: statsEarlier.rideName,
-                                      notes: statsEarlier.notes.length > statsLater.notes.length ? statsEarlier.notes : statsLater.notes
+                                      notes: statsEarlier.notes!.length > statsLater.notes!.length ? statsEarlier.notes : statsLater.notes
                                   );
                                   await DatabaseAssistant.dbUpdateLog(newStatistics); // Update database entry
                                   rideLogsFromDatabase[index+1] = newStatistics; // Update in memory
 
                                   // Remove later file from database and filesystem
-                                  await DatabaseAssistant.dbRemoveLog(rideLogsFromDatabase[index].logFilePath);
+                                  await DatabaseAssistant.dbRemoveLog(rideLogsFromDatabase[index].logFilePath!);
                                   //Remove from Filesystem
                                   File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").deleteSync();
                                   setState(() {
@@ -729,9 +729,9 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                             try {
                               // Share file dialog
                               String fileSummary = 'Robogotchi gotchi!';
-                              String fileContents = await FileManager.openLogFile(rideLogsFromDatabase[index].logFilePath);
+                              String fileContents = await FileManager.openLogFile(rideLogsFromDatabase[index].logFilePath!);
                               await SharePlus.instance.share(ShareParams(
-                                files: [XFile.fromData(utf8.encode(fileContents), name: "${rideLogsFromDatabase[index].logFilePath.substring(rideLogsFromDatabase[index].logFilePath.lastIndexOf("/") + 1)}", mimeType: 'text/csv')],
+                                files: [XFile.fromData(utf8.encode(fileContents), name: "${rideLogsFromDatabase[index].logFilePath!.substring(rideLogsFromDatabase[index].logFilePath!.lastIndexOf("/") + 1)}", mimeType: 'text/csv')],
                                 text: fileSummary,
                               ));
                             } catch (e, stacktrace) {
@@ -770,8 +770,8 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                                     Text("Are you sure you wish to permanently erase this item?"),
                                     SizedBox(height: 15),
                                     Text("${rideLogsFromDatabase[index].boardAlias}"),
-                                    Text("${rideLogsFromDatabase[index].dateTime.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}"),
-                                    Text("${prettyPrintDuration(Duration(seconds: rideLogsFromDatabase[index].durationSeconds))}"),
+                                    Text("${rideLogsFromDatabase[index].dateTime!.add(DateTime.now().timeZoneOffset).toString().substring(0,19)}"),
+                                    Text("${prettyPrintDuration(Duration(seconds: rideLogsFromDatabase[index].durationSeconds!))}"),
                                   ],
                                 )
                             );
@@ -779,7 +779,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                               try {
                                 final documentsDirectory = await getApplicationDocumentsDirectory();
                                 // Remove the item from the database and rideLogs array
-                                await DatabaseAssistant.dbRemoveLog(rideLogsFromDatabase[index].logFilePath);
+                                await DatabaseAssistant.dbRemoveLog(rideLogsFromDatabase[index].logFilePath!);
                                 //Remove from Filesystem
                                 File("${documentsDirectory.path}${rideLogsFromDatabase[index].logFilePath}").deleteSync();
                               } catch (e, stacktrace) {
@@ -799,7 +799,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                   );
                 })),
 
-            widget.syncStatus.syncInProgress?Row(
+            widget.syncStatus.syncInProgress! ? Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 FileSyncViewer(syncStatus: widget.syncStatus,),
@@ -817,9 +817,9 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                       return _alertLimitedFunctionality(context);
                     }
                     if (widget.isLoggerLogging) {
-                      sendBLEData(widget.theTXLoggerCharacteristic, utf8.encode("logstop~"), false);
+                      sendBLEData(widget.theTXLoggerCharacteristic!, utf8.encode("logstop~"), false);
                     } else if (!widget.syncInProgress) {
-                      sendBLEData(widget.theTXLoggerCharacteristic, utf8.encode("logstart~"), false);
+                      sendBLEData(widget.theTXLoggerCharacteristic!, utf8.encode("logstart~"), false);
                     }
                   }),
 
@@ -836,7 +836,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                     genericConfirmationDialog(
                         context,
                         TextButton(child: Text("CLEAR LOGS!"),onPressed: () async {
-                          await sendBLEData(widget.theTXLoggerCharacteristic, utf8.encode("logdeleteall~"), false); // Clear all logs
+                          await sendBLEData(widget.theTXLoggerCharacteristic!, utf8.encode("logdeleteall~"), false); // Clear all logs
                           Navigator.of(context).pop(true); // Close dialog
                         }),
                         TextButton(child: Text("NOPE!"),onPressed: (){
@@ -861,7 +861,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                             Navigator.of(context).pop(false); // Close dialog
                           }),
                           TextButton(child: Text("Stop N Sync"),onPressed: () async {
-                            await sendBLEData(widget.theTXLoggerCharacteristic, utf8.encode("logstop~"), false); // Stop logging
+                            await sendBLEData(widget.theTXLoggerCharacteristic!, utf8.encode("logstop~"), false); // Stop logging
                             widget._handleSyncPress(); // Start sync routine
                             Navigator.of(context).pop(true); // Close dialog
                           }),
@@ -927,7 +927,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
 
     tableChildren.add(TableRow(children: [
       Icon(Icons.watch),
-      Text("${prettyPrintDuration(Duration(seconds: logEntry.durationSeconds))}",
+      Text("${prettyPrintDuration(Duration(seconds: logEntry.durationSeconds!))}",
           textAlign: TextAlign.center)]));
 
     // Show GPS distance if requested and available
@@ -935,12 +935,12 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
     if (widget.myUserSettings.settings.useGPSData) {
       if (logEntry.distanceGPS != -1.0) tableChildren.add(TableRow(children: [
         Icon(Icons.flag),
-        Text("${useImperial ? kmToMile(logEntry.distanceGPS) : logEntry.distanceGPS} ${useImperial ? "mi" : "km"}",
+        Text("${useImperial ? kmToMile(logEntry.distanceGPS!) : logEntry.distanceGPS} ${useImperial ? "mi" : "km"}",
             textAlign: TextAlign.center)]));
     } else {
       if (logEntry.distance != -1.0) tableChildren.add(TableRow(children: [
         Icon(Icons.flag_outlined),
-        Text("${useImperial ? kmToMile(logEntry.distance) : logEntry.distance} ${useImperial ? "mi" : "km"}",
+        Text("${useImperial ? kmToMile(logEntry.distance!) : logEntry.distance} ${useImperial ? "mi" : "km"}",
             textAlign: TextAlign.center)]));
     }
 
@@ -950,12 +950,12 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
     if (widget.myUserSettings.settings.useGPSData) {
       if (logEntry.maxSpeedGPS != -1.0) tableChildren.add(TableRow(children: [
         Transform.rotate(angle: 3.14159, child: Icon(Icons.av_timer),),
-        Text("${useImperial ? kmToMile(logEntry.maxSpeedGPS) : logEntry.maxSpeedGPS} ${useImperial ? "mph" : "kph"}",
+        Text("${useImperial ? kmToMile(logEntry.maxSpeedGPS!) : logEntry.maxSpeedGPS} ${useImperial ? "mph" : "kph"}",
             textAlign: TextAlign.center)]));
     } else {
       tableChildren.add(TableRow(children: [
         Transform.rotate(angle: 3.14159, child: Icon(Icons.av_timer),),
-        Text("${useImperial ? kmToMile(logEntry.maxSpeed) : logEntry.maxSpeed} ${useImperial ? "mph" : "kph"}",
+        Text("${useImperial ? kmToMile(logEntry.maxSpeed!) : logEntry.maxSpeed} ${useImperial ? "mph" : "kph"}",
             textAlign: TextAlign.center)]));
     }
 
@@ -980,7 +980,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
 
     if (logEntry.altitudeMax != -1.0) tableChildren.add(TableRow(children: [
       Icon(Icons.show_chart),
-      Text("${doublePrecision(logEntry.altitudeMax - logEntry.altitudeMin, 2)} meters",
+      Text("${doublePrecision(logEntry.altitudeMax! - logEntry.altitudeMin!, 2)} meters",
           textAlign: TextAlign.center)]));
 
     tableChildren.add(TableRow(children: [
@@ -990,7 +990,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
 
     genericAlert(context, title, Column(
       children: [
-        Text("${logEntry.dateTime.toIso8601String().substring(0,19)}"),
+        Text("${logEntry.dateTime!.toIso8601String().substring(0,19)}"),
         SizedBox(height: 10),
         Table(
             columnWidths: {

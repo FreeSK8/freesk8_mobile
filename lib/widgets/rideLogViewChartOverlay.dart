@@ -16,7 +16,7 @@ class RideLogChartData {
 
 class RideLogViewChartOverlay extends StatefulWidget {
   RideLogViewChartOverlay({this.eventObservable, this.imperialDistance});
-  final PublishSubject<RideLogChartData>? eventObservable;
+  final PublishSubject<RideLogChartData?>? eventObservable;
   final bool? imperialDistance;
   RideLogViewChartOverlayState createState() => new RideLogViewChartOverlayState(this.eventObservable);
 }
@@ -26,19 +26,19 @@ class RideLogViewChartOverlayState extends State<RideLogViewChartOverlay> {
   DateTime? selectedDateTime;
   TimeSeriesESC? selectedESCData;
 
-  StreamSubscription<RideLogChartData>? subscription;
-  PublishSubject<RideLogChartData>? eventObservable;
+  StreamSubscription<RideLogChartData?>? subscription;
+  PublishSubject<RideLogChartData?>? eventObservable;
 
-  RideLogViewChartOverlayState(PublishSubject<RideLogChartData> eventObservable) {
+  RideLogViewChartOverlayState(PublishSubject<RideLogChartData?>? eventObservable) {
     this.eventObservable = eventObservable;
 
-    subscription = this.eventObservable.listen((value) {
+    subscription = this.eventObservable!.listen((value) {
       reloadData(value);
     });
   }
 
   // As the StreamSubscription receives data from the PublishSubject update the state of this widget
-  void reloadData(RideLogChartData eventObject) {
+  void reloadData(RideLogChartData? eventObject) {
     if(eventObject!=null) {
       setState(() {
         selectedDateTime = eventObject.dateTime;
@@ -59,21 +59,21 @@ class RideLogViewChartOverlayState extends State<RideLogViewChartOverlay> {
       return Container();
     }
 
-    String tempMotor = "${selectedESCData.tempMotor == null ? "--" : selectedESCData.tempMotor}";
-    if (selectedESCData.tempMotor2 != null) {
-      tempMotor += ", ${selectedESCData.tempMotor2}";
+    String tempMotor = "${selectedESCData!.tempMotor == null ? "--" : selectedESCData!.tempMotor}";
+    if (selectedESCData!.tempMotor2 != null) {
+      tempMotor += ", ${selectedESCData!.tempMotor2}";
     }
-    String tempMosfet = "${selectedESCData.tempMosfet == null ? "--" : selectedESCData.tempMosfet}";
-    if (selectedESCData.tempMosfet2 != null) {
-      tempMosfet += ", ${selectedESCData.tempMosfet2}";
+    String tempMosfet = "${selectedESCData!.tempMosfet == null ? "--" : selectedESCData!.tempMosfet}";
+    if (selectedESCData!.tempMosfet2 != null) {
+      tempMosfet += ", ${selectedESCData!.tempMosfet2}";
     }
-    String currentMotor = "${selectedESCData.currentMotor == null ? "--" : selectedESCData.currentMotor} A";
-    if (selectedESCData.currentMotor2 != null) {
-      currentMotor += ", ${selectedESCData.currentMotor2} A";
+    String currentMotor = "${selectedESCData!.currentMotor == null ? "--" : selectedESCData!.currentMotor} A";
+    if (selectedESCData!.currentMotor2 != null) {
+      currentMotor += ", ${selectedESCData!.currentMotor2} A";
     }
-    String currentInput = "${selectedESCData.currentInput == null ? "--" : selectedESCData.currentInput} A";
-    if (selectedESCData.currentInput2 != null) {
-      currentInput += ", ${selectedESCData.currentInput2} A";
+    String currentInput = "${selectedESCData!.currentInput == null ? "--" : selectedESCData!.currentInput} A";
+    if (selectedESCData!.currentInput2 != null) {
+      currentInput += ", ${selectedESCData!.currentInput2} A";
     }
 
     return Container(
@@ -88,15 +88,15 @@ class RideLogViewChartOverlayState extends State<RideLogViewChartOverlay> {
         }
         ,child: Column(
           children: <Widget>[
-            Text("${selectedDateTime.toIso8601String().substring(0,19)}"),
-            selectedESCData.faultCode != null ? Text("${mc_fault_code.values[selectedESCData.faultCode].toString().substring(14)}", style: TextStyle(fontSize: 8),) : Container(),
+            Text("${selectedDateTime!.toIso8601String().substring(0,19)}"),
+            selectedESCData!.faultCode != null ? Text("${mc_fault_code.values[selectedESCData!.faultCode!].toString().substring(14)}", style: TextStyle(fontSize: 8),) : Container(),
             Container(
                 padding: EdgeInsets.only(left: 5),
                 child: Table(  //border: TableBorder.all(color: Colors.white),
                   children: [
                   TableRow( children: [
                     Text("VDC"),
-                    Text("${selectedESCData.voltage != null ? selectedESCData.voltage : "--"}", textAlign: TextAlign.center),
+                    Text("${selectedESCData!.voltage != null ? selectedESCData!.voltage : "--"}", textAlign: TextAlign.center),
                   ]),
                   TableRow( children: [
                     Text("MotorTemp"),
@@ -108,7 +108,7 @@ class RideLogViewChartOverlayState extends State<RideLogViewChartOverlay> {
                   ]),
                   TableRow( children: [
                     Text("Duty"),
-                    Text("${doublePrecision(selectedESCData.dutyCycle * 100, 2)} %", textAlign: TextAlign.center),
+                    Text("${doublePrecision(selectedESCData!.dutyCycle! * 100, 2)} %", textAlign: TextAlign.center),
                   ]),
                   TableRow( children: [
                     Text("Motor"),
@@ -120,11 +120,11 @@ class RideLogViewChartOverlayState extends State<RideLogViewChartOverlay> {
                   ]),
                   TableRow( children: [
                     Text("Speed"),
-                    Text("${selectedESCData.speed != null ? selectedESCData.speed : "--"}", textAlign: TextAlign.center),
+                    Text("${selectedESCData!.speed != null ? selectedESCData!.speed : "--"}", textAlign: TextAlign.center),
                   ]),
                   TableRow( children: [
-                    Text("Wh/${widget.imperialDistance ? "mile" : "km"}"),
-                    Text("${selectedESCData.consumption != null ? selectedESCData.consumption : "--"}", textAlign: TextAlign.center),
+                    Text("Wh/${widget.imperialDistance! ? "mile" : "km"}"),
+                    Text("${selectedESCData!.consumption != null ? selectedESCData!.consumption : "--"}", textAlign: TextAlign.center),
                   ]),
                 ],)
             ),

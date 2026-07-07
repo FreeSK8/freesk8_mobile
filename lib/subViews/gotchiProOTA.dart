@@ -110,8 +110,8 @@ class gotchiProOTAState extends State<gotchiProOTA> with SingleTickerProviderSta
       scanResults.clear();
       scanSubscription = FlutterBluePlus.scan().listen(
             (scanResult) {
-          if (scanResults.firstWhere(
-                  (ele) => ele.device.remoteId == scanResult.device.remoteId,
+          if (scanResults.cast<ScanResult?>().firstWhere(
+                  (ele) => ele!.device.remoteId == scanResult.device.remoteId,
               orElse: () => null) !=
               null) {
             return;
@@ -167,7 +167,7 @@ class gotchiProOTAState extends State<gotchiProOTA> with SingleTickerProviderSta
 
     // Update icon angle every state refresh
     if (otaRunning) {
-      _animationController.forward(from: _animationController.isCompleted ? 0.0 : _animationController.value);
+      _animationController!.forward(from: _animationController!.isCompleted ? 0.0 : _animationController!.value);
     }
 
     return Scaffold(
@@ -210,7 +210,7 @@ class gotchiProOTAState extends State<gotchiProOTA> with SingleTickerProviderSta
                   color: Colors.blue,
                 ) :
                 RotationTransition(
-                  turns: Tween(begin: 0.0, end: -1.0).animate(_animationController),
+                  turns: Tween(begin: 0.0, end: -1.0).animate(_animationController!),
                   child: Icon(
                     Icons.sync,
                     size: 60.0,
@@ -259,10 +259,10 @@ class DeviceItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var name = "Unknown";
-    if (scanResult.device.name != null && scanResult.device.name.length > 0) {
-      name = scanResult.device.name;
+    if (scanResult!.device.name != null && scanResult!.device.name.length > 0) {
+      name = scanResult!.device.name;
     }
-    var inOTAMode = scanResult.device.name == "ESP32";
+    var inOTAMode = scanResult!.device.name == "ESP32";
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -274,8 +274,8 @@ class DeviceItem extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(inOTAMode ? "gotchiPro (ready for update)" : name),
-                  Text(scanResult.device.remoteId.str),
-                  Text("RSSI: ${scanResult.rssi}"),
+                  Text(scanResult!.device.remoteId.str),
+                  Text("RSSI: ${scanResult!.rssi}"),
                 ],
               ),
             ),

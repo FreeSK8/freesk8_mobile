@@ -58,7 +58,7 @@ class LogInfoItem {
   // The keys correspond to the names of the columns in the database.
   Map<String, dynamic> toMap() {
     return {
-      'date_time' : dateTime.millisecondsSinceEpoch / 1000,
+      'date_time' : dateTime!.millisecondsSinceEpoch / 1000,
       'board_id' : boardID,
       'board_alias' : boardAlias,
       'log_file_path' : logFilePath, //NOTE: relative path as iOS updates will create new container UUIDs

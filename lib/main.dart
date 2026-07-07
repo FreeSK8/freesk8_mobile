@@ -191,11 +191,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
    *---A really nice renee should clean all this up---*
    */
   // Create a tab controller
-  TabController? controller;
+  late TabController controller;
 
-  BLEHelper? bleHelper;
-  ESCHelper? escHelper;
-  DieBieMSHelper? dieBieMSHelper;
+  late BLEHelper bleHelper;
+  late ESCHelper escHelper;
+  late DieBieMSHelper dieBieMSHelper;
   //final flutterReactiveBle = FlutterReactiveBle();
 
   static ESC_FIRMWARE escFirmwareVersion = ESC_FIRMWARE.UNSUPPORTED;
@@ -245,7 +245,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     FileManager.createLogDirectory();
 
     if (_connectedDevice != null){
-      widget.myUserSettings.loadSettings(_connectedDevice.id.toString());
+      widget.myUserSettings.loadSettings(_connectedDevice!.id.toString());
     } else {
       widget.myUserSettings.loadSettings("defaults");
     }
@@ -315,9 +315,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         // Cocked your head to the side and said I'm angry
         globalLogger.w("_monitorGotchiTimer: syncInProgress = true && syncLastACK > 5 seconds; lsInProgress=$lsInProgress catInProgress=$catInProgress");
         if (lsInProgress) {
-          theTXLoggerCharacteristic.write(utf8.encode("ls,${fileList.length},nack~"));
+          theTXLoggerCharacteristic!.write(utf8.encode("ls,${fileList.length},nack~"));
         } else if (catInProgress) {
-          theTXLoggerCharacteristic.write(utf8.encode("cat,$catBytesReceived,nack~"));
+          theTXLoggerCharacteristic!.write(utf8.encode("cat,$catBytesReceived,nack~"));
         }
         syncLastACK = DateTime.now();
       }
@@ -351,10 +351,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
     // Filter out points that are too close to the last one
     if (routeTakenLocations.length == 0 ){
-      routeTakenLocations.add(lastLocation);
+      routeTakenLocations.add(lastLocation!);
     } else {
       //NOTE: Only storing the first and current position of the mobile device
-      routeTakenLocations.last = lastLocation;
+      routeTakenLocations.last = lastLocation!;
     }
     /* NOT TRACKING VIA PHONE GPS
     else if ( (lastLocation.latitude - routeTakenLocations.last.latitude).abs() > 0.00005 ) {
@@ -435,12 +435,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     );
   }
 
-  void requestAPPCONF({int optionalCANID}) async {
+  void requestAPPCONF({int? optionalCANID}) async {
     Uint8List packet = simpleVESCRequest(COMM_PACKET_ID.COMM_GET_APPCONF.index, optionalCANID: optionalCANID);
 
     // Request APPCONF from the ESC
     globalLogger.i("requestAPPCONF: requesting application configuration (CAN ID? $optionalCANID)");
-    if (!await sendBLEData(theTXCharacteristic, packet, false)) {
+    if (!await sendBLEData(theTXCharacteristic!, packet, false)) {
       globalLogger.e("requestAPPCONF: failed to request application configuration");
     }
   }
@@ -450,7 +450,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
     // Request MCCONF from the ESC
     globalLogger.i("requestMCCONF: requesting motor configuration");
-    if (!await sendBLEData(theTXCharacteristic, packet, false)) {
+    if (!await sendBLEData(theTXCharacteristic!, packet, false)) {
       globalLogger.e("requestMCCONF: failed to request motor configuration");
     }
   }
@@ -524,7 +524,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       _connectedDeviceStreamSubscription = null;
 
       // Disconnect device
-      _connectedDevice.disconnect();
+      _connectedDevice!.disconnect();
       _connectedDevice = null;
 
       // Reset the TX characteristic
@@ -613,8 +613,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   final int tcpBridgePort = 65102;
   void disconnectTCPClient() {
     if (clientTCPSocket != null) {
-      clientTCPSocket.close();
-      clientTCPSocket.destroy();
+      clientTCPSocket!.close();
+      clientTCPSocket!.destroy();
       clientTCPSocket = null;
     }
   }
@@ -627,10 +627,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   }
   void startTCPServer() async {
     serverTCPSocket = await ServerSocket.bind(InternetAddress.anyIPv4, tcpBridgePort, shared: true);
-    globalLogger.i("TCP Socket Server Started: ${serverTCPSocket.address}");
-    serverTCPSocket.listen(handleTCPClient);
+    globalLogger.i("TCP Socket Server Started: ${serverTCPSocket!.address}");
+    serverTCPSocket!.listen(handleTCPClient);
     if (serverTCPSocket != null) {
-      String myIP = "(address unknown)";
+      String? myIP = "(address unknown)";
       try {
         myIP = await WiFiForIoTPlugin.getIP();
       } catch (exception) {
@@ -643,12 +643,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   }
   void handleTCPClient(Socket client) {
     clientTCPSocket = client;
-    globalLogger.i("handleTCPClient: A new client has connected from ${clientTCPSocket.remoteAddress.address}:${clientTCPSocket.remotePort}");
+    globalLogger.i("handleTCPClient: A new client has connected from ${clientTCPSocket!.remoteAddress.address}:${clientTCPSocket!.remotePort}");
 
-    clientTCPSocket.listen((onData) {
+    clientTCPSocket!.listen((onData) {
         //globalLogger.wtf("TCP Client to ESC: $onData");
         // Pass TCP data to BLE
-        sendBLEData(theTXCharacteristic, onData, true);
+        sendBLEData(theTXCharacteristic!, onData, true);
       },
       onError: (e) {
         globalLogger.e("TCP Socket Server::handleTCPClient: Error: ${e.toString()}");
@@ -799,17 +799,17 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 children: <Widget>[
                  // Text(device.remoteId.str),
 
-                  FutureBuilder<String>(
+                  FutureBuilder<String?>(
                       future: UserSettings.getBoardAlias(result.device.remoteId.str),
-                      builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
-                        return Text(snapshot.data != null ? snapshot.data : "unnamed", textAlign: TextAlign.center,);
+                      builder: (BuildContext context, AsyncSnapshot<String?> snapshot) {
+                        return Text(snapshot.data != null ? snapshot.data! : "unnamed", textAlign: TextAlign.center,);
                       }),
                   Stack(children: [
-                    FutureBuilder<String>(
+                    FutureBuilder<String?>(
                         future: UserSettings.getBoardAvatarPath(result.device.remoteId.str),
-                        builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+                        builder: (BuildContext context, AsyncSnapshot<String?> snapshot) {
                           return CircleAvatar(
-                              backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data)) : AssetImage('assets/FreeSK8_Mobile.png'),
+                              backgroundImage: snapshot.data != null ? FileImage(File(snapshot.data!)) : AssetImage('assets/FreeSK8_Mobile.png') as ImageProvider,
                               radius: 60,
                               backgroundColor: Colors.white);
                         }),
@@ -926,11 +926,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         _gotchiStatusTimer = null;
       });
       // Send syncstart message to the Robogotchi
-      if (await sendBLEData(theTXLoggerCharacteristic, utf8.encode("syncstart~"), false)) {
+      if (await sendBLEData(theTXLoggerCharacteristic!, utf8.encode("syncstart~"), false)) {
         globalLogger.i("_handleBLESyncState: syncstart command sent");
 
         // Request the files to begin the process
-        if (!await sendBLEData(theTXLoggerCharacteristic, utf8.encode("ls~"), false)) {
+        if (!await sendBLEData(theTXLoggerCharacteristic!, utf8.encode("ls~"), false)) {
           globalLogger.e("_handleBLESyncState: failed to request file list");
         }
       } else {
@@ -961,7 +961,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   }
   Future<bool> sendSyncStop() async {
     // Inform the Robogotchi we've completed the sync process
-    if (await sendBLEData(theTXLoggerCharacteristic, utf8.encode("syncstop~"), false)) {
+    if (await sendBLEData(theTXLoggerCharacteristic!, utf8.encode("syncstop~"), false)) {
       globalLogger.i("_handleBLESyncState: syncstop command sent");
       return Future.value(true);
     } else {
@@ -972,7 +972,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   //TODO: ^^ move this stuff when you feel like it ^^
 
   Future<void> setupConnectedDeviceStreamListener() async {
-    _connectedDeviceStreamSubscription = _connectedDevice.connectionState.listen((state) async {
+    _connectedDeviceStreamSubscription = _connectedDevice!.connectionState.listen((state) async {
       switch (state) {
         case BluetoothConnectionState.connected:
           if ( deviceHasDisconnected ){
@@ -1045,7 +1045,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     bool foundRXLogger = false;
     _services = await _connectedDevice?.discoverServices();
 
-    for (BluetoothService service in _services) {
+    for (BluetoothService service in _services!) {
       globalLogger.d("prepareConnectedDevice: Discovered service: ${service.uuid}");
       if (service.uuid == uartServiceUUID) {
         foundService = true;
@@ -1089,10 +1089,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     }
 
     if(foundRXLogger){
-      await theRXLoggerCharacteristic.setNotifyValue(true);
+      await theRXLoggerCharacteristic!.setNotifyValue(true);
     }
 
-    if(foundRXLogger) loggerRXDataSubscription = theRXLoggerCharacteristic.lastValueStream.listen((value) async {
+    if(foundRXLogger) loggerRXDataSubscription = theRXLoggerCharacteristic!.lastValueStream.listen((value) async {
       if (value.length == 0) {
         return; // Nothing to process. This happens on initial connection
       }
@@ -1102,7 +1102,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       if (lsInProgress) {
         if (receiveStr == "ls,complete") {
           globalLogger.d("List File Operation Complete. ${fileList.length} files reported");
-          fileList.sort((a, b) => a.fileName.compareTo(b.fileName)); // Sort ascending to grab the oldest file first
+          fileList.sort((a, b) => a.fileName!.compareTo(b.fileName!)); // Sort ascending to grab the oldest file first
           fileList.forEach((element) {
             globalLogger.d("File: ${element.fileName} is ${element.fileSize} bytes");
           });
