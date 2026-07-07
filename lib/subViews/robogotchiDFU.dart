@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_nordic_dfu/flutter_nordic_dfu.dart';
+import 'package:nordic_dfu/nordic_dfu.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import '../globalUtilities.dart';
 
@@ -61,12 +61,11 @@ class RobogotchiDFUState extends State<RobogotchiDFU> with SingleTickerProviderS
     int failCount = 0;
     while(dfuRunning) {
       try {
-        var result = await FlutterNordicDfu.startDfu(
+        var result = await NordicDfu().startDfu(
           deviceId,
           'assets/firmware/$updateFileName.zip',
           fileInAsset: true,
-          progressListener:
-          DefaultDfuProgressListenerAdapter(onProgressChangedHandle: (
+          onProgressChanged: (
               deviceAddress,
               percent,
               speed,
@@ -84,7 +83,7 @@ class RobogotchiDFUState extends State<RobogotchiDFU> with SingleTickerProviderS
             if (_percent == 100) {
               showCompletedDialog();
             }
-          }),
+          },
         );
         globalLogger.i("DFU Operation Completed. ($result)");
         dfuRunning = false;

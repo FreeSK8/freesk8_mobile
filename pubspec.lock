@@ -342,15 +342,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.2"
-  flutter_nordic_dfu:
-    dependency: "direct main"
-    description:
-      path: "."
-      ref: master
-      resolved-ref: "17fbfe602b504ef62261007c15634b2523792328"
-      url: "https://github.com/fengqiangboy/flutter-nordic-dfu.git"
-    source: git
-    version: "3.0.0"
   flutter_plugin_android_lifecycle:
     dependency: transitive
     description:
@@ -696,6 +687,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.0"
+  nordic_dfu:
+    dependency: "direct main"
+    description:
+      name: nordic_dfu
+      sha256: "498c18e7587f8aabb478fccfb93c2687ee2338595e3f81c26f82c8c8782c49ca"
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.2.0"
   package_config:
     dependency: transitive
     description:
