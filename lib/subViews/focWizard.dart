@@ -11,7 +11,7 @@ import '../globalUtilities.dart';
 
 class FOCWizardArguments {
   final BluetoothCharacteristic txCharacteristic;
-  final Uint8List escMotorConfigurationDefaults;
+  final Uint8List? escMotorConfigurationDefaults;
 
   FOCWizardArguments(this.txCharacteristic, this.escMotorConfigurationDefaults);
 }
@@ -186,7 +186,7 @@ class FOCWizardState extends State<FOCWizard> {
                 //TODO: set MCCONF from response data. Passing via arguments will most likely not work
                 if(myArguments.escMotorConfigurationDefaults != null){
                   print("Have MCCONF DEFAULT but don't know what to do with it yet");
-                  int mcconfPacketLength = myArguments.escMotorConfigurationDefaults.length;
+                  int mcconfPacketLength = myArguments.escMotorConfigurationDefaults!.length;
                   var byteData = new ByteData(mcconfPacketLength + 6); //<start><len><len2><payload><crc><crc2><end>
                   byteData.setUint8(0, 0x03);
                   byteData.setUint16(1, mcconfPacketLength);
