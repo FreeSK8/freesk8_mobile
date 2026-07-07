@@ -54,8 +54,12 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Analyze (non-blocking until null-safety migration completes)
-        run: flutter analyze --no-fatal-infos || true
+      # Warnings/infos are pre-existing deprecation noise; errors fail the build.
+      - name: Analyze
+        run: flutter analyze --no-fatal-warnings --no-fatal-infos
+
+      - name: Test
+        run: flutter test
 
       # Signing: decodes the release keystore from secrets when they exist.
       # Without secrets the build falls back to debug signing (still installable

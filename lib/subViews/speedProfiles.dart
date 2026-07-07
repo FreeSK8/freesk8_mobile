@@ -71,23 +71,23 @@ class SpeedProfilesEditorState extends State<SpeedProfilesEditor> {
     byteData.setFloat32(11, escProfile.l_current_max_scale);
     byteData.setFloat32(15, escProfile.speedKmhRev / 3.6); //kph to m/s
     byteData.setFloat32(19, escProfile.speedKmh / 3.6); //kph to m/s
-    byteData.setFloat32(23, myArguments.escMotorConfiguration.l_min_duty);
-    byteData.setFloat32(27, myArguments.escMotorConfiguration.l_max_duty);
+    byteData.setFloat32(23, myArguments!.escMotorConfiguration.l_min_duty);
+    byteData.setFloat32(27, myArguments!.escMotorConfiguration.l_max_duty);
     if (escProfile.l_watt_min != 0.0){
       byteData.setFloat32(31, escProfile.l_watt_min);
     } else {
-      byteData.setFloat32(31, myArguments.escMotorConfiguration.l_watt_min);
+      byteData.setFloat32(31, myArguments!.escMotorConfiguration.l_watt_min);
     }
     if (escProfile.l_watt_max != 0.0){
       byteData.setFloat32(35, escProfile.l_watt_max);
     } else {
-      byteData.setFloat32(35, myArguments.escMotorConfiguration.l_watt_max);
+      byteData.setFloat32(35, myArguments!.escMotorConfiguration.l_watt_max);
     }
     int checksum = CRC16.crc16(byteData.buffer.asUint8List(), 2, 37);
     byteData.setUint16(39, checksum);
     byteData.setUint8(41, 0x03); //End of packet
 
-    sendBLEData(myArguments.theTXCharacteristic, byteData.buffer.asUint8List(), true).then((sendResult){
+    sendBLEData(myArguments!.theTXCharacteristic, byteData.buffer.asUint8List(), true).then((sendResult){
       if (sendResult) globalLogger.d('COMM_SET_MCCONF_TEMP_SETUP sent');
       else globalLogger.d('COMM_SET_MCCONF_TEMP_SETUP failed to send');
     });
@@ -165,7 +165,7 @@ class SpeedProfilesEditorState extends State<SpeedProfilesEditor> {
                             },
                             style: ButtonStyle(backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
                               if (states.contains(MaterialState.disabled)) {
-                                return Colors.grey[100];
+                                return Colors.grey[100]!;
                               }
                               return Colors.transparent;
                             })),
@@ -179,14 +179,14 @@ class SpeedProfilesEditorState extends State<SpeedProfilesEditor> {
                               ],),
                             onPressed: () async {
                               // navigate to the editor
-                              final result = await Navigator.of(context).pushNamed(ESCProfileEditor.routeName, arguments: ESCProfileEditorArguments(myArguments.theTXCharacteristic, await ESCHelper.getESCProfile(i), i, myArguments.myUserSettings.settings.useImperial));
+                              final result = await Navigator.of(context).pushNamed(ESCProfileEditor.routeName, arguments: ESCProfileEditorArguments(myArguments!.theTXCharacteristic, await ESCHelper.getESCProfile(i), i, myArguments!.myUserSettings.settings.useImperial));
                               setState(() {
                                 // Update UI in case changes were made
                               });
                             },
                             style: ButtonStyle(backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
                               if (states.contains(MaterialState.disabled)) {
-                                return Colors.grey[100];
+                                return Colors.grey[100]!;
                               }
                               return Colors.transparent;
                             })),
@@ -199,11 +199,11 @@ class SpeedProfilesEditorState extends State<SpeedProfilesEditor> {
                                 Icon(Icons.exit_to_app),
                               ],),
                             onPressed: () async {
-                              setMCCONFTemp(_applyESCProfilePermanently, await ESCHelper.getESCProfile(i));
+                              setMCCONFTemp(_applyESCProfilePermanently!, await ESCHelper.getESCProfile(i));
                             },
                             style: ButtonStyle(backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
                               if (states.contains(MaterialState.disabled)) {
-                                return Colors.grey[100];
+                                return Colors.grey[100]!;
                               }
                               return Colors.transparent;
                             })),
@@ -224,40 +224,40 @@ class SpeedProfilesEditorState extends State<SpeedProfilesEditor> {
                               TableRow(children: [
                                 Text("Speed Forward", textAlign: TextAlign.right),
                                 Text(":"),
-                                Text("${myArguments.myUserSettings.settings.useImperial ? kmToMile(snapshot.data.speedKmh) : snapshot.data.speedKmh} ${myArguments.myUserSettings.settings.useImperial ? "mph" : "km/h"}")
+                                Text("${myArguments!.myUserSettings.settings.useImperial ? kmToMile(snapshot.data!.speedKmh) : snapshot.data!.speedKmh} ${myArguments!.myUserSettings.settings.useImperial ? "mph" : "km/h"}")
                               ]),
                               TableRow(children: [
                                 Text("Speed Reverse", textAlign: TextAlign.right),
                                 Text(":"),
-                                Text("${myArguments.myUserSettings.settings.useImperial ? kmToMile(snapshot.data.speedKmhRev) : snapshot.data.speedKmhRev} ${myArguments.myUserSettings.settings.useImperial ? "mph" : "km/h"}")
+                                Text("${myArguments!.myUserSettings.settings.useImperial ? kmToMile(snapshot.data!.speedKmhRev) : snapshot.data!.speedKmhRev} ${myArguments!.myUserSettings.settings.useImperial ? "mph" : "km/h"}")
                               ]),
                               TableRow(children: [
                                 Text("Current Accel", textAlign: TextAlign.right),
                                 Text(":"),
-                                Text("${snapshot.data.l_current_max_scale * 100} %")
+                                Text("${snapshot.data!.l_current_max_scale * 100} %")
                               ]),
                               TableRow(children: [
                                 Text("Current Brake", textAlign: TextAlign.right),
                                 Text(":"),
-                                Text("${snapshot.data.l_current_min_scale * 100} %")
+                                Text("${snapshot.data!.l_current_min_scale * 100} %")
                               ]),
 
                             ],
                           );
 
-                          if (snapshot.data.l_watt_max != 0.0) {
+                          if (snapshot.data!.l_watt_max != 0.0) {
                             thisTableData.children.add(new TableRow(children: [
                               Text("Max Power Out", textAlign: TextAlign.right),
                               Text(":"),
-                              Text("${snapshot.data.l_watt_max} W")
+                              Text("${snapshot.data!.l_watt_max} W")
                             ]));
                           }
 
-                          if (snapshot.data.l_watt_min != 0.0) {
+                          if (snapshot.data!.l_watt_min != 0.0) {
                             thisTableData.children.add(new TableRow(children: [
                               Text("Max Power Regen", textAlign: TextAlign.right),
                               Text(":"),
-                              Text("${snapshot.data.l_watt_min} W")
+                              Text("${snapshot.data!.l_watt_min} W")
                             ]));
                           }
                           return thisTableData;
@@ -276,7 +276,7 @@ class SpeedProfilesEditorState extends State<SpeedProfilesEditor> {
               children: <Widget>[
                 SwitchListTile(
                   title: Text("Retain profile after ESC is reset?"),
-                  value: _applyESCProfilePermanently,
+                  value: _applyESCProfilePermanently!,
                   onChanged: (bool newValue) { setState((){_applyESCProfilePermanently = newValue;}); },
                   secondary: const Icon(Icons.memory),
                 ),
@@ -296,7 +296,7 @@ class SpeedProfilesEditorState extends State<SpeedProfilesEditor> {
     print("Building Template");
 
     //Receive arguments building this widget
-    myArguments = ModalRoute.of(context).settings.arguments;
+    myArguments = ModalRoute.of(context)!.settings.arguments as SpeedProfileArguments?;
     if(myArguments == null){
       return Container(child:Text("No Arguments"));
     }
@@ -324,7 +324,7 @@ class SpeedProfilesEditorState extends State<SpeedProfilesEditor> {
             future: _buildBody(context),
             builder: (context, AsyncSnapshot<Widget> snapshot) {
               if (snapshot.hasData) {
-                return snapshot.data;
+                return snapshot.data!;
               } else {
                 return Column(
                   mainAxisAlignment: MainAxisAlignment.center,

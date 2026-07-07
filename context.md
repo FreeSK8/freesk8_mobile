@@ -1,8 +1,13 @@
 # FreeSK8 Mobile — Modernization Context & Handoff
 
 > Living handoff document for agents/developers continuing the Flutter 3 / Dart 3
-> modernization. Last updated: 2026-07-07. Branch: `claude/update-flutter-dart-pfN82`
-> (identical history also exists on `flutter-bloc-state-engine`).
+> modernization. Last updated: 2026-07-07 (post Phase A+B). Branch:
+> `claude/update-flutter-dart-pfN82`.
+>
+> **STATUS: null-safety migration COMPLETE — `flutter analyze` reports 0 errors**
+> (down from 4,320), 71 warnings / 121 infos remain (pre-existing deprecation
+> noise, non-blocking). `flutter test` passes (12 unit tests covering blocs and
+> data-model defaults in `test/blocs_test.dart`). Next milestones: §7 Phases C–E.
 
 ---
 
@@ -72,19 +77,24 @@ Top files: inputConfigurationEditor 554 · rideLogViewer 552 · firmware seriali
 
 ## 7. ACTION PLAN (ordered, with expected error burn-down)
 
-**Phase A — De-nullable the data models (eliminates ~2,400+ errors)**
-In `mcConf.dart`, `appConf.dart` (and the few remaining nullable fields in `escHelper.dart` telemetry classes): replace `double? x;` → `double x = 0;`, `int? x;` → `int x = 0;`, `bool? x;` → `bool x = false;`, enums → first enum value (matches what the deserializer writes anyway; the app never reads these before deserialization or `ESCHelper` defaults fill them). This zeroes the serializer errors *without touching the serializer files* and kills most of input/motorConfigurationEditor. Same treatment for `logFileParser.dart` (LogESC/LogGPS) and `userSettings.dart` (`UserSettingsStructure` — it has a `defaults()`-style initializer; fields can be non-nullable with defaults).
+**Phase A — De-nullable the data models — ✅ DONE (4,309 → 1,945 errors)**
+MCCONF/APPCONF (385 fields via script), ESCTelemetry/ESCProfile/ESCFirmware/ESCFault, LogESC/LogGPS, UserSettingsStructure/UserSettings: `Type? x;` → default-initialized non-nullable; constructor-body assignments merged into field initializers (constructor-body assignment does not satisfy definite assignment). Genuinely-optional stayed nullable: `boardAvatarPath`, `ESCFault.firstSeen/lastSeen`, `LogESC/LogGPS.dt`. The 6 firmware serializer files (1,796 errors) went to zero with no edits.
 
-**Phase B — View-layer null handling (main.dart, rideLogViewer, rideLogging, realTimeData, brocator, connectionStatus, fileSyncViewer, speedProfiles, esk8Configuration, vehicleManager)**
-Mechanical per-site fixes now that models are sane: `!` where a connection/argument is guaranteed (e.g. `theTXCharacteristic!.write` after connect), `?.`/`??` for genuinely-optional UI state, `late` for `initState`-assigned fields (e.g. `TabController`), local-variable definite-assignment fixes. Budget: this is the long tail; do it file-by-file, `flutter analyze` after each file. `missing_default_value_for_parameter` (47) = optional params needing `?` or a default.
+**Phase B — View-layer null handling — ✅ DONE (1,945 → 0 errors)**
+Executed by 7 parallel agents, one per file group, each verifying with the real analyzer to 0 errors in its files. Conventions used (follow these for future edits):
+- `late` only where assignment provably precedes every read (initState helpers, top-of-build route args). NOT for `applicationDocumentsDirectory` (async `.then()` assignment, read in first build — stays `String?`).
+- `!` inside existing null-guarded branches / connected-only paths (fields don't promote; locals do). `!` on `tryParse` results preserves original crash-on-bad-data semantics.
+- InputCalibration `ppmCalibrationRunning`/`adcCalibrationRunning` stay nullable — main.dart assigns `null` as semantic "not started" state.
+- Null-sentinel `firstWhere` patterns preserved via `.cast<ScanResult?>()`.
+- flutter_nordic_dfu git package verified: still exposes static `FlutterNordicDfu.startDfu` — no API rename needed.
 
-**Phase C — Replace logger_flutter properly** (see §5.1) and verify `flutter_nordic_dfu` (§5.2).
+**Phase C — Replace logger_flutter properly** (see §5.1). Still the only stubbed functionality (shake-to-show debug console).
 
-**Phase D — Build & runtime verification**
-`flutter build apk --release` must succeed; then on-device/BLE smoke test: scan→connect→RT telemetry→ride log sync→config editor read/write. Also fix the 2 Dependabot alerts on master (visible in repo Security tab).
+**Phase D — Build & runtime verification — NEXT**
+`flutter analyze` = 0 errors and `flutter test` passes (12 tests, `test/blocs_test.dart`); the container has no Android SDK, so `flutter build apk --release` runs in CI (workflow is now strict: analyze + test + build). Then on-device/BLE smoke test: scan→connect→RT telemetry→ride log sync→config editor read/write. Also fix the 2 Dependabot alerts on master (repo Security tab).
 
 **Phase E — Finish the bloc migration (optional, perf goal)**
-Wire the 4 dead blocs (BLEConnection, FileSync, Robogotchi, ESCConfig) or delete them; replace `context.watch` at top of `RealTimeData.build()` with scoped `BlocBuilder(buildWhen:)` so the 50 ms tick redraws only gauge widgets (audit item H3); fix `FileSyncBloc._onEraseToggled` not emitting (M4); rideLogging sort-clause load race (M3).
+Wire the 4 dead blocs (BLEConnection, FileSync, Robogotchi, ESCConfig) or delete them; replace `context.watch` at top of `RealTimeData.build()` with scoped `BlocBuilder(buildWhen:)` so the 50 ms tick redraws only gauge widgets (audit item H3); fix `FileSyncBloc._onEraseToggled` not emitting (M4); rideLogging sort-clause load race (M3). Cleanup: burn down the 71 warnings (mostly `unnecessary_null_comparison` from preserved guards and deprecated `withOpacity`/`WillPopScope`/`wtf`).
 
 ## 8. CI (implemented this session)
 
