@@ -12,7 +12,12 @@ name: Android Release
 
 on:
   push:
-    branches: [master]
+    branches:
+      - master
+      # TEMPORARY: one-shot bootstrap trigger to produce the first CI run of
+      # the migration branch. Remove after the run completes — PR builds are
+      # manual-only by policy.
+      - claude/update-flutter-dart-pfN82
   workflow_dispatch:
     inputs:
       build_type:
