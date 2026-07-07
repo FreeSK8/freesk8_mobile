@@ -7,7 +7,10 @@
 > **STATUS: null-safety migration COMPLETE — `flutter analyze` reports 0 errors**
 > (down from 4,320), 71 warnings / 121 infos remain (pre-existing deprecation
 > noise, non-blocking). `flutter test` passes (12 unit tests covering blocs and
-> data-model defaults in `test/blocs_test.dart`). Next milestones: §7 Phases C–E.
+> data-model defaults in `test/blocs_test.dart`).
+> **`flutter build apk --release` SUCCEEDS end-to-end (71 MB APK)** on the
+> modernized Android toolchain: Gradle 8.11.1 / AGP 8.9.1 / Kotlin 2.2.0 /
+> compileSdk 36 / declarative plugins DSL. Next milestones: §7 Phases C & E.
 
 ---
 
@@ -90,8 +93,17 @@ Executed by 7 parallel agents, one per file group, each verifying with the real 
 
 **Phase C — Replace logger_flutter properly** (see §5.1). Still the only stubbed functionality (shake-to-show debug console).
 
-**Phase D — Build & runtime verification — NEXT**
-`flutter analyze` = 0 errors and `flutter test` passes (12 tests, `test/blocs_test.dart`); the container has no Android SDK, so `flutter build apk --release` runs in CI (workflow is now strict: analyze + test + build). Then on-device/BLE smoke test: scan→connect→RT telemetry→ride log sync→config editor read/write. Also fix the 2 Dependabot alerts on master (repo Security tab).
+**Phase D — Build & runtime verification — ✅ BUILD DONE (runtime pending)**
+`flutter build apk --release` succeeds locally (71 MB APK) after modernizing the Android toolchain. The failure→fix chain, in order (useful if CI diverges):
+1. Gradle wrapper 7.2 → **8.11.1** (AGP requirement; in this sandbox the wrapper download is proxy-blocked — pre-seed `~/.gradle/wrapper/dists/` from `mirrors.cloud.tencent.com/gradle/`; CI downloads normally)
+2. AGP 8.5.2 → **8.9.1** (Flutter 3.44 min is 8.6.0; androidx.navigationevent transitively requires 8.9.1)
+3. **compileSdk 36** (androidx transitive requirement; targetSdk stays 35; NDK 27 auto-installs)
+4. Legacy plugins lack AGP-8 `namespace` and mix JVM targets → compatibility shims in `android/build.gradle` (namespace from manifest package attr; Java/Kotlin pinned to 11); removed unused `android_id` package
+5. `flutter_nordic_dfu` (git, V1 embedding) → **`nordic_dfu` ^6.2.0** (API migrated in robogotchiDFU.dart)
+6. `flutter_plugin_android_lifecycle` 2.0.7 → 2.0.35 (V1 embedding leftovers)
+7. Kotlin 2.0.21 → **2.2.0** (wakelock_plus internal compiler error)
+
+Still pending: on-device/BLE smoke test (scan→connect→RT telemetry→ride log sync→config editor read/write) — static/build checks can't verify BLE. Fix the 2 Dependabot alerts on master (repo Security tab).
 
 **Phase E — Finish the bloc migration (optional, perf goal)**
 Wire the 4 dead blocs (BLEConnection, FileSync, Robogotchi, ESCConfig) or delete them; replace `context.watch` at top of `RealTimeData.build()` with scoped `BlocBuilder(buildWhen:)` so the 50 ms tick redraws only gauge widgets (audit item H3); fix `FileSyncBloc._onEraseToggled` not emitting (M4); rideLogging sort-clause load race (M3). Cleanup: burn down the 71 warnings (mostly `unnecessary_null_comparison` from preserved guards and deprecated `withOpacity`/`WillPopScope`/`wtf`).
