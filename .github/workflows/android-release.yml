@@ -1,0 +1,102 @@
+# Android release build for FreeSK8 Mobile.
+#
+# Trigger policy (per project decision):
+#   - Runs automatically ONLY when changes land on master (i.e. on merge).
+#   - Pull requests do NOT build automatically — trigger manually from the
+#     Actions tab (workflow_dispatch) against the PR branch when needed.
+#
+# NOTE: This bootstrap copy on master is dispatch-only — master's current
+# code predates the Flutter 3 migration and cannot build. PR #34 carries
+# the full version with the push-to-master trigger; it takes over on merge.
+#
+# See CI_GUIDE.md for keystore/secret setup. Until the signing secrets are
+# configured this workflow produces a debug-signed release APK artifact.
+
+name: Android Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: "Artifact type to build"
+        required: false
+        default: apk
+        type: choice
+        options: [apk, appbundle]
+
+concurrency:
+  group: android-release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.5
+          cache: true
+
+      - name: Flutter version
+        run: flutter --version
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Warnings/infos are pre-existing deprecation noise; errors fail the build.
+      - name: Analyze
+        run: flutter analyze --no-fatal-warnings --no-fatal-infos
+
+      - name: Test
+        run: flutter test
+
+      # Signing: decodes the release keystore from secrets when they exist.
+      # Without secrets the build falls back to debug signing (still installable
+      # for testing, not distributable via Play Store).
+      - name: Decode release keystore
+        if: ${{ vars.HAS_SIGNING == 'true' }}
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
+          cat > android/key.properties <<EOF
+          storePassword=${{ secrets.STORE_PASSWORD }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          storeFile=release.keystore
+          EOF
+
+      - name: Build APK
+        if: ${{ github.event.inputs.build_type != 'appbundle' }}
+        run: flutter build apk --release
+
+      - name: Build App Bundle
+        if: ${{ github.event.inputs.build_type == 'appbundle' }}
+        run: flutter build appbundle --release
+
+      - name: Upload APK artifact
+        if: ${{ github.event.inputs.build_type != 'appbundle' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: freesk8-mobile-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
+
+      - name: Upload AAB artifact
+        if: ${{ github.event.inputs.build_type == 'appbundle' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: freesk8-mobile-release-aab
+          path: build/app/outputs/bundle/release/app-release.aab
+          retention-days: 30
