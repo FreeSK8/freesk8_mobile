@@ -1,5 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.derelictrobot.freesk8_mobile">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- This is for image_picker on Android SDK 30
      See: https://github.com/flutter/flutter/issues/63727#issuecomment-690070820 -->

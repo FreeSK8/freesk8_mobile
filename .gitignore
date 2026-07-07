@@ -9,3 +9,6 @@ build/
 .flutter-plugins-dependencies
 .packages
 ios/Flutter/ephemeral/
+android/local.properties
+android/key.properties
+android/app/release.keystore
