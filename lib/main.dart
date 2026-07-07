@@ -1233,34 +1233,34 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 if(entry[1] == "gps" && entry.length >= 7) {
                   //dt,gps,satellites,altitude,speed,latitude,longitude
                   // Determine date times
-                  DateTime thisEntryTime = DateTime.tryParse(entry[0]);
+                  DateTime? thisEntryTime = DateTime.tryParse(entry[0]);
                   firstEntryTime ??= thisEntryTime;
                   if (thisEntryTime != null) lastEntryTime = thisEntryTime;
 
                   // Track elevation change
-                  double elevation = double.tryParse(entry[3]);
+                  double elevation = double.tryParse(entry[3])!;
                   minElevation ??= elevation; //Set if null
                   maxElevation ??= elevation; //Set if null
-                  if (elevation < minElevation) minElevation = elevation;
-                  if (elevation > maxElevation) maxElevation = elevation;
+                  if (elevation < minElevation!) minElevation = elevation;
+                  if (elevation > maxElevation!) maxElevation = elevation;
 
 
                   // Track avg speed
-                  double speedNow = double.tryParse(entry[4]);
+                  double speedNow = double.tryParse(entry[4])!;
                   avgSpeedGPS ??= 0;
-                  avgSpeedGPS += speedNow;
+                  avgSpeedGPS = avgSpeedGPS! + speedNow;
                   ++avgSpeedGPSEntries;
 
                   // Track avg moving speed (;idle boards won't bring you down;)
                   if (speedNow > 0.0) {
                     avgMovingSpeedGPS ??= 0;
-                    avgMovingSpeedGPS += speedNow;
+                    avgMovingSpeedGPS = avgMovingSpeedGPS! + speedNow;
                     ++avgMovingSpeedGPSEntries;
                   }
 
                   // Track max speed
                   maxSpeedGPS ??= speedNow;
-                  if (speedNow > maxSpeedGPS) {
+                  if (speedNow > maxSpeedGPS!) {
                     maxSpeedGPS = speedNow;
                   }
 
@@ -1268,14 +1268,14 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   LatLng gpsPositionNow = new LatLng(double.parse(entry[5]), double.parse(entry[6]));
                   gpsPositionPrevious ??= gpsPositionNow;
                   distanceTotalGPS ??= 0;
-                  distanceTotalGPS += calculateGPSDistance(gpsPositionNow, gpsPositionPrevious);
+                  distanceTotalGPS = distanceTotalGPS! + calculateGPSDistance(gpsPositionNow, gpsPositionPrevious!);
                   gpsPositionPrevious = gpsPositionNow;
                 }
                 ///ESC Values
                 else if (entry[1] == "esc" && entry.length >= 14) {
                   //dt,esc,esc_id,voltage,motor_temp,esc_temp,duty_cycle,motor_current,battery_current,watt_hours,watt_hours_regen,e_rpm,e_distance,fault
                   // Determine date times
-                  DateTime thisEntryTime = DateTime.tryParse(entry[0]);
+                  DateTime? thisEntryTime = DateTime.tryParse(entry[0]);
                   firstEntryTime ??= thisEntryTime;
                   if (thisEntryTime != null) lastEntryTime = thisEntryTime;
 
@@ -1284,10 +1284,10 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   firstESCID ??= escID;
 
                   // Determine max values
-                  double motorCurrent = double.tryParse(entry[7]); //Motor Current
-                  double batteryCurrent = double.tryParse(entry[8]); //Input Current
-                  double eRPM = double.tryParse(entry[11]); //eRPM
-                  double eDistance = double.tryParse(entry[12]); //eDistance
+                  double motorCurrent = double.tryParse(entry[7])!; //Motor Current
+                  double batteryCurrent = double.tryParse(entry[8])!; //Input Current
+                  double eRPM = double.tryParse(entry[11])!; //eRPM
+                  double eDistance = double.tryParse(entry[12])!; //eDistance
                   if (batteryCurrent>maxCurrentBattery) maxCurrentBattery = batteryCurrent;
                   if (motorCurrent>maxCurrentMotor) maxCurrentMotor = motorCurrent;
                   // Compute max speed!
@@ -1297,12 +1297,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   }
                   // Prepare average speed!
                   avgSpeed ??= 0;
-                  avgSpeed += speed;
+                  avgSpeed = avgSpeed! + speed;
                   ++avgSpeedEntries;
                   // Prepare average moving speed
                   if (speed > 0.0) {
                     avgMovingSpeed ??= 0;
-                    avgMovingSpeed += speed;
+                    avgMovingSpeed = avgMovingSpeed! + speed;
                     ++avgMovingSpeedEntries;
                   }
                   // Capture Distance for first ESC
@@ -1329,7 +1329,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
             /// Compute distance
             if (distanceEnd != null) {
-              distanceTotal = doublePrecision(distanceEnd - distanceStart, 2);
+              distanceTotal = doublePrecision(distanceEnd - distanceStart!, 2);
             } else {
               globalLogger.e("distanceEnd was null. Distance total could not be computed");
               if (distanceTotalGPS != null) {
@@ -1346,28 +1346,28 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             double wattHours = 0;
             double wattHoursRegen = 0;
             wattHoursStartByESC.forEach((key, value) {
-              globalLogger.d("ESC ID $key consumed ${wattHoursEndByESC[key] - value} watt hours");
-              wattHours += wattHoursEndByESC[key] - value;
+              globalLogger.d("ESC ID $key consumed ${wattHoursEndByESC[key]! - value} watt hours");
+              wattHours += wattHoursEndByESC[key]! - value;
             });
             wattHoursRegenStartByESC.forEach((key, value) {
-              globalLogger.d("ESC ID $key regenerated ${wattHoursRegenEndByESC[key] - value} watt hours");
-              wattHoursRegen += wattHoursRegenEndByESC[key] - value;
+              globalLogger.d("ESC ID $key regenerated ${wattHoursRegenEndByESC[key]! - value} watt hours");
+              wattHoursRegen += wattHoursRegenEndByESC[key]! - value;
             });
 
             globalLogger.d("Consumption calculation: Watt Hours Total $wattHours Regenerated Total $wattHoursRegen");
 
             /// Compute average speeds
             if (avgSpeedGPSEntries > 0) {
-              avgSpeedGPS /= avgSpeedGPSEntries;
+              avgSpeedGPS = avgSpeedGPS! / avgSpeedGPSEntries;
             }
             if (avgMovingSpeedGPSEntries > 0) {
-              avgMovingSpeedGPS /= avgMovingSpeedGPSEntries;
+              avgMovingSpeedGPS = avgMovingSpeedGPS! / avgMovingSpeedGPSEntries;
             }
             if (avgSpeedEntries > 0) {
-              avgSpeed /= avgSpeedEntries;
+              avgSpeed = avgSpeed! / avgSpeedEntries;
             }
             if (avgMovingSpeedEntries > 0) {
-              avgMovingSpeed /= avgMovingSpeedEntries;
+              avgMovingSpeed = avgMovingSpeed! / avgMovingSpeedEntries;
             }
             //NOTE: failure checking...
             //int test = null;
@@ -1396,7 +1396,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   wattHoursRegenTotal: doublePrecision(wattHoursRegen, 2),
                   distance: distanceTotal,
                   distanceGPS: distanceTotalGPS != null ? doublePrecision(distanceTotalGPS, 2) : -1.0,
-                  durationSeconds: lastEntryTime.difference(firstEntryTime).inSeconds,
+                  durationSeconds: lastEntryTime!.difference(firstEntryTime!).inSeconds,
                   faultCount: faultCodeCount,
                   rideName: "",
                   notes: ""
