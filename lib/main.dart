@@ -3210,7 +3210,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 updateCachedAvatar: _cacheAvatar,
                 escFirmwareVersion: escFirmwareVersion,
                 updateComputedVehicleStatistics: updateComputedVehicleStatistics,
-                applicationDocumentsDirectory: applicationDocumentsDirectory,
+                applicationDocumentsDirectory: applicationDocumentsDirectory ?? "",
                 reloadUserSettings: reloadUserSettings,
                 telemetryStream: telemetryStream.stream,
               )
