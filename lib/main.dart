@@ -1471,7 +1471,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           });
 
           syncLastACK = DateTime.now();
-          if (!await sendBLEData(theTXLoggerCharacteristic, utf8.encode("cat,$catBytesReceived,ack~"), true)) {
+          if (!await sendBLEData(theTXLoggerCharacteristic!, utf8.encode("cat,$catBytesReceived,ack~"), true)) {
             globalLogger.e("catInProgress failed to send ACK");
           }
         }
@@ -1486,7 +1486,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         FileManager.clearLogFile();
 
         syncLastACK = DateTime.now();
-        await theTXLoggerCharacteristic.write(utf8.encode("cat,0,ack~"));
+        await theTXLoggerCharacteristic!.write(utf8.encode("cat,0,ack~"));
       }
 
       else if(receiveStr.startsWith("rm,")){
@@ -1509,14 +1509,14 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           try {
             isLoggerLogging = (values[2] == "1");
             gotchiStatus.isLogging = isLoggerLogging;
-            gotchiStatus.faultCount = int.tryParse(values[3]);
-            gotchiStatus.faultCode = int.tryParse(values[4]);
-            gotchiStatus.percentFree = int.tryParse(values[5]);
-            gotchiStatus.fileCount = int.tryParse(values[6]);
-            gotchiStatus.gpsFix = int.tryParse(values[7]);
-            gotchiStatus.gpsSatellites = int.tryParse(values[8]);
-            gotchiStatus.lastPriorityAlertReason = RobogotchiAlertReasons.values[int.tryParse(values[9])];
-            gotchiStatus.melodySnoozeSeconds = int.tryParse(values[10]);
+            gotchiStatus.faultCount = int.tryParse(values[3])!;
+            gotchiStatus.faultCode = int.tryParse(values[4])!;
+            gotchiStatus.percentFree = int.tryParse(values[5])!;
+            gotchiStatus.fileCount = int.tryParse(values[6])!;
+            gotchiStatus.gpsFix = int.tryParse(values[7])!;
+            gotchiStatus.gpsSatellites = int.tryParse(values[8])!;
+            gotchiStatus.lastPriorityAlertReason = RobogotchiAlertReasons.values[int.tryParse(values[9])!];
+            gotchiStatus.melodySnoozeSeconds = int.tryParse(values[10])!;
           } catch (e) {
             print("Robogotchi status parsing caught an exception: $e");
           }
@@ -1525,7 +1525,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       else if(receiveStr.startsWith("faults,")) {
         globalLogger.d("Faults packet received: $receiveStr");
         List<String> values = receiveStr.split(",");
-        int count = int.tryParse(values[1]);
+        int count = int.tryParse(values[1])!;
         //TODO: Robogotchi firmware is limiting output to 6 faults
         if (count > 6) {
           count = 6;
@@ -1589,21 +1589,21 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         List<String> values = receiveStr.split(",");
         int parseIndex = 1;
         RobogotchiConfiguration gotchiConfig = new RobogotchiConfiguration(
-            cfgVersion: int.tryParse(values[parseIndex++]),
-            logAutoStopIdleTime: int.tryParse(values[parseIndex++]),
-            logAutoStopLowVoltage: double.tryParse(values[parseIndex++]),
-            logAutoStartERPM: int.tryParse(values[parseIndex++]),
-            logIntervalHz: int.tryParse(values[parseIndex++]),
+            cfgVersion: int.tryParse(values[parseIndex++])!,
+            logAutoStopIdleTime: int.tryParse(values[parseIndex++])!,
+            logAutoStopLowVoltage: double.tryParse(values[parseIndex++])!,
+            logAutoStartERPM: int.tryParse(values[parseIndex++])!,
+            logIntervalHz: int.tryParse(values[parseIndex++])!,
             logAutoEraseWhenFull: int.tryParse(values[parseIndex++]) == 1 ? true : false,
-            multiESCMode: int.tryParse(values[parseIndex++]),
+            multiESCMode: int.tryParse(values[parseIndex++])!,
             multiESCIDs: new List.from({int.tryParse(values[parseIndex++]), int.tryParse(values[parseIndex++]), int.tryParse(values[parseIndex++]), int.tryParse(values[parseIndex++])}),
-            gpsBaudRate: int.tryParse(values[parseIndex++]),
-            alertVoltageLow: double.tryParse(values[parseIndex++]),
-            alertESCTemp: double.tryParse(values[parseIndex++]),
-            alertMotorTemp: double.tryParse(values[parseIndex++]),
-            alertStorageAtCapacity: int.tryParse(values[parseIndex++]),
-            timeZoneOffsetHours: int.tryParse(values[parseIndex++]),
-            timeZoneOffsetMinutes: int.tryParse(values[parseIndex++]),
+            gpsBaudRate: int.tryParse(values[parseIndex++])!,
+            alertVoltageLow: double.tryParse(values[parseIndex++])!,
+            alertESCTemp: double.tryParse(values[parseIndex++])!,
+            alertMotorTemp: double.tryParse(values[parseIndex++])!,
+            alertStorageAtCapacity: int.tryParse(values[parseIndex++])!,
+            timeZoneOffsetHours: int.tryParse(values[parseIndex++])!,
+            timeZoneOffsetMinutes: int.tryParse(values[parseIndex++])!,
         );
 
         // Validate we received the expected cfgVersion from the module or else there could be trouble
@@ -1621,7 +1621,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           Navigator.of(context).pushNamed(
               RobogotchiCfgEditor.routeName,
               arguments: RobogotchiCfgEditorArguments(
-                  txLoggerCharacteristic: theTXLoggerCharacteristic,
+                  txLoggerCharacteristic: theTXLoggerCharacteristic!,
                   currentConfiguration: gotchiConfig,
                   discoveredCANDevices: _validCANBusDeviceIDs
               )
@@ -1697,14 +1697,14 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     });
 
     // Setup the RX characteristic to notify on value change
-    await theRXCharacteristic.setNotifyValue(true);
+    await theRXCharacteristic!.setNotifyValue(true);
     // Setup the RX characteristic callback function
-    escRXDataSubscription = theRXCharacteristic.lastValueStream.listen((value) {
+    escRXDataSubscription = theRXCharacteristic!.lastValueStream.listen((value) {
 
       // If we have the TCP Socket server running and a client connected forward the data
       if(serverTCPSocket != null && clientTCPSocket != null) {
         //globalLogger.wtf("ESC Data $value");
-        clientTCPSocket.add(value);
+        clientTCPSocket!.add(value);
         return;
       }
 
@@ -1803,7 +1803,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         else if ( packetID == COMM_PACKET_ID.COMM_GET_VALUES.index ) {
           if(_showDieBieMS) {
             // Parse DieBieMS GET_VALUES packet - A shame they share the same ID as ESC values
-            DieBieMSTelemetry parsedTelemetry = dieBieMSHelper.processTelemetry(bleHelper.getPayload(), smartBMSCANID);
+            DieBieMSTelemetry? parsedTelemetry = dieBieMSHelper.processTelemetry(bleHelper.getPayload(), smartBMSCANID);
 
             // Make sure we parsed what we are expecting
             if (parsedTelemetry != null) {
@@ -1818,7 +1818,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               byteData.setUint16(5, checksum);
               byteData.setUint8(7, 0x03); // End of packet
 
-              sendBLEData(theTXCharacteristic, byteData.buffer.asUint8List(), true).then((sendResult){
+              sendBLEData(theTXCharacteristic!, byteData.buffer.asUint8List(), true).then((sendResult){
                 if (!sendResult) {
                   globalLogger.w("Smart BMS cell data request failed");
                 }
@@ -1932,14 +1932,14 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           escMotorConfiguration = escHelper.processMCCONF(bleHelper.getPayload(), escFirmwareVersion); //bleHelper.payload.sublist(0,bleHelper.lenPayload);
 
           // Publish MCCONF to potential subscriber
-          mcconfStream.add(escMotorConfiguration);
+          mcconfStream.add(escMotorConfiguration!);
 
           //NOTE: for debug & testing
           //ByteData serializedMcconf = escHelper.serializeMCCONF(escMotorConfiguration);
           //MCCONF refriedMcconf = escHelper.processMCCONF(serializedMcconf.buffer.asUint8List());
           //globalLogger.wtf("Break for MCCONF: $escMotorConfiguration");
 
-          if (escMotorConfiguration.si_battery_ah == null) {
+          if (escMotorConfiguration!.si_battery_ah == null) {
             // Stop the init message sequencer
             _initMsgSequencer?.cancel();
             _initMsgSequencer = null;
@@ -1966,8 +1966,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
             // Save FreeSK8 user settings from received MCCONF
             globalLogger.d("Updating application settings specific from MCCONF");
-            widget.myUserSettings.settings.batterySeriesCount = escMotorConfiguration.si_battery_cells;
-            switch (escMotorConfiguration.si_battery_type) {
+            widget.myUserSettings.settings.batterySeriesCount = escMotorConfiguration!.si_battery_cells;
+            switch (escMotorConfiguration!.si_battery_type) {
               case BATTERY_TYPE.BATTERY_TYPE_LIIRON_2_6__3_6:
                 widget.myUserSettings.settings.batteryCellMinVoltage = 2.6;
                 widget.myUserSettings.settings.batteryCellMaxVoltage = 3.6;
@@ -1978,12 +1978,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 break;
             }
 
-            widget.myUserSettings.settings.wheelDiameterMillimeters = (doublePrecision(escMotorConfiguration.si_wheel_diameter, 3) * 1000).toInt();
+            widget.myUserSettings.settings.wheelDiameterMillimeters = (doublePrecision(escMotorConfiguration!.si_wheel_diameter, 3) * 1000).toInt();
             //TODO: Take note of this importance: globalLogger.wtf("wheel diameter mm maths ${(doublePrecision(escMotorConfiguration.si_wheel_diameter, 3) * 1000).toInt()} vs ${(escMotorConfiguration.si_wheel_diameter * 1000).toInt()}");
 
-            widget.myUserSettings.settings.motorPoles = escMotorConfiguration.si_motor_poles;
-            widget.myUserSettings.settings.maxERPM = escMotorConfiguration.l_max_erpm;
-            widget.myUserSettings.settings.gearRatio = doublePrecision(escMotorConfiguration.si_gear_ratio, 2);
+            widget.myUserSettings.settings.motorPoles = escMotorConfiguration!.si_motor_poles;
+            widget.myUserSettings.settings.maxERPM = escMotorConfiguration!.l_max_erpm;
+            widget.myUserSettings.settings.gearRatio = doublePrecision(escMotorConfiguration!.si_gear_ratio, 2);
 
             widget.myUserSettings.saveSettings();
           }
@@ -2005,9 +2005,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           escApplicationConfiguration = escHelper.processAPPCONF(bleHelper.getPayload(), escFirmwareVersion);
 
           // Publish APPCONF to subscribers
-          appconfStream.add(escApplicationConfiguration);
+          appconfStream.add(escApplicationConfiguration!);
 
-          if (escApplicationConfiguration.imu_conf.sample_rate_hz == null) {
+          if (escApplicationConfiguration!.imu_conf.sample_rate_hz == null) {
             // Show dialog
             showDialog(
               context: context,
@@ -2125,25 +2125,25 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
         } else if (packetID == COMM_PACKET_ID.COMM_SET_APPCONF.index) {
 
-          if (inputCalibration.ppmCalibrationStarting != null && inputCalibration.ppmCalibrationStarting) {
+          if (inputCalibration.ppmCalibrationStarting != null && inputCalibration.ppmCalibrationStarting!) {
             globalLogger.d("PPM Calibration is Ready");
             genericAlert(context, "Calibration", Text("Calibration Instructions:\nMove input to full brake, full throttle then leave in the center\n\nPlease ensure the wheels are off the ground in case something goes wrong. Press OK when ready."), "OK");
             inputCalibration.ppmCalibrationStarting = null;
             inputCalibration.ppmCalibrationRunning = true;
             calibrationStream.add(inputCalibration); // Publish update
-          } else if (inputCalibration.ppmCalibrationRunning != null && !inputCalibration.ppmCalibrationRunning) {
+          } else if (inputCalibration.ppmCalibrationRunning != null && !inputCalibration.ppmCalibrationRunning!) {
             globalLogger.d("PPM Calibration has completed");
             genericAlert(context, "Calibration", Text("Calibration Completed"), "OK");
             inputCalibration.ppmCalibrationStarting = null;
             inputCalibration.ppmCalibrationRunning = null;
             calibrationStream.add(inputCalibration); // Publish update
-          } else if (inputCalibration.adcCalibrationStarting != null && inputCalibration.adcCalibrationStarting) {
+          } else if (inputCalibration.adcCalibrationStarting != null && inputCalibration.adcCalibrationStarting!) {
             globalLogger.d("ADC Calibration is Ready");
             genericAlert(context, "Calibration", Text("Calibration Instructions:\nMove input to full brake, full throttle then leave in the center\n\nPlease ensure the wheels are off the ground in case something goes wrong. Press OK when ready."), "OK");
             inputCalibration.adcCalibrationStarting = null;
             inputCalibration.adcCalibrationRunning = true;
             calibrationStream.add(inputCalibration); // Publish update
-          } else if (inputCalibration.adcCalibrationRunning != null && !inputCalibration.adcCalibrationRunning) {
+          } else if (inputCalibration.adcCalibrationRunning != null && !inputCalibration.adcCalibrationRunning!) {
             globalLogger.d("ADC Calibration has completed");
             genericAlert(context, "Calibration", Text("Calibration Completed"), "OK");
             inputCalibration.adcCalibrationStarting = null;
@@ -2205,18 +2205,18 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     if (_deviceIsRobogotchi && !initMsgGotchiVersion) {
       globalLogger.d("_requestInitMessages: Requesting Robogotchi version");
       // Request the Robogotchi version
-      theTXLoggerCharacteristic.write(utf8.encode("version~"));
+      theTXLoggerCharacteristic!.write(utf8.encode("version~"));
       _changeConnectedDialogMessage("Requesting Robogotchi version");
     } else if (_deviceIsRobogotchi && !initMsgGotchiSettime) {
       globalLogger.d("_requestInitMessages: Sending current time to Robogotchi");
       // Set the Robogotchi time from DateTime.now() converted to UTC
-      theTXLoggerCharacteristic.write(utf8.encode("settime ${DateTime.now().toUtc().toIso8601String().substring(0,19).replaceAll("-", ":")}~"));
+      theTXLoggerCharacteristic!.write(utf8.encode("settime ${DateTime.now().toUtc().toIso8601String().substring(0,19).replaceAll("-", ":")}~"));
       //TODO: without a response we will assume this went as planned
       initMsgGotchiSettime = true;
     } else if (!initMsgESCVersion) {
       // Request the ESC Firmware Packet
       globalLogger.d("_requestInitMessages: Requesting ESC Firmware Packet");
-      theTXCharacteristic.write([0x02, 0x01, 0x00, 0x00, 0x00, 0x03]).catchError((onError){
+      theTXCharacteristic!.write([0x02, 0x01, 0x00, 0x00, 0x00, 0x03]).catchError((onError){
           globalLogger.e("_requestInitMessages: Error Requesting ESC Firmware Packet!");
         });
 
@@ -2236,7 +2236,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       if (initMsgESCDevicesCANRequested == 0) {
         globalLogger.d("_requestInitMessages: Requesting initMsgESCDevicesCAN");
         // Request CAN Devices scan
-        theTXCharacteristic.write(simpleVESCRequest(COMM_PACKET_ID.COMM_PING_CAN.index));
+        theTXCharacteristic!.write(simpleVESCRequest(COMM_PACKET_ID.COMM_PING_CAN.index));
         initMsgESCDevicesCANRequested = 1;
 
         _changeConnectedDialogMessage("Requesting CAN IDs");
@@ -2251,7 +2251,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         if (++initMsgESCDevicesCANRequested == 25) {
           globalLogger.e("_requestInitMessages: initMsgESCDevicesCAN did not get a response. Retrying");
           // Re-request CAN Devices scan
-          theTXCharacteristic.write(simpleVESCRequest(COMM_PACKET_ID.COMM_PING_CAN.index));
+          theTXCharacteristic!.write(simpleVESCRequest(COMM_PACKET_ID.COMM_PING_CAN.index));
           initMsgESCDevicesCANRequested = 1;
           _changeConnectedDialogMessage("Requesting CAN IDs (again)");
         }
@@ -2274,7 +2274,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           child: Text("YES"),
           onPressed: () async {
             // Navigate to Firmware Update view
-            await theTXLoggerCharacteristic.write(utf8.encode("otamode~")).timeout(Duration(milliseconds: 500)).whenComplete((){
+            await theTXLoggerCharacteristic!.write(utf8.encode("otamode~")).timeout(Duration(milliseconds: 500)).whenComplete((){
               globalLogger.d('gotchiPro OTA Update Mode Command Executed');
               Navigator.of(context).pop();
               _bleDisconnect();
@@ -2309,7 +2309,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           child: Text("YES"),
           onPressed: () async {
             // Navigate to Firmware Update view
-            await theTXLoggerCharacteristic.write(utf8.encode("dfumode~")).timeout(Duration(milliseconds: 500)).whenComplete((){
+            await theTXLoggerCharacteristic!.write(utf8.encode("dfumode~")).timeout(Duration(milliseconds: 500)).whenComplete((){
               globalLogger.d('Robogotchi DFU Mode Command Executed');
               Navigator.of(context).pop();
               _bleDisconnect();
@@ -2343,7 +2343,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       globalLogger.i("_requestInitMessages: initMsgSequencer is complete! Great success!");
 
-      _initMsgSequencer.cancel();
+      _initMsgSequencer?.cancel();
       _initMsgSequencer = null;
 
       initMsgSqeuencerCompleted = true;
@@ -2552,7 +2552,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       ],
     );
 
-    bool menuOptionIsReady({bool isRobogotchiOption}) {
+    bool menuOptionIsReady({bool isRobogotchiOption = false}) {
       // Check if we are connected
       if (!isRobogotchiOption && _connectedDevice == null) {
         showDialog(
@@ -2617,7 +2617,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           {
             _preNavigationTasks();
 
-            FileImage _boardAvatar;
+            FileImage? _boardAvatar;
             if (widget.myUserSettings.settings.boardAvatarPath != null) {
               _boardAvatar = FileImage(File("$applicationDocumentsDirectory${widget.myUserSettings.settings.boardAvatarPath}"));
             }
@@ -2642,7 +2642,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 SmartBMSViewer.routeName,
                 arguments: SmartBMSArguments(
                   dataStream: bmsTelemetryStream.stream,
-                  theTXCharacteristic: theTXCharacteristic,
+                  theTXCharacteristic: theTXCharacteristic!,
                   myUserSettings: widget.myUserSettings,
                   changeSmartBMSID: changeSmartBMSIDFunc,
                 ));
@@ -2664,8 +2664,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             final result = await Navigator.of(context).pushNamed(
                 SpeedProfilesEditor.routeName,
                 arguments: SpeedProfileArguments(
-                  theTXCharacteristic: theTXCharacteristic,
-                  escMotorConfiguration: escMotorConfiguration,
+                  theTXCharacteristic: theTXCharacteristic!,
+                  escMotorConfiguration: escMotorConfiguration!,
                   myUserSettings: widget.myUserSettings,
                 ));
 
@@ -2690,8 +2690,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 arguments: InputConfigurationArguments(
                   calibrationStream: calibrationStream.stream,
                   dataStream: appconfStream.stream,
-                  theTXCharacteristic: theTXCharacteristic,
-                  applicationConfiguration: escApplicationConfiguration,
+                  theTXCharacteristic: theTXCharacteristic!,
+                  applicationConfiguration: escApplicationConfiguration!,
                   discoveredCANDevices: _validCANBusDeviceIDs,
                   escFirmwareVersion: escFirmwareVersion,
                   notifyStopStartADCCalibrate: notifyStopStartADCCalibrate,
@@ -2719,8 +2719,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                 MotorConfigurationEditor.routeName,
                 arguments: MotorConfigurationArguments(
                   dataStream: mcconfStream.stream,
-                  theTXCharacteristic: theTXCharacteristic,
-                  motorConfiguration: escMotorConfiguration,
+                  theTXCharacteristic: theTXCharacteristic!,
+                  motorConfiguration: escMotorConfiguration!,
                   discoveredCANDevices: _validCANBusDeviceIDs,
                   escFirmwareVersion: escFirmwareVersion,
                 ));
@@ -2735,7 +2735,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         title: Text("Logging Config"),
         onTap: () {
           if (menuOptionIsReady(isRobogotchiOption: true)) {
-            sendBLEData(theTXLoggerCharacteristic, utf8.encode("getcfg~"), false);
+            sendBLEData(theTXLoggerCharacteristic!, utf8.encode("getcfg~"), false);
           }
         },
       ),
@@ -2778,7 +2778,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                     TextButton(
                       child: Text('YES'),
                       onPressed: () async {
-                        await theTXLoggerCharacteristic.write(utf8.encode("dfumode~")).timeout(Duration(milliseconds: 500)).whenComplete((){
+                        await theTXLoggerCharacteristic!.write(utf8.encode("dfumode~")).timeout(Duration(milliseconds: 500)).whenComplete((){
                           globalLogger.d('Robogotchi DFU Mode Command Executed');
 
                           Navigator.of(context).pop();
@@ -2838,7 +2838,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                     TextButton(
                       child: Text('YES'),
                       onPressed: () async {
-                        await theTXLoggerCharacteristic.write(utf8.encode("otamode~")).timeout(Duration(milliseconds: 500)).whenComplete((){
+                        await theTXLoggerCharacteristic!.write(utf8.encode("otamode~")).timeout(Duration(milliseconds: 500)).whenComplete((){
                           globalLogger.d('gotchiPro OTA Command Executed');
 
                           Navigator.of(context).pop();
@@ -2865,7 +2865,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         title: Text("sk8net Config"),
         onTap: () {
           if (menuOptionIsReady(isRobogotchiOption: true) && (_deviceIsGotchiPro == true)) {
-            sendBLEData(theTXLoggerCharacteristic, utf8.encode("getnetcfg~"), false);
+            sendBLEData(theTXLoggerCharacteristic!, utf8.encode("getnetcfg~"), false);
           }
         },
       ),
@@ -2981,7 +2981,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       globalLogger.d("_requestGotchiStatus: Auto stopping gotchi timer");
       startStopGotchiTimer(true);
     } else {
-      theTXLoggerCharacteristic.write(utf8.encode("status~")).catchError((error){
+      theTXLoggerCharacteristic!.write(utf8.encode("status~")).catchError((error){
         globalLogger.w("_requestGotchiStatus: theTXLoggerCharacteristic was busy");
       }); //Request next file
     }
@@ -3000,7 +3000,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       //Request telemetry packet; On error increase error counter
       Uint8List packet = simpleVESCRequest(COMM_PACKET_ID.COMM_GET_VALUES_SETUP.index);
 
-      if (!await sendBLEData(theTXCharacteristic, packet, true)) {
+      if (!await sendBLEData(theTXCharacteristic!, packet, true)) {
         ++bleTXErrorCount;
         globalLogger.e("_requestTelemetry() failed ($bleTXErrorCount) times!");
       }
@@ -3089,7 +3089,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   void reloadUserSettings(bool navigateHome) async {
     globalLogger.wtf("reloadUserSettings");
     if (_connectedDevice != null) {
-      await widget.myUserSettings.loadSettings(_connectedDevice.id.toString()).then((value){
+      await widget.myUserSettings.loadSettings(_connectedDevice!.id.toString()).then((value){
         globalLogger.i("reloadUserSettings::widget.myUserSettings.loadSettings(): isConnectedDeviceKnown = $value");
         isConnectedDeviceKnown = value;
       });
@@ -3119,14 +3119,14 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       if(fileListToDelete.length>0 && syncEraseOnComplete) {
           globalLogger.d("Sync requesting rm of ${fileListToDelete.first}");
           // Remove the first file in the list of files to delete
-          sendBLEData(theTXLoggerCharacteristic,
+          sendBLEData(theTXLoggerCharacteristic!,
               utf8.encode("rm ${fileListToDelete.first}~"), false);
       // Second check if we have more files to sync
       } else if(fileList.length>0) {
-        catCurrentFilename = fileList.first.fileName;
-        catBytesTotal = fileList.first.fileSize; //Set the total expected bytes for the current file
+        catCurrentFilename = fileList.first.fileName!;
+        catBytesTotal = fileList.first.fileSize!; //Set the total expected bytes for the current file
         globalLogger.d("Sync requesting cat of $catCurrentFilename with $catBytesTotal bytes");
-        sendBLEData(theTXLoggerCharacteristic, utf8.encode("cat ${fileList.first.fileName}~"), false); //Request next file
+        sendBLEData(theTXLoggerCharacteristic!, utf8.encode("cat ${fileList.first.fileName}~"), false); //Request next file
       // We've finished the sync
       }  else {
         globalLogger.d("Sync complete!");
