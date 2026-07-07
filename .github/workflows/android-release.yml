@@ -5,13 +5,14 @@
 #   - Pull requests do NOT build automatically — trigger manually from the
 #     Actions tab (workflow_dispatch) against the PR branch when needed.
 #
-
 # See CI_GUIDE.md for keystore/secret setup. Until the signing secrets are
 # configured this workflow produces a debug-signed release APK artifact.
 
 name: Android Release
 
 on:
+  push:
+    branches: [master]
   workflow_dispatch:
     inputs:
       build_type:
