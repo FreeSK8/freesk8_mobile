@@ -5,6 +5,26 @@ allprojects {
     }
 }
 
+// AGP 8 requires every module to declare a namespace. Several unmaintained
+// pub packages predate that requirement; derive it from their manifest's
+// package attribute (the pre-AGP8 convention) so they still build.
+subprojects {
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            def android = project.android
+            if (android.hasProperty('namespace') && android.namespace == null) {
+                def manifest = project.file('src/main/AndroidManifest.xml')
+                if (manifest.exists()) {
+                    def packageName = new groovy.xml.XmlSlurper().parse(manifest).@package.text()
+                    if (packageName) {
+                        android.namespace = packageName
+                    }
+                }
+            }
+        }
+    }
+}
+
 rootProject.buildDir = '../build'
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
