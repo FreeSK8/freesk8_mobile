@@ -12,3 +12,4 @@ ios/Flutter/ephemeral/
 android/local.properties
 android/key.properties
 android/app/release.keystore
+android/.kotlin/
