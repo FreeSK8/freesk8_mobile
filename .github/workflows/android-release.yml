@@ -107,6 +107,12 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      # The ESC configuration serializers are generated from vendored VESC
+      # firmware sources; fail if someone edited them by hand or forgot to
+      # re-run the generator.
+      - name: Check generated ESC serializers
+        run: python3 tool/esc_serializers/generate.py --check
+
       # Analyzer errors and warnings fail the build; lint infos (flutter_lints via
       # analysis_options.yaml) are advisory.
       - name: Analyze

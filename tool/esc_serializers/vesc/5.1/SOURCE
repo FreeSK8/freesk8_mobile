@@ -1,0 +1,5 @@
+repo=https://github.com/vedderb/bldc
+ref=5.01
+commit=80fffdea7340f3b7d4faea63f24339c2212ab62f
+fetched=2026-09-28
+files=confgenerator.c confgenerator.h datatypes.h

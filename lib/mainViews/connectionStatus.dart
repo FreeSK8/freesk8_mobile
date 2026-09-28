@@ -196,7 +196,7 @@ class ConnectionStatus extends StatelessWidget {
               //Text(currentDevice.id.toString()),
 
               Text("ESC Hardware: ${currentFirmware!.hardware_name}"),
-              Text("ESC Firmware: ${currentFirmware!.fw_version_major}.${currentFirmware!.fw_version_minor}"),
+              Text("ESC Firmware: ${ESCHelper.firmwareLabel(currentFirmware!.fw_version_major, currentFirmware!.fw_version_minor)}"),
 
 
               ElevatedButton(
