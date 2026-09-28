@@ -280,4 +280,22 @@ enum mc_fault_code {
   FAULT_CODE_PHASE_FILTER, //fw6
   FAULT_CODE_ENCODER_FAULT,
   FAULT_CODE_LV_OUTPUT_FAULT,
+  FAULT_CODE_ENCODER_SLIP, // fw7.0
+  FAULT_CODE_OVERSPEED, // fw7.0
+  FAULT_CODE_UNDERSPEED, // fw7.0
+  FAULT_CODE_ABS_OVERSPEED, // fw7.0,
+  FAULT_CODE_UNKNOWN, // app-only: a code this build does not know
 }
+
+/// Decodes a fault code byte from the ESC. Codes this build does not know
+/// (newer firmware) become FAULT_CODE_UNKNOWN instead of throwing.
+mc_fault_code faultCodeFromWire(int value) {
+  final int known = mc_fault_code.values.length - 1; // FAULT_CODE_UNKNOWN is app-only
+  if (value >= 0 && value < known) {
+    return mc_fault_code.values[value];
+  }
+  return mc_fault_code.FAULT_CODE_UNKNOWN;
+}
+
+/// Display name of a fault code byte, e.g. "FAULT_CODE_OVER_VOLTAGE".
+String faultCodeName(int value) => faultCodeFromWire(value).name;

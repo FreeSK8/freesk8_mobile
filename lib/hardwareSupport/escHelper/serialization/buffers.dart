@@ -3,27 +3,27 @@ import 'dart:math';
 import 'dart:typed_data';
 
 int buffer_get_int16(Uint8List buffer, int index) {
-  var byteData = new ByteData.view(buffer.buffer);
+  var byteData = ByteData.sublistView(buffer);
   return byteData.getInt16(index);
 }
 
 int buffer_get_uint16(Uint8List buffer, int index) {
-  var byteData = new ByteData.view(buffer.buffer);
+  var byteData = ByteData.sublistView(buffer);
   return byteData.getUint16(index);
 }
 
 int buffer_get_int32(Uint8List buffer, int index) {
-  var byteData = new ByteData.view(buffer.buffer);
+  var byteData = ByteData.sublistView(buffer);
   return byteData.getInt32(index);
 }
 
 int buffer_get_uint32(Uint8List buffer, int index) {
-  var byteData = new ByteData.view(buffer.buffer);
+  var byteData = ByteData.sublistView(buffer);
   return byteData.getUint32(index);
 }
 
 int buffer_get_uint64(Uint8List buffer, int index, [Endian endian = Endian.big]) {
-  var byteData = new ByteData.view(buffer.buffer);
+  var byteData = ByteData.sublistView(buffer);
   return byteData.getUint64(index, endian);
 }
 

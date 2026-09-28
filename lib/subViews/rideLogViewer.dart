@@ -341,7 +341,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           textAlign: TextAlign.center)]));
     if (eventData.faultCode != null) tableChildren.add(TableRow(children: [
       Icon(Icons.warning_amber_outlined),
-      Text("${mc_fault_code.values[eventData.faultCode!].toString().substring(14)}",
+      Text(faultCodeName(eventData.faultCode!),
           textAlign: TextAlign.center)]));
 
     genericAlert(context, title, Column(

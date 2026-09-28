@@ -88,7 +88,7 @@ class RideLogViewChartOverlayState extends State<RideLogViewChartOverlay> {
         ,child: Column(
           children: <Widget>[
             Text("${selectedDateTime!.toIso8601String().substring(0,19)}"),
-            selectedESCData!.faultCode != null ? Text("${mc_fault_code.values[selectedESCData!.faultCode!].toString().substring(14)}", style: TextStyle(fontSize: 8),) : Container(),
+            selectedESCData!.faultCode != null ? Text(faultCodeName(selectedESCData!.faultCode!), style: TextStyle(fontSize: 8),) : Container(),
             Container(
                 padding: EdgeInsets.only(left: 5),
                 child: Table(  //border: TableBorder.all(color: Colors.white),

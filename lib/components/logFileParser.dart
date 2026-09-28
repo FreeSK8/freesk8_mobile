@@ -341,7 +341,7 @@ class LogFileParser {
         if (parsedESC[i]!.faultCode != 0) {
           parsedResults += "${parsedESC[i]!.dt!.toIso8601String().substring(0,19)},"
               "err,"
-              "${mc_fault_code.values[parsedESC[i]!.faultCode].toString().substring(14)},"
+              "${faultCodeName(parsedESC[i]!.faultCode)},"
               "${parsedESC[i]!.faultCode},"
               "${parsedESC[i]!.escID}\n";
         }

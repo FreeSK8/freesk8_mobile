@@ -88,6 +88,8 @@ enum adc_control_type {
 enum pas_control_type { // Firmware 5.2 added
   PAS_CTRL_TYPE_NONE,
   PAS_CTRL_TYPE_CADENCE,
+  PAS_CTRL_TYPE_TORQUE, // fw5.3
+  PAS_CTRL_TYPE_TORQUE_WITH_CADENCE_TIMEOUT, // fw5.3
 }
 
 // PAS sensor types
@@ -146,6 +148,8 @@ class chuk_config {
   bool use_smart_rev = false;
   double smart_rev_max_duty = 0;
   double smart_rev_ramp_time = 0;
+  double coast_brake_level = 0; // fw7.0
+  double coast_brake_ramp_time = 0; // fw7.0
 }
 
 class pas_config { // Firmware 5.2 added
@@ -388,13 +392,15 @@ enum CAN_MODE {
   CAN_MODE_VESC,
   CAN_MODE_UAVCAN,
   CAN_MODE_COMM_BRIDGE,
-  CAN_MODE_UNUSED, //fw6
+  CAN_MODE_UNUSED, //fw6,
+  CAN_MODE_VESC_UAVCAN, // fw7.0
 }
 
 enum UAVCAN_RAW_MODE { // Firmware 5.2 added
   UAVCAN_RAW_MODE_CURRENT,
   UAVCAN_RAW_MODE_CURRENT_NO_REV_BRAKE,
   UAVCAN_RAW_MODE_DUTY,
+  UAVCAN_RAW_MODE_RPM, // fw5.2
 }
 
 enum UAVCAN_STATUS_CURRENT_MODE {
@@ -411,7 +417,8 @@ enum CAN_BAUD {
   CAN_BAUD_20K,
   CAN_BAUD_50K,
   CAN_BAUD_75K,
-  CAN_BAUD_100K, // Firmware 5.2 added
+  CAN_BAUD_100K, // Firmware 5.2 added,
+  CAN_BAUD_INVALID, // fw7.0, wire value 255
 }
 
 enum KILL_SW_MODE { // Firmware 5.3 added
