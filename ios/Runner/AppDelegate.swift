@@ -1,11 +1,7 @@
-import UIKit
 import Flutter
+import UIKit
 
-func registerPlugins(registry: FlutterPluginRegistry) -> () {
-    GeneratedPluginRegistrant.register(with: registry)
-}
-
-@UIApplicationMain
+@main
 @objc class AppDelegate: FlutterAppDelegate {
   override func application(
     _ application: UIApplication,
