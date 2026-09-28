@@ -59,6 +59,8 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
 
   static ESC_FIRMWARE? escFirmwareVersion;
   static MCCONF? escMotorConfiguration;
+  /// Which fields the connected ESC's firmware has (escFirmwareVersion is set from the route arguments in build)
+  FirmwareFeatures get _features => FirmwareFeatures(escFirmwareVersion ?? ESC_FIRMWARE.UNSUPPORTED);
   MCCONF? _mcconfClipboard;
   
   final tecBatterySeriesCount = TextEditingController();
@@ -80,11 +82,18 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
   final tecMaxVIN = TextEditingController();
   final tecBatteryCutStart = TextEditingController();
   final tecBatteryCutEnd = TextEditingController();
+  final tecBatteryRegenCutStart = TextEditingController(); // fw6.05+
+  final tecBatteryRegenCutEnd = TextEditingController(); // fw6.05+
 
   final tecTempFETStart = TextEditingController();
   final tecTempFETEnd = TextEditingController();
   final tecTempMotorStart = TextEditingController();
   final tecTempMotorEnd = TextEditingController();
+
+  final tecBmsVminStart = TextEditingController(); // fw6.05+
+  final tecBmsVminEnd = TextEditingController(); // fw6.05+
+  final tecBmsVmaxStart = TextEditingController(); // fw6.05+
+  final tecBmsVmaxEnd = TextEditingController(); // fw6.05+
 
   final tecWattMin = TextEditingController();
   final tecWattMax = TextEditingController();
@@ -131,10 +140,34 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
     tecMaxVIN.addListener(() {escMotorConfiguration!.l_max_vin = doublePrecision(double.tryParse(tecMaxVIN.text.replaceFirst(',', '.'))!, 1); });
     tecBatteryCutStart.addListener(() {escMotorConfiguration!.l_battery_cut_start = doublePrecision(double.tryParse(tecBatteryCutStart.text.replaceFirst(',', '.'))!, 1); });
     tecBatteryCutEnd.addListener(() {escMotorConfiguration!.l_battery_cut_end = doublePrecision(double.tryParse(tecBatteryCutEnd.text.replaceFirst(',', '.'))!, 1); });
+    tecBatteryRegenCutStart.addListener(() {
+      double? newValue = double.tryParse(tecBatteryRegenCutStart.text.replaceFirst(',', '.'));
+      if (newValue != null) escMotorConfiguration!.l_battery_regen_cut_start = doublePrecision(newValue, 1);
+    });
+    tecBatteryRegenCutEnd.addListener(() {
+      double? newValue = double.tryParse(tecBatteryRegenCutEnd.text.replaceFirst(',', '.'));
+      if (newValue != null) escMotorConfiguration!.l_battery_regen_cut_end = doublePrecision(newValue, 1);
+    });
     tecTempFETStart.addListener(() {escMotorConfiguration!.l_temp_fet_start = doublePrecision(double.tryParse(tecTempFETStart.text.replaceFirst(',', '.'))!, 1); });
     tecTempFETEnd.addListener(() {escMotorConfiguration!.l_temp_fet_end = doublePrecision(double.tryParse(tecTempFETEnd.text.replaceFirst(',', '.'))!, 1); });
     tecTempMotorStart.addListener(() {escMotorConfiguration!.l_temp_motor_start = doublePrecision(double.tryParse(tecTempMotorStart.text.replaceFirst(',', '.'))!, 1); });
     tecTempMotorEnd.addListener(() {escMotorConfiguration!.l_temp_motor_end = doublePrecision(double.tryParse(tecTempMotorEnd.text.replaceFirst(',', '.'))!, 1); });
+    tecBmsVminStart.addListener(() {
+      double? newValue = double.tryParse(tecBmsVminStart.text.replaceFirst(',', '.'));
+      if (newValue != null) escMotorConfiguration!.bms.vmin_limit_start = doublePrecision(newValue, 3);
+    });
+    tecBmsVminEnd.addListener(() {
+      double? newValue = double.tryParse(tecBmsVminEnd.text.replaceFirst(',', '.'));
+      if (newValue != null) escMotorConfiguration!.bms.vmin_limit_end = doublePrecision(newValue, 3);
+    });
+    tecBmsVmaxStart.addListener(() {
+      double? newValue = double.tryParse(tecBmsVmaxStart.text.replaceFirst(',', '.'));
+      if (newValue != null) escMotorConfiguration!.bms.vmax_limit_start = doublePrecision(newValue, 3);
+    });
+    tecBmsVmaxEnd.addListener(() {
+      double? newValue = double.tryParse(tecBmsVmaxEnd.text.replaceFirst(',', '.'));
+      if (newValue != null) escMotorConfiguration!.bms.vmax_limit_end = doublePrecision(newValue, 3);
+    });
     tecWattMin.addListener(() {
       double? newValue = double.tryParse(tecWattMin.text.replaceFirst(',', '.'));
       if(newValue==null) newValue = 0.0; //Ensure not null
@@ -189,10 +222,16 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
     tecMaxVIN.dispose();
     tecBatteryCutStart.dispose();
     tecBatteryCutEnd.dispose();
+    tecBatteryRegenCutStart.dispose();
+    tecBatteryRegenCutEnd.dispose();
     tecTempFETStart.dispose();
     tecTempFETEnd.dispose();
     tecTempMotorStart.dispose();
     tecTempMotorEnd.dispose();
+    tecBmsVminStart.dispose();
+    tecBmsVminEnd.dispose();
+    tecBmsVmaxStart.dispose();
+    tecBmsVmaxEnd.dispose();
     tecWattMin.dispose();
     tecWattMax.dispose();
     tecCurrentMinScale.dispose();
@@ -200,6 +239,55 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
     tecDutyStart.dispose();
 
     super.dispose();
+  }
+
+  /// foc_offsets_cal_on_boot (firmware 5.3 to 6.05) or bit 0 of foc_offsets_cal_mode (6.06+);
+  /// the other bits of the mode are left as they are.
+  bool get _offsetsCalOnBoot => _features.hasOffsetsCalMode
+      ? (escMotorConfiguration!.foc_offsets_cal_mode & 0x01) != 0
+      : escMotorConfiguration!.foc_offsets_cal_on_boot;
+  set _offsetsCalOnBoot(bool enabled) {
+    if (_features.hasOffsetsCalMode) {
+      final int others = escMotorConfiguration!.foc_offsets_cal_mode & ~0x01;
+      escMotorConfiguration!.foc_offsets_cal_mode = enabled ? (others | 0x01) : others;
+    } else {
+      escMotorConfiguration!.foc_offsets_cal_on_boot = enabled;
+    }
+  }
+
+  /// Sensor modes offered in the dropdown: the ones this firmware declares, plus the
+  /// current value should it ever come from somewhere else.
+  List<mc_foc_sensor_mode> get _sensorModeItems {
+    final List<mc_foc_sensor_mode> modes = _features.sensorModes;
+    final mc_foc_sensor_mode current = escMotorConfiguration!.foc_sensor_mode;
+    return modes.contains(current) ? modes : [...modes, current];
+  }
+
+  /// Temperature limits are whole degrees on firmware 6.05+ and tenths of a degree before.
+  static String _temperatureText(double celsius, bool wholeDegrees) =>
+      wholeDegrees ? celsius.round().toString() : doublePrecision(celsius, 1).toString();
+
+  Widget _temperatureField(TextEditingController controller, String label) {
+    final bool wholeDegrees = _features.tempsAreWholeDegrees;
+    return TextField(
+        controller: controller,
+        decoration: new InputDecoration(labelText: label),
+        keyboardType: wholeDegrees ? TextInputType.number : TextInputType.numberWithOptions(decimal: true),
+        inputFormatters: <TextInputFormatter>[
+          wholeDegrees ? FilteringTextInputFormatter.digitsOnly : FilteringTextInputFormatter.allow(formatPositiveDouble)
+        ]
+    );
+  }
+
+  Widget _voltageField(TextEditingController controller, String label) {
+    return TextField(
+        controller: controller,
+        decoration: new InputDecoration(labelText: label),
+        keyboardType: TextInputType.numberWithOptions(decimal: true),
+        inputFormatters: <TextInputFormatter>[
+          FilteringTextInputFormatter.allow(formatPositiveDouble)
+        ]
+    );
   }
 
   void requestMCCONF({int? optionalCANID}) async {
@@ -308,10 +396,17 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
     tecMaxVIN.text = doublePrecision(escMotorConfiguration!.l_max_vin, 1).toString();
     tecBatteryCutStart.text = doublePrecision(escMotorConfiguration!.l_battery_cut_start, 1).toString();
     tecBatteryCutEnd.text = doublePrecision(escMotorConfiguration!.l_battery_cut_end, 1).toString();
-    tecTempFETStart.text = doublePrecision(escMotorConfiguration!.l_temp_fet_start, 1).toString();
-    tecTempFETEnd.text = doublePrecision(escMotorConfiguration!.l_temp_fet_end, 1).toString();
-    tecTempMotorStart.text = doublePrecision(escMotorConfiguration!.l_temp_motor_start, 1).toString();
-    tecTempMotorEnd.text = doublePrecision(escMotorConfiguration!.l_temp_motor_end, 1).toString();
+    tecBatteryRegenCutStart.text = doublePrecision(escMotorConfiguration!.l_battery_regen_cut_start, 1).toString();
+    tecBatteryRegenCutEnd.text = doublePrecision(escMotorConfiguration!.l_battery_regen_cut_end, 1).toString();
+    final bool wholeDegrees = _features.tempsAreWholeDegrees;
+    tecTempFETStart.text = _temperatureText(escMotorConfiguration!.l_temp_fet_start, wholeDegrees);
+    tecTempFETEnd.text = _temperatureText(escMotorConfiguration!.l_temp_fet_end, wholeDegrees);
+    tecTempMotorStart.text = _temperatureText(escMotorConfiguration!.l_temp_motor_start, wholeDegrees);
+    tecTempMotorEnd.text = _temperatureText(escMotorConfiguration!.l_temp_motor_end, wholeDegrees);
+    tecBmsVminStart.text = doublePrecision(escMotorConfiguration!.bms.vmin_limit_start, 3).toString();
+    tecBmsVminEnd.text = doublePrecision(escMotorConfiguration!.bms.vmin_limit_end, 3).toString();
+    tecBmsVmaxStart.text = doublePrecision(escMotorConfiguration!.bms.vmax_limit_start, 3).toString();
+    tecBmsVmaxEnd.text = doublePrecision(escMotorConfiguration!.bms.vmax_limit_end, 3).toString();
     tecWattMin.text = doublePrecision(escMotorConfiguration!.l_watt_min, 1).toString();
     tecWattMax.text = doublePrecision(escMotorConfiguration!.l_watt_max, 1).toString();
     tecCurrentMinScale.text = doublePrecision(escMotorConfiguration!.l_current_min_scale, 2).toString();
@@ -330,10 +425,16 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
     tecMaxVIN.selection = TextSelection.fromPosition(TextPosition(offset: tecMaxVIN.text.length));
     tecBatteryCutStart.selection = TextSelection.fromPosition(TextPosition(offset: tecBatteryCutStart.text.length));
     tecBatteryCutEnd.selection = TextSelection.fromPosition(TextPosition(offset: tecBatteryCutEnd.text.length));
+    tecBatteryRegenCutStart.selection = TextSelection.fromPosition(TextPosition(offset: tecBatteryRegenCutStart.text.length));
+    tecBatteryRegenCutEnd.selection = TextSelection.fromPosition(TextPosition(offset: tecBatteryRegenCutEnd.text.length));
     tecTempFETStart.selection = TextSelection.fromPosition(TextPosition(offset: tecTempFETStart.text.length));
     tecTempFETEnd.selection = TextSelection.fromPosition(TextPosition(offset: tecTempFETEnd.text.length));
     tecTempMotorStart.selection = TextSelection.fromPosition(TextPosition(offset: tecTempMotorStart.text.length));
     tecTempMotorEnd.selection = TextSelection.fromPosition(TextPosition(offset: tecTempMotorEnd.text.length));
+    tecBmsVminStart.selection = TextSelection.fromPosition(TextPosition(offset: tecBmsVminStart.text.length));
+    tecBmsVminEnd.selection = TextSelection.fromPosition(TextPosition(offset: tecBmsVminEnd.text.length));
+    tecBmsVmaxStart.selection = TextSelection.fromPosition(TextPosition(offset: tecBmsVmaxStart.text.length));
+    tecBmsVmaxEnd.selection = TextSelection.fromPosition(TextPosition(offset: tecBmsVmaxEnd.text.length));
     tecWattMin.selection = TextSelection.fromPosition(TextPosition(offset: tecWattMin.text.length));
     tecWattMax.selection = TextSelection.fromPosition(TextPosition(offset: tecWattMax.text.length));
     tecCurrentMinScale.selection = TextSelection.fromPosition(TextPosition(offset: tecCurrentMinScale.text.length));
@@ -510,6 +611,14 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
                     secondary: const Icon(Icons.sync),
                   ),
 
+                  if (_features.hasOffsetsCalOnBoot || _features.hasOffsetsCalMode) SwitchListTile(
+                    title: Text("Calibrate Offsets on Boot"),
+                    subtitle: Text("Measure the current and voltage sensor offsets every time the ESC starts"),
+                    value: _offsetsCalOnBoot,
+                    onChanged: (bool newValue) { setState((){ _offsetsCalOnBoot = newValue; }); },
+                    secondary: const Icon(Icons.tune),
+                  ),
+
                   DropdownButton(
                       value:escMotorConfiguration!.si_battery_type.index,
                       items: [
@@ -532,29 +641,16 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
                         });
                       }),
 
-                  DropdownButton(
-                      value:escMotorConfiguration!.foc_sensor_mode.index,
-                      items: [
-                        DropdownMenuItem(
-                          child: Text("FOC_SENSOR_MODE_SENSORLESS"),
-                          value: 0,
-                        ),
-                        DropdownMenuItem(
-                          child: Text("FOC_SENSOR_MODE_ENCODER"),
-                          value: 1,
-                        ),
-                        DropdownMenuItem(
-                            child: Text("FOC_SENSOR_MODE_HALL"),
-                            value: 2
-                        ),
-                        DropdownMenuItem(
-                            child: Text("FOC_SENSOR_MODE_HFI"),
-                            value: 3
-                        ),
-                      ],
+                  // Sensor modes this firmware knows (HFI_START: 5.3, HFI_V2..V5: 6.0, ENCODER_AB: 7.00)
+                  DropdownButton<mc_foc_sensor_mode>(
+                      value: escMotorConfiguration!.foc_sensor_mode,
+                      items: _sensorModeItems.map((mode) => DropdownMenuItem(
+                        child: Text(mode.name),
+                        value: mode,
+                      )).toList(),
                       onChanged: (value) {
                         setState(() {
-                          escMotorConfiguration!.foc_sensor_mode = mc_foc_sensor_mode.values[value!];
+                          escMotorConfiguration!.foc_sensor_mode = value!;
                         });
                       }),
 
@@ -697,38 +793,13 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
                         FilteringTextInputFormatter.allow(formatPositiveDouble)
                       ]
                   ),
-                  TextField(
-                      controller: tecTempFETStart,
-                      decoration: new InputDecoration(labelText: "ESC Temperature Cutoff Start (Celsius)"),
-                      keyboardType: TextInputType.numberWithOptions(decimal: true),
-                      inputFormatters: <TextInputFormatter>[
-                        FilteringTextInputFormatter.allow(formatPositiveDouble)
-                      ]
-                  ),
-                  TextField(
-                      controller: tecTempFETEnd,
-                      decoration: new InputDecoration(labelText: "ESC Temperature Cutoff End (Celsius)"),
-                      keyboardType: TextInputType.numberWithOptions(decimal: true),
-                      inputFormatters: <TextInputFormatter>[
-                        FilteringTextInputFormatter.allow(formatPositiveDouble)
-                      ]
-                  ),
-                  TextField(
-                      controller: tecTempMotorStart,
-                      decoration: new InputDecoration(labelText: "Motor Temperature Cutoff Start (Celsius)"),
-                      keyboardType: TextInputType.numberWithOptions(decimal: true),
-                      inputFormatters: <TextInputFormatter>[
-                        FilteringTextInputFormatter.allow(formatPositiveDouble)
-                      ]
-                  ),
-                  TextField(
-                      controller: tecTempMotorEnd,
-                      decoration: new InputDecoration(labelText: "Motor Temperature Cutoff End (Celsius)"),
-                      keyboardType: TextInputType.numberWithOptions(decimal: true),
-                      inputFormatters: <TextInputFormatter>[
-                        FilteringTextInputFormatter.allow(formatPositiveDouble)
-                      ]
-                  ),
+                  // Firmware 6.05+ limits regenerative braking separately when the pack is full
+                  if (_features.hasRegenCutoff) _voltageField(tecBatteryRegenCutStart, "Battery Regen Cutoff Start (Volts)"),
+                  if (_features.hasRegenCutoff) _voltageField(tecBatteryRegenCutEnd, "Battery Regen Cutoff End (Volts)"),
+                  _temperatureField(tecTempFETStart, "ESC Temperature Cutoff Start (Celsius)"),
+                  _temperatureField(tecTempFETEnd, "ESC Temperature Cutoff End (Celsius)"),
+                  _temperatureField(tecTempMotorStart, "Motor Temperature Cutoff Start (Celsius)"),
+                  _temperatureField(tecTempMotorEnd, "Motor Temperature Cutoff End (Celsius)"),
 
                   TextField(
                       controller: tecWattMin,
@@ -770,6 +841,16 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
                         FilteringTextInputFormatter.allow(formatPositiveDouble)
                       ]
                   ),
+
+                  // Firmware 6.05+ can limit current from the cell voltages a CAN BMS reports
+                  if (_features.hasBmsVoltageLimits) ...[
+                    Divider(height: 10,),
+                    Center(child: Text("BMS Cell Voltage Limits"),),
+                    _voltageField(tecBmsVminStart, "Minimum Cell Voltage Limit Start (Volts)"),
+                    _voltageField(tecBmsVminEnd, "Minimum Cell Voltage Limit End (Volts)"),
+                    _voltageField(tecBmsVmaxStart, "Maximum Cell Voltage Limit Start (Volts)"),
+                    _voltageField(tecBmsVmaxEnd, "Maximum Cell Voltage Limit End (Volts)"),
+                  ],
 
                   //Text(" ${escMotorConfiguration.}"),
 
@@ -853,6 +934,8 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
                               escMotorConfiguration!.l_max_vin = _mcconfClipboard!.l_max_vin;
                               escMotorConfiguration!.l_battery_cut_start = _mcconfClipboard!.l_battery_cut_start;
                               escMotorConfiguration!.l_battery_cut_end = _mcconfClipboard!.l_battery_cut_end;
+                              escMotorConfiguration!.l_battery_regen_cut_start = _mcconfClipboard!.l_battery_regen_cut_start;
+                              escMotorConfiguration!.l_battery_regen_cut_end = _mcconfClipboard!.l_battery_regen_cut_end;
                               escMotorConfiguration!.l_temp_fet_start = _mcconfClipboard!.l_temp_fet_start;
                               escMotorConfiguration!.l_temp_fet_end = _mcconfClipboard!.l_temp_fet_end;
                               escMotorConfiguration!.l_temp_motor_start = _mcconfClipboard!.l_temp_motor_start;
@@ -862,6 +945,10 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
                               escMotorConfiguration!.l_current_min_scale = _mcconfClipboard!.l_current_min_scale;
                               escMotorConfiguration!.l_current_max_scale = _mcconfClipboard!.l_current_max_scale;
                               escMotorConfiguration!.l_duty_start = _mcconfClipboard!.l_duty_start;
+                              escMotorConfiguration!.bms.vmin_limit_start = _mcconfClipboard!.bms.vmin_limit_start;
+                              escMotorConfiguration!.bms.vmin_limit_end = _mcconfClipboard!.bms.vmin_limit_end;
+                              escMotorConfiguration!.bms.vmax_limit_start = _mcconfClipboard!.bms.vmax_limit_start;
+                              escMotorConfiguration!.bms.vmax_limit_end = _mcconfClipboard!.bms.vmax_limit_end;
                               // Notify User
                               setState(() {
                                 ScaffoldMessenger

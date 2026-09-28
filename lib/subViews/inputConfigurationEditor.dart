@@ -76,6 +76,19 @@ class InputConfigurationEditorState extends State<InputConfigurationEditor> {
 
   static APPCONF? escInputConfiguration;
   static ESC_FIRMWARE? escFirmwareVersion;
+  /// Which fields the connected ESC's firmware has (escFirmwareVersion is set from the route arguments in build)
+  FirmwareFeatures get _features => FirmwareFeatures(escFirmwareVersion ?? ESC_FIRMWARE.UNSUPPORTED);
+
+  /// app_adc_conf.buttons bits on firmware 6.0+ (applications/app_adc.c): the buttons are
+  /// enabled at all, the cruise control button is inverted, the reverse button is inverted.
+  static const int _adcButtonsEnabledBit = 0x01;
+  static const int _adcCcInvertedBit = 0x02;
+  static const int _adcRevInvertedBit = 0x04;
+  bool _adcButtonBit(int bit) => (escInputConfiguration!.app_adc_conf.buttons & bit) != 0;
+  void _setAdcButtonBit(int bit, bool enabled) {
+    final int others = escInputConfiguration!.app_adc_conf.buttons & ~bit;
+    escInputConfiguration!.app_adc_conf.buttons = enabled ? (others | bit) : others;
+  }
 
   static List<int>? discoveredCANDevices;
 
@@ -95,8 +108,10 @@ class InputConfigurationEditorState extends State<InputConfigurationEditor> {
   final tecTiltbackConstantERPM = TextEditingController();
 
 
-  /// APP Conf
-  List<ListItem> _appModeItems = [
+  /// APP Conf (built per firmware in _buildBody: the balance app was removed in 6.05)
+  List<ListItem> _appModeItems = [];
+  ESC_FIRMWARE? _appModeItemsFirmware;
+  static List<ListItem> _buildAppModeItems(FirmwareFeatures features) => [
     ListItem(app_use.APP_NONE.index, "None"),
     //ListItem(app_use.APP_PPM.index, "PPM"), //TODO: disables uart!?! whoa
     //ListItem(app_use.APP_ADC.index, "ADC"),
@@ -106,7 +121,7 @@ class InputConfigurationEditorState extends State<InputConfigurationEditor> {
     //ListItem(app_use.APP_NUNCHUK.index, "NUNCHUK"),
     //ListItem(app_use.APP_NRF.index, "NRF"),
     //ListItem(app_use.APP_CUSTOM.index, "CUSTOM"),
-    ListItem(app_use.APP_BALANCE.index, "BALANCE"),
+    if (features.hasBalanceApp) ListItem(app_use.APP_BALANCE.index, "BALANCE"),
   ];
   List<DropdownMenuItem<ListItem>>? _appModeDropdownItems;
   ListItem? _selectedAppMode;
@@ -198,8 +213,7 @@ class InputConfigurationEditorState extends State<InputConfigurationEditor> {
 
   @override
   void initState() {
-    /// ESC Application Configuration
-    _appModeDropdownItems = buildDropDownMenuItems(_appModeItems);
+    /// ESC Application Configuration (the app mode list is built in _buildBody once the firmware is known)
     _ppmCtrlTypeDropdownItems = buildDropDownMenuItems(_ppmCtrlTypeItems);
     _thrExpModeDropdownItems = buildDropDownMenuItems(_thrExpModeItems);
     _nunchuckCtrlTypeDropdownItems = buildDropDownMenuItems(_nunchukCtrlTypeItems);
@@ -422,6 +436,14 @@ class InputConfigurationEditorState extends State<InputConfigurationEditor> {
     }
 
 
+    // Build the application list for this firmware (BALANCE only exists before 6.05)
+    if (_appModeDropdownItems == null || _appModeItemsFirmware != escFirmwareVersion) {
+      _appModeItemsFirmware = escFirmwareVersion;
+      _appModeItems = _buildAppModeItems(_features);
+      _appModeDropdownItems = buildDropDownMenuItems(_appModeItems);
+      _selectedAppMode = null;
+    }
+
     // Select App to use
     if (_selectedAppMode == null) {
       _appModeItems.forEach((item) {
@@ -436,7 +458,7 @@ class InputConfigurationEditorState extends State<InputConfigurationEditor> {
     }
     showPPMConfiguration = escInputConfiguration!.app_to_use == app_use.APP_PPM_UART;
     showNunchukConfiguration = escInputConfiguration!.app_to_use == app_use.APP_UART;
-    showBalanceConfiguration = escInputConfiguration!.app_to_use == app_use.APP_BALANCE;
+    showBalanceConfiguration = escInputConfiguration!.app_to_use == app_use.APP_BALANCE && _features.hasBalanceApp;
     showADCConfiguration = escInputConfiguration!.app_to_use == app_use.APP_ADC_UART;
 
 
@@ -734,7 +756,7 @@ class InputConfigurationEditorState extends State<InputConfigurationEditor> {
                         escInputConfiguration!.app_to_use = app_use.values[newValue!.value];
                         showPPMConfiguration = escInputConfiguration!.app_to_use == app_use.APP_PPM_UART;
                         showNunchukConfiguration = escInputConfiguration!.app_to_use == app_use.APP_UART;
-                        showBalanceConfiguration = escInputConfiguration!.app_to_use == app_use.APP_BALANCE;
+                        showBalanceConfiguration = escInputConfiguration!.app_to_use == app_use.APP_BALANCE && _features.hasBalanceApp;
                       });
                     },
                   )
@@ -1222,17 +1244,39 @@ class InputConfigurationEditorState extends State<InputConfigurationEditor> {
                           secondary: const Icon(Icons.not_started),
                         ),
 
+                        // Firmware 6.0+ packs the button options into the app_adc_conf.buttons bitmask;
+                        // earlier firmware has the two invert flags only.
+                        if (_features.adcButtonsBitmask) SwitchListTile(
+                          title: Text("Buttons Enabled"),
+                          subtitle: Text("Cruise control and reverse buttons on the ADC input"),
+                          value: _adcButtonBit(_adcButtonsEnabledBit),
+                          onChanged: (bool newValue) { setState((){ _setAdcButtonBit(_adcButtonsEnabledBit, newValue); }); },
+                          secondary: const Icon(Icons.radio_button_checked),
+                        ),
+
                         SwitchListTile(
                           title: Text("Invert Cruise Control Button"),
-                          value: escInputConfiguration!.app_adc_conf.cc_button_inverted,
-                          onChanged: (bool newValue) { setState((){ escInputConfiguration!.app_adc_conf.cc_button_inverted = newValue; }); },
+                          value: _features.adcButtonsBitmask ? _adcButtonBit(_adcCcInvertedBit) : escInputConfiguration!.app_adc_conf.cc_button_inverted,
+                          onChanged: (bool newValue) { setState((){
+                            if (_features.adcButtonsBitmask) {
+                              _setAdcButtonBit(_adcCcInvertedBit, newValue);
+                            } else {
+                              escInputConfiguration!.app_adc_conf.cc_button_inverted = newValue;
+                            }
+                          }); },
                           secondary: const Icon(Icons.help_outline),
                         ),
 
                         SwitchListTile(
                           title: Text("Invert Reverse Button"),
-                          value: escInputConfiguration!.app_adc_conf.rev_button_inverted,
-                          onChanged: (bool newValue) { setState((){ escInputConfiguration!.app_adc_conf.rev_button_inverted = newValue; }); },
+                          value: _features.adcButtonsBitmask ? _adcButtonBit(_adcRevInvertedBit) : escInputConfiguration!.app_adc_conf.rev_button_inverted,
+                          onChanged: (bool newValue) { setState((){
+                            if (_features.adcButtonsBitmask) {
+                              _setAdcButtonBit(_adcRevInvertedBit, newValue);
+                            } else {
+                              escInputConfiguration!.app_adc_conf.rev_button_inverted = newValue;
+                            }
+                          }); },
                           secondary: const Icon(Icons.help_outline),
                         ),
 
