@@ -464,8 +464,13 @@ def generate(manifest: dict) -> tuple[dict[str, str], dict[str, dict]]:
                      manifest.get("enum_member_renames", {}))
         try:
             files[v["file"]] = em.render(csrc, sigs, read_source(vdir))
+            # member lists (Dart names, wire order) of every C enum a field uses, so tests can
+            # check UI choice lists against the firmware
+            used = {e["enum"] for k in ("mcconf", "appconf") for e in em.layout[k]["fields"] if e.get("enum") and e["enum"] != "bool"}
+            enums = {name: [em.member_renames.get(n, n) for n, _ in members] for name, members in em.c_enums.items() if name in used}
             layouts[v["label"]] = {"label": v["label"], "ref": read_source(vdir).get("ref"), "class": v["class"],
-                                   "firmware": v["firmware"], "mcconf": em.layout["mcconf"], "appconf": em.layout["appconf"]}
+                                   "firmware": v["firmware"], "mcconf": em.layout["mcconf"], "appconf": em.layout["appconf"],
+                                   "enums": enums}
         except GenError as e:
             errors.append(f"[{v['label']}] {e}")
     if errors:

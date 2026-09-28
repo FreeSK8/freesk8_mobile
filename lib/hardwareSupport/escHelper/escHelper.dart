@@ -50,10 +50,32 @@ class FirmwareFeatures {
   bool get tempsAreWholeDegrees => _atLeast(ESC_FIRMWARE.FW6_5);
   /// bms.vmin/vmax_limit_* (6.05+).
   bool get hasBmsVoltageLimits => _atLeast(ESC_FIRMWARE.FW6_5);
+  /// foc_offsets_cal_on_boot flag (5.3 up to 6.05).
+  bool get hasOffsetsCalOnBoot => _atLeast(ESC_FIRMWARE.FW5_3) && !hasOffsetsCalMode;
   /// foc_offsets_cal_mode bitmask replaces foc_offsets_cal_on_boot (6.06+).
   bool get hasOffsetsCalMode => _atLeast(ESC_FIRMWARE.FW6_6);
   /// app_adc_conf.buttons bitmask replaces cc/rev_button_inverted (6.0+).
   bool get adcButtonsBitmask => _atLeast(ESC_FIRMWARE.FW6_0);
+
+  /// The FOC sensor modes this firmware's datatypes.h declares, in wire order:
+  /// HFI_START arrived in 5.3, HFI_V2..V5 in 6.0 and ENCODER_AB in 7.00.
+  /// Unsupported firmware gets the full list so a stale value still renders.
+  List<mc_foc_sensor_mode> get sensorModes {
+    final List<mc_foc_sensor_mode> all = mc_foc_sensor_mode.values;
+    int count = all.length;
+    if (firmware == ESC_FIRMWARE.UNSUPPORTED) {
+      count = all.length;
+    } else if (_atLeast(ESC_FIRMWARE.FW7_0)) {
+      count = 10;
+    } else if (_atLeast(ESC_FIRMWARE.FW6_0)) {
+      count = 9;
+    } else if (_atLeast(ESC_FIRMWARE.FW5_3)) {
+      count = 5;
+    } else {
+      count = 4;
+    }
+    return all.take(count).toList();
+  }
 }
 
 class ESCTelemetry {

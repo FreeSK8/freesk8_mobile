@@ -34,6 +34,7 @@ class Layout {
   int size(String kind) => json[kind]['size'] as int;
   int signature(String kind) => json[kind]['signature'] as int;
   bool has(String kind, String dartPath) => fields(kind).any((f) => f['dart'] == dartPath);
+  List<String> enumMembers(String cEnum) => (json['enums'][cEnum] as List).cast<String>();
 
   /// Byte offset of a field inside the packet (packet id at 0, signature at 1..4).
   int packetOffset(String kind, String dartPath) {
@@ -54,6 +55,10 @@ void main() {
     final Layout layout = Layout(jsonDecode(File('tool/esc_serializers/layouts/${layoutLabel[fw]}.json').readAsStringSync()));
 
     group('$fw', () {
+      test('the sensor modes offered in the motor editor are the ones this firmware declares', () {
+        expect(FirmwareFeatures(fw).sensorModes.map((m) => m.name).toList(), layout.enumMembers('mc_foc_sensor_mode'));
+      });
+
       test('freshly constructed configurations are not valid', () {
         expect(MCCONF().isValid, isFalse);
         expect(APPCONF().isValid, isFalse);

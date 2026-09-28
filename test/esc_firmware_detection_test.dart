@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:freesk8_mobile/hardwareSupport/escHelper/dataTypes.dart';
 import 'package:freesk8_mobile/hardwareSupport/escHelper/escHelper.dart';
+import 'package:freesk8_mobile/hardwareSupport/escHelper/mcConf.dart';
 
 void main() {
   test('firmwareFor maps reported versions to supported releases', () {
@@ -39,6 +40,20 @@ void main() {
     expect(FirmwareFeatures(ESC_FIRMWARE.FW5_3).adcButtonsBitmask, isFalse);
     expect(FirmwareFeatures(ESC_FIRMWARE.FW7_0).adcButtonsBitmask, isTrue);
     expect(FirmwareFeatures(ESC_FIRMWARE.UNSUPPORTED).hasBalanceApp, isFalse);
+    expect(FirmwareFeatures(ESC_FIRMWARE.FW5_2).hasOffsetsCalOnBoot, isFalse);
+    expect(FirmwareFeatures(ESC_FIRMWARE.FW5_3).hasOffsetsCalOnBoot, isTrue);
+    expect(FirmwareFeatures(ESC_FIRMWARE.FW6_5).hasOffsetsCalOnBoot, isTrue);
+    expect(FirmwareFeatures(ESC_FIRMWARE.FW6_6).hasOffsetsCalOnBoot, isFalse);
+    expect(FirmwareFeatures(ESC_FIRMWARE.UNSUPPORTED).hasOffsetsCalOnBoot, isFalse);
+  });
+
+  test('sensor mode lists grow with the firmware', () {
+    expect(FirmwareFeatures(ESC_FIRMWARE.FW5_1).sensorModes.last, mc_foc_sensor_mode.FOC_SENSOR_MODE_HFI);
+    expect(FirmwareFeatures(ESC_FIRMWARE.FW5_3).sensorModes.last, mc_foc_sensor_mode.FOC_SENSOR_MODE_HFI_START);
+    expect(FirmwareFeatures(ESC_FIRMWARE.FW6_0).sensorModes.last, mc_foc_sensor_mode.FOC_SENSOR_MODE_HFI_V5);
+    expect(FirmwareFeatures(ESC_FIRMWARE.FW6_6).sensorModes, isNot(contains(mc_foc_sensor_mode.FOC_SENSOR_MODE_ENCODER_AB)));
+    expect(FirmwareFeatures(ESC_FIRMWARE.FW7_0).sensorModes.last, mc_foc_sensor_mode.FOC_SENSOR_MODE_ENCODER_AB);
+    expect(FirmwareFeatures(ESC_FIRMWARE.UNSUPPORTED).sensorModes, mc_foc_sensor_mode.values);
   });
 
   test('fault codes newer than this build decode to FAULT_CODE_UNKNOWN', () {
