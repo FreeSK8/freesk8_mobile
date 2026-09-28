@@ -46,8 +46,8 @@ class FlutterMapWidgetState extends State<FlutterMapWidget> {
       ),
       children: [
         TileLayer(
-          urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-          subdomains: const ['a', 'b', 'c'],
+          urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+          userAgentPackageName: 'com.derelictrobot.freesk8_mobile',
         ),
         PolylineLayer(
           polylines: [
