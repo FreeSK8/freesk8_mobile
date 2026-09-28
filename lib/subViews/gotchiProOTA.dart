@@ -14,7 +14,7 @@ class gotchiProOTA extends StatefulWidget {
 }
 
 class gotchiProOTAState extends State<gotchiProOTA> with SingleTickerProviderStateMixin {
-  StreamSubscription<ScanResult>? scanSubscription;
+  StreamSubscription<List<ScanResult>>? scanSubscription;
   List<ScanResult> scanResults = <ScanResult>[];
   bool otaRunning = false;
 
@@ -108,28 +108,35 @@ class gotchiProOTAState extends State<gotchiProOTA> with SingleTickerProviderSta
     FlutterBluePlus.stopScan();
     setState(() {
       scanResults.clear();
-      scanSubscription = FlutterBluePlus.scan().listen(
-            (scanResult) {
-          if (scanResults.cast<ScanResult?>().firstWhere(
-                  (ele) => ele!.device.remoteId == scanResult.device.remoteId,
-              orElse: () => null) !=
-              null) {
-            return;
-          }
-          if (scanResult.device.name.startsWith("ESP")) {
-            setState(() {
-              /// add result to results if not added
-              scanResults.add(scanResult);
-            });
-          }
-        },
-      );
+    });
+    // flutter_blue_plus 2.x removed FlutterBluePlus.scan() (its body throws).
+    // Listen for results first, then start the scan. No service filter: a
+    // device waiting for an update does not advertise the UART service.
+    scanSubscription = FlutterBluePlus.onScanResults.listen((results) {
+      for (final scanResult in results) {
+        if (scanResults.any((ele) => ele.device.remoteId == scanResult.device.remoteId)) {
+          continue;
+        }
+        if (scanResultName(scanResult).startsWith("ESP")) {
+          setState(() {
+            scanResults.add(scanResult);
+          });
+        }
+      }
+    }, onError: (error) {
+      globalLogger.e("OTA scan error: $error");
+    });
+    FlutterBluePlus.startScan().catchError((error) {
+      globalLogger.e("FlutterBluePlus.startScan threw: $error");
+      if (mounted) {
+        genericAlert(context, "BLE Scan Error", Text("Unable to start scanning: $error"), "OK");
+      }
     });
   }
 
   void stopScan() {
     scanSubscription?.cancel();
-    scanSubscription = null;
+    FlutterBluePlus.stopScan();
     setState(() => scanSubscription = null);
   }
 
@@ -258,11 +265,9 @@ class DeviceItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var name = "Unknown";
-    if (scanResult!.device.name != null && scanResult!.device.name.length > 0) {
-      name = scanResult!.device.name;
-    }
-    var inOTAMode = scanResult!.device.name == "ESP32";
+    final advertisedName = scanResultName(scanResult!);
+    var name = advertisedName.isNotEmpty ? advertisedName : "Unknown";
+    var inOTAMode = advertisedName == "ESP32";
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(8.0),

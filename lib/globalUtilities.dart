@@ -19,6 +19,14 @@ import 'dart:collection';
 
 import 'package:table_calendar/table_calendar.dart';
 
+/// Name a BLE scan result was advertised with: the advertisement name when
+/// present, otherwise the platform (cached/bonded) name. Either may be empty.
+String scanResultName(ScanResult result) {
+  final advName = result.advertisementData.advName;
+  return advName.isNotEmpty ? advName : result.device.platformName;
+}
+
+
 void setLandscapeOrientation({bool? enabled}) {
   SystemChrome.setPreferredOrientations(
       enabled! ? [
