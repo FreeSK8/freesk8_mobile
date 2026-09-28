@@ -4,6 +4,39 @@ A Flutter project to enhance connectivity to your ESK8 or PEV.
 
 This project also serves as a companion application to the [FreeSK8 Robogotchi](https://derelictrobot.com/collections/production/products/freesk8-robogotchi).
 
+## Download / Releases
+
+Android APKs are published on the [GitHub Releases page](https://github.com/FreeSK8/freesk8_mobile/releases)
+(the [latest release](https://github.com/FreeSK8/freesk8_mobile/releases/latest) is always the current
+version). Each release carries the APK and its SHA-256 checksum. A release marked **pre-release** is
+either a release candidate (tag with a `-rc` suffix) or a debug-signed test build; a debug-signed build
+cannot be upgraded in place by a later signed release, so uninstall it first.
+
+iOS builds are not distributed through GitHub Releases.
+
+## Building from source
+
+The Flutter version is pinned in `pubspec.yaml` (`environment.flutter`); `flutter pub get` refuses any
+other version, so install exactly that one (for example with [fvm](https://fvm.app) or
+`git clone -b <version> https://github.com/flutter/flutter.git`). Then:
+
+```bash
+flutter pub get
+flutter analyze
+flutter test
+flutter build apk --release   # Android; see CI_GUIDE.md for release signing
+```
+
+## Release process
+
+1. Bump `version:` in `pubspec.yaml`, `freeSK8ApplicationVersion` in `lib/main.dart` (a unit test keeps
+   them in sync) and add a `CHANGELOG` entry, in the pull request that finishes the version.
+2. After the merge to `master`, tag the merge commit `v<version>` and push the tag. CI builds the APK,
+   checks the tag against the pubspec version and publishes the GitHub Release with the CHANGELOG
+   section as its notes. `v<version>-rc1` style tags publish a pre-release.
+
+See [`CI_GUIDE.md`](CI_GUIDE.md) for the workflow details and the one-time signing setup.
+
 ## Getting Started
 
 This project was a starting point for a Flutter application.

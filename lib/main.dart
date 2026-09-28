@@ -84,7 +84,7 @@ import 'blocs/esc_config/esc_config_bloc.dart';
 
 
 //release update
-const String freeSK8ApplicationVersion = "0.23.0";
+const String freeSK8ApplicationVersion = "0.24.0";
 const String robogotchiFirmwareExpectedVersion = "0.10.2";
 const String gotchiproFirmwareExpectedVersion = "1.6.0";
 
