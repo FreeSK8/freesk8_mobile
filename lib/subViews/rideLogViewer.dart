@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -252,7 +251,7 @@ class RideLogViewerState extends State<RideLogViewer> {
 
   @override
   void dispose() {
-    eventObservable?.close();
+    eventObservable.close();
     super.dispose();
   }
 
@@ -382,7 +381,6 @@ class RideLogViewerState extends State<RideLogViewer> {
     double gpsAverageSpeed = 0;
     double gpsMaxSpeed = 0;
     DateTime? gpsStartTime;
-    DateTime? gpsEndTime;
     String gpsDistanceStr = "N/A";
 
     //Charting and data
@@ -447,7 +445,6 @@ class RideLogViewerState extends State<RideLogViewer> {
     thisRideLogEntries = thisRideLog.split("\n");
     globalLogger.d("rideLogViewer rideLogEntry count: ${thisRideLog.length}");
     int fileLoggingRateHz = 1;
-    int fileMultiESCMode = 0;
     for(int i=0; i<thisRideLogEntries.length; ++i) {
       final entry = thisRideLogEntries[i].split(",");
 
@@ -459,7 +456,6 @@ class RideLogViewerState extends State<RideLogViewer> {
             globalLogger.d("Parsed: ${thisRideLogEntries[i]}");
           }
           if (entry[1] == "multi_esc_mode") {
-            fileMultiESCMode = int.parse(entry[2]);
             globalLogger.d("Parsed: ${thisRideLogEntries[i]}");
           }
           if (entry[1] == "gear_ratio") {
@@ -502,7 +498,6 @@ class RideLogViewerState extends State<RideLogViewer> {
           // Set the GPS start time if null
           gpsStartTime ??= thisGPSTime;
           // Set the GPS end time to the last message parsed
-          gpsEndTime = thisGPSTime;
           double thisSpeed = double.tryParse(entry[4])!;
           gpsAverageSpeed += thisSpeed;
           if (thisSpeed > gpsMaxSpeed) {gpsMaxSpeed = thisSpeed;}
@@ -735,7 +730,6 @@ class RideLogViewerState extends State<RideLogViewer> {
           // Set the GPS start time if null
           gpsStartTime ??= thisGPSTime;
           // Set the GPS end time to the last message parsed
-          gpsEndTime = thisGPSTime;
           double thisSpeed = double.tryParse(entry[6])!;
           gpsAverageSpeed += thisSpeed;
           if (thisSpeed > gpsMaxSpeed) {gpsMaxSpeed = thisSpeed;}
@@ -1426,7 +1420,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                                 eventObservable.add(currentSelection);
                                 eventObservable.publish();
                                 // Set the map center to this position in time
-                                if (gpsLatLngMap.length > 0 && _mapController != null) {
+                                if (gpsLatLngMap.length > 0) {
                                   LatLng closestMapPoint = selectNearestGPSPoint(model.selectedDatum.first.datum.time, gpsLatLngMap);
                                   // Before redrawing the map lets move the last (user selection) marker
                                   mapMakers.last = new Marker(

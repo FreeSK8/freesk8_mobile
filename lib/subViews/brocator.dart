@@ -256,7 +256,7 @@ class BrocatorState extends State<Brocator> {
         'Latitude' : myBrocation.position!.latitude,
         'Longitude' : myBrocation.position!.longitude,
         'BatteryVoltage' : myTelemetry.v_in,
-        'BatteryPercentage' : myTelemetry.battery_level == null ? 0 : (myTelemetry.battery_level * 100).toInt(),
+        'BatteryPercentage' : (myTelemetry.battery_level * 100).toInt(),
         'DistanceTraveled' : myTelemetry.tachometer_abs / 1000.0,
       }) : jsonEncode(<String, dynamic>{
         'UUID' : myUUID,
@@ -264,7 +264,7 @@ class BrocatorState extends State<Brocator> {
         'Latitude' : myBrocation.position!.latitude,
         'Longitude' : myBrocation.position!.longitude,
         'BatteryVoltage' : myTelemetry.v_in,
-        'BatteryPercentage' : myTelemetry.battery_level == null ? 0 : (myTelemetry.battery_level * 100).toInt(),
+        'BatteryPercentage' : (myTelemetry.battery_level * 100).toInt(),
         'DistanceTraveled' : myTelemetry.tachometer_abs / 1000.0,
       }),
     );
@@ -371,9 +371,7 @@ class BrocatorState extends State<Brocator> {
       checkLocationPermission();
       positionStream = _geolocatorPlatform.getPositionStream(locationSettings: locationOptions).listen(
               (Position position) {
-            if(position != null) {
-              updateLocation(new LatLng(position.latitude, position.longitude));
-            }
+            updateLocation(new LatLng(position.latitude, position.longitude));
           });
     } catch (e) {
       currentLocation = LatLng(0,0);
@@ -385,8 +383,8 @@ class BrocatorState extends State<Brocator> {
 
   @override
   void dispose() {
-    tecServer?.dispose();
-    tecAlias?.dispose();
+    tecServer.dispose();
+    tecAlias.dispose();
     positionStream?.cancel();
     dataRequestTimer?.cancel();
     dataRequestTimer = null;

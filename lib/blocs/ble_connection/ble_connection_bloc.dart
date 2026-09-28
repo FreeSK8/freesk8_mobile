@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import '../../hardwareSupport/escHelper/escHelper.dart';
 import 'ble_connection_event.dart';
 import 'ble_connection_state.dart';
 

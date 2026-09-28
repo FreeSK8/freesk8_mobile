@@ -791,23 +791,23 @@ class InputConfigurationEditorState extends State<InputConfigurationEditor> {
                       ),
 
                       // NOTE: Not in FW5.1
-                      escInputConfiguration!.app_balance_conf.fault_delay_switch_half != null ? TextField(
+                      TextField(
                           controller: tecHalfSwitchFaultDelay,
                           decoration: new InputDecoration(labelText: "Half Switch Fault Delay (ms)"),
                           keyboardType: TextInputType.number,
                           inputFormatters: <TextInputFormatter>[
                             FilteringTextInputFormatter.digitsOnly
                           ]
-                      ) : Container(),
+                      ),
                       // NOTE: Not in FW5.1
-                      escInputConfiguration!.app_balance_conf.fault_delay_switch_full != null ? TextField(
+                      TextField(
                           controller: tecFullSwitchFaultDelay,
                           decoration: new InputDecoration(labelText: "Full Switch Fault Delay (ms)"),
                           keyboardType: TextInputType.number,
                           inputFormatters: <TextInputFormatter>[
                             FilteringTextInputFormatter.digitsOnly
                           ]
-                      ) : Container(),
+                      ),
                       TextField(
                           controller: tecHalfStateFaultERPM,
                           decoration: new InputDecoration(labelText: "Half State Fault ERPM"),

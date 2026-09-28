@@ -1,0 +1,24 @@
+# Analyzer and lint configuration. `flutter analyze --no-fatal-infos` runs in
+# CI: analyzer warnings fail the build, lint infos are advisory.
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - build/**
+    - android/**
+    - ios/**
+
+linter:
+  rules:
+    # Established conventions in this codebase that would need a mass rename
+    # to satisfy; disabled deliberately rather than left as permanent noise.
+    file_names: false                      # camelCase file names throughout lib/
+    non_constant_identifier_names: false   # MCCONF/APPCONF fields mirror the VESC C structs
+    constant_identifier_names: false       # COMM_PACKET_ID, ESC_FIRMWARE enum members
+    camel_case_types: false                # gotchiProOTA and friends
+    library_private_types_in_public_api: false
+    use_key_in_widget_constructors: false
+    prefer_const_constructors: false
+    prefer_const_literals_to_create_immutables: false
+    unnecessary_new: false                 # `new` is used pervasively
+    avoid_print: false                     # debug logging in developer views

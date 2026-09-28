@@ -70,7 +70,6 @@ import 'hardwareSupport/escHelper/serialization/buffers.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'blocs/preferences/preferences_cubit.dart';
 import 'blocs/location/location_bloc.dart';
-import 'blocs/location/location_event.dart';
 import 'blocs/telemetry/telemetry_bloc.dart';
 import 'blocs/ble_connection/ble_connection_bloc.dart';
 import 'blocs/file_sync/file_sync_bloc.dart';
@@ -279,9 +278,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     checkLocationPermission();
     positionStream = _geolocatorPlatform.getPositionStream(locationSettings: locationOptions).listen(
             (Position position) {
-          if(position != null) {
-            updateLocationForRoute(new LatLng(position.latitude, position.longitude));
-          }
+          updateLocationForRoute(new LatLng(position.latitude, position.longitude));
         });
 
     // Watching AppLifecycleState for when the application is put in the background/resumed
@@ -393,11 +390,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
     positionStream?.cancel();
 
-    telemetryStream?.close();
-    mcconfStream?.close();
-    appconfStream?.close();
-    calibrationStream?.close();
-    bmsTelemetryStream?.close();
+    telemetryStream.close();
+    mcconfStream.close();
+    appconfStream.close();
+    calibrationStream.close();
+    bmsTelemetryStream.close();
 
     super.dispose();
   }
@@ -1020,9 +1017,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             }
           }
           break;
-        default:
-          globalLogger.e("setupConnectedDeviceStreamListener::_connectedDeviceStreamSubscription: listen: unexpected state: $state");
-          break;
       }
     });
   }
@@ -1193,8 +1187,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             Map<int, double> wattHoursEndByESC = new Map();
             Map<int, double> wattHoursRegenStartByESC = new Map();
             Map<int, double> wattHoursRegenEndByESC = new Map();
-            int escRecordCount = 0;
-            int gpsRecordCount = 0;
             double maxCurrentBattery = 0.0;
             double maxCurrentMotor = 0.0;
             double maxSpeedKph = 0.0;
@@ -1224,7 +1216,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             /// Iterate each line of logFileContents
             List<String> thisRideLogEntries = logFileContents.split("\n");
             for(int i=0; i<thisRideLogEntries.length; ++i) {
-              if(thisRideLogEntries[i] == null || thisRideLogEntries[i] == "") continue;
+              if(thisRideLogEntries[i] == "") continue;
               //globalLogger.f("uhhhh parsing: ${thisRideLogEntries[i]}");
               final entry = thisRideLogEntries[i].split(",");
 
@@ -1241,26 +1233,26 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   double elevation = double.tryParse(entry[3])!;
                   minElevation ??= elevation; //Set if null
                   maxElevation ??= elevation; //Set if null
-                  if (elevation < minElevation!) minElevation = elevation;
-                  if (elevation > maxElevation!) maxElevation = elevation;
+                  if (elevation < minElevation) minElevation = elevation;
+                  if (elevation > maxElevation) maxElevation = elevation;
 
 
                   // Track avg speed
                   double speedNow = double.tryParse(entry[4])!;
                   avgSpeedGPS ??= 0;
-                  avgSpeedGPS = avgSpeedGPS! + speedNow;
+                  avgSpeedGPS = avgSpeedGPS + speedNow;
                   ++avgSpeedGPSEntries;
 
                   // Track avg moving speed (;idle boards won't bring you down;)
                   if (speedNow > 0.0) {
                     avgMovingSpeedGPS ??= 0;
-                    avgMovingSpeedGPS = avgMovingSpeedGPS! + speedNow;
+                    avgMovingSpeedGPS = avgMovingSpeedGPS + speedNow;
                     ++avgMovingSpeedGPSEntries;
                   }
 
                   // Track max speed
                   maxSpeedGPS ??= speedNow;
-                  if (speedNow > maxSpeedGPS!) {
+                  if (speedNow > maxSpeedGPS) {
                     maxSpeedGPS = speedNow;
                   }
 
@@ -1268,7 +1260,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   LatLng gpsPositionNow = new LatLng(double.parse(entry[5]), double.parse(entry[6]));
                   gpsPositionPrevious ??= gpsPositionNow;
                   distanceTotalGPS ??= 0;
-                  distanceTotalGPS = distanceTotalGPS! + calculateGPSDistance(gpsPositionNow, gpsPositionPrevious!);
+                  distanceTotalGPS = distanceTotalGPS + calculateGPSDistance(gpsPositionNow, gpsPositionPrevious);
                   gpsPositionPrevious = gpsPositionNow;
                 }
                 ///ESC Values
@@ -1297,12 +1289,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   }
                   // Prepare average speed!
                   avgSpeed ??= 0;
-                  avgSpeed = avgSpeed! + speed;
+                  avgSpeed = avgSpeed + speed;
                   ++avgSpeedEntries;
                   // Prepare average moving speed
                   if (speed > 0.0) {
                     avgMovingSpeed ??= 0;
-                    avgMovingSpeed = avgMovingSpeed! + speed;
+                    avgMovingSpeed = avgMovingSpeed + speed;
                     ++avgMovingSpeedEntries;
                   }
                   // Capture Distance for first ESC
@@ -1318,7 +1310,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   wattHoursRegenStartByESC[escID] ??= wattHoursRegen;
                   wattHoursRegenEndByESC[escID] = wattHoursRegen;
 
-                  ++escRecordCount;
                 }
                 ///Fault codes
                 else if (entry[1] == "err") {
@@ -2638,7 +2629,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
             _showDieBieMS = true;
             // Wait for the navigation to return
-            final result = await Navigator.of(context).pushNamed(
+            await Navigator.of(context).pushNamed(
                 SmartBMSViewer.routeName,
                 arguments: SmartBMSArguments(
                   dataStream: bmsTelemetryStream.stream,
@@ -2661,7 +2652,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             _preNavigationTasks();
 
             // Wait for the navigation to return
-            final result = await Navigator.of(context).pushNamed(
+            await Navigator.of(context).pushNamed(
                 SpeedProfilesEditor.routeName,
                 arguments: SpeedProfileArguments(
                   theTXCharacteristic: theTXCharacteristic!,
@@ -2685,7 +2676,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             requestAPPCONF(); // Get Input Configuration before displaying
 
             // Wait for the navigation to return
-            final result = await Navigator.of(context).pushNamed(
+            await Navigator.of(context).pushNamed(
                 InputConfigurationEditor.routeName,
                 arguments: InputConfigurationArguments(
                   calibrationStream: calibrationStream.stream,
@@ -2715,7 +2706,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             _preNavigationTasks();
 
             // Wait for the navigation to return
-            final result = await Navigator.of(context).pushNamed(
+            await Navigator.of(context).pushNamed(
                 MotorConfigurationEditor.routeName,
                 arguments: MotorConfigurationArguments(
                   dataStream: mcconfStream.stream,
