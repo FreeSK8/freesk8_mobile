@@ -1249,10 +1249,10 @@ packages:
     dependency: "direct main"
     description:
       name: wifi_iot
-      sha256: "466aa682dfec9347f359ed552a35a2bc046597c39eb6005b36627b0bc8819d70"
+      sha256: "966b4e7142a091cd14c0fd1bee7d2f19d25143624d5bfb7848d3d2aa16ee7d62"
       url: "https://pub.dev"
     source: hosted
-    version: "0.3.19+3"
+    version: "0.4.0"
   win32:
     dependency: transitive
     description:
