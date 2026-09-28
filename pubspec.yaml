@@ -46,7 +46,7 @@ dependencies:
 
   nordic_dfu: ^8.1.0 #https://pub.dev/packages/nordic_dfu/changelog (maintained successor of flutter_nordic_dfu)
 
-  wifi_iot: ^0.3.19+3 #https://pub.dev/packages/wifi_iot/changelog
+  wifi_iot: ^0.4.0 #https://pub.dev/packages/wifi_iot/changelog
 
   device_info_plus: ^13.1.0 #https://pub.dev/packages/device_info_plus/changelog
 
