@@ -52,6 +52,11 @@
    git dependency deleted.
 10. **Version 0.24.0+52**, CHANGELOG back-filled for 0.22.0–0.24.0, README release section,
     `CI_GUIDE.md` rewritten.
+11. **ESC firmware support** (§11): motor/app configuration serializers generated from vendored VESC
+    firmware sources for 5.1, 5.2, 5.3, 6.00/6.02, 6.05, 6.06 and 7.00 (the hand-written 6.x
+    serializers were misaligned); tolerant enum and fault-code decoding; `FirmwareFeatures` drives
+    the motor and input editors (regen cutoff, BMS cell voltage limits, offsets calibration, ADC
+    button bitmask, balance app hidden on 6.05+); CI checks that the generated files are current.
 
 ## 4. Environment learnings (read before you start)
 
@@ -104,7 +109,10 @@
 
 1. **On-device smoke test** (nothing here can exercise BLE): scan → connect → real-time telemetry →
    ride log sync → motor/app config read and write → Robogotchi DFU → backup export/import →
-   shake-to-open debug console → external links.
+   shake-to-open debug console → external links. Include an ESC on firmware 6.05, 6.06 or 7.00:
+   read the motor and app configuration, compare a few values with VESC Tool, write one harmless
+   change (wheel diameter) and read it back; connect an unsupported version to see the
+   "unsupported firmware" message instead of a crash.
 2. **iOS on a Mac:** `flutter pub get && cd ios && pod install`, commit the regenerated
    `Podfile.lock`, build and run; then do the UIScene/SceneDelegate migration with Xcode.
 3. **AGP 9 / Gradle 9.1+ / built-in Kotlin migration** (Flutter will drop AGP 8 / Gradle 8 support):
@@ -116,14 +124,7 @@
    `BlocBuilder(buildWhen:)` so the 50 ms tick only redraws gauges.
 6. **Release signing:** create the keystore and set the secrets + `HAS_SIGNING` (CI_GUIDE.md)
    before tagging a public release; without them releases are debug-signed pre-releases.
-7. **FW6.x MCCONF serializers are inconsistent with their deserializers** (found by
-   `test/esc_config_signature_test.dart`, whose fw6.x round trips are skipped): the fw6.0/6.2
-   writers emit 477 bytes and the fw6.5 writer 484 while the matching readers consume more, and the
-   writers emit a `bms.limit_mode` byte the readers never read; `ESCHelper.serializeMCCONF` also has
-   no `FW6_2` case (writing motor configuration on 6.2 throws "unsupported ESC version"). Reads are
-   unaffected. Verify the fw6.x layouts against the VESC `confgenerator` sources before trusting
-   motor-configuration writes on firmware 6.x, then un-skip the tests.
-8. Dependabot alerts on master; `latlong2` 0.10; `package_info_plus` for the version string;
+7. Dependabot alerts on master; `latlong2` 0.10; `package_info_plus` for the version string;
    `Logger` release-mode filter (`globalUtilities.dart` MyFilter TODO); `--split-per-abi` assets.
 
 ## 8. CI and releases
@@ -162,12 +163,42 @@ Key UUIDs (UART service): `6e400001-…` service, `…0002` TX, `…0003` RX, `�
 
 - `ESCTelemetry`/`ESCFault` live in `hardwareSupport/escHelper/escHelper.dart`; `InputCalibration`
   in `subViews/inputConfigurationEditor.dart`; `TimeSeriesESC` at the bottom of `rideLogViewer.dart`.
-- The firmware deserializers (`hardwareSupport/escHelper/serialization/`) return a default
-  object on a signature mismatch; check `isValid`, never a field value.
+- The firmware serializers (`hardwareSupport/escHelper/serialization/firmware*.dart`) are
+  generated (§11); never edit them by hand. They return a default object on a signature mismatch;
+  check `isValid`, never a field value.
 - flutter_blue_plus 2.x: `FlutterBluePlus.scan()` throws; use `onScanResults` + `startScan()`.
   `connect()` requires `license:` (FreeSK8 uses `License.nonprofit`).
 - archive 4.x: `ZipFileEncoder` add/close are async; use `createBackupArchive()`.
 - Serialized MCCONF/APPCONF start with the signature at byte 0; the deserializers expect a
-  packet-id byte first (index 1), see `test/esc_config_signature_test.dart`.
+  packet-id byte first (index 1), see `test/esc_serializers_test.dart`.
 - Font-size preference historical minimum is 14, not 10.
 - Route tracking via phone GPS is intentionally disabled in `updateLocationForRoute`.
+
+## 11. ESC firmware support
+
+Supported: 5.1, 5.2, 5.3, 6.00, 6.02, 6.05, 6.06, 7.00 (`ESC_FIRMWARE` in
+`lib/hardwareSupport/escHelper/escHelper.dart`; `ESCHelper.firmwareFor()` maps the reported
+major/minor, an unknown 7.x minor falls back to the 7.00 layout and the signature check is the real
+guard). Unknown versions map to `UNSUPPORTED`: telemetry still works, the Motor/Input configuration
+menu entries refuse with a message and `main.dart` guards the configuration parsers.
+
+- `tool/esc_serializers/generate.py` generates `serialization/firmware*.dart` and
+  `tool/esc_serializers/layouts/*.json` from the vendored firmware sources in
+  `tool/esc_serializers/vesc/<version>/`; `versions.json` maps versions to classes and renames
+  fields; CI runs `generate.py --check`. Adding a release: `tool/esc_serializers/SOURCES.md`.
+- `MCCONF`/`APPCONF` (`mcConf.dart`, `appConf.dart`) are the union of all versions. Enums are
+  decoded through `serialization/wireEnums.dart` with per-version wire tables; an unknown index logs
+  and falls back to the first member. Fault codes: `faultCodeFromWire` / `faultCodeName` in
+  `dataTypes.dart`.
+- `FirmwareFeatures(fw)` tells the editors what a release has: `hasBalanceApp`, `hasRegenCutoff`,
+  `tempsAreWholeDegrees`, `hasBmsVoltageLimits`, `hasOffsetsCalOnBoot` / `hasOffsetsCalMode`,
+  `adcButtonsBitmask`, `sensorModes`.
+- Wire-format history: 6.0 replaced the ADC invert flags with the `app_adc_conf.buttons` bitmask
+  (bit 0 enabled, bit 1 invert cruise control, bit 2 invert reverse); 6.05 removed
+  `app_balance_conf` and `APP_BALANCE` (so `app_use` wire indices shift), made the temperature
+  limits whole degrees and added the regen cutoff and BMS voltage limits; 6.06 replaced
+  `foc_offsets_cal_on_boot` with the `foc_offsets_cal_mode` bitmask (bit 0 = on boot); 7.00 added
+  `FOC_SENSOR_MODE_ENCODER_AB` and the nunchuk coast brake. The bldc `master` branch has the 7.00
+  layout under a different signature and is not supported until it is released.
+- Tests: `test/esc_serializers_test.dart` (per-version round trips, sizes, signatures and enum
+  lists against the layout tables), `test/esc_firmware_detection_test.dart`.

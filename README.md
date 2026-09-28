@@ -14,6 +14,19 @@ cannot be upgraded in place by a later signed release, so uninstall it first.
 
 iOS builds are not distributed through GitHub Releases.
 
+## Supported ESC firmware
+
+| VESC firmware | Motor and app configuration |
+| --- | --- |
+| 5.1, 5.2, 5.3 | read and write |
+| 6.00, 6.02 | read and write |
+| 6.05, 6.06 | read and write |
+| 7.00 | read and write (an unknown 7.x minor is tried with the 7.00 layout) |
+
+Other versions are reported as unsupported and the Motor and Input configuration screens are disabled
+for them. The configuration serializers are generated from the firmware's own sources; see
+[`tool/esc_serializers/SOURCES.md`](tool/esc_serializers/SOURCES.md) for how a new release is added.
+
 ## Building from source
 
 The Flutter version is pinned in `pubspec.yaml` (`environment.flutter`); `flutter pub get` refuses any
