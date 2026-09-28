@@ -184,6 +184,11 @@ SAT_COMP_LAMBDA_AND_FACTOR
 
 
 class MCCONF {
+  /// True once a firmware deserializer has parsed this configuration with a
+  /// matching signature. A freshly constructed or signature-mismatched
+  /// configuration is not valid and must not be edited or written back.
+  bool isValid = false;
+
   // Limits
   double l_current_max = 0;
   double l_current_min = 0;

@@ -154,6 +154,7 @@ class SerializeFirmware51 {
     appconfData.imu_conf.gyro_offset_comp_clamp = buffer_get_float32_auto(buffer, index); index += 4;
 
     //globalLogger.f("escHelper::processAPPCONF: final index = $index");
+    appconfData.isValid = true;
     return appconfData;
   }
 
@@ -448,6 +449,7 @@ class SerializeFirmware51 {
     mcconfData.si_battery_cells = buffer[index++];
     mcconfData.si_battery_ah = buffer_get_float32_auto(buffer, index); index += 4;
 
+    mcconfData.isValid = true;
     return mcconfData;
   }
 

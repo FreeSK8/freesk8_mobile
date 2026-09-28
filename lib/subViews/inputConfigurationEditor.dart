@@ -392,7 +392,7 @@ class InputConfigurationEditorState extends State<InputConfigurationEditor> {
   Future<Widget> _buildBody(BuildContext context) async {
 
     // Check if we are building with an invalid motor configuration (signature mismatch)
-    if (escInputConfiguration == null || escInputConfiguration!.imu_conf.sample_rate_hz == null) {
+    if (escInputConfiguration == null || !escInputConfiguration!.isValid) {
       // Invalid APPCONF received
       _invalidCANID = _selectedCANFwdID; // Store invalid ID
       _selectedCANFwdID = null; // Clear selected CAN device

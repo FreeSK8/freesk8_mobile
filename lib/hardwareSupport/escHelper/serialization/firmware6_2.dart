@@ -212,6 +212,7 @@ class SerializeFirmware62 { //fw6
     appconfData.imu_conf.gyro_offsets[2] = buffer_get_float32_auto(buffer, index); index += 4;
 
     //globalLogger.f("SerializeFirmware62::processAPPCONF: final index = $index");
+    appconfData.isValid = true;
     return appconfData;
   }
 
@@ -614,6 +615,7 @@ class SerializeFirmware62 { //fw6
     mcconfData.bms.fwd_can_mode = BMS_FWD_CAN_MODE.values[buffer[index++]];
 
     //globalLogger.f("SerializeFirmware62::processMCCONF: final index = $index");
+    mcconfData.isValid = true;
     return mcconfData;
   }
 

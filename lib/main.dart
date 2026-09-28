@@ -1938,7 +1938,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           //MCCONF refriedMcconf = escHelper.processMCCONF(serializedMcconf.buffer.asUint8List());
           //globalLogger.f("Break for MCCONF: $escMotorConfiguration");
 
-          if (escMotorConfiguration!.si_battery_ah == null) {
+          if (!escMotorConfiguration!.isValid) {
             // Stop the init message sequencer
             _initMsgSequencer?.cancel();
             _initMsgSequencer = null;
@@ -2006,7 +2006,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           // Publish APPCONF to subscribers
           appconfStream.add(escApplicationConfiguration!);
 
-          if (escApplicationConfiguration!.imu_conf.sample_rate_hz == null) {
+          if (!escApplicationConfiguration!.isValid) {
             // Show dialog
             showDialog(
               context: context,
