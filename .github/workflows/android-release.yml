@@ -18,7 +18,7 @@ name: Android Release
 
 on:
   push:
-    branches: [master]
+    branches: [master, test/inspiring-darwin-m43on1] # TEMPORARY: branch added to exercise the workflow; revert before merge
     tags: ['v*']
   workflow_dispatch:
     inputs:
