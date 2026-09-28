@@ -158,12 +158,13 @@ class ESCHelper {
     firmwarePacket.fw_version_major = payload[index++];
     firmwarePacket.fw_version_minor = payload[index++];
 
-    Uint8List hardwareBytes = new Uint8List(30);
-    int i = 0;
-    while (payload[index] != 0) {
-      hardwareBytes[i++] = payload[index++];
+    // The hardware name is a NUL-terminated string of arbitrary length; read up
+    // to the terminator (bounded by the payload) without padding with NULs.
+    int end = index;
+    while (end < payload.length && payload[end] != 0) {
+      end++;
     }
-    firmwarePacket.hardware_name = new String.fromCharCodes(hardwareBytes);
+    firmwarePacket.hardware_name = String.fromCharCodes(payload, index, end);
 
     return firmwarePacket;
   }
