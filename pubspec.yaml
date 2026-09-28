@@ -44,7 +44,7 @@ dependencies:
 
   table_calendar: ^3.2.1 #https://pub.dev/packages/table_calendar/changelog
 
-  nordic_dfu: ^6.2.0 #https://pub.dev/packages/nordic_dfu/changelog (maintained successor of flutter_nordic_dfu)
+  nordic_dfu: ^8.1.0 #https://pub.dev/packages/nordic_dfu/changelog (maintained successor of flutter_nordic_dfu)
 
   wifi_iot: ^0.3.19+3 #https://pub.dev/packages/wifi_iot/changelog
 
