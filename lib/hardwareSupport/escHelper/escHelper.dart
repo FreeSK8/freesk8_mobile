@@ -8,23 +8,52 @@ import './mcConf.dart';
 
 import '../../globalUtilities.dart';
 import './serialization/buffers.dart';
+import './serialization/escConfigSerializer.dart';
 import './serialization/firmware5_1.dart';
 import './serialization/firmware5_2.dart';
 import './serialization/firmware5_3.dart';
 import './serialization/firmware6_0.dart';
-import './serialization/firmware6_2.dart';
 import './serialization/firmware6_5.dart';
+import './serialization/firmware6_6.dart';
+import './serialization/firmware7_0.dart';
 
 import 'dataTypes.dart';
 
+/// Supported VESC firmware releases, in chronological order (feature checks
+/// compare indices). The configuration serializers are generated per release
+/// by tool/esc_serializers/generate.py.
 enum ESC_FIRMWARE {
   UNSUPPORTED,
-  FW5_1,
-  FW5_2,
-  FW5_3,
-  FW6_0, //fw6
-  FW6_2, //fw6.2
-  FW6_5,  
+  FW5_1, // 5.01
+  FW5_2, // 5.02
+  FW5_3, // 5.03
+  FW6_0, // 6.00
+  FW6_2, // 6.02 (same configuration layout as 6.00)
+  FW6_5, // 6.05
+  FW6_6, // 6.06
+  FW7_0, // 7.00
+}
+
+/// Which configuration features a firmware release has; used by the editors
+/// to show, hide or reinterpret fields.
+class FirmwareFeatures {
+  const FirmwareFeatures(this.firmware);
+  final ESC_FIRMWARE firmware;
+
+  bool _atLeast(ESC_FIRMWARE min) => firmware != ESC_FIRMWARE.UNSUPPORTED && firmware.index >= min.index;
+
+  /// app_balance_conf exists (removed from the firmware in 6.05).
+  bool get hasBalanceApp => firmware != ESC_FIRMWARE.UNSUPPORTED && !_atLeast(ESC_FIRMWARE.FW6_5);
+  /// l_battery_regen_cut_start/end (6.05+).
+  bool get hasRegenCutoff => _atLeast(ESC_FIRMWARE.FW6_5);
+  /// Temperature limits are stored as whole degrees (6.05+).
+  bool get tempsAreWholeDegrees => _atLeast(ESC_FIRMWARE.FW6_5);
+  /// bms.vmin/vmax_limit_* (6.05+).
+  bool get hasBmsVoltageLimits => _atLeast(ESC_FIRMWARE.FW6_5);
+  /// foc_offsets_cal_mode bitmask replaces foc_offsets_cal_on_boot (6.06+).
+  bool get hasOffsetsCalMode => _atLeast(ESC_FIRMWARE.FW6_6);
+  /// app_adc_conf.buttons bitmask replaces cc/rev_button_inverted (6.0+).
+  bool get adcButtonsBitmask => _atLeast(ESC_FIRMWARE.FW6_0);
 }
 
 class ESCTelemetry {
@@ -93,12 +122,12 @@ class ESCFault {
   ESCFault({this.faultCode = 0, this.faultCount = 0, this.escID = 0, this.firstSeen, this.lastSeen});
 
   String toString() {
-    return "${mc_fault_code.values[this.faultCode].toString().substring(14)} was seen ${this.faultCount} time${this.faultCount!=1?"s":""} on ESC ${this.escID} at ${this.firstSeen.toString().substring(0,19)}${this.faultCount > 1 ? " until ${this.lastSeen.toString().substring(11,19)}" : ""}";
+    return "${faultCodeName(this.faultCode)} was seen ${this.faultCount} time${this.faultCount!=1?"s":""} on ESC ${this.escID} at ${this.firstSeen.toString().substring(0,19)}${this.faultCount > 1 ? " until ${this.lastSeen.toString().substring(11,19)}" : ""}";
   }
 
   TableRow toTableRow() {
     return TableRow(children: [
-      Text(mc_fault_code.values[this.faultCode].toString().substring(14)),
+      Text(faultCodeName(this.faultCode)),
       Text(this.faultCount.toString()),
       Text(this.escID.toString()),
       Text(this.firstSeen.toString()),
@@ -108,30 +137,51 @@ class ESCFault {
 }
 
 class ESCHelper {
-  static const int MCCONF_SIGNATURE_FW5_1 = 3698540221;
-  static const int APPCONF_SIGNATURE_FW5_1 = 2460147246;
+  static final SerializeFirmware60 _fw60 = SerializeFirmware60();
 
-  static const int MCCONF_SIGNATURE_FW5_2 = 2211848314;
-  static const int APPCONF_SIGNATURE_FW5_2 = 3264926020;
+  /// Configuration serializer per firmware release. 6.02 shares the 6.00 layout.
+  static final Map<ESC_FIRMWARE, EscConfigSerializer> serializers = {
+    ESC_FIRMWARE.FW5_1: SerializeFirmware51(),
+    ESC_FIRMWARE.FW5_2: SerializeFirmware52(),
+    ESC_FIRMWARE.FW5_3: SerializeFirmware53(),
+    ESC_FIRMWARE.FW6_0: _fw60,
+    ESC_FIRMWARE.FW6_2: _fw60,
+    ESC_FIRMWARE.FW6_5: SerializeFirmware65(),
+    ESC_FIRMWARE.FW6_6: SerializeFirmware66(),
+    ESC_FIRMWARE.FW7_0: SerializeFirmware70(),
+  };
 
-  static const int MCCONF_SIGNATURE_FW5_3 = 3706516163;
-  static const int APPCONF_SIGNATURE_FW5_3 = 1531606261;
+  static EscConfigSerializer serializerFor(ESC_FIRMWARE firmware) {
+    final EscConfigSerializer? serializer = serializers[firmware];
+    if (serializer == null) {
+      throw StateError("unsupported ESC firmware $firmware");
+    }
+    return serializer;
+  }
 
-  static const int MCCONF_SIGNATURE_FW6_0 = 776184161;      //fw6
-  static const int APPCONF_SIGNATURE_FW6_0 = 486554156;
+  /// Maps the version reported by COMM_FW_VERSION to a supported release.
+  /// Unknown 7.x minors use the 7.00 layout (the signature check still guards
+  /// against a changed layout); unknown 5.x/6.x minors and other majors are
+  /// unsupported because their layouts changed at almost every release.
+  static ESC_FIRMWARE firmwareFor(int major, int minor) {
+    if (major == 5 && minor == 1) return ESC_FIRMWARE.FW5_1;
+    if (major == 5 && minor == 2) return ESC_FIRMWARE.FW5_2;
+    if (major == 5 && minor == 3) return ESC_FIRMWARE.FW5_3;
+    if (major == 6 && minor == 0) return ESC_FIRMWARE.FW6_0;
+    if (major == 6 && minor == 2) return ESC_FIRMWARE.FW6_2;
+    if (major == 6 && minor == 5) return ESC_FIRMWARE.FW6_5;
+    if (major == 6 && minor == 6) return ESC_FIRMWARE.FW6_6;
+    if (major == 7) {
+      if (minor != 0) {
+        globalLogger.w("firmwareFor: firmware $major.$minor is newer than this build knows; using the 7.00 layout");
+      }
+      return ESC_FIRMWARE.FW7_0;
+    }
+    return ESC_FIRMWARE.UNSUPPORTED;
+  }
 
-  static const int MCCONF_SIGNATURE_FW6_2 = 776184161;      //fw6.2
-  static const int APPCONF_SIGNATURE_FW6_2 = 486554156;    //fw6.2
-
-    static const int MCCONF_SIGNATURE_FW6_5 = 295158857;      //fw6.3
-  static const int APPCONF_SIGNATURE_FW6_5 = 2099347128;    //fw6.3
-
-  static SerializeFirmware51 fw51serializer = new SerializeFirmware51();
-  static SerializeFirmware52 fw52serializer = new SerializeFirmware52();
-  static SerializeFirmware53 fw53serializer = new SerializeFirmware53();
-  static SerializeFirmware60 fw60serializer = new SerializeFirmware60(); //fw6
-  static SerializeFirmware62 fw62serializer = new SerializeFirmware62(); //fw6.2  
-  static SerializeFirmware65 fw65serializer = new SerializeFirmware65();
+  /// "6.05" style label for a reported version.
+  static String firmwareLabel(int major, int minor) => "$major.${minor.toString().padLeft(2, '0')}";
 
 
   List<ESCFault> processFaults(int faultCount, Uint8List payload) {
@@ -188,7 +238,7 @@ class ESCHelper {
     telemetryPacket.watt_hours_charged = buffer_get_float32(payload, index, 10000.0); index += 4;
     telemetryPacket.tachometer = buffer_get_int32(payload, index); index += 4;
     telemetryPacket.tachometer_abs = buffer_get_int32(payload, index); index += 4;
-    telemetryPacket.fault_code = mc_fault_code.values[payload[index++]];
+    telemetryPacket.fault_code = faultCodeFromWire(payload[index++]);
     telemetryPacket.position = buffer_get_float32(payload, index, 1000000.0); index += 4;
     telemetryPacket.vesc_id = payload[index++];
     telemetryPacket.temp_mos_1 = buffer_get_float16(payload, index, 10.0); index += 2;
@@ -224,7 +274,7 @@ class ESCHelper {
     telemetryPacket.tachometer = buffer_get_float32(payload, index, 1000.0).toInt(); index += 4;
     telemetryPacket.tachometer_abs = buffer_get_float32(payload, index, 1000.0).toInt(); index += 4;
     telemetryPacket.position = buffer_get_float32(payload, index, 1e6); index += 4;
-    telemetryPacket.fault_code = mc_fault_code.values[payload[index++]];
+    telemetryPacket.fault_code = faultCodeFromWire(payload[index++]);
     telemetryPacket.vesc_id = payload[index++];
     telemetryPacket.num_vescs = payload[index++];
     telemetryPacket.battery_wh = buffer_get_float32(payload, index, 1000.0); index += 4;
@@ -232,79 +282,13 @@ class ESCHelper {
     return telemetryPacket;
   }
 
-  APPCONF processAPPCONF(Uint8List buffer, ESC_FIRMWARE escFirmwareVersion) {
-    switch(escFirmwareVersion) {
-      case ESC_FIRMWARE.FW5_1:
-        return fw51serializer.processAPPCONF(buffer);
-      case ESC_FIRMWARE.FW5_2:
-        return fw52serializer.processAPPCONF(buffer);
-      case ESC_FIRMWARE.FW5_3:
-        return fw53serializer.processAPPCONF(buffer);
-      case ESC_FIRMWARE.FW6_0:
-        return fw60serializer.processAPPCONF(buffer);        //fw6
-      case ESC_FIRMWARE.FW6_2:
-        return fw62serializer.processAPPCONF(buffer);        //fw6.2        
-      case ESC_FIRMWARE.FW6_5:
-        return fw65serializer.processAPPCONF(buffer);                 
-      default:
-        throw("unsupported ESC version");
-    }
-  }
+  APPCONF processAPPCONF(Uint8List buffer, ESC_FIRMWARE escFirmwareVersion) => serializerFor(escFirmwareVersion).processAPPCONF(buffer);
 
-  ByteData serializeAPPCONF(APPCONF conf, ESC_FIRMWARE escFirmwareVersion) {
-    switch(escFirmwareVersion) {
-      case ESC_FIRMWARE.FW5_1:
-        return fw51serializer.serializeAPPCONF(conf);
-      case ESC_FIRMWARE.FW5_2:
-        return fw52serializer.serializeAPPCONF(conf);
-      case ESC_FIRMWARE.FW5_3:
-        return fw53serializer.serializeAPPCONF(conf);
-      case ESC_FIRMWARE.FW6_0:
-        return fw60serializer.serializeAPPCONF(conf);        //fw6
-      case ESC_FIRMWARE.FW6_2:
-        return fw62serializer.serializeAPPCONF(conf);        //fw6.2
-      case ESC_FIRMWARE.FW6_5:
-        return fw65serializer.serializeAPPCONF(conf);         
-      default:
-        throw("unsupported ESC version");
-    }
-  }
+  ByteData serializeAPPCONF(APPCONF conf, ESC_FIRMWARE escFirmwareVersion) => serializerFor(escFirmwareVersion).serializeAPPCONF(conf);
 
-  MCCONF processMCCONF(Uint8List buffer, ESC_FIRMWARE escFirmwareVersion) {
-    switch(escFirmwareVersion) {
-      case ESC_FIRMWARE.FW5_1:
-        return fw51serializer.processMCCONF(buffer);
-      case ESC_FIRMWARE.FW5_2:
-        return fw52serializer.processMCCONF(buffer);
-      case ESC_FIRMWARE.FW5_3:
-        return fw53serializer.processMCCONF(buffer);
-      case ESC_FIRMWARE.FW6_0:
-        return fw60serializer.processMCCONF(buffer);        //fw6
-      case ESC_FIRMWARE.FW6_2:
-        return fw62serializer.processMCCONF(buffer);        //fw6.2              
-      case ESC_FIRMWARE.FW6_5:
-        return fw65serializer.processMCCONF(buffer);             
-      default:
-        throw("unsupported ESC version");
-    }
-  }
+  MCCONF processMCCONF(Uint8List buffer, ESC_FIRMWARE escFirmwareVersion) => serializerFor(escFirmwareVersion).processMCCONF(buffer);
 
-  ByteData serializeMCCONF(MCCONF conf, ESC_FIRMWARE escFirmwareVersion) {
-    switch(escFirmwareVersion) {
-      case ESC_FIRMWARE.FW5_1:
-        return fw51serializer.serializeMCCONF(conf);
-      case ESC_FIRMWARE.FW5_2:
-        return fw52serializer.serializeMCCONF(conf);
-      case ESC_FIRMWARE.FW5_3:
-        return fw53serializer.serializeMCCONF(conf);
-      case ESC_FIRMWARE.FW6_0:
-        return fw60serializer.serializeMCCONF(conf);      //fw6
-      case ESC_FIRMWARE.FW6_5:
-        return fw65serializer.serializeMCCONF(conf);     
-      default:      
-        throw("unsupported ESC version");
-    }
-  }
+  ByteData serializeMCCONF(MCCONF conf, ESC_FIRMWARE escFirmwareVersion) => serializerFor(escFirmwareVersion).serializeMCCONF(conf);
 
   ///ESC Profiles
   static Future<ESCProfile> getESCProfile(int profileIndex) async {

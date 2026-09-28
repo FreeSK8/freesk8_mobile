@@ -1725,21 +1725,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           bleHelper.resetPacket(); //Be ready for another packet
 
           // Check if compatible firmware
-          if (major == 5 && minor == 1) {
-            escFirmwareVersion = ESC_FIRMWARE.FW5_1;
-          } else if (major == 5 && minor == 2) {
-            escFirmwareVersion = ESC_FIRMWARE.FW5_2;
-          } else if (major == 5 && minor == 3) {
-            escFirmwareVersion = ESC_FIRMWARE.FW5_3;
-          } else if (major == 6 && minor == 0) {
-            escFirmwareVersion = ESC_FIRMWARE.FW6_0;           
-          } else if (major == 6 && minor == 2) {
-            escFirmwareVersion = ESC_FIRMWARE.FW6_2;                
-          } else if (major == 6 && minor == 5) {
-            escFirmwareVersion = ESC_FIRMWARE.FW6_5;               
-          } else {
-            escFirmwareVersion = ESC_FIRMWARE.UNSUPPORTED;
-          }
+          escFirmwareVersion = ESCHelper.firmwareFor(major, minor);
           if(escFirmwareVersion == ESC_FIRMWARE.UNSUPPORTED) {
             // Stop the init message sequencer
             _initMsgSequencer?.cancel();
@@ -1752,7 +1738,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             }
 
             // Notify user we are in invalid firmware land
-            _alertInvalidFirmware("Firmware: $major.$minor\nHardware: $hardName");
+            _alertInvalidFirmware("Firmware: ${ESCHelper.firmwareLabel(major, minor)}\nHardware: $hardName");
 
             return; //TODO: not going to force the user to disconnect? _bleDisconnect();
           }
@@ -1920,7 +1906,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_GET_MCCONF.index) {
           ///ESC Motor Configuration
-          escMotorConfiguration = escHelper.processMCCONF(bleHelper.getPayload(), escFirmwareVersion); //bleHelper.payload.sublist(0,bleHelper.lenPayload);
+          try {
+            escMotorConfiguration = escHelper.processMCCONF(bleHelper.getPayload(), escFirmwareVersion);
+          } catch (e) {
+            globalLogger.e("processMCCONF failed for $escFirmwareVersion: $e");
+            escMotorConfiguration = MCCONF(); // isValid == false
+          }
 
           // Publish MCCONF to potential subscriber
           mcconfStream.add(escMotorConfiguration!);
@@ -1947,7 +1938,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               builder: (BuildContext context) {
                 return AlertDialog(
                   title: Text("Incompatible ESC"),
-                  content: Text("The selected ESC did not return a valid Motor Configuration"),
+                  content: Text("The selected ESC did not return a valid Motor Configuration.\nESC firmware ${ESCHelper.firmwareLabel(firmwarePacket.fw_version_major, firmwarePacket.fw_version_minor)} ($escFirmwareVersion)"),
                 );
               },
             );
@@ -1993,7 +1984,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           globalLogger.d("COMM_PACKET_ID = COMM_GET_APPCONF");
 
           ///ESC Application Configuration
-          escApplicationConfiguration = escHelper.processAPPCONF(bleHelper.getPayload(), escFirmwareVersion);
+          try {
+            escApplicationConfiguration = escHelper.processAPPCONF(bleHelper.getPayload(), escFirmwareVersion);
+          } catch (e) {
+            globalLogger.e("processAPPCONF failed for $escFirmwareVersion: $e");
+            escApplicationConfiguration = APPCONF(); // isValid == false
+          }
 
           // Publish APPCONF to subscribers
           appconfStream.add(escApplicationConfiguration!);
@@ -2005,7 +2001,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               builder: (BuildContext context) {
                 return AlertDialog(
                   title: Text("Incompatible ESC"),
-                  content: Text("The selected ESC did not return a valid Input Configuration"),
+                  content: Text("The selected ESC did not return a valid Input Configuration.\nESC firmware ${ESCHelper.firmwareLabel(firmwarePacket.fw_version_major, firmwarePacket.fw_version_minor)} ($escFirmwareVersion)"),
                 );
               },
             );
@@ -2563,6 +2559,17 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             return AlertDialog(
               title: Text("No data"),
               content: Text("There is an active connection but no communication from the ESC. Please check your configuration."),
+            );
+          },
+        );
+        return false;
+      } else if (!isRobogotchiOption && escFirmwareVersion == ESC_FIRMWARE.UNSUPPORTED) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text("Unsupported ESC firmware"),
+              content: Text("FreeSK8 cannot read or write configuration on ESC firmware ${ESCHelper.firmwareLabel(firmwarePacket.fw_version_major, firmwarePacket.fw_version_minor)}. Supported: 5.1, 5.2, 5.3, 6.00, 6.02, 6.05, 6.06 and 7.00."),
             );
           },
         );

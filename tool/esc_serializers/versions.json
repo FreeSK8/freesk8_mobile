@@ -1,0 +1,108 @@
+{
+  "_comment": "Firmware versions whose configuration serializers are generated. `label` is the directory under vesc/, `firmware` lists the ESC_FIRMWARE members served by the class. Renames map C field names (last path segment or full path) to the Dart field names used by the data classes.",
+  "renames": {
+    "foc_speed_soure": "foc_speed_source",
+    "servo_out_enable": "servo_out_enabled"
+  },
+  "enum_member_renames": {
+    "SPEED_SRC_CORRECTED": "FOC_SPEED_SRC_CORRECTED",
+    "SPEED_SRC_OBSERVER": "FOC_SPEED_SRC_OBSERVER"
+  },
+  "versions": [
+    {
+      "label": "5.1",
+      "ref": "5.01",
+      "class": "SerializeFirmware51",
+      "file": "firmware5_1.dart",
+      "firmware": [
+        "FW5_1"
+      ],
+      "renames": {
+        "foc_f_sw": "foc_f_zv",
+        "foc_sl_d_current_duty": "foc_sl_openloop_time_lock",
+        "foc_sl_d_current_factor": "foc_sl_openloop_time_ramp",
+        "app_balance_conf.pitch_fault": "app_balance_conf.fault_pitch",
+        "app_balance_conf.roll_fault": "app_balance_conf.fault_roll",
+        "app_balance_conf.adc1": "app_balance_conf.fault_adc1",
+        "app_balance_conf.adc2": "app_balance_conf.fault_adc2",
+        "app_balance_conf.tiltback_angle": "app_balance_conf.tiltback_duty_angle",
+        "app_balance_conf.tiltback_speed": "app_balance_conf.tiltback_duty_speed",
+        "app_balance_conf.tiltback_high_voltage": "app_balance_conf.tiltback_hv",
+        "app_balance_conf.tiltback_low_voltage": "app_balance_conf.tiltback_lv",
+        "app_balance_conf.adc_half_fault_erpm": "app_balance_conf.fault_adc_half_erpm",
+        "app_balance_conf.setpoint_clamp": "app_balance_conf.setpoint_filter_clamp"
+      },
+      "note": "fw5.1 names for fields the Dart classes carry under their fw5.3+ names"
+    },
+    {
+      "label": "5.2",
+      "ref": "5.02",
+      "class": "SerializeFirmware52",
+      "file": "firmware5_2.dart",
+      "firmware": [
+        "FW5_2"
+      ],
+      "renames": {
+        "foc_f_sw": "foc_f_zv",
+        "app_balance_conf.tiltback_angle": "app_balance_conf.tiltback_duty_angle",
+        "app_balance_conf.tiltback_speed": "app_balance_conf.tiltback_duty_speed",
+        "app_balance_conf.tiltback_high_voltage": "app_balance_conf.tiltback_hv",
+        "app_balance_conf.tiltback_low_voltage": "app_balance_conf.tiltback_lv",
+        "app_balance_conf.kd_pt1_frequency": "app_balance_conf.kd_pt1_lowpass_frequency"
+      },
+      "note": "fw5.2 names for fields the Dart classes carry under their fw5.3+ names"
+    },
+    {
+      "label": "5.3",
+      "ref": "5.03",
+      "class": "SerializeFirmware53",
+      "file": "firmware5_3.dart",
+      "firmware": [
+        "FW5_3"
+      ],
+      "renames": {}
+    },
+    {
+      "label": "6.0",
+      "ref": "6.00",
+      "class": "SerializeFirmware60",
+      "file": "firmware6_0.dart",
+      "firmware": [
+        "FW6_0",
+        "FW6_2"
+      ],
+      "renames": {},
+      "note": "firmware 6.02 uses the identical layout and signatures"
+    },
+    {
+      "label": "6.05",
+      "ref": "release_6_05",
+      "class": "SerializeFirmware65",
+      "file": "firmware6_5.dart",
+      "firmware": [
+        "FW6_5"
+      ],
+      "renames": {}
+    },
+    {
+      "label": "6.06",
+      "ref": "release_6_06",
+      "class": "SerializeFirmware66",
+      "file": "firmware6_6.dart",
+      "firmware": [
+        "FW6_6"
+      ],
+      "renames": {}
+    },
+    {
+      "label": "7.0",
+      "ref": "release_7_00",
+      "class": "SerializeFirmware70",
+      "file": "firmware7_0.dart",
+      "firmware": [
+        "FW7_0"
+      ],
+      "renames": {}
+    }
+  ]
+}
