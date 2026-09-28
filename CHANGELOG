@@ -4,7 +4,10 @@ v0.24.0
 * Fix Robogotchi Updater and gotchiPro Updater screens crashing when opened
 * Fix "Export Data Backup" producing an empty zip file
 * Fix ESC hardware name decoding (long names, stray characters)
-* Restore detection of unsupported ESC firmware when reading motor/app configuration
+* VESC firmware 6.05, 6.06 and 7.00 supported; firmware 6.0/6.2 motor and app configuration read/write corrected (misaligned fields, wrong scales, writes on 6.2 failed)
+* Motor configuration: battery regen cutoff, BMS cell voltage limits and calibrate-offsets-on-boot settings; sensor modes and temperature limits follow the connected firmware
+* App configuration: ADC button options on firmware 6.0+; the balance app is only offered where the firmware has it
+* Unsupported ESC firmware is reported with its version instead of crashing; unknown enum values and fault codes no longer crash the telemetry or ride log views
 * Restore the shake-to-show debug log console (filter, search, share)
 * Android: remove obsolete background location service declarations; predictive back support
 * Update project dependencies (flutter_map 8, nordic_dfu 8, wifi_iot 0.4, flutter_blue_plus 2.3, geolocator 14.1, wakelock_plus 1.8, archive 4.3)
