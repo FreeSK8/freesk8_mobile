@@ -60,7 +60,7 @@ import 'package:share_plus/share_plus.dart';
 
 import 'package:wifi_iot/wifi_iot.dart';
 
-import 'package:logger_flutter/logger_flutter.dart';
+import 'widgets/debugLog/debugLog.dart';
 
 import 'package:signal_strength_indicator/signal_strength_indicator.dart';
 
@@ -99,6 +99,7 @@ Future <void> initFirebase() async {
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  DebugLogBuffer.install(); // capture start-up logs for the debug console
   //initFirebase();
   runApp(
     MultiBlocProvider(

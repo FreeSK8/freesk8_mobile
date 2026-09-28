@@ -74,10 +74,7 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
 
-  logger_flutter:
-    git:
-      url: https://github.com/FreeSK8/logger_flutter.git
-      ref: freesk8_mobile
+  sensors_plus: ^7.1.0 # shake detection for the debug log console
 
   rxdart: ^0.28.0
 

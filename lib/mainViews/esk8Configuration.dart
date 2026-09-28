@@ -5,7 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:freesk8_mobile/subViews/brocator.dart';
-import 'package:logger_flutter/logger_flutter.dart';
+import '../widgets/debugLog/debugLog.dart';
 
 import '../subViews/vehicleManager.dart';
 import '../globalUtilities.dart';
