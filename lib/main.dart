@@ -424,7 +424,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     );
   }
 
-  TabBarView getTabBarView(var tabs) {
+  TabBarView getTabBarView(List<Widget> tabs) {
     return TabBarView(
       physics: NeverScrollableScrollPhysics(),
 

@@ -14,7 +14,8 @@ description: A new Flutter project.
 version: 0.23.0+51
 
 environment:
-  sdk: ">=3.0.0 <4.0.0"
+  sdk: ^3.13.0
+  flutter: 3.47.5 # exact pin: CI installs this version via flutter-version-file
 
 dependencies:
   flutter:
