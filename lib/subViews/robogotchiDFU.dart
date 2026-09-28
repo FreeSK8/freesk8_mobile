@@ -65,25 +65,31 @@ class RobogotchiDFUState extends State<RobogotchiDFU> with SingleTickerProviderS
           deviceId,
           'assets/firmware/$updateFileName.zip',
           fileInAsset: true,
-          onProgressChanged: (
-              deviceAddress,
-              percent,
-              speed,
-              avgSpeed,
-              currentPart,
-              partsTotal,
-              ) {
-            //globalLogger.f('deviceAddress: $deviceAddress, percent: $percent');
-            setState(() {
-              _deviceAddress = deviceAddress;
-              _percent = percent;
-              _currentPart = currentPart;
-              _partsTotal = partsTotal;
-            });
-            if (_percent == 100) {
-              showCompletedDialog();
-            }
-          },
+          dfuEventHandler: DfuEventHandler(
+            onProgressChanged: (
+                deviceAddress,
+                percent,
+                speed,
+                avgSpeed,
+                currentPart,
+                partsTotal,
+                ) {
+              //globalLogger.f('deviceAddress: $deviceAddress, percent: $percent');
+              if (!mounted) return;
+              setState(() {
+                _deviceAddress = deviceAddress;
+                _percent = percent;
+                _currentPart = currentPart;
+                _partsTotal = partsTotal;
+              });
+              if (_percent == 100) {
+                showCompletedDialog();
+              }
+            },
+            onError: (deviceAddress, error, errorType, message) {
+              globalLogger.e("DFU error $error/$errorType on $deviceAddress: $message");
+            },
+          ),
         );
         globalLogger.i("DFU Operation Completed. ($result)");
         dfuRunning = false;
