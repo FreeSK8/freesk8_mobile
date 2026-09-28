@@ -10,6 +10,7 @@ import 'package:logger_flutter/logger_flutter.dart';
 import '../subViews/vehicleManager.dart';
 import '../globalUtilities.dart';
 
+import '../components/backupArchive.dart';
 import '../components/userSettings.dart';
 import '../hardwareSupport/escHelper/escHelper.dart';
 
@@ -358,32 +359,21 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                   final documentsDirectory = await getApplicationDocumentsDirectory();
                                   final supportDirectory = await getApplicationSupportDirectory();
 
-                                  // Zip a directory to out.zip using the zipDirectory convenience method
-                                  var encoder = ZipFileEncoder();
+                                  final String databasePath = await getDatabasesPath();
+                                  final File settingsExport = await exportSettings('${supportDirectory.path}/freesk8_beta_userSettings.json');
 
-                                  // Manually create a zip of individual files
-                                  encoder.create("${supportDirectory.path}/freesk8_beta_backup.zip");
-
-                                  // Add log files
-                                  encoder.addDirectory(Directory("${documentsDirectory.path}/logs"));
-
-                                  //rideLogsFromDatabase.forEach((element)  {
-                                  //TODO: no safety checking here. Opening file must be on device
-                                  //  encoder.addFile(File("${documentsDirectory.path}${element.logFilePath}"));
-                                  //});
-
-                                  // Add the database
-                                  String path = await getDatabasesPath();
-                                  encoder.addFile(File("$path/logDatabase.db"));
-
-                                  // Add the avatars
-                                  encoder.addDirectory(Directory("${documentsDirectory.path}/avatars"));
-
-                                  // Add the userSettings export
-                                  encoder.addFile(await exportSettings('${supportDirectory.path}/freesk8_beta_userSettings.json'));
-
-                                  // Finish out zip file
-                                  encoder.close();
+                                  // Zip the ride logs, avatars, database and settings export.
+                                  await createBackupArchive(
+                                    outputPath: "${supportDirectory.path}/freesk8_beta_backup.zip",
+                                    directories: [
+                                      Directory("${documentsDirectory.path}/logs"),
+                                      Directory("${documentsDirectory.path}/avatars"),
+                                    ],
+                                    files: [
+                                      File("$databasePath/logDatabase.db"),
+                                      settingsExport,
+                                    ],
+                                  );
 
                                   Navigator.of(context).pop(); // Remove PleaseWait dialog
                                   await SharePlus.instance.share(ShareParams(
