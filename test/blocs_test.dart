@@ -73,6 +73,14 @@ void main() {
   });
 
   group('LocationBloc', () {
+    test('distinct marker states are not equal (guards the equatable 3 upgrade)', () {
+      // equatable 3.0 drops the runtimeType check, so states that only differ
+      // by type and share `props => []` would compare equal and Bloc.emit
+      // would swallow the transition. Revisit props before upgrading.
+      expect(const LocationInitial(), isNot(equals(const LocationPermissionPending())));
+      expect(const LocationInitial(), isNot(equals(const LocationPermissionDenied())));
+    });
+
     test('starts in LocationInitial', () {
       final bloc = LocationBloc();
       expect(bloc.state, const LocationInitial());
