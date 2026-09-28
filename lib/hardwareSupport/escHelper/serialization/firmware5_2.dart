@@ -172,6 +172,7 @@ class SerializeFirmware52 {
     appconfData.imu_conf.gyro_offset_comp_clamp = buffer_get_float32_auto(buffer, index); index += 4;
 
     //globalLogger.f("SerializeFirmware52::processAPPCONF: final index = $index");
+    appconfData.isValid = true;
     return appconfData;
   }
 
@@ -497,6 +498,7 @@ class SerializeFirmware52 {
     mcconfData.bms.soc_limit_end = buffer_get_float16(buffer, index, 100); index += 2;
 
     //globalLogger.f("SerializeFirmware52::processMCCONF: final index = $index");
+    mcconfData.isValid = true;
     return mcconfData;
   }
 

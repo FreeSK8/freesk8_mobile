@@ -423,6 +423,10 @@ enum KILL_SW_MODE { // Firmware 5.3 added
 }
 
 class APPCONF {
+  /// True once a firmware deserializer has parsed this configuration with a
+  /// matching signature (see MCCONF.isValid).
+  bool isValid = false;
+
   // Settings
   int controller_id = 0;
   int timeout_msec = 0;

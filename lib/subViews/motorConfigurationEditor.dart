@@ -260,7 +260,7 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
 
   Future<Widget> _buildBody(BuildContext context) async {
     // Check if we are building with an invalid motor configuration (signature mismatch)
-    if (escMotorConfiguration == null || escMotorConfiguration!.si_battery_ah == null) {
+    if (escMotorConfiguration == null || !escMotorConfiguration!.isValid) {
       // Invalid MCCONF received
       _invalidCANID = _selectedCANFwdID; // Store invalid ID
       _selectedCANFwdID = null; // Clear selected CAN device
