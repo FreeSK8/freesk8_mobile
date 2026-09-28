@@ -1366,6 +1366,7 @@ class RideLogViewerState extends State<RideLogViewer> {
                       children: [
                         TileLayer(
                           urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                          userAgentPackageName: 'com.derelictrobot.freesk8_mobile',
                         ),
                         PolylineLayer(
                           polylines: [routePolyLine],
