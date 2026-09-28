@@ -175,7 +175,7 @@ double calculateGPSDistance(LatLng pointA, LatLng pointB){
 
 void copyDirectory(Directory source, Directory destination) =>
     source.listSync(recursive: false)
-        .forEach((var entity) {
+        .forEach((entity) {
       if (entity is Directory) {
         var newDirectory = Directory(path.join(destination.absolute.path, path.basename(entity.path)));
         newDirectory.createSync();
