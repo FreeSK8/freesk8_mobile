@@ -107,9 +107,10 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      # Warnings/infos are pre-existing deprecation noise; errors fail the build.
+      # Analyzer errors and warnings fail the build; lint infos (flutter_lints via
+      # analysis_options.yaml) are advisory.
       - name: Analyze
-        run: flutter analyze --no-fatal-warnings --no-fatal-infos
+        run: flutter analyze --no-fatal-infos
 
       - name: Test
         run: flutter test

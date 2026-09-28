@@ -101,7 +101,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
 
   @override
   void dispose(){
-    tecRideNotes?.dispose();
+    tecRideNotes.dispose();
 
     super.dispose();
   }
@@ -334,10 +334,8 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
       ),
     ).then((value){
       // Once finished re-list files and remove a potential snackBar item before re-draw of setState
-      if (context != null) {
-        _listFiles(true);
-        ScaffoldMessenger.of(context).removeCurrentSnackBar();
-      }
+      _listFiles(true);
+      ScaffoldMessenger.of(context).removeCurrentSnackBar();
     });
   }
 

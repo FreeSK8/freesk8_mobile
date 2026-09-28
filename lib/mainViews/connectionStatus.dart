@@ -177,7 +177,7 @@ class ConnectionStatus extends StatelessWidget {
               gotchiStatus?.isLogging != null ? Divider(thickness: 2,) : Container(),
 
               Text("Connected to"),
-              Text(userSettings.settings.boardAlias != null ? userSettings.settings.boardAlias : "unnamed",style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold), textAlign: TextAlign.center,),
+              Text(userSettings.settings.boardAlias.isNotEmpty ? userSettings.settings.boardAlias : "unnamed",style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold), textAlign: TextAlign.center,),
 
               Flexible(child: CircleAvatar(
                 backgroundImage: imageBoardAvatar != null ? imageBoardAvatar : AssetImage('assets/FreeSK8_Mobile.png') as ImageProvider,

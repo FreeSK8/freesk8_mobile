@@ -307,7 +307,7 @@ Future<bool> sendBLEData(BluetoothCharacteristic txCharacteristic, Uint8List dat
       await txCharacteristic.write(
           data.buffer.asUint8List().sublist(bytesSent, endByte),
           withoutResponse: withoutResponse);
-    } on PlatformException catch (err) {
+    } on PlatformException {
       //TODO: Assuming err.code will always be "write_characteristic_error"
       if (--errorLimiter == 0) {
         globalLogger.e("sendBLEData: Write to characteristic exhausted all attempts. Data not sent. ${txCharacteristic.toString()}");

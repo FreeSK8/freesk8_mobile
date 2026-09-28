@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -143,7 +142,6 @@ class RealTimeDataState extends State<RealTimeData> {
     String temperatureMotor = widget.currentSettings.settings.useFahrenheit ? "$tempMotor F" : "$tempMotor C";
 
     double escSpeed = escTelemetry.speed; //NOTE: Meters/second
-    if (escSpeed == null) escSpeed = 0;
     escSpeed *= 3.6; //Meters/s to kph
     double speedNow = widget.currentSettings.settings.useImperial ? kphToMph(escSpeed) : escSpeed;
 
@@ -155,7 +153,6 @@ class RealTimeDataState extends State<RealTimeData> {
     double efficiency = calculateEfficiency(distanceTraveled);
     String efficiencyGaugeLabel = widget.currentSettings.settings.useImperial ? "Wh/mi" : "Wh/km";
 
-    double powerMax = widget.currentSettings.settings.batterySeriesCount * widget.currentSettings.settings.batteryCellMaxVoltage;
     double powerMinimum = widget.currentSettings.settings.batterySeriesCount * widget.currentSettings.settings.batteryCellMinVoltage;
 
     if (widget.deviceIsConnected) {
@@ -172,23 +169,17 @@ class RealTimeDataState extends State<RealTimeData> {
 
     // Set initial batteryRemaining value
     if (batteryRemaining == null) {
-      if (escTelemetry.battery_level != null) {
-        batteryRemaining = escTelemetry.battery_level * 100;
-      } else {
-        batteryRemaining = 0;
-      }
+      batteryRemaining = escTelemetry.battery_level * 100;
     }
 
     // Smooth battery remaining from ESC
-    if (escTelemetry.battery_level != null) {
-      batteryRemaining = (0.1 * escTelemetry.battery_level * 100) + (0.9 * batteryRemaining!);
-      if (batteryRemaining! < 0.0) {
-        globalLogger.e("Battery Remaining $batteryRemaining battery_level ${escTelemetry.battery_level} v_in ${escTelemetry.v_in}");
-        batteryRemaining = 0;
-      }
-      if(batteryRemaining! > 100.0) {
-        batteryRemaining = 100.0;
-      }
+    batteryRemaining = (0.1 * escTelemetry.battery_level * 100) + (0.9 * batteryRemaining!);
+    if (batteryRemaining! < 0.0) {
+      globalLogger.e("Battery Remaining $batteryRemaining battery_level ${escTelemetry.battery_level} v_in ${escTelemetry.v_in}");
+      batteryRemaining = 0;
+    }
+    if(batteryRemaining! > 100.0) {
+      batteryRemaining = 100.0;
     }
 
     // Estimate range

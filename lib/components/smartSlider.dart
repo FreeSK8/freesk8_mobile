@@ -14,10 +14,7 @@ class SmartSlider extends Slider {
     this.divisions,
     required this.label,
   })
-      : assert(value != null),
-        assert(mini != null),
-        assert(maxi != null),
-        assert(mini <= maxi),
+      : assert(mini <= maxi),
         assert(divisions == null || divisions > 0),
         super(
           value: value,

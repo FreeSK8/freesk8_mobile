@@ -179,7 +179,7 @@ class SpeedProfilesEditorState extends State<SpeedProfilesEditor> {
                               ],),
                             onPressed: () async {
                               // navigate to the editor
-                              final result = await Navigator.of(context).pushNamed(ESCProfileEditor.routeName, arguments: ESCProfileEditorArguments(myArguments!.theTXCharacteristic, await ESCHelper.getESCProfile(i), i, myArguments!.myUserSettings.settings.useImperial));
+                              await Navigator.of(context).pushNamed(ESCProfileEditor.routeName, arguments: ESCProfileEditorArguments(myArguments!.theTXCharacteristic, await ESCHelper.getESCProfile(i), i, myArguments!.myUserSettings.settings.useImperial));
                               setState(() {
                                 // Update UI in case changes were made
                               });

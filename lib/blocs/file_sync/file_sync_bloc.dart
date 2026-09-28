@@ -1,5 +1,4 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../widgets/fileSyncViewer.dart';
 import 'file_sync_event.dart';
 import 'file_sync_state.dart';
 
@@ -16,12 +15,10 @@ class FileSyncBloc extends Bloc<FileSyncEvent, FileSyncState> {
 
   bool _eraseOnComplete = false;
   List<int> _rawBytes = [];
-  int _fileIndex = 0;
 
   void _onStarted(FileSyncStarted event, Emitter<FileSyncState> emit) {
     _eraseOnComplete = event.eraseOnComplete;
     _rawBytes = [];
-    _fileIndex = 0;
     emit(const FileSyncListing());
   }
 
@@ -60,7 +57,6 @@ class FileSyncBloc extends Bloc<FileSyncEvent, FileSyncState> {
 
     final nextIndex = current.currentFileIndex + 1;
     if (nextIndex < current.fileList.length) {
-      _fileIndex = nextIndex;
       final nextFile = current.fileList[nextIndex];
       emit(FileSyncDownloading(
         filename: nextFile.fileName ?? '',

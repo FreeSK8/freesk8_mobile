@@ -46,12 +46,10 @@ class FOCWizardState extends State<FOCWizard> {
     loadESCDefaults = false;
     tecBatteryCurrentRegen.addListener(() {
       focDetectMinBatteryAmps = double.tryParse(tecBatteryCurrentRegen.text.replaceFirst(',', '.')) ?? 0.0; //Try parse so we don't throw
-      if(focDetectMinBatteryAmps==null) focDetectMinBatteryAmps = 0.0; //Ensure not null
       if(focDetectMinBatteryAmps>0.0) focDetectMinBatteryAmps *= -1; //Ensure negative
     });
     tecBatteryCurrentOutput.addListener(() {
       focDetectMaxBatteryAmps = double.tryParse(tecBatteryCurrentOutput.text.replaceFirst(',', '.')) ?? 0.0; //Try parse so we don't throw
-      if(focDetectMaxBatteryAmps==null) focDetectMaxBatteryAmps = 0.0; //Ensure not null
     });
   }
 
