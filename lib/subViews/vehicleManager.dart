@@ -247,43 +247,23 @@ class VehicleManagerState extends State<VehicleManager> {
 
                 Text("Trending statistics:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
 
-                Row(children: [
-                  Text("Daily"),
-                  Radio(
-                    value: 1,
-                    groupValue: trendDays,
-                    onChanged: (int? value){
-                      setState(() {
-                        loadingTrends = true;
-                        trendDays = value!;
-                      });
-                    },
-                  ),
-
-                  Text("Weekly"),
-                  Radio(
-                    value: 7,
-                    groupValue: trendDays,
-                    onChanged: (int? value){
-                      setState(() {
-                        loadingTrends = true;
-                        trendDays = value!;
-                      });
-                    },
-                  ),
-
-                  Text("Monthly"),
-                  Radio(
-                    value: 30,
-                    groupValue: trendDays,
-                    onChanged: (int? value){
-                      setState(() {
-                        loadingTrends = true;
-                        trendDays = value!;
-                      });
-                    },
-                  ),
-                ],),
+                RadioGroup<int>(
+                  groupValue: trendDays,
+                  onChanged: (int? value) {
+                    setState(() {
+                      loadingTrends = true;
+                      trendDays = value!;
+                    });
+                  },
+                  child: Row(children: [
+                    Text("Daily"),
+                    Radio<int>(value: 1),
+                    Text("Weekly"),
+                    Radio<int>(value: 7),
+                    Text("Monthly"),
+                    Radio<int>(value: 30),
+                  ],),
+                ),
 
                 Row(children: [
                   Text("Distance", style: TextStyle(fontSize: 10, color: Colors.green)),
@@ -385,7 +365,7 @@ class VehicleManagerState extends State<VehicleManager> {
               : null,
           child: Container(
             decoration: BoxDecoration(
-                color: Theme.of(context).dialogBackgroundColor,
+                color: dialogBackground(context),
                 borderRadius: BorderRadius.circular(5)
             ),
             child: Row(
@@ -488,7 +468,7 @@ class VehicleManagerState extends State<VehicleManager> {
     listChildren.add(Text("Vehicle Distance Comparison:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20), textAlign: TextAlign.center,),);
     listChildren.add(Container(
         decoration: BoxDecoration(
-            color: Theme.of(context).dialogBackgroundColor,
+            color: dialogBackground(context),
             borderRadius: BorderRadius.circular(5)
         ),
         child: SizedBox(width: 140, height: 250, child: new charts.LineChart(
@@ -532,8 +512,8 @@ class VehicleManagerState extends State<VehicleManager> {
       return Container(child:Text("No Arguments"));
     }
 
-    return new WillPopScope(
-      onWillPop: () async => false,
+    return PopScope(
+      canPop: false,
       child: new Scaffold(
         appBar: AppBar(
           title: Row(children: <Widget>[

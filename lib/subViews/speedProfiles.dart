@@ -163,8 +163,8 @@ class SpeedProfilesEditorState extends State<SpeedProfilesEditor> {
 
                               });
                             },
-                            style: ButtonStyle(backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
-                              if (states.contains(MaterialState.disabled)) {
+                            style: ButtonStyle(backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+                              if (states.contains(WidgetState.disabled)) {
                                 return Colors.grey[100]!;
                               }
                               return Colors.transparent;
@@ -184,8 +184,8 @@ class SpeedProfilesEditorState extends State<SpeedProfilesEditor> {
                                 // Update UI in case changes were made
                               });
                             },
-                            style: ButtonStyle(backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
-                              if (states.contains(MaterialState.disabled)) {
+                            style: ButtonStyle(backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+                              if (states.contains(WidgetState.disabled)) {
                                 return Colors.grey[100]!;
                               }
                               return Colors.transparent;
@@ -201,8 +201,8 @@ class SpeedProfilesEditorState extends State<SpeedProfilesEditor> {
                             onPressed: () async {
                               setMCCONFTemp(_applyESCProfilePermanently!, await ESCHelper.getESCProfile(i));
                             },
-                            style: ButtonStyle(backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
-                              if (states.contains(MaterialState.disabled)) {
+                            style: ButtonStyle(backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+                              if (states.contains(WidgetState.disabled)) {
                                 return Colors.grey[100]!;
                               }
                               return Colors.transparent;
@@ -301,8 +301,8 @@ class SpeedProfilesEditorState extends State<SpeedProfilesEditor> {
       return Container(child:Text("No Arguments"));
     }
 
-    return new WillPopScope(
-      onWillPop: () async => false,
+    return PopScope(
+      canPop: false,
       child: new Scaffold(
         appBar: AppBar(
           title: Row(children: <Widget>[

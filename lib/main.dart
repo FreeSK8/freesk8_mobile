@@ -61,7 +61,6 @@ import 'package:share_plus/share_plus.dart';
 import 'package:wifi_iot/wifi_iot.dart';
 
 import 'package:logger_flutter/logger_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'package:signal_strength_indicator/signal_strength_indicator.dart';
 
@@ -245,7 +244,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     FileManager.createLogDirectory();
 
     if (_connectedDevice != null){
-      widget.myUserSettings.loadSettings(_connectedDevice!.id.toString());
+      widget.myUserSettings.loadSettings(_connectedDevice!.remoteId.str);
     } else {
       widget.myUserSettings.loadSettings("defaults");
     }
@@ -260,7 +259,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     controller = TabController(length: 4, vsync: this);
     controller.addListener(() {
       if (syncInProgress && controller.index != controllerViewLogging) {
-        globalLogger.wtf("no tab change please");
+        globalLogger.f("no tab change please");
         controller.index = controller.previousIndex;
       }
     });
@@ -329,7 +328,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           // Just refresh bc on some devices we might display a stale state after being backgrounded for extended period of time
         });
       }
-      //logger.wtf("_monitorGotchiTimer is alive");
+      //logger.f("_monitorGotchiTimer is alive");
     }
   }
 
@@ -646,7 +645,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     globalLogger.i("handleTCPClient: A new client has connected from ${clientTCPSocket!.remoteAddress.address}:${clientTCPSocket!.remotePort}");
 
     clientTCPSocket!.listen((onData) {
-        //globalLogger.wtf("TCP Client to ESC: $onData");
+        //globalLogger.f("TCP Client to ESC: $onData");
         // Pass TCP data to BLE
         sendBLEData(theTXCharacteristic!, onData, true);
       },
@@ -671,8 +670,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           context: context,
           barrierDismissible: false,
           builder: (BuildContext context) {
-            return new WillPopScope(
-                onWillPop: () async => false,
+            return PopScope(
+                canPop: false,
                 child: SimpleDialog(
                     key: _keyLoader,
                     backgroundColor: Colors.black54,
@@ -781,7 +780,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
     for (ScanResult result in widget.bleScanResults) {
       //If there is no name for the device we are going to ignore it
-      if (result.device.name == '') continue;
+      if (scanResultName(result) == '') continue;
 
       //If this device is known give it a special row in the list of devices
       if (widget.myUserSettings.isDeviceKnown(result.device.remoteId.str)) {
@@ -790,7 +789,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             width: MediaQuery.of(context).size.width / crossAxisCount,
             child: GestureDetector(
               onTap: () async {
-                globalLogger.d("Attempting connection to ${result.device.name} (${result.device.remoteId.str}) with ${result.rssi}dB");
+                globalLogger.d("Attempting connection to ${scanResultName(result)} (${result.device.remoteId.str}) with ${result.rssi}dB");
                 await _attemptDeviceConnection(result.device);
               },
               child:
@@ -816,7 +815,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                     Positioned(right: 0, bottom: 0, child: SignalStrengthIndicator.bars(value: result.rssi, minValue: -90, maxValue: -45, barCount: 5, radius: Radius.circular(1.5)),),
                   ],),
 
-                  Text(result.device.name),
+                  Text(scanResultName(result)),
                 ],
               ),
             )
@@ -842,7 +841,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   ),
                   Positioned(right: 0, bottom: 0, child: SignalStrengthIndicator.bars(value: result.rssi, minValue: -90, maxValue: -45, barCount: 5, radius: Radius.circular(1.5),),),
                 ]),
-                Text(result.device.name == '' ? '(unknown device)' : result.device.name),
+                Text(scanResultName(result) == '' ? '(unknown device)' : scanResultName(result)),
                 //NOTE: this is not MAC on iOS: Text(device.remoteId.str),
               ],
             )
@@ -1225,7 +1224,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             List<String> thisRideLogEntries = logFileContents.split("\n");
             for(int i=0; i<thisRideLogEntries.length; ++i) {
               if(thisRideLogEntries[i] == null || thisRideLogEntries[i] == "") continue;
-              //globalLogger.wtf("uhhhh parsing: ${thisRideLogEntries[i]}");
+              //globalLogger.f("uhhhh parsing: ${thisRideLogEntries[i]}");
               final entry = thisRideLogEntries[i].split(",");
 
               if(entry.length > 1 && entry[0] != "header"){ // entry[0] = Time, entry[1] = Data type
@@ -1691,7 +1690,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       }
       else {
       ///Unexpected response
-      globalLogger.wtf("loggerReceived and unexpected response: ${new String.fromCharCodes(value)}");
+      globalLogger.f("loggerReceived and unexpected response: ${new String.fromCharCodes(value)}");
       }
 
     });
@@ -1703,7 +1702,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       // If we have the TCP Socket server running and a client connected forward the data
       if(serverTCPSocket != null && clientTCPSocket != null) {
-        //globalLogger.wtf("ESC Data $value");
+        //globalLogger.f("ESC Data $value");
         clientTCPSocket!.add(value);
         return;
       }
@@ -1937,7 +1936,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           //NOTE: for debug & testing
           //ByteData serializedMcconf = escHelper.serializeMCCONF(escMotorConfiguration);
           //MCCONF refriedMcconf = escHelper.processMCCONF(serializedMcconf.buffer.asUint8List());
-          //globalLogger.wtf("Break for MCCONF: $escMotorConfiguration");
+          //globalLogger.f("Break for MCCONF: $escMotorConfiguration");
 
           if (escMotorConfiguration!.si_battery_ah == null) {
             // Stop the init message sequencer
@@ -1979,7 +1978,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             }
 
             widget.myUserSettings.settings.wheelDiameterMillimeters = (doublePrecision(escMotorConfiguration!.si_wheel_diameter, 3) * 1000).toInt();
-            //TODO: Take note of this importance: globalLogger.wtf("wheel diameter mm maths ${(doublePrecision(escMotorConfiguration.si_wheel_diameter, 3) * 1000).toInt()} vs ${(escMotorConfiguration.si_wheel_diameter * 1000).toInt()}");
+            //TODO: Take note of this importance: globalLogger.f("wheel diameter mm maths ${(doublePrecision(escMotorConfiguration.si_wheel_diameter, 3) * 1000).toInt()} vs ${(escMotorConfiguration.si_wheel_diameter * 1000).toInt()}");
 
             widget.myUserSettings.settings.motorPoles = escMotorConfiguration!.si_motor_poles;
             widget.myUserSettings.settings.maxERPM = escMotorConfiguration!.l_max_erpm;
@@ -2360,8 +2359,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         context: context,
         barrierDismissible: false,
         builder: (BuildContext context) {
-          return new WillPopScope(
-              onWillPop: () async => false,
+          return PopScope(
+              canPop: false,
               child: SimpleDialog(
                   backgroundColor: Colors.black54,
                   children: <Widget>[
@@ -2906,60 +2905,28 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   SizedBox(height: 5),
                   GestureDetector(
                     child: Text(url, style: TextStyle(color: Colors.blue),),
-                    onTap: () async {
-                      if (await canLaunch(url)) {
-                        await launch(
-                          url,
-                          forceSafariVC: false,
-                          forceWebView: false,
-                        );
-                      }
-                    },
+                    onTap: () => openExternalUrl(url),
                   ),
                   SizedBox(height: 10),
                   Text("FreeSK8 Forum:"),
                   SizedBox(height: 5),
                   GestureDetector(
                     child: Text(url2, style: TextStyle(color: Colors.blue)),
-                    onTap: () async {
-                      if (await canLaunch(url2)) {
-                        await launch(
-                          url2,
-                          forceSafariVC: false,
-                          forceWebView: false,
-                        );
-                      }
-                    },
+                    onTap: () => openExternalUrl(url2),
                   ),
                   SizedBox(height: 10),
                   Text("Telegram Support Channel:"),
                   SizedBox(height: 5),
                   GestureDetector(
                     child: Text(url3, style: TextStyle(color: Colors.blue)),
-                    onTap: () async {
-                      if (await canLaunch(url3)) {
-                        await launch(
-                          url3,
-                          forceSafariVC: false,
-                          forceWebView: false,
-                        );
-                      }
-                    },
+                    onTap: () => openExternalUrl(url3),
                   ),
                   SizedBox(height: 10),
                   Text("DRI Shop:"),
                   SizedBox(height: 5),
                   GestureDetector(
                     child: Text(url4, style: TextStyle(color: Colors.blue)),
-                    onTap: () async {
-                      if (await canLaunch(url4)) {
-                        await launch(
-                          url4,
-                          forceSafariVC: false,
-                          forceWebView: false,
-                        );
-                      }
-                    },
+                    onTap: () => openExternalUrl(url4),
                   )
                 ],
               ),
@@ -3087,9 +3054,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   }
 
   void reloadUserSettings(bool navigateHome) async {
-    globalLogger.wtf("reloadUserSettings");
+    globalLogger.f("reloadUserSettings");
     if (_connectedDevice != null) {
-      await widget.myUserSettings.loadSettings(_connectedDevice!.id.toString()).then((value){
+      await widget.myUserSettings.loadSettings(_connectedDevice!.remoteId.str).then((value){
         globalLogger.i("reloadUserSettings::widget.myUserSettings.loadSettings(): isConnectedDeviceKnown = $value");
         isConnectedDeviceKnown = value;
       });

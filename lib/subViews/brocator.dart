@@ -157,11 +157,11 @@ class BrocatorState extends State<Brocator> {
     } else {
       currentLocation = data;
     }
-    //globalLogger.wtf(data);
+    //globalLogger.f(data);
   }
 
   Future<void> loadSettings() async {
-    //globalLogger.wtf("loading settings");
+    //globalLogger.f("loading settings");
     final prefs = await SharedPreferences.getInstance();
 
     myUUID = prefs.getString('brocatorUUID') ?? _uuid.v4().toString();
@@ -176,7 +176,7 @@ class BrocatorState extends State<Brocator> {
   }
 
   void saveSettings() async {
-    //globalLogger.wtf("saving settings");
+    //globalLogger.f("saving settings");
     final prefs = await SharedPreferences.getInstance();
 
     await prefs.setString('brocatorUUID', myUUID!);
@@ -190,7 +190,7 @@ class BrocatorState extends State<Brocator> {
   }
 
   Future<BroList> fetchBrocations() async {
-    //globalLogger.wtf("Requesting Bros");
+    //globalLogger.f("Requesting Bros");
     final response = await http
         .get(Uri.parse("${serverURL}/brocator.php"));
 
@@ -219,7 +219,7 @@ class BrocatorState extends State<Brocator> {
       _insidePrivacyZone = false;
     }
 
-    //globalLogger.wtf("Sending brocation");
+    //globalLogger.f("Sending brocation");
 
     myBrocation.alias = myArguments!.boardAlias == null ? offlineAlias : myArguments!.boardAlias;
     if (myArguments!.boardAvatar != null && includeAvatar) {
@@ -301,7 +301,7 @@ class BrocatorState extends State<Brocator> {
     }
 
     if (theTXCharacteristic != null) {
-      //globalLogger.wtf("Brocator Telemetry Requested");
+      //globalLogger.f("Brocator Telemetry Requested");
       /// Request ESC Telemetry
       Uint8List packet = simpleVESCRequest(COMM_PACKET_ID.COMM_GET_VALUES_SETUP.index);
 
@@ -602,7 +602,7 @@ class BrocatorState extends State<Brocator> {
                   },
                   child: Container(
                     decoration: BoxDecoration(
-                        color: Theme.of(context).dialogBackgroundColor,
+                        color: dialogBackground(context),
                         borderRadius: BorderRadius.circular(2),
 
                         gradient: myBros!.brocations[i].batteryPercentage == 0 ? null :  LinearGradient(
@@ -612,8 +612,8 @@ class BrocatorState extends State<Brocator> {
                           stops: [0.0, 0.85, 1.0],
                           colors: [
                             colorCellVoltage,
-                            Theme.of(context).dialogBackgroundColor,
-                            Theme.of(context).dialogBackgroundColor,
+                            dialogBackground(context),
+                            dialogBackground(context),
                           ],
                         )
                     ),
@@ -675,8 +675,8 @@ class BrocatorState extends State<Brocator> {
       theTXCharacteristic = myArguments!.theTXCharacteristic;
     }
 
-    return new WillPopScope(
-      onWillPop: () async => false,
+    return PopScope(
+      canPop: false,
       child: new Scaffold(
         appBar: AppBar(
           title: Row(children: <Widget>[

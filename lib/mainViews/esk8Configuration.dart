@@ -488,7 +488,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               onPressed: () async {
                                 FocusScope.of(context).requestFocus(new FocusNode()); //Hide keyboard
                                 // Wait for the navigation to return
-                                final result = await Navigator.of(context).pushNamed(VehicleManager.routeName, arguments: VehicleManagerArguments(widget.currentDevice == null ? null : widget.currentDevice?.id.toString()));
+                                final result = await Navigator.of(context).pushNamed(VehicleManager.routeName, arguments: VehicleManagerArguments(widget.currentDevice == null ? null : widget.currentDevice?.remoteId.str));
                                 // If changes were made the result of the Navigation will be true and we'll want to reload the user settings
                                 if (result == true) {
                                   // Request the user settings to be reloaded
@@ -505,7 +505,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                 final result = await Navigator.of(context).pushNamed(Brocator.routeName, arguments: BrocatorArguments(widget.currentDevice == null ? null : widget.myUserSettings.settings.boardAlias, _boardAvatar, widget.telemetryStream, widget.theTXCharacteristic));
                                 // If changes were made the result of the Navigation will be true and we'll want to reload the user settings
                                 if (result == true) {
-                                  globalLogger.wtf(result);
+                                  globalLogger.f(result);
                                 }
                               }),
                         ],),

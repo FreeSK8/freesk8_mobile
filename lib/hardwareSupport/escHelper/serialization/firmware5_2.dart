@@ -171,7 +171,7 @@ class SerializeFirmware52 {
     appconfData.imu_conf.gyro_offset_comp_fact[2] = buffer_get_float32_auto(buffer, index); index += 4;
     appconfData.imu_conf.gyro_offset_comp_clamp = buffer_get_float32_auto(buffer, index); index += 4;
 
-    //globalLogger.wtf("SerializeFirmware52::processAPPCONF: final index = $index");
+    //globalLogger.f("SerializeFirmware52::processAPPCONF: final index = $index");
     return appconfData;
   }
 
@@ -330,7 +330,7 @@ class SerializeFirmware52 {
     response.setFloat32(index, conf.imu_conf.gyro_offset_comp_fact[2]); index += 4;
     response.setFloat32(index, conf.imu_conf.gyro_offset_comp_clamp); index += 4;
 
-    //globalLogger.wtf("SerializeFirmware52::serializeAPPCONF: final index is $index");
+    //globalLogger.f("SerializeFirmware52::serializeAPPCONF: final index is $index");
     return response;
   }
 
@@ -496,7 +496,7 @@ class SerializeFirmware52 {
     mcconfData.bms.soc_limit_start = buffer_get_float16(buffer, index, 100); index += 2;
     mcconfData.bms.soc_limit_end = buffer_get_float16(buffer, index, 100); index += 2;
 
-    //globalLogger.wtf("SerializeFirmware52::processMCCONF: final index = $index");
+    //globalLogger.f("SerializeFirmware52::processMCCONF: final index = $index");
     return mcconfData;
   }
 
@@ -657,7 +657,7 @@ class SerializeFirmware52 {
     response.setInt16(index, (conf.bms.soc_limit_start * 100).toInt()); index += 2;
     response.setInt16(index, (conf.bms.soc_limit_end * 100).toInt()); index += 2;
 
-    //globalLogger.wtf("SerializeFirmware52::serializeMCCONF: final index is $index");
+    //globalLogger.f("SerializeFirmware52::serializeMCCONF: final index is $index");
     return response;
   }
 }

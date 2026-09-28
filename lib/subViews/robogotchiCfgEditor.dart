@@ -335,36 +335,18 @@ class RobogotchiCfgEditorState extends State<RobogotchiCfgEditor> {
 
                   Divider(thickness: 3),
 
-                  RadioListTile(
-                    title: const Text("Single ESC Mode"),
-                    value: 0,
+                  RadioGroup<int>(
                     groupValue: myArguments.currentConfiguration!.multiESCMode,
-                    onChanged: (int? value){
+                    onChanged: (int? value) {
                       setState(() {
                         myArguments.currentConfiguration!.multiESCMode = value;
                       });
                     },
-                  ),
-
-                  RadioListTile(
-                    title: const Text("Dual ESC Mode"),
-                    value: 2,
-                    groupValue: myArguments.currentConfiguration!.multiESCMode,
-                    onChanged: (int? value){
-                      setState(() {
-                        myArguments.currentConfiguration!.multiESCMode = value;
-                      });
-                    },
-                  ),
-                  RadioListTile(
-                    title: const Text("Quad ESC Mode"),
-                    value: 4,
-                    groupValue: myArguments.currentConfiguration!.multiESCMode,
-                    onChanged: (int? value){
-                      setState(() {
-                        myArguments.currentConfiguration!.multiESCMode = value;
-                      });
-                    },
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      RadioListTile<int>(title: const Text("Single ESC Mode"), value: 0),
+                      RadioListTile<int>(title: const Text("Dual ESC Mode"), value: 2),
+                      RadioListTile<int>(title: const Text("Quad ESC Mode"), value: 4),
+                    ]),
                   ),
 
                   myArguments.currentConfiguration!.multiESCMode! > 1 ? MultiSelectFormField(

@@ -22,7 +22,7 @@ class BLEHelper {
   }
 
   void resetPacket() {
-    //globalLogger.wtf("Resetting packet");
+    //globalLogger.f("Resetting packet");
     messageRead = false;
     counter = 0;
     endMessage = 512;

@@ -135,7 +135,7 @@ class ESCHelper {
 
 
   List<ESCFault> processFaults(int faultCount, Uint8List payload) {
-    //globalLogger.wtf(payload);
+    //globalLogger.f(payload);
     List<ESCFault> response = [];
     int index = 0;
     for (int i=0; i<faultCount; ++i) {

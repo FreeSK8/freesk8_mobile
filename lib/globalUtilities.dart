@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 import 'package:logger/logger.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'components/crc16.dart';
 import 'hardwareSupport/escHelper/dataTypes.dart';
@@ -130,8 +131,8 @@ class Dialogs {
         context: context,
         barrierDismissible: false,
         builder: (BuildContext context) {
-          return new WillPopScope(
-              onWillPop: () async => false,
+          return PopScope(
+              canPop: false,
               child: SimpleDialog(
                   key: key,
                   backgroundColor: Colors.black54,
@@ -153,8 +154,8 @@ class Dialogs {
         context: context,
         barrierDismissible: false,
         builder: (BuildContext context) {
-          return new WillPopScope(
-              onWillPop: () async => false,
+          return PopScope(
+              canPop: false,
               child: SimpleDialog(
                   key: key,
                   backgroundColor: Colors.black54,
@@ -234,6 +235,31 @@ class MyFilter extends LogFilter {
 }
 Logger globalLogger = Logger(printer: PrettyPrinter(methodCount: 0), filter: MyFilter());
 
+/// Background colour used for dialog-like panels. Reproduces the value the
+/// deprecated ThemeData.dialogBackgroundColor used to default to unless a
+/// DialogThemeData.backgroundColor is set.
+Color dialogBackground(BuildContext context) {
+  final theme = Theme.of(context);
+  return theme.dialogTheme.backgroundColor ??
+      (theme.brightness == Brightness.dark ? Colors.grey[800]! : Colors.white);
+}
+
+/// Opens [url] in the external browser (or the app registered for it).
+Future<void> openExternalUrl(String url) async {
+  final uri = Uri.tryParse(url);
+  if (uri == null) {
+    globalLogger.w("openExternalUrl: invalid url $url");
+    return;
+  }
+  try {
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      globalLogger.w("openExternalUrl: could not launch $url");
+    }
+  } catch (e) {
+    globalLogger.e("openExternalUrl: $url: $e");
+  }
+}
+
 class Pair<T1, T2> {
   final T1 first;
   final T2 second;
@@ -288,7 +314,7 @@ Future<bool> sendBLEData(BluetoothCharacteristic txCharacteristic, Uint8List dat
         return Future.value(false);
       } else {
         //TODO: Observed "write_characteristic_error, no instance of BluetoothGatt, have you connected first?" (believed to be resolved)
-        //globalLogger.wtf(err);
+        //globalLogger.f(err);
         continue; // Try again without incrementing bytesSent
       }
     } catch (e) {

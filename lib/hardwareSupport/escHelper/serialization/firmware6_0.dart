@@ -211,7 +211,7 @@ class SerializeFirmware60 { //fw6
     appconfData.imu_conf.gyro_offsets[1] = buffer_get_float32_auto(buffer, index); index += 4;
     appconfData.imu_conf.gyro_offsets[2] = buffer_get_float32_auto(buffer, index); index += 4;
 
-    //globalLogger.wtf("SerializeFirmware60::processAPPCONF: final index = $index");
+    //globalLogger.f("SerializeFirmware60::processAPPCONF: final index = $index");
     return appconfData;
   }
 
@@ -410,7 +410,7 @@ class SerializeFirmware60 { //fw6
     response.setFloat32(index, conf.imu_conf.gyro_offsets[1]); index += 4;
     response.setFloat32(index, conf.imu_conf.gyro_offsets[2]); index += 4;
 
-    //globalLogger.wtf("SerializeFirmware60::serializeAPPCONF: final index is $index");
+    //globalLogger.f("SerializeFirmware60::serializeAPPCONF: final index is $index");
     return response;
   }
 
@@ -613,7 +613,7 @@ class SerializeFirmware60 { //fw6
     mcconfData.bms.soc_limit_end = buffer_get_float16(buffer, index, 100); index += 2;
     mcconfData.bms.fwd_can_mode = BMS_FWD_CAN_MODE.values[buffer[index++]];
 
-    //globalLogger.wtf("SerializeFirmware60::processMCCONF: final index = $index");
+    //globalLogger.f("SerializeFirmware60::processMCCONF: final index = $index");
     return mcconfData;
   }
 
@@ -811,7 +811,7 @@ class SerializeFirmware60 { //fw6
     response.setInt16(index, (conf.bms.soc_limit_end * 100).toInt()); index += 2;
     response.setUint8(index++, conf.bms.fwd_can_mode.index);
 
-    //globalLogger.wtf("SerializeFirmware60::serializeMCCONF: final index is $index");
+    //globalLogger.f("SerializeFirmware60::serializeMCCONF: final index is $index");
     return response;
   }
 }
