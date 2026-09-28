@@ -1998,7 +1998,7 @@ class InputConfigurationEditorState extends State<InputConfigurationEditor> {
     
     if (calibrationSubscription == null) {
       calibrationSubscription = myArguments!.calibrationStream.listen((value) {
-        globalLogger.wtf("Calibration Data Received PPM Cal:${value.ppmCalibrationRunning} ADC Cal:${value.adcCalibrationRunning}");
+        globalLogger.f("Calibration Data Received PPM Cal:${value.ppmCalibrationRunning} ADC Cal:${value.adcCalibrationRunning}");
         setState(() {
           calibrationState = value;
         });
@@ -2013,8 +2013,8 @@ class InputConfigurationEditorState extends State<InputConfigurationEditor> {
     }
     escFirmwareVersion = myArguments!.escFirmwareVersion;
 
-    return new WillPopScope(
-      onWillPop: () async => false,
+    return PopScope(
+      canPop: false,
       child: new Scaffold(
         appBar: AppBar(
           title: Row(children: <Widget>[

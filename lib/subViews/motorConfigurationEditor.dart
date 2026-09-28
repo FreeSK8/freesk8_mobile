@@ -969,8 +969,8 @@ class MotorConfigurationEditorState extends State<MotorConfigurationEditor> {
     escFirmwareVersion = myArguments!.escFirmwareVersion;
 
     
-    return new WillPopScope(
-      onWillPop: () async => false,
+    return PopScope(
+      canPop: false,
       child: new Scaffold(
         appBar: AppBar(
           title: Row(children: <Widget>[

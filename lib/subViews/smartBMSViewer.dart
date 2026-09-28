@@ -173,9 +173,9 @@ class SmartBMSViewerState extends State<SmartBMSViewer> {
           Column(children: <Widget>[
             Table(children: [
               TableRow(children: [
-                Text("Pack Voltage: ", textAlign: TextAlign.right,textScaleFactor: 1.25,),
+                Text("Pack Voltage: ", textAlign: TextAlign.right,textScaler: const TextScaler.linear(1.25),),
                 //TODO: Hiding SOC if value is 50% because the FlexiBMS always reports 50
-                Text(" ${bmsTelemetry.packVoltage} ${bmsTelemetry.soc != 50 ? "(${bmsTelemetry.soc}%)" : ""}", textScaleFactor: 1.25,)
+                Text(" ${bmsTelemetry.packVoltage} ${bmsTelemetry.soc != 50 ? "(${bmsTelemetry.soc}%)" : ""}", textScaler: const TextScaler.linear(1.25),)
               ]),
               TableRow(children: [
                 Text("Pack Current: ", textAlign: TextAlign.right,),
@@ -245,7 +245,7 @@ class SmartBMSViewerState extends State<SmartBMSViewer> {
                             top: 5, child: new Text(
                           "  ${formatTriple.format(bmsTelemetry.cellVoltage[index].abs())} V",
                           style: TextStyle(color: Colors.black),
-                          textScaleFactor: 1.25,)),
+                          textScaler: const TextScaler.linear(1.25),)),
                         new Positioned(bottom: 2, child: new Text("  Cell ${index + 1}")),
                         new ClipRRect(
                             borderRadius: new BorderRadius.circular(10),
@@ -332,8 +332,8 @@ class SmartBMSViewerState extends State<SmartBMSViewer> {
       });
     }
 
-    return new WillPopScope(
-      onWillPop: () async => false,
+    return PopScope(
+      canPop: false,
       child: new Scaffold(
         appBar: AppBar(
           title: Row(children: <Widget>[

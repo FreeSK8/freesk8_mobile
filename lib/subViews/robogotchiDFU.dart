@@ -73,7 +73,7 @@ class RobogotchiDFUState extends State<RobogotchiDFU> with SingleTickerProviderS
               currentPart,
               partsTotal,
               ) {
-            //globalLogger.wtf('deviceAddress: $deviceAddress, percent: $percent');
+            //globalLogger.f('deviceAddress: $deviceAddress, percent: $percent');
             setState(() {
               _deviceAddress = deviceAddress;
               _percent = percent;

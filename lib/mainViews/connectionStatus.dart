@@ -145,7 +145,7 @@ class ConnectionStatus extends StatelessWidget {
                           initialTime: Duration(seconds: 0),
                           decoration: new BoxDecoration(
                             shape: BoxShape.rectangle,
-                            color: Theme.of(context).dialogBackgroundColor,
+                            color: dialogBackground(context),
                             borderRadius: new BorderRadius.all(new Radius.circular(32.0)),
                           ),
                         );
@@ -185,7 +185,7 @@ class ConnectionStatus extends StatelessWidget {
                 backgroundColor: Colors.white,
               )),
 
-              Text(currentDevice!.name == '' ? '(unknown device)' : currentDevice!.name),
+              Text(currentDevice!.platformName == '' ? '(unknown device)' : currentDevice!.platformName),
 
               gotchiStatus?.isLogging != null ?
               Text("Distance Logged ${doublePrecision(userSettings.settings.useImperial ? kmToMile(connectedVehicleOdometer!) : connectedVehicleOdometer!, 2)} ${userSettings.settings.useImperial ? "miles" : "km"}") : Container(),

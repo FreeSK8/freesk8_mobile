@@ -107,7 +107,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
   }
 
   void _listFiles(bool doSetState) async {
-    //globalLogger.wtf("selecting logs from database");
+    //globalLogger.f("selecting logs from database");
     try {
       rideLogsFromDatabase = await DatabaseAssistant.dbSelectLogs(orderByClause: orderByClause);
 
@@ -116,10 +116,10 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
       rideLogsFromDatabase.forEach((element) {
         DateTime thisDate = DateTime.parse(new DateFormat("yyyy-MM-dd").format(element.dateTime!.add(DateTime.now().timeZoneOffset)));
         if (_events.containsKey(thisDate)) {
-          //globalLogger.wtf("updating $thisDate");
+          //globalLogger.f("updating $thisDate");
           _events[thisDate]!.add('${rideLogsFromDatabase.indexOf(element)}');
         } else {
-          //globalLogger.wtf("adding $thisDate");
+          //globalLogger.f("adding $thisDate");
           _events[thisDate] = ['${rideLogsFromDatabase.indexOf(element)}'];
         }
       });
@@ -201,7 +201,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
       children: _selectedEvents
           .map((event) => Container(
         decoration: BoxDecoration(
-          color: Theme.of(context).dialogBackgroundColor,
+          color: dialogBackground(context),
           border: Border.all(width: 0.8),
           borderRadius: BorderRadius.circular(12.0),
         ),
@@ -212,7 +212,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
           //TODO: this title's Column is essentially taken from the ListView Gesture Detector. simplify
           title: Column(
               children: <Widget>[
-                Container(color: Theme.of(context).dialogBackgroundColor,
+                Container(color: dialogBackground(context),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: <Widget>[
@@ -311,24 +311,6 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
       ))
           .toList(),
     );
-  }
-
-  void _onDaySelected(DateTime day, List events, List holidays) {
-    //globalLogger.wtf('CALLBACK: _onDaySelected');
-    setState(() {
-      _selectedDay = DateTime.parse(new DateFormat("yyyy-MM-dd").format(day));
-      _selectedEvents = events;
-    });
-  }
-
-  void _onVisibleDaysChanged(DateTime first, DateTime last, CalendarFormat format) {
-    //globalLogger.wtf('CALLBACK: _onVisibleDaysChanged');
-    //TODO: capture calendar format changes and store with user preferences for determining initial viewing format
-  }
-
-  void _onCalendarCreated(
-      DateTime first, DateTime last, CalendarFormat format) {
-    //globalLogger.wtf('CALLBACK: _onCalendarCreated');
   }
 
   Future<void> _loadLogFile(int index) async {
@@ -500,7 +482,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
                               Container(height: 50,
                                   width: MediaQuery.of(context).size.width - 20,
                                   margin: const EdgeInsets.only(left: 10.0, right: 10),
-                                  color: Theme.of(context).dialogBackgroundColor,
+                                  color: dialogBackground(context),
                                   child: Row(
 
                                     mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -827,7 +809,7 @@ class RideLoggingState extends State<RideLogging> with TickerProviderStateMixin 
               widget.syncInProgress ? Container() : ElevatedButton(
                   child: Text("Clear Logs"),
                   style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all<Color>(Colors.red),
+                    backgroundColor: WidgetStateProperty.all<Color>(Colors.red),
                   ),
                   onPressed: () async {
                     if (!widget.isRobogotchi) {

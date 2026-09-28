@@ -64,7 +64,7 @@ class BrocatorMapState extends State<BrocatorMap> {
         circles: [
           CircleMarker(
             point: data.privacyZone!,
-            color: Colors.blue.withOpacity(0.3),
+            color: Colors.blue.withValues(alpha: 0.3),
             borderStrokeWidth: 3.0,
             borderColor: Colors.blue,
             useRadiusInMeter: true,

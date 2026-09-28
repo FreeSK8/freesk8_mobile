@@ -73,7 +73,7 @@ class gotchiProOTAState extends State<gotchiProOTA> with SingleTickerProviderSta
               currentPart,
               partsTotal,
               ) {
-            //globalLogger.wtf('deviceAddress: $deviceAddress, percent: $percent');
+            //globalLogger.f('deviceAddress: $deviceAddress, percent: $percent');
             setState(() {
               _deviceAddress = deviceAddress;
               _percent = percent;

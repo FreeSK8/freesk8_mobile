@@ -431,7 +431,7 @@ class RideLogViewerState extends State<RideLogViewer> {
     //Load log file from received arguments
     if( thisRideLog == "" ) {
       FileManager.openLogFile(myArguments.logFileInfo!.logFilePath!).then((value){
-        //globalLogger.wtf("opening log file");
+        //globalLogger.f("opening log file");
         setState(() {
           thisRideLog = value;
         });
@@ -511,7 +511,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           if (gpsLatLngMap.isNotEmpty && gpsLatLngMap.keys.last.isAfter(thisGPSTime)) {
             ++outOfOrderGPSRecords;
             outOfOrderGPSFirstMessage ??= "GPS out of order: Now $thisGPSTime Previous ${gpsLatLngMap.keys.last}";
-            //globalLogger.wtf("GPS out of order: Now $thisGPSTime Previous ${gpsLatLngMap.keys.last}; Skipping record");
+            //globalLogger.f("GPS out of order: Now $thisGPSTime Previous ${gpsLatLngMap.keys.last}; Skipping record");
             gpsLatLngRejectMap[thisGPSTime] = thisPosition;
             continue;
           }
@@ -540,7 +540,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           if (escTimeSeriesMap.isNotEmpty && escTimeSeriesMap.keys.last.subtract(Duration(milliseconds: escTimeSeriesMap.keys.last.millisecond)).isAfter(thisDt)) {
             ++outOfOrderESCRecords;
             outOfOrderESCFirstMessage ??= "ESC out of order: $thisDt Previous ${escTimeSeriesMap.keys.last}";
-            //globalLogger.wtf("ESC out of order: Now $thisDt Previous ${escTimeSeriesMap.keys.last}");
+            //globalLogger.f("ESC out of order: Now $thisDt Previous ${escTimeSeriesMap.keys.last}");
           }
 
           if (!escIDsInLog.contains(thisESCID)) {
@@ -654,7 +654,7 @@ class RideLogViewerState extends State<RideLogViewer> {
               break;
             default:
             // Shit this was not supposed to happen
-              globalLogger.wtf("Shit this was not supposed to happen. There appears to be a 5th ESC ID in the log file: $escIDsInLog");
+              globalLogger.f("Shit this was not supposed to happen. There appears to be a 5th ESC ID in the log file: $escIDsInLog");
               break;
           }
 
@@ -1156,7 +1156,7 @@ class RideLogViewerState extends State<RideLogViewer> {
           ClipRRect(
             borderRadius: new BorderRadius.circular(10),
             child: Image(width: 40, height: 40, image: AssetImage('assets/FreeSK8_Icon_Dark.png'),
-              color: Color(0xffffffff).withOpacity(0.1),
+              color: Color(0xffffffff).withValues(alpha: 0.1),
               colorBlendMode: BlendMode.softLight,),
           ),
         ],),

@@ -121,7 +121,7 @@ class LogFileParser {
         }
         LOG_MSG_TYPES msgType = LOG_MSG_TYPES.values[msgTypeByte];
         int messageLength = bytes[i++]; // Increment i after we read
-        //logger.wtf("message length $messageLength @ byte ${i-1}");
+        //logger.f("message length $messageLength @ byte ${i-1}");
         if (i+messageLength > bytes.length) {
           globalLogger.w("logFileParser::parseFile: reached EOF early: Index ${i+messageLength} but bytes.length is only ${bytes.length}");
           continue;
@@ -131,7 +131,7 @@ class LogFileParser {
         }
         switch(msgType) {
           case LOG_MSG_TYPES.DEBUG:
-            globalLogger.wtf("logFileParser::parseFile: LOG_MSG_TYPE = DEBUG is not implemented");
+            globalLogger.f("logFileParser::parseFile: LOG_MSG_TYPE = DEBUG is not implemented");
             break;
           case LOG_MSG_TYPES.HEADER:
             int logFileVersion = buffer_get_uint16(bytes, i, Endian.little); i+=2;
@@ -164,7 +164,7 @@ class LogFileParser {
             lastESCPacket.wattHours = buffer_get_uint32(bytes, i, Endian.little) / 100.0; i+=4;
             lastESCPacket.eRPM = buffer_get_int32(bytes, i, Endian.little); i+=4;
             lastESCPacket.eDistance = buffer_get_uint32(bytes, i, Endian.little); i+=4;
-            //globalLogger.wtf("ESC Duty ${lastESCPacket.dutyCycle}");
+            //globalLogger.f("ESC Duty ${lastESCPacket.dutyCycle}");
 
             if (bytes[i] == PacketEnd) {
               parsedESC[parsedIndex++] = new LogESC().fromValues(lastESCPacket);
@@ -191,8 +191,8 @@ class LogFileParser {
             int deltaEDistance = buffer_get_int16(bytes, i, Endian.little); i+=2;
             int faultCode = bytes[i++];
             i+=1; //NOTE: alignment
-            //globalLogger.wtf("ESC DELTA dt $deltaDT id $escID vin $deltaVin mt $deltaMotorTemp et $deltaESCTemp duty $deltaDuty mc $deltaMotorCurrent bc $deltaBatteryCurrent wh $deltaWattHours whr $deltaWattHoursRegen erpm $deltaERPM edist $deltaEDistance f $faultCode");
-            //globalLogger.wtf("ESC Duty ${lastESCPacket.dutyCycle} Delta $deltaDuty");
+            //globalLogger.f("ESC DELTA dt $deltaDT id $escID vin $deltaVin mt $deltaMotorTemp et $deltaESCTemp duty $deltaDuty mc $deltaMotorCurrent bc $deltaBatteryCurrent wh $deltaWattHours whr $deltaWattHoursRegen erpm $deltaERPM edist $deltaEDistance f $faultCode");
+            //globalLogger.f("ESC Duty ${lastESCPacket.dutyCycle} Delta $deltaDuty");
 
             if (bytes[i] == PacketEnd) {
               // Update ESC packet with delta values
@@ -239,7 +239,7 @@ class LogFileParser {
             double deltaSpeed = buffer_get_int8(bytes, i++) / 10.0;
             double deltaLatitude = buffer_get_int16(bytes, i, Endian.little) / 100000.0; i+=2;
             double deltaLongitude = buffer_get_int16(bytes, i, Endian.little) / 100000.0; i+=2;
-            //logger.wtf("GPS DELTA Time $deltaDt Satellites $deltaSatellites Altitude $deltaAltitude Speed $deltaSpeed Latitude $deltaLatitude Longitude $deltaLongitude");
+            //logger.f("GPS DELTA Time $deltaDt Satellites $deltaSatellites Altitude $deltaAltitude Speed $deltaSpeed Latitude $deltaLatitude Longitude $deltaLongitude");
             if (bytes[i] == PacketEnd) {
               lastGPSPacket.dt = lastGPSPacket.dt!.add(Duration(seconds: deltaDt));
               lastGPSPacket.satellites += deltaSatellites;
@@ -254,10 +254,10 @@ class LogFileParser {
             }
             break;
           case LOG_MSG_TYPES.IMU:
-            globalLogger.wtf("logFileParser::parseFile: LOG_MSG_TYPE = IMU is not implemented");
+            globalLogger.f("logFileParser::parseFile: LOG_MSG_TYPE = IMU is not implemented");
             break;
           case LOG_MSG_TYPES.BMS:
-            globalLogger.wtf("logFileParser::parseFile: LOG_MSG_TYPE = BMS is not implemented");
+            globalLogger.f("logFileParser::parseFile: LOG_MSG_TYPE = BMS is not implemented");
             break;
           case LOG_MSG_TYPES.FREESK8:
             int eventType = bytes[i++];
@@ -284,12 +284,12 @@ class LogFileParser {
                       // Adjust fileName with new starting time
                       DateTime? dtFromString = DateTime.tryParse(fileName);
                       if (dtFromString == null) {
-                        globalLogger.wtf("logFileParser::parseFile:TIME_SYNC: unable to parse time from filename ($fileName) checking records");
+                        globalLogger.f("logFileParser::parseFile:TIME_SYNC: unable to parse time from filename ($fileName) checking records");
                         if (parsedESC.values.length > 0) {
                           dtFromString = parsedESC.values.first.dt!.add(Duration(seconds: eventData));
                           fileNameOut = dtFromString.toIso8601String();
                         } else {
-                          globalLogger.wtf("logFileParser::parseFile:TIME_SYNC: No ESC records found to parse valid time. Using original filename");
+                          globalLogger.f("logFileParser::parseFile:TIME_SYNC: No ESC records found to parse valid time. Using original filename");
                         }
                       } else {
                         dtFromString = dtFromString.add(Duration(seconds: eventData));
@@ -299,10 +299,10 @@ class LogFileParser {
                   }
                   break;
                 case 1:
-                  globalLogger.wtf("logFileParser::parseFile: FreeSK8 message USER_FLAG is not implemented");
+                  globalLogger.f("logFileParser::parseFile: FreeSK8 message USER_FLAG is not implemented");
                   break;
                 default:
-                  globalLogger.wtf("logFileParser::parseFile: FreeSK8 message $eventType is unknown");
+                  globalLogger.f("logFileParser::parseFile: FreeSK8 message $eventType is unknown");
                   break;
               }
             }

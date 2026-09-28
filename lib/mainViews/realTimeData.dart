@@ -201,7 +201,7 @@ class RealTimeDataState extends State<RealTimeData> {
       rangeEstimateAverage = rangeEstimate * 0.1 + rangeEstimateAverage! * 0.9;
     }
 
-    Color boxBgColor = Theme.of(context).dialogBackgroundColor;
+    Color boxBgColor = dialogBackground(context);
     double cellVoltage = escTelemetry.v_in / widget.currentSettings.settings.batterySeriesCount;
 
     // Compute color for cell voltage
@@ -222,7 +222,7 @@ class RealTimeDataState extends State<RealTimeData> {
 
 
     BoxDecoration boxDecoration = BoxDecoration(
-        color: Theme.of(context).dialogBackgroundColor,
+        color: dialogBackground(context),
         borderRadius: BorderRadius.circular(5),
 
         gradient: LinearGradient(
@@ -231,8 +231,8 @@ class RealTimeDataState extends State<RealTimeData> {
           end: Alignment.bottomRight,
           stops: [0.0, 0.9, 1.0],
           colors: [
-            Theme.of(context).dialogBackgroundColor,
-            Theme.of(context).dialogBackgroundColor,
+            dialogBackground(context),
+            dialogBackground(context),
             Theme.of(context).scaffoldBackgroundColor,
           ],
         )
@@ -371,7 +371,7 @@ class RealTimeDataState extends State<RealTimeData> {
 
     Widget childBattery = Container(
         decoration: BoxDecoration(
-            color: Theme.of(context).dialogBackgroundColor,
+            color: dialogBackground(context),
             borderRadius: BorderRadius.circular(5),
 
             gradient: LinearGradient(
@@ -380,8 +380,8 @@ class RealTimeDataState extends State<RealTimeData> {
               end: Alignment.bottomRight,
               stops: [0.0, 0.4, 1.0],
               colors: [
-                Theme.of(context).dialogBackgroundColor,
-                Theme.of(context).dialogBackgroundColor,
+                dialogBackground(context),
+                dialogBackground(context),
                 colorCellVoltage,
               ],
             )
@@ -428,7 +428,7 @@ class RealTimeDataState extends State<RealTimeData> {
 
     Widget childMosfetTemp = Container(
         decoration: BoxDecoration(
-            color: Theme.of(context).dialogBackgroundColor,
+            color: dialogBackground(context),
             borderRadius: BorderRadius.circular(5),
 
             gradient: LinearGradient(
@@ -437,8 +437,8 @@ class RealTimeDataState extends State<RealTimeData> {
               end: Alignment.bottomRight,
               stops: [0.0, 0.4, 1.0],
               colors: [
-                Theme.of(context).dialogBackgroundColor,
-                Theme.of(context).dialogBackgroundColor,
+                dialogBackground(context),
+                dialogBackground(context),
                 colorMosfet,
               ],
             )
@@ -460,7 +460,7 @@ class RealTimeDataState extends State<RealTimeData> {
 
     Widget childMotorTemp = Container(
         decoration: BoxDecoration(
-            color: Theme.of(context).dialogBackgroundColor,
+            color: dialogBackground(context),
             borderRadius: BorderRadius.circular(5),
 
             gradient: LinearGradient(
@@ -469,8 +469,8 @@ class RealTimeDataState extends State<RealTimeData> {
               end: Alignment.bottomRight,
               stops: [0.0, 0.4, 1.0],
               colors: [
-                Theme.of(context).dialogBackgroundColor,
-                Theme.of(context).dialogBackgroundColor,
+                dialogBackground(context),
+                dialogBackground(context),
                 colorMotor,
               ],
             )
@@ -515,14 +515,14 @@ class RealTimeDataState extends State<RealTimeData> {
                               context.read<PreferencesCubit>().increaseFontSize();
                               globalLogger.d("Font Size: $fontSizeValues Screen W: ${MediaQuery.of(context).size.width.toInt()} H: ${MediaQuery.of(context).size.height.toInt()}");
                             },
-                            child: Icon(Icons.add_circle_outline, color: Theme.of(context).dialogBackgroundColor),
+                            child: Icon(Icons.add_circle_outline, color: dialogBackground(context)),
                           ),
                           GestureDetector(
                             onTap: () {
                               context.read<PreferencesCubit>().decreaseFontSize();
                               globalLogger.d("Font Size: $fontSizeValues Screen W: ${MediaQuery.of(context).size.width.toInt()} H: ${MediaQuery.of(context).size.height.toInt()}");
                             },
-                            child: Icon(Icons.remove_circle, color: Theme.of(context).dialogBackgroundColor),
+                            child: Icon(Icons.remove_circle, color: dialogBackground(context)),
                           ),
                         ],)
                     ) : Container(),
@@ -636,14 +636,14 @@ class RealTimeDataState extends State<RealTimeData> {
                               context.read<PreferencesCubit>().decreaseFontSize();
                               globalLogger.d("Font Size: $fontSizeValues Screen W: ${MediaQuery.of(context).size.width.toInt()} H: ${MediaQuery.of(context).size.height.toInt()}");
                             },
-                            child: Icon(Icons.remove_circle, color: Theme.of(context).dialogBackgroundColor),
+                            child: Icon(Icons.remove_circle, color: dialogBackground(context)),
                           ),
                           GestureDetector(
                             onTap: () {
                               context.read<PreferencesCubit>().increaseFontSize();
                               globalLogger.d("Font Size: $fontSizeValues Screen W: ${MediaQuery.of(context).size.width.toInt()} H: ${MediaQuery.of(context).size.height.toInt()}");
                             },
-                            child: Icon(Icons.add_circle_outline, color: Theme.of(context).dialogBackgroundColor),
+                            child: Icon(Icons.add_circle_outline, color: dialogBackground(context)),
                           )
                         ],)
                     ) : Container(),
