@@ -46,12 +46,10 @@ class FOCWizardState extends State<FOCWizard> {
     loadESCDefaults = false;
     tecBatteryCurrentRegen.addListener(() {
       focDetectMinBatteryAmps = double.tryParse(tecBatteryCurrentRegen.text.replaceFirst(',', '.')) ?? 0.0; //Try parse so we don't throw
-      if(focDetectMinBatteryAmps==null) focDetectMinBatteryAmps = 0.0; //Ensure not null
       if(focDetectMinBatteryAmps>0.0) focDetectMinBatteryAmps *= -1; //Ensure negative
     });
     tecBatteryCurrentOutput.addListener(() {
       focDetectMaxBatteryAmps = double.tryParse(tecBatteryCurrentOutput.text.replaceFirst(',', '.')) ?? 0.0; //Try parse so we don't throw
-      if(focDetectMaxBatteryAmps==null) focDetectMaxBatteryAmps = 0.0; //Ensure not null
     });
   }
 
@@ -221,7 +219,7 @@ class FOCWizardState extends State<FOCWizard> {
               byteData.setUint16(24, checksum);
               byteData.setUint8(26, 0x03); //End of packet
 
-              //globalLogger.wtf("FOC Detection packet: ${byteData.buffer.asUint8List()}");
+              //globalLogger.f("FOC Detection packet: ${byteData.buffer.asUint8List()}");
 
               sendBLEData(myArguments.txCharacteristic, byteData.buffer.asUint8List(), true).then((sendResult){
                 if (sendResult) globalLogger.i("FOC Detection packet is off off and away...");

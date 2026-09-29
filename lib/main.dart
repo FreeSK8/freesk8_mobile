@@ -60,8 +60,7 @@ import 'package:share_plus/share_plus.dart';
 
 import 'package:wifi_iot/wifi_iot.dart';
 
-import 'package:logger_flutter/logger_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'widgets/debugLog/debugLog.dart';
 
 import 'package:signal_strength_indicator/signal_strength_indicator.dart';
 
@@ -71,7 +70,6 @@ import 'hardwareSupport/escHelper/serialization/buffers.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'blocs/preferences/preferences_cubit.dart';
 import 'blocs/location/location_bloc.dart';
-import 'blocs/location/location_event.dart';
 import 'blocs/telemetry/telemetry_bloc.dart';
 import 'blocs/ble_connection/ble_connection_bloc.dart';
 import 'blocs/file_sync/file_sync_bloc.dart';
@@ -86,7 +84,7 @@ import 'blocs/esc_config/esc_config_bloc.dart';
 
 
 //release update
-const String freeSK8ApplicationVersion = "0.23.0";
+const String freeSK8ApplicationVersion = "0.24.0";
 const String robogotchiFirmwareExpectedVersion = "0.10.2";
 const String gotchiproFirmwareExpectedVersion = "1.6.0";
 
@@ -100,6 +98,7 @@ Future <void> initFirebase() async {
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  DebugLogBuffer.install(); // capture start-up logs for the debug console
   //initFirebase();
   runApp(
     MultiBlocProvider(
@@ -245,7 +244,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     FileManager.createLogDirectory();
 
     if (_connectedDevice != null){
-      widget.myUserSettings.loadSettings(_connectedDevice!.id.toString());
+      widget.myUserSettings.loadSettings(_connectedDevice!.remoteId.str);
     } else {
       widget.myUserSettings.loadSettings("defaults");
     }
@@ -260,7 +259,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     controller = TabController(length: 4, vsync: this);
     controller.addListener(() {
       if (syncInProgress && controller.index != controllerViewLogging) {
-        globalLogger.wtf("no tab change please");
+        globalLogger.f("no tab change please");
         controller.index = controller.previousIndex;
       }
     });
@@ -279,9 +278,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     checkLocationPermission();
     positionStream = _geolocatorPlatform.getPositionStream(locationSettings: locationOptions).listen(
             (Position position) {
-          if(position != null) {
-            updateLocationForRoute(new LatLng(position.latitude, position.longitude));
-          }
+          updateLocationForRoute(new LatLng(position.latitude, position.longitude));
         });
 
     // Watching AppLifecycleState for when the application is put in the background/resumed
@@ -329,7 +326,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           // Just refresh bc on some devices we might display a stale state after being backgrounded for extended period of time
         });
       }
-      //logger.wtf("_monitorGotchiTimer is alive");
+      //logger.f("_monitorGotchiTimer is alive");
     }
   }
 
@@ -393,11 +390,11 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
     positionStream?.cancel();
 
-    telemetryStream?.close();
-    mcconfStream?.close();
-    appconfStream?.close();
-    calibrationStream?.close();
-    bmsTelemetryStream?.close();
+    telemetryStream.close();
+    mcconfStream.close();
+    appconfStream.close();
+    calibrationStream.close();
+    bmsTelemetryStream.close();
 
     super.dispose();
   }
@@ -424,7 +421,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     );
   }
 
-  TabBarView getTabBarView(var tabs) {
+  TabBarView getTabBarView(List<Widget> tabs) {
     return TabBarView(
       physics: NeverScrollableScrollPhysics(),
 
@@ -646,7 +643,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
     globalLogger.i("handleTCPClient: A new client has connected from ${clientTCPSocket!.remoteAddress.address}:${clientTCPSocket!.remotePort}");
 
     clientTCPSocket!.listen((onData) {
-        //globalLogger.wtf("TCP Client to ESC: $onData");
+        //globalLogger.f("TCP Client to ESC: $onData");
         // Pass TCP data to BLE
         sendBLEData(theTXCharacteristic!, onData, true);
       },
@@ -671,8 +668,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           context: context,
           barrierDismissible: false,
           builder: (BuildContext context) {
-            return new WillPopScope(
-                onWillPop: () async => false,
+            return PopScope(
+                canPop: false,
                 child: SimpleDialog(
                     key: _keyLoader,
                     backgroundColor: Colors.black54,
@@ -781,7 +778,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
     for (ScanResult result in widget.bleScanResults) {
       //If there is no name for the device we are going to ignore it
-      if (result.device.name == '') continue;
+      if (scanResultName(result) == '') continue;
 
       //If this device is known give it a special row in the list of devices
       if (widget.myUserSettings.isDeviceKnown(result.device.remoteId.str)) {
@@ -790,7 +787,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             width: MediaQuery.of(context).size.width / crossAxisCount,
             child: GestureDetector(
               onTap: () async {
-                globalLogger.d("Attempting connection to ${result.device.name} (${result.device.remoteId.str}) with ${result.rssi}dB");
+                globalLogger.d("Attempting connection to ${scanResultName(result)} (${result.device.remoteId.str}) with ${result.rssi}dB");
                 await _attemptDeviceConnection(result.device);
               },
               child:
@@ -816,7 +813,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                     Positioned(right: 0, bottom: 0, child: SignalStrengthIndicator.bars(value: result.rssi, minValue: -90, maxValue: -45, barCount: 5, radius: Radius.circular(1.5)),),
                   ],),
 
-                  Text(result.device.name),
+                  Text(scanResultName(result)),
                 ],
               ),
             )
@@ -842,7 +839,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   ),
                   Positioned(right: 0, bottom: 0, child: SignalStrengthIndicator.bars(value: result.rssi, minValue: -90, maxValue: -45, barCount: 5, radius: Radius.circular(1.5),),),
                 ]),
-                Text(result.device.name == '' ? '(unknown device)' : result.device.name),
+                Text(scanResultName(result) == '' ? '(unknown device)' : scanResultName(result)),
                 //NOTE: this is not MAC on iOS: Text(device.remoteId.str),
               ],
             )
@@ -1020,9 +1017,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             }
           }
           break;
-        default:
-          globalLogger.e("setupConnectedDeviceStreamListener::_connectedDeviceStreamSubscription: listen: unexpected state: $state");
-          break;
       }
     });
   }
@@ -1193,8 +1187,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             Map<int, double> wattHoursEndByESC = new Map();
             Map<int, double> wattHoursRegenStartByESC = new Map();
             Map<int, double> wattHoursRegenEndByESC = new Map();
-            int escRecordCount = 0;
-            int gpsRecordCount = 0;
             double maxCurrentBattery = 0.0;
             double maxCurrentMotor = 0.0;
             double maxSpeedKph = 0.0;
@@ -1224,8 +1216,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             /// Iterate each line of logFileContents
             List<String> thisRideLogEntries = logFileContents.split("\n");
             for(int i=0; i<thisRideLogEntries.length; ++i) {
-              if(thisRideLogEntries[i] == null || thisRideLogEntries[i] == "") continue;
-              //globalLogger.wtf("uhhhh parsing: ${thisRideLogEntries[i]}");
+              if(thisRideLogEntries[i] == "") continue;
+              //globalLogger.f("uhhhh parsing: ${thisRideLogEntries[i]}");
               final entry = thisRideLogEntries[i].split(",");
 
               if(entry.length > 1 && entry[0] != "header"){ // entry[0] = Time, entry[1] = Data type
@@ -1241,26 +1233,26 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   double elevation = double.tryParse(entry[3])!;
                   minElevation ??= elevation; //Set if null
                   maxElevation ??= elevation; //Set if null
-                  if (elevation < minElevation!) minElevation = elevation;
-                  if (elevation > maxElevation!) maxElevation = elevation;
+                  if (elevation < minElevation) minElevation = elevation;
+                  if (elevation > maxElevation) maxElevation = elevation;
 
 
                   // Track avg speed
                   double speedNow = double.tryParse(entry[4])!;
                   avgSpeedGPS ??= 0;
-                  avgSpeedGPS = avgSpeedGPS! + speedNow;
+                  avgSpeedGPS = avgSpeedGPS + speedNow;
                   ++avgSpeedGPSEntries;
 
                   // Track avg moving speed (;idle boards won't bring you down;)
                   if (speedNow > 0.0) {
                     avgMovingSpeedGPS ??= 0;
-                    avgMovingSpeedGPS = avgMovingSpeedGPS! + speedNow;
+                    avgMovingSpeedGPS = avgMovingSpeedGPS + speedNow;
                     ++avgMovingSpeedGPSEntries;
                   }
 
                   // Track max speed
                   maxSpeedGPS ??= speedNow;
-                  if (speedNow > maxSpeedGPS!) {
+                  if (speedNow > maxSpeedGPS) {
                     maxSpeedGPS = speedNow;
                   }
 
@@ -1268,7 +1260,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   LatLng gpsPositionNow = new LatLng(double.parse(entry[5]), double.parse(entry[6]));
                   gpsPositionPrevious ??= gpsPositionNow;
                   distanceTotalGPS ??= 0;
-                  distanceTotalGPS = distanceTotalGPS! + calculateGPSDistance(gpsPositionNow, gpsPositionPrevious!);
+                  distanceTotalGPS = distanceTotalGPS + calculateGPSDistance(gpsPositionNow, gpsPositionPrevious);
                   gpsPositionPrevious = gpsPositionNow;
                 }
                 ///ESC Values
@@ -1297,12 +1289,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   }
                   // Prepare average speed!
                   avgSpeed ??= 0;
-                  avgSpeed = avgSpeed! + speed;
+                  avgSpeed = avgSpeed + speed;
                   ++avgSpeedEntries;
                   // Prepare average moving speed
                   if (speed > 0.0) {
                     avgMovingSpeed ??= 0;
-                    avgMovingSpeed = avgMovingSpeed! + speed;
+                    avgMovingSpeed = avgMovingSpeed + speed;
                     ++avgMovingSpeedEntries;
                   }
                   // Capture Distance for first ESC
@@ -1318,7 +1310,6 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   wattHoursRegenStartByESC[escID] ??= wattHoursRegen;
                   wattHoursRegenEndByESC[escID] = wattHoursRegen;
 
-                  ++escRecordCount;
                 }
                 ///Fault codes
                 else if (entry[1] == "err") {
@@ -1691,7 +1682,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
       }
       else {
       ///Unexpected response
-      globalLogger.wtf("loggerReceived and unexpected response: ${new String.fromCharCodes(value)}");
+      globalLogger.f("loggerReceived and unexpected response: ${new String.fromCharCodes(value)}");
       }
 
     });
@@ -1703,7 +1694,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
       // If we have the TCP Socket server running and a client connected forward the data
       if(serverTCPSocket != null && clientTCPSocket != null) {
-        //globalLogger.wtf("ESC Data $value");
+        //globalLogger.f("ESC Data $value");
         clientTCPSocket!.add(value);
         return;
       }
@@ -1734,21 +1725,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           bleHelper.resetPacket(); //Be ready for another packet
 
           // Check if compatible firmware
-          if (major == 5 && minor == 1) {
-            escFirmwareVersion = ESC_FIRMWARE.FW5_1;
-          } else if (major == 5 && minor == 2) {
-            escFirmwareVersion = ESC_FIRMWARE.FW5_2;
-          } else if (major == 5 && minor == 3) {
-            escFirmwareVersion = ESC_FIRMWARE.FW5_3;
-          } else if (major == 6 && minor == 0) {
-            escFirmwareVersion = ESC_FIRMWARE.FW6_0;           
-          } else if (major == 6 && minor == 2) {
-            escFirmwareVersion = ESC_FIRMWARE.FW6_2;                
-          } else if (major == 6 && minor == 5) {
-            escFirmwareVersion = ESC_FIRMWARE.FW6_5;               
-          } else {
-            escFirmwareVersion = ESC_FIRMWARE.UNSUPPORTED;
-          }
+          escFirmwareVersion = ESCHelper.firmwareFor(major, minor);
           if(escFirmwareVersion == ESC_FIRMWARE.UNSUPPORTED) {
             // Stop the init message sequencer
             _initMsgSequencer?.cancel();
@@ -1761,7 +1738,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             }
 
             // Notify user we are in invalid firmware land
-            _alertInvalidFirmware("Firmware: $major.$minor\nHardware: $hardName");
+            _alertInvalidFirmware("Firmware: ${ESCHelper.firmwareLabel(major, minor)}\nHardware: $hardName");
 
             return; //TODO: not going to force the user to disconnect? _bleDisconnect();
           }
@@ -1929,7 +1906,12 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           bleHelper.resetPacket();
         } else if (packetID == COMM_PACKET_ID.COMM_GET_MCCONF.index) {
           ///ESC Motor Configuration
-          escMotorConfiguration = escHelper.processMCCONF(bleHelper.getPayload(), escFirmwareVersion); //bleHelper.payload.sublist(0,bleHelper.lenPayload);
+          try {
+            escMotorConfiguration = escHelper.processMCCONF(bleHelper.getPayload(), escFirmwareVersion);
+          } catch (e) {
+            globalLogger.e("processMCCONF failed for $escFirmwareVersion: $e");
+            escMotorConfiguration = MCCONF(); // isValid == false
+          }
 
           // Publish MCCONF to potential subscriber
           mcconfStream.add(escMotorConfiguration!);
@@ -1937,9 +1919,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           //NOTE: for debug & testing
           //ByteData serializedMcconf = escHelper.serializeMCCONF(escMotorConfiguration);
           //MCCONF refriedMcconf = escHelper.processMCCONF(serializedMcconf.buffer.asUint8List());
-          //globalLogger.wtf("Break for MCCONF: $escMotorConfiguration");
+          //globalLogger.f("Break for MCCONF: $escMotorConfiguration");
 
-          if (escMotorConfiguration!.si_battery_ah == null) {
+          if (!escMotorConfiguration!.isValid) {
             // Stop the init message sequencer
             _initMsgSequencer?.cancel();
             _initMsgSequencer = null;
@@ -1956,7 +1938,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
               builder: (BuildContext context) {
                 return AlertDialog(
                   title: Text("Incompatible ESC"),
-                  content: Text("The selected ESC did not return a valid Motor Configuration"),
+                  content: Text("The selected ESC did not return a valid Motor Configuration.\nESC firmware ${ESCHelper.firmwareLabel(firmwarePacket.fw_version_major, firmwarePacket.fw_version_minor)} ($escFirmwareVersion)"),
                 );
               },
             );
@@ -1979,7 +1961,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             }
 
             widget.myUserSettings.settings.wheelDiameterMillimeters = (doublePrecision(escMotorConfiguration!.si_wheel_diameter, 3) * 1000).toInt();
-            //TODO: Take note of this importance: globalLogger.wtf("wheel diameter mm maths ${(doublePrecision(escMotorConfiguration.si_wheel_diameter, 3) * 1000).toInt()} vs ${(escMotorConfiguration.si_wheel_diameter * 1000).toInt()}");
+            //TODO: Take note of this importance: globalLogger.f("wheel diameter mm maths ${(doublePrecision(escMotorConfiguration.si_wheel_diameter, 3) * 1000).toInt()} vs ${(escMotorConfiguration.si_wheel_diameter * 1000).toInt()}");
 
             widget.myUserSettings.settings.motorPoles = escMotorConfiguration!.si_motor_poles;
             widget.myUserSettings.settings.maxERPM = escMotorConfiguration!.l_max_erpm;
@@ -2002,19 +1984,24 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           globalLogger.d("COMM_PACKET_ID = COMM_GET_APPCONF");
 
           ///ESC Application Configuration
-          escApplicationConfiguration = escHelper.processAPPCONF(bleHelper.getPayload(), escFirmwareVersion);
+          try {
+            escApplicationConfiguration = escHelper.processAPPCONF(bleHelper.getPayload(), escFirmwareVersion);
+          } catch (e) {
+            globalLogger.e("processAPPCONF failed for $escFirmwareVersion: $e");
+            escApplicationConfiguration = APPCONF(); // isValid == false
+          }
 
           // Publish APPCONF to subscribers
           appconfStream.add(escApplicationConfiguration!);
 
-          if (escApplicationConfiguration!.imu_conf.sample_rate_hz == null) {
+          if (!escApplicationConfiguration!.isValid) {
             // Show dialog
             showDialog(
               context: context,
               builder: (BuildContext context) {
                 return AlertDialog(
                   title: Text("Incompatible ESC"),
-                  content: Text("The selected ESC did not return a valid Input Configuration"),
+                  content: Text("The selected ESC did not return a valid Input Configuration.\nESC firmware ${ESCHelper.firmwareLabel(firmwarePacket.fw_version_major, firmwarePacket.fw_version_minor)} ($escFirmwareVersion)"),
                 );
               },
             );
@@ -2360,8 +2347,8 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
         context: context,
         barrierDismissible: false,
         builder: (BuildContext context) {
-          return new WillPopScope(
-              onWillPop: () async => false,
+          return PopScope(
+              canPop: false,
               child: SimpleDialog(
                   backgroundColor: Colors.black54,
                   children: <Widget>[
@@ -2576,6 +2563,17 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
           },
         );
         return false;
+      } else if (!isRobogotchiOption && escFirmwareVersion == ESC_FIRMWARE.UNSUPPORTED) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text("Unsupported ESC firmware"),
+              content: Text("FreeSK8 cannot read or write configuration on ESC firmware ${ESCHelper.firmwareLabel(firmwarePacket.fw_version_major, firmwarePacket.fw_version_minor)}. Supported: 5.1, 5.2, 5.3, 6.00, 6.02, 6.05, 6.06 and 7.00."),
+            );
+          },
+        );
+        return false;
       // Check if we are connected to a Robogotchi
       } else if (isRobogotchiOption && (!_deviceIsRobogotchi || theTXLoggerCharacteristic == null)) {
         showDialog(
@@ -2638,7 +2636,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
 
             _showDieBieMS = true;
             // Wait for the navigation to return
-            final result = await Navigator.of(context).pushNamed(
+            await Navigator.of(context).pushNamed(
                 SmartBMSViewer.routeName,
                 arguments: SmartBMSArguments(
                   dataStream: bmsTelemetryStream.stream,
@@ -2661,7 +2659,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             _preNavigationTasks();
 
             // Wait for the navigation to return
-            final result = await Navigator.of(context).pushNamed(
+            await Navigator.of(context).pushNamed(
                 SpeedProfilesEditor.routeName,
                 arguments: SpeedProfileArguments(
                   theTXCharacteristic: theTXCharacteristic!,
@@ -2685,7 +2683,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             requestAPPCONF(); // Get Input Configuration before displaying
 
             // Wait for the navigation to return
-            final result = await Navigator.of(context).pushNamed(
+            await Navigator.of(context).pushNamed(
                 InputConfigurationEditor.routeName,
                 arguments: InputConfigurationArguments(
                   calibrationStream: calibrationStream.stream,
@@ -2715,7 +2713,7 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
             _preNavigationTasks();
 
             // Wait for the navigation to return
-            final result = await Navigator.of(context).pushNamed(
+            await Navigator.of(context).pushNamed(
                 MotorConfigurationEditor.routeName,
                 arguments: MotorConfigurationArguments(
                   dataStream: mcconfStream.stream,
@@ -2906,60 +2904,28 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
                   SizedBox(height: 5),
                   GestureDetector(
                     child: Text(url, style: TextStyle(color: Colors.blue),),
-                    onTap: () async {
-                      if (await canLaunch(url)) {
-                        await launch(
-                          url,
-                          forceSafariVC: false,
-                          forceWebView: false,
-                        );
-                      }
-                    },
+                    onTap: () => openExternalUrl(url),
                   ),
                   SizedBox(height: 10),
                   Text("FreeSK8 Forum:"),
                   SizedBox(height: 5),
                   GestureDetector(
                     child: Text(url2, style: TextStyle(color: Colors.blue)),
-                    onTap: () async {
-                      if (await canLaunch(url2)) {
-                        await launch(
-                          url2,
-                          forceSafariVC: false,
-                          forceWebView: false,
-                        );
-                      }
-                    },
+                    onTap: () => openExternalUrl(url2),
                   ),
                   SizedBox(height: 10),
                   Text("Telegram Support Channel:"),
                   SizedBox(height: 5),
                   GestureDetector(
                     child: Text(url3, style: TextStyle(color: Colors.blue)),
-                    onTap: () async {
-                      if (await canLaunch(url3)) {
-                        await launch(
-                          url3,
-                          forceSafariVC: false,
-                          forceWebView: false,
-                        );
-                      }
-                    },
+                    onTap: () => openExternalUrl(url3),
                   ),
                   SizedBox(height: 10),
                   Text("DRI Shop:"),
                   SizedBox(height: 5),
                   GestureDetector(
                     child: Text(url4, style: TextStyle(color: Colors.blue)),
-                    onTap: () async {
-                      if (await canLaunch(url4)) {
-                        await launch(
-                          url4,
-                          forceSafariVC: false,
-                          forceWebView: false,
-                        );
-                      }
-                    },
+                    onTap: () => openExternalUrl(url4),
                   )
                 ],
               ),
@@ -3087,9 +3053,9 @@ class MyHomeState extends State<MyHome> with SingleTickerProviderStateMixin {
   }
 
   void reloadUserSettings(bool navigateHome) async {
-    globalLogger.wtf("reloadUserSettings");
+    globalLogger.f("reloadUserSettings");
     if (_connectedDevice != null) {
-      await widget.myUserSettings.loadSettings(_connectedDevice!.id.toString()).then((value){
+      await widget.myUserSettings.loadSettings(_connectedDevice!.remoteId.str).then((value){
         globalLogger.i("reloadUserSettings::widget.myUserSettings.loadSettings(): isConnectedDeviceKnown = $value");
         isConnectedDeviceKnown = value;
       });

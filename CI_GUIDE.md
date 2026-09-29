@@ -1,24 +1,41 @@
 # Android Release CI Guide
 
-Step-by-step instructions for setting up GitHub Actions to build and sign a release APK/AAB for FreeSK8 Mobile.
+How the GitHub Actions workflow in `.github/workflows/android-release.yml` builds, signs and
+publishes FreeSK8 Mobile for Android, and the one-time setup it needs.
 
-> **Status:** The workflow already exists at `.github/workflows/android-release.yml`
-> (builds on merge to `master`; manual `workflow_dispatch` for everything else) and
-> `android/app/build.gradle` already reads `android/key.properties` when present,
-> falling back to debug signing otherwise. The only remaining setup is the one-time
-> keystore + secrets work below (Steps 1–3, then set the `HAS_SIGNING` repo variable
-> to `true`). Steps 4+ are kept for reference — they are already implemented.
-
----
-
-## Prerequisites
-
-- Java `keytool` available locally (ships with the JDK)
-- Access to the GitHub repo's Settings > Secrets
+> **Status:** the workflow is in place. Release signing only becomes active once the keystore
+> secrets and the `HAS_SIGNING` repository variable exist (Steps 1-3). Until then every build
+> is debug-signed: the APK is named `-debug-signed` and any GitHub Release made from it is
+> marked as a pre-release.
 
 ---
 
-## Step 1 — Generate a release keystore (one time)
+## How the workflow runs
+
+| Event | What happens |
+|---|---|
+| push to `master` | build, `flutter analyze`, `flutter test`, `flutter build apk --release`; the APK is uploaded as a 30-day workflow artifact named `freesk8_mobile-<version>-g<sha>-<signed\|debug-signed>` |
+| push of a tag `vX.Y.Z` | same build, then a **GitHub Release** for the tag with the APK and its `.sha256` attached, the matching `CHANGELOG` section as the body, and auto-generated notes |
+| push of a tag `vX.Y.Z-<suffix>` (e.g. `v0.24.0-rc1`) | same as above, marked **pre-release** |
+| manual run (Actions tab) | builds any branch or tag; choose `apk` or `appbundle`. A Release is published only when the run is dispatched on a `v*` tag ref with `publish_release` ticked (use this to retry a failed upload) |
+
+Guards that fail the run early:
+
+- `pubspec.yaml` must have a `version:` line and `lib/main.dart`'s `freeSK8ApplicationVersion`
+  must equal its version name (`test/version_test.dart` checks the same thing locally).
+- On a tag ref, the tag must be `v<version name>` or `v<version name>-<suffix>`.
+- If `HAS_SIGNING` is `true` but the built APK is still debug-signed, the job fails.
+
+The Flutter version is not in the workflow: it comes from `environment.flutter` in `pubspec.yaml`
+(`subosito/flutter-action` reads it via `flutter-version-file`). Bump it there.
+
+Toolchain the workflow expects: Java 17 (Temurin), Gradle 8.11.1 / AGP 8.9.1 / Kotlin 2.2.0
+(`android/settings.gradle`, `android/gradle/wrapper/gradle-wrapper.properties`),
+compileSdk / targetSdk 36 (`android/app/build.gradle`).
+
+---
+
+## Step 1 - Generate a release keystore (one time)
 
 Run this on your local machine and store the output file somewhere safe (password manager, not the repo):
 
@@ -30,193 +47,89 @@ keytool -genkey -v \
   -validity 10000
 ```
 
-You will need:
-- The `release.keystore` file
-- Your chosen `keyAlias` (e.g. `freesk8`)
-- `storePassword` (set during keytool prompt)
-- `keyPassword` (set during keytool prompt)
+You will need the `release.keystore` file, the `keyAlias` (e.g. `freesk8`), the `storePassword`
+and the `keyPassword`. Losing the keystore means future builds can no longer upgrade installed
+copies in place, so back it up.
 
----
-
-## Step 2 — Encode the keystore as base64
+## Step 2 - Encode the keystore as base64
 
 ```bash
-# Linux / macOS
+# Linux
 base64 -w 0 release.keystore > release.keystore.b64
-
-# macOS alternative
+# macOS
 base64 release.keystore | tr -d '\n' > release.keystore.b64
 ```
 
-Copy the entire contents of `release.keystore.b64` — you'll paste it as a GitHub secret.
+## Step 3 - Add the GitHub secrets and variable
 
----
+**GitHub -> repo -> Settings -> Secrets and variables -> Actions**
 
-## Step 3 — Add GitHub Secrets
-
-**GitHub → repo → Settings → Secrets and variables → Actions → New repository secret**
+Secrets:
 
 | Secret name | Value |
 |---|---|
-| `KEYSTORE_BASE64` | The base64 string from step 2 |
+| `KEYSTORE_BASE64` | contents of `release.keystore.b64` |
 | `KEY_ALIAS` | e.g. `freesk8` |
-| `KEY_PASSWORD` | Key password |
-| `STORE_PASSWORD` | Store password |
+| `KEY_PASSWORD` | key password |
+| `STORE_PASSWORD` | store password |
 
-If Firebase is re-enabled in the future, also add:
+Variable (the *Variables* tab, not a secret):
 
-| Secret name | Value |
+| Variable | Value |
 |---|---|
-| `GOOGLE_SERVICES_JSON` | Full contents of `android/app/google-services.json` |
+| `HAS_SIGNING` | `true` |
 
----
+Passwords may contain any characters: the workflow passes them through the environment and
+writes `android/key.properties` with `printf`, so nothing is shell-expanded.
 
-## Step 4 — Update `android/app/build.gradle` for release signing
+Set these **before** tagging the first real release; a release built without them is
+debug-signed and published as a pre-release.
 
-The current build.gradle uses `signingConfigs.debug` for release builds (a placeholder). Replace it with a proper release signing config that reads from `key.properties`.
+## Step 4 - Local release builds (optional)
 
-**Add near the top of the file** (after the `flutterVersionName` block):
-
-```groovy
-def keystorePropertiesFile = rootProject.file("key.properties")
-def keystoreProperties = new Properties()
-if (keystorePropertiesFile.exists()) {
-    keystorePropertiesFile.withReader('UTF-8') { reader ->
-        keystoreProperties.load(reader)
-    }
-}
-```
-
-**Update the `android { }` block** to add a `signingConfigs` section and use it in `buildTypes.release`:
-
-```groovy
-android {
-    compileSdkVersion 35
-    // ... existing config unchanged ...
-
-    signingConfigs {
-        release {
-            keyAlias     keystoreProperties['keyAlias']
-            keyPassword  keystoreProperties['keyPassword']
-            storeFile    keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
-            storePassword keystoreProperties['storePassword']
-        }
-    }
-
-    buildTypes {
-        release {
-            signingConfig signingConfigs.release
-            // shrinkResources and minifyEnabled can be enabled here if desired
-        }
-    }
-}
-```
-
----
-
-## Step 5 — Gitignore the key files
-
-Add to `android/.gitignore` (create if it doesn't exist):
-
-```
-key.properties
-*.keystore
-*.jks
-release.keystore.b64
-```
-
-For local builds, create `android/key.properties` manually (never commit this):
+`android/app/build.gradle` reads `android/key.properties` when it exists and falls back to the
+debug key otherwise. For a signed local build create (never commit) `android/key.properties`:
 
 ```properties
 storePassword=YOUR_STORE_PASSWORD
 keyPassword=YOUR_KEY_PASSWORD
 keyAlias=freesk8
-storeFile=../release.keystore
+storeFile=release.keystore
 ```
+
+and put `release.keystore` in `android/app/`. Both paths are ignored by the root `.gitignore`
+(`android/key.properties`, `android/app/release.keystore`).
 
 ---
 
-## Step 6 — Create the workflow file
+## Tagging and releasing
 
-Create `.github/workflows/android-release.yml`:
+1. In the pull request that finishes a version: bump `version:` in `pubspec.yaml` (name and
+   build number, e.g. `0.24.0+52`), set `freeSK8ApplicationVersion` in `lib/main.dart` to the
+   same name, and add a `vX.Y.Z` section to `CHANGELOG` (the release body is copied from it).
+2. Merge to `master`. The master push builds and uploads an artifact only.
+3. Tag the merge commit and push the tag:
 
-```yaml
-name: Android Release Build
+   ```bash
+   git checkout master && git pull
+   git tag -a v0.24.0 -m "FreeSK8 Mobile v0.24.0"
+   git push origin v0.24.0
+   ```
 
-on:
-  push:
-    branches:
-      - 'flutter-3.41-dart-3.11'
-      - 'main'
-      - '[0-9]+.[0-9]+.[0-9]+'   # version branches e.g. 0.23.0
-  workflow_dispatch:              # allows manual trigger from Actions tab
+4. Watch the **Android Release** run. The `release` job publishes
+   `https://github.com/FreeSK8/freesk8_mobile/releases/tag/v0.24.0` with
+   `freesk8_mobile-v0.24.0-signed.apk` and `.sha256`.
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Java 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - name: Set up Flutter 3.41.5
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.41.5'
-          channel: stable
-          cache: true
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Decode keystore
-        run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/release.keystore
-
-      - name: Write key.properties
-        run: |
-          cat > android/key.properties <<EOF
-          storePassword=${{ secrets.STORE_PASSWORD }}
-          keyPassword=${{ secrets.KEY_PASSWORD }}
-          keyAlias=${{ secrets.KEY_ALIAS }}
-          storeFile=../release.keystore
-          EOF
-
-      # Uncomment if Firebase is re-enabled:
-      # - name: Write google-services.json
-      #   run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
-
-      - name: Build release APK
-        run: flutter build apk --release
-
-      - name: Build release AAB (Play Store)
-        run: flutter build appbundle --release
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: freesk8-release-${{ github.sha }}
-          path: |
-            build/app/outputs/flutter-apk/app-release.apk
-            build/app/outputs/bundle/release/app-release.aab
-          retention-days: 30
-```
+To rehearse without a real release, push `v0.24.0-rc1`; it publishes a pre-release that can be
+deleted afterwards (delete the release in the GitHub UI, then
+`git push origin :refs/tags/v0.24.0-rc1`).
 
 ---
 
-## Step 7 — Optional: auto-publish to Play Store
+## Optional: publish to Google Play
 
-Append this step after the build steps if you want CI to push directly to a Play Store track.  
-Requires a Google Play service account JSON (see [Google Play docs](https://developers.google.com/android-publisher/getting_started)).
-
-Add secret `PLAY_STORE_SERVICE_ACCOUNT_JSON` = the service account JSON contents, then add:
+Add a step after the App Bundle build (run the workflow manually with `build_type: appbundle`).
+It needs a Google Play service account JSON stored as the secret `PLAY_STORE_SERVICE_ACCOUNT_JSON`:
 
 ```yaml
       - name: Upload to Play Store (internal track)
@@ -228,19 +141,8 @@ Add secret `PLAY_STORE_SERVICE_ACCOUNT_JSON` = the service account JSON contents
           track: internal
 ```
 
----
-
 ## Notes
 
-### Git dependencies use HTTPS (already done in this branch)
-
-The `pubspec.yaml` git deps (`flutter_nordic_dfu`, `logger_flutter`) have been switched from SSH to HTTPS URLs so they resolve correctly on GitHub Actions runners without needing an SSH key.
-
-### Artifacts
-
-Downloaded from **GitHub → repo → Actions → (workflow run) → Artifacts**.  
-The APK can be sideloaded directly; the AAB is for the Play Store.
-
-### Caching
-
-The `subosito/flutter-action@v2` `cache: true` option caches the Flutter SDK and pub cache between runs, significantly reducing build time after the first run.
+- **Artifacts** are under *Actions -> (run) -> Artifacts*. The APK can be sideloaded; the AAB is for Play.
+- **Caching:** `flutter-action` caches the Flutter SDK and `setup-java` caches Gradle between runs.
+- **Dependencies** all come from pub.dev; there are no git dependencies, so runners need no SSH key.

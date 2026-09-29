@@ -55,8 +55,8 @@ class BrocatorMapState extends State<BrocatorMap> {
 
     List<Widget> mapChildren = [];
     mapChildren.add(TileLayer(
-      urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-      subdomains: const ['a', 'b', 'c'],
+      urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+      userAgentPackageName: 'com.derelictrobot.freesk8_mobile',
     ));
 
     if (data.privacyZone != null) {
@@ -64,7 +64,7 @@ class BrocatorMapState extends State<BrocatorMap> {
         circles: [
           CircleMarker(
             point: data.privacyZone!,
-            color: Colors.blue.withOpacity(0.3),
+            color: Colors.blue.withValues(alpha: 0.3),
             borderStrokeWidth: 3.0,
             borderColor: Colors.blue,
             useRadiusInMeter: true,

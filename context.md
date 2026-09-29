@@ -1,145 +1,204 @@
 # FreeSK8 Mobile — Modernization Context & Handoff
 
-> Living handoff document for agents/developers continuing the Flutter 3 / Dart 3
-> modernization. Last updated: 2026-07-07 (post Phase A+B). Branch:
-> `claude/update-flutter-dart-pfN82`.
+> Living handoff document for agents/developers working on the modernized app.
+> Last updated: 2026-09-28 (v0.24.0 preparation, branch `test/inspiring-darwin-m43on1`).
 >
-> **STATUS: null-safety migration COMPLETE — `flutter analyze` reports 0 errors**
-> (down from 4,320), 71 warnings / 121 infos remain (pre-existing deprecation
-> noise, non-blocking). `flutter test` passes (12 unit tests covering blocs and
-> data-model defaults in `test/blocs_test.dart`).
-> **`flutter build apk --release` SUCCEEDS end-to-end (71 MB APK)** on the
-> modernized Android toolchain: Gradle 8.11.1 / AGP 8.9.1 / Kotlin 2.2.0 /
-> compileSdk 36 / declarative plugins DSL. Next milestones: §7 Phases C & E.
+> **STATUS:** Flutter **3.47.5 / Dart 3.13.4**, sound null safety, `flutter analyze` 0 errors,
+> analyzer warnings fatal in CI, unit tests green, release APK builds locally and in CI.
+> Tag-driven GitHub Releases are in place (see §8). Remaining work is listed in §7.
 
 ---
 
 ## 1. Project snapshot
 
-- **App:** FreeSK8 Mobile — companion app for VESC-based skateboards + Robogotchi telemetry logger. BLE (UART service) is the core transport; everything else (telemetry, config editors, file sync, OTA) sits on top of it.
-- **Original codebase:** Flutter 2.x era, pre-null-safety (Dart language 2.10), `setState()`-driven with ~60 state fields in one God-widget (`MyHomeState` in `lib/main.dart`, ~3,200 lines).
-- **Target:** Latest stable Flutter (**3.44.5 / Dart 3.12.2** as of 2026-07-06 — verified from the official releases feed), sound null safety, flutter_bloc state management.
+- **App:** FreeSK8 Mobile — companion app for VESC-based vehicles + Robogotchi/gotchiPro telemetry
+  logger. BLE (Nordic UART service) is the core transport; telemetry, config editors, file sync and
+  OTA sit on top of it.
+- **Toolchain:** Flutter 3.47.5 pinned in `pubspec.yaml` (`environment.flutter`); Android Gradle
+  8.14.3 / AGP 8.13.2 / Kotlin 2.2.21 / compileSdk + targetSdk 36 / Java 17; iOS deployment
+  target 15.0 (project files aligned with the 3.47 template, unverified on a Mac).
+- **State management:** `setState` in `lib/main.dart` (the ~3,200-line `MyHomeState` God widget)
+  plus a partial flutter_bloc layer (§9).
 
 ## 2. Branch map
 
 | Branch | Contents |
 |---|---|
-| `master` | Untouched upstream (0.23.0, pre-null-safety) |
-| `flutter-3.41-dart-3.11` | Dependency/API modernization + `CI_GUIDE.md` (superseded) |
-| `flutter-bloc-state-engine` | + bloc foundation, null-safety declaration migration (superseded) |
-| **`claude/update-flutter-dart-pfN82`** | **Current working branch — everything above + review fixes, CI workflow, this doc** |
+| `master` | Flutter 3 / Dart 3 modernization (PR #34, 2026-07) |
+| `test/inspiring-darwin-m43on1` | This work: latest Flutter/Dart, dependency updates, bug fixes, tag-driven releases, iOS template alignment, v0.24.0 |
+| `0.23.0_ios` | Superseded. Its one real fix (ESC hardware-name decoding) is ported; iOS version bumps are obsolete |
+| `0.2x.y`, `flutter-3.41-dart-3.11`, `flutter-bloc-state-engine`, `firebase_bringup`, `claude/update-flutter-dart-pfN82`, `cursor/setup-ci-*` | Fully merged or empty; safe to delete |
 
-## 3. Work completed (chronological)
+## 3. Work completed on this branch (chronological)
 
-1. **Dependency modernization** (`pubspec.yaml`): SDK `>=3.0.0 <4.0.0`; flutter_blue_plus v2, flutter_map v7, flutter_slidable v4, wakelock_plus, share_plus v13, community_charts_flutter, geolocator v14, etc.
-2. **API migrations** in code: flutter_blue_plus v2 (static `FlutterBluePlus.*`, `remoteId`, `lastValueStream`, `BluetoothConnectionState`, required `license:` param on `connect()` — using `License.nonprofit`), flutter_map v7 (`children:`/`TileLayer`/`MarkerLayer`/`Marker(child:)`/`CameraFit.bounds`/`controller.camera.zoom`), share_plus v11+ API (`SharePlus.instance.share(ShareParams(...))`), image_picker (`pickImage`/`XFile`), archive (`archive_io.dart` for `ZipFileEncoder`).
-3. **`CI_GUIDE.md`** — keystore + secrets setup guide for Android release CI.
-4. **flutter_bloc foundation** (`lib/blocs/`, 21 files): `PreferencesCubit` (wired: realTimeData, rideLogging), `TelemetryBloc` (wired: 50 ms hot path routed through it, main.dart no longer `setState()`s per tick), `LocationBloc`, `BLEConnectionBloc`, `FileSyncBloc`, `RobogotchiBloc`, `ESCConfigBloc` (created + provided via `MultiBlocProvider`, **not yet wired** — main.dart still owns those subsystems).
-5. **Null-safety declaration migration** (47 files): `@required`→`required`, uninitialized fields→`Type?`, `copyWith` params→nullable, Equatable `props`→`List<Object?>`.
-6. **Review fixes (this session):** bloc layer now analyzer-clean (0 errors); all one-off structural errors fixed (see §6); `share_plus` bumped to ^13.2.0 to resolve a hard `win32` version conflict with wakelock_plus; CI workflow added (§8).
+1. **Flutter 3.47.5 pin** + Dart 3.13 fixes (`var` parameter types); CI reads the version from pubspec.
+2. **CI rewrite** (`.github/workflows/android-release.yml`): build on master, GitHub Release on `v*`
+   tags, hardened signing, version-named artifacts, tag/pubspec/main.dart version guards.
+3. **Runtime bug fixes:** DFU/OTA screens crashed on open (`FlutterBluePlus.scan()` throws in 2.x);
+   backup export zip was empty (un-awaited archive 4 encoder); ESC hardware name decoding (from
+   `0.23.0_ios`); unsupported-firmware detection restored via `MCCONF.isValid` / `APPCONF.isValid`.
+4. **Tests** (`test/`): blocs + data models, hardware name, backup archive, config signature
+   round-trips, version constant guard, equatable identity guard, debug log buffer.
+5. **iOS project** aligned with the 3.47 template (iOS 15, versions from pubspec, Podfile,
+   AppDelegate, xcconfig, Xcode Cloud script; `Podfile.lock` removed pending a Mac `pod install`).
+6. **Android toolchain:** Gradle 8.14.3, AGP 8.13.2, Kotlin 2.2.21 (Flutter 3.47 minimums are
+   Gradle 8.14 / AGP 8.11.1 / Kotlin 2.2.20); targetSdk 36; manifest cleanup (§6).
+7. **Deprecation cleanup:** PopScope, WidgetState, withValues, textScaler, RadioGroup, launchUrl,
+   flutter_blue_plus remoteId/platformName, logger `.f()`, dead code removed.
+8. **Dependencies:** unused packages removed; transitive-only imports declared; minor bumps;
+   majors nordic_dfu 8, flutter_map 8 and wifi_iot 0.4 (§5); `flutter_lints` + `analysis_options.yaml`.
+9. **Debug log console restored** (`lib/widgets/debugLog/`): `logger` ring buffer, viewer with
+   filter/search/share, shake detection via `sensors_plus`; `logger_flutter` stub, override and
+   git dependency deleted.
+10. **Version 0.24.0+52**, CHANGELOG back-filled for 0.22.0–0.24.0, README release section,
+    `CI_GUIDE.md` rewritten.
+11. **ESC firmware support** (§11): motor/app configuration serializers generated from vendored VESC
+    firmware sources for 5.1, 5.2, 5.3, 6.00/6.02, 6.05, 6.06 and 7.00 (the hand-written 6.x
+    serializers were misaligned); tolerant enum and fault-code decoding; `FirmwareFeatures` drives
+    the motor and input editors (regen cutoff, BMS cell voltage limits, offsets calibration, ADC
+    button bitmask, balance app hidden on 6.05+); CI checks that the generated files are current.
 
 ## 4. Environment learnings (read before you start)
 
-- **No Flutter SDK in the container.** Install: download `https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_<VER>-stable.tar.xz` (~1 GB, the proxy allows it), extract to scratch, then:
-  - `export BOT=true` (suppresses the root-user prompt that otherwise hangs the tool)
-  - `git config --global --add safe.directory <flutter-sdk-path>`
-- **`flutter pub get` works** through the session proxy against pub.dev.
-- **Sessions are ephemeral** — anything not committed and pushed is lost on container recycle. Remote branches survive.
-- **latest-stable check:** `curl https://storage.googleapis.com/flutter_infra_release/releases/releases_linux.json` → `current_release.stable`.
+- **No Flutter SDK in the container.** Download
+  `https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_<VER>-stable.tar.xz`
+  (~1 GB), extract to scratch, `export BOT=true`, `git config --global --add safe.directory <sdk>`.
+  `flutter pub get` works through the session proxy.
+- **Android SDK:** command-line tools zip from `dl.google.com` + `sdkmanager "platform-tools"
+  "platforms;android-36" "build-tools;36.0.0"`, then `flutter config --android-sdk`.
+- **Stale plugin build output can break a plugin major bump:** all plugins build under
+  `build/<plugin>/`; after nordic_dfu 6 -> 8 the Kotlin incremental cache produced bogus
+  "unresolved reference" errors until `rm -rf build/nordic_dfu`. Clean the plugin dir (or
+  `flutter clean`) after changing a native plugin's major version.
+- **Gradle wrapper download is proxy-blocked** (services.gradle.org redirects are refused).
+  Pre-seed `~/.gradle/wrapper/dists/gradle-<V>-all/<hash>/gradle-<V>-all.zip` from
+  `https://mirrors.cloud.tencent.com/gradle/`; `<hash>` is base-36 of the MD5 of the
+  distributionUrl string (see the wrapper's PathAssembler). CI downloads normally.
+- **Flutter 3.47 Gradle plugin enforces minimum Gradle/AGP/Kotlin versions** at plugin-apply time
+  and already warns that Gradle < 9.1.0 and AGP < 9.0.1 support "will soon be dropped".
+- Sessions are ephemeral; commit and push.
 
-## 5. Known blockers
+## 5. Dependencies: decisions and deferrals
 
-### 5.1 `logger_flutter` (temporarily stubbed — needs real replacement)
-The git dependency `FreeSK8/logger_flutter` is pre-null-safety and **hard-blocks dependency resolution** under Dart 3. Currently worked around via `pubspec_overrides.yaml` → `third_party/logger_flutter_stub/`, a null-safe stub whose `LogConsoleOnShake` just renders its child. **Consequence: shake-to-show-debug-log is non-functional.** Proper fix options (pick one):
-- Vendor the real console UI: port `LogConsole`/`LogConsoleOnShake` from the fork into `lib/widgets/` (it's ~2 files; migrate to null safety while porting, drop `sensors` dependency or use `sensors_plus` for shake detection), then delete the stub + override + git dependency.
-- Or migrate the `FreeSK8/logger_flutter` fork itself to null safety and repoint the git ref.
+- **nordic_dfu 8.x:** `startDfu(..., dfuEventHandler: DfuEventHandler(...))`; the plugin no longer
+  declares Bluetooth permissions (the app manifest already does). Applies KGP itself on AGP < 9.
+- **flutter_map 8.x:** no API changes were needed here; OSM tiles now use
+  `https://tile.openstreetmap.org` with `userAgentPackageName`.
+- **wifi_iot 0.4.0:** its Android sources are Java-only and it applies just `com.android.library`,
+  so it builds on AGP 8.13 despite declaring an AGP 9.0.1 buildscript classpath (verified).
+- **equatable 3 deferred:** 3.0 drops the runtimeType check, so bloc marker states sharing
+  `props => []` would compare equal and `emit` would swallow transitions
+  (`test/blocs_test.dart` has a guard). Give those states discriminating props first.
+- **flutter_document_picker 5.2.3** is an AGP-3.6-era plugin; it builds only thanks to the
+  namespace / JVM-11 shim in `android/build.gradle`. Replace it before the AGP 9 migration.
+- Old packages that only resolve because Dart 3 relaxes their `<3.0.0` SDK cap:
+  `multiselect_formfield`, `sliding_up_panel`.
 
-### 5.2 `flutter_nordic_dfu` (unverified at runtime)
-Pinned to `fengqiangboy/flutter-nordic-dfu` git master. It resolves, but `lib/subViews/robogotchiDFU.dart` calls `FlutterNordicDfu.startDfu(...)` from the old 3.x API — newer versions renamed the entry point (`NordicDfu().startDfu`). Verify/migrate when touching DFU.
+## 6. Android notes
 
-## 6. Comprehensive review — findings (2026-07-07)
+- `android/app/build.gradle`: compileSdk/targetSdk from the Flutter plugin (36), release signing
+  from `android/key.properties` when present, debug signing otherwise.
+- `android/build.gradle` keeps the compatibility shim (namespace from manifest `package`, Java and
+  Kotlin JVM target 11) for unmaintained plugins.
+- `android/gradle.properties` keeps `android.builtInKotlin=false` / `android.newDsl=false`; both
+  opt-outs disappear with the AGP 9 migration (docs.flutter.dev "migrate-to-built-in-kotlin").
+- Manifest: dead `background_locator` receivers/services and fake `READ_CONTENT`/`WRITE_CONTENT`
+  permissions removed; `NormalTheme` added; debug/profile manifests are the template ones.
 
-Method: full `flutter analyze` on Flutter 3.44.5 (first time the analyzer has run on this branch), plus prior Opus 4.7 manual audit.
+## 7. Remaining work / follow-ups
 
-### Fixed during this review
-- `lib/blocs/**` — **all 21 files now 0 analyzer errors**: `props` base signatures (`List<Object?>`), `LocationPermissionDenied` event/state name collision (event renamed `LocationPermissionDeniedEvent`), nullable args in `FileSyncBloc`/`TelemetryBloc`, required `license:` on `connect()`.
-- `community_charts_flutter/flutter.dart` → `community_charts_flutter.dart` (bad URI, 2 files).
-- Last `Marker(builder:)` in rideLogViewer.dart; last `_mapController.zoom` in brocator.dart.
-- `AppLifecycleState.hidden` switch case (autoStopHandler.dart).
-- `AndroidDeviceInfo.androidId` removed (device_info_plus dropped it; value was unused).
-- `ImagePicker.getImage`→`pickImage`, `PickedFile`→`XFile?`, two `currentDevice.id`→`.remoteId`, `archive_io` import (esk8Configuration.dart).
-- Two `catchError`/`catch` handlers accessing `.message`/`.code` on `Object` (main.dart:638, 736).
-- `share_plus` ^10→^13 (win32 conflict; code already used the v11+ API).
+1. **On-device smoke test** (nothing here can exercise BLE): scan → connect → real-time telemetry →
+   ride log sync → motor/app config read and write → Robogotchi DFU → backup export/import →
+   shake-to-open debug console → external links. Include an ESC on firmware 6.05, 6.06 or 7.00:
+   read the motor and app configuration, compare a few values with VESC Tool, write one harmless
+   change (wheel diameter) and read it back; connect an unsupported version to see the
+   "unsupported firmware" message instead of a crash.
+2. **iOS on a Mac:** `flutter pub get && cd ios && pod install`, commit the regenerated
+   `Podfile.lock`, build and run; then do the UIScene/SceneDelegate migration with Xcode.
+3. **AGP 9 / Gradle 9.1+ / built-in Kotlin migration** (Flutter will drop AGP 8 / Gradle 8 support):
+   replace `flutter_document_picker` first, remove the shim and the two opt-out flags, switch to the
+   Kotlin DSL templates.
+4. **equatable 3** (see §5).
+5. **Bloc layer:** five blocs are provided but unused (§9); either wire them or delete them, and
+   replace the `context.watch` at the top of `RealTimeData.build()` with scoped
+   `BlocBuilder(buildWhen:)` so the 50 ms tick only redraws gauges.
+6. **Release signing:** create the keystore and set the secrets + `HAS_SIGNING` (CI_GUIDE.md)
+   before tagging a public release; without them releases are debug-signed pre-releases.
+7. Dependabot alerts on master; `latlong2` 0.10; `package_info_plus` for the version string;
+   `Logger` release-mode filter (`globalUtilities.dart` MyFilter TODO); `--split-per-abi` assets.
 
-### Remaining: **4,309 analyzer errors** — all null-safety usage-site fan-out
-Breakdown by type: `unchecked_use_of_nullable_value` 2,341 · `argument_type_not_assignable` 1,599 · `invalid_assignment` 105 · `not_assigned_potentially_non_nullable_local_variable` 94 · `not_initialized_non_nullable_instance_field` 85 · `missing_default_value_for_parameter` 47 · misc 38.
+## 8. CI and releases
 
-Top files: inputConfigurationEditor 554 · rideLogViewer 552 · firmware serializers (6 files) 1,796 · main.dart 292 · motorConfigurationEditor 187 · rideLogging 139 · realTimeData 97.
+`.github/workflows/android-release.yml` (details in `CI_GUIDE.md`):
+- push to `master` → build/analyze/test/APK → 30-day artifact
+  `freesk8_mobile-<version>-g<sha>-<signed|debug-signed>`.
+- push tag `vX.Y.Z` → same, then a GitHub Release with the APK + `.sha256`, the CHANGELOG section
+  as body, generated notes; `vX.Y.Z-<suffix>` → pre-release.
+- Guards: pubspec `version:` ↔ `lib/main.dart` `freeSK8ApplicationVersion` (also
+  `test/version_test.dart`), tag ↔ pubspec version, signed APK when `HAS_SIGNING` is true.
+- `flutter analyze --no-fatal-infos`: warnings fail CI, infos are advisory.
 
-**Root cause / strategy correction (important):** the declaration migration added `?` to *every* uninitialized field, including ~600 fields in `MCCONF`/`APPCONF` and the telemetry structs. Those structs are always fully populated by the firmware deserializers before use — making them nullable poisoned every read site downstream (the 6 serializer files alone are 1,796 errors and were never edited; the errors are pure fan-out). **Do not fix those call sites one by one.**
-
-## 7. ACTION PLAN (ordered, with expected error burn-down)
-
-**Phase A — De-nullable the data models — ✅ DONE (4,309 → 1,945 errors)**
-MCCONF/APPCONF (385 fields via script), ESCTelemetry/ESCProfile/ESCFirmware/ESCFault, LogESC/LogGPS, UserSettingsStructure/UserSettings: `Type? x;` → default-initialized non-nullable; constructor-body assignments merged into field initializers (constructor-body assignment does not satisfy definite assignment). Genuinely-optional stayed nullable: `boardAvatarPath`, `ESCFault.firstSeen/lastSeen`, `LogESC/LogGPS.dt`. The 6 firmware serializer files (1,796 errors) went to zero with no edits.
-
-**Phase B — View-layer null handling — ✅ DONE (1,945 → 0 errors)**
-Executed by 7 parallel agents, one per file group, each verifying with the real analyzer to 0 errors in its files. Conventions used (follow these for future edits):
-- `late` only where assignment provably precedes every read (initState helpers, top-of-build route args). NOT for `applicationDocumentsDirectory` (async `.then()` assignment, read in first build — stays `String?`).
-- `!` inside existing null-guarded branches / connected-only paths (fields don't promote; locals do). `!` on `tryParse` results preserves original crash-on-bad-data semantics.
-- InputCalibration `ppmCalibrationRunning`/`adcCalibrationRunning` stay nullable — main.dart assigns `null` as semantic "not started" state.
-- Null-sentinel `firstWhere` patterns preserved via `.cast<ScanResult?>()`.
-- flutter_nordic_dfu git package verified: still exposes static `FlutterNordicDfu.startDfu` — no API rename needed.
-
-**Phase C — Replace logger_flutter properly** (see §5.1). Still the only stubbed functionality (shake-to-show debug console).
-
-**Phase D — Build & runtime verification — ✅ BUILD DONE (runtime pending)**
-`flutter build apk --release` succeeds locally (71 MB APK) after modernizing the Android toolchain. The failure→fix chain, in order (useful if CI diverges):
-1. Gradle wrapper 7.2 → **8.11.1** (AGP requirement; in this sandbox the wrapper download is proxy-blocked — pre-seed `~/.gradle/wrapper/dists/` from `mirrors.cloud.tencent.com/gradle/`; CI downloads normally)
-2. AGP 8.5.2 → **8.9.1** (Flutter 3.44 min is 8.6.0; androidx.navigationevent transitively requires 8.9.1)
-3. **compileSdk 36** (androidx transitive requirement; targetSdk stays 35; NDK 27 auto-installs)
-4. Legacy plugins lack AGP-8 `namespace` and mix JVM targets → compatibility shims in `android/build.gradle` (namespace from manifest package attr; Java/Kotlin pinned to 11); removed unused `android_id` package
-5. `flutter_nordic_dfu` (git, V1 embedding) → **`nordic_dfu` ^6.2.0** (API migrated in robogotchiDFU.dart)
-6. `flutter_plugin_android_lifecycle` 2.0.7 → 2.0.35 (V1 embedding leftovers)
-7. Kotlin 2.0.21 → **2.2.0** (wakelock_plus internal compiler error)
-
-Still pending: on-device/BLE smoke test (scan→connect→RT telemetry→ride log sync→config editor read/write) — static/build checks can't verify BLE. Fix the 2 Dependabot alerts on master (repo Security tab).
-
-**Phase E — Finish the bloc migration (optional, perf goal)**
-Wire the 4 dead blocs (BLEConnection, FileSync, Robogotchi, ESCConfig) or delete them; replace `context.watch` at top of `RealTimeData.build()` with scoped `BlocBuilder(buildWhen:)` so the 50 ms tick redraws only gauge widgets (audit item H3); fix `FileSyncBloc._onEraseToggled` not emitting (M4); rideLogging sort-clause load race (M3). Cleanup: burn down the 71 warnings (mostly `unnecessary_null_comparison` from preserved guards and deprecated `withOpacity`/`WillPopScope`/`wtf`).
-
-## 8. CI (implemented this session)
-
-`.github/workflows/android-release.yml`:
-- **Triggers:** `push` to `master` only (i.e. on merge) + `workflow_dispatch` for manual runs (this is the agreed policy: PRs do not build automatically — trigger manually from the Actions tab).
-- Flutter 3.44.5 pinned, Java 17, `flutter analyze` is **non-blocking** until Phase B completes (flip `|| true` off then).
-- Signing: set repo variable `HAS_SIGNING=true` + secrets `KEYSTORE_BASE64`, `STORE_PASSWORD`, `KEY_PASSWORD`, `KEY_ALIAS` (full walkthrough in `CI_GUIDE.md`). Without them the workflow still produces a debug-signed release APK artifact.
-- Note: the build will fail until Phase A/B fix the compile errors — the workflow is in place so it goes green the moment the code does.
+Release procedure: bump pubspec + main.dart + CHANGELOG in the PR → merge → tag the merge commit
+`v<version>` → push the tag.
 
 ## 9. Bloc architecture reference
 
 ```
 lib/blocs/
-  preferences/  PreferencesCubit + PreferencesState     WIRED (realTimeData, rideLogging)
-  telemetry/    TelemetryBloc: private internal events;
-                public updateTelemetry()/updateDieBieMS()/
-                clearDieBieMS()/resetForDisconnect()     WIRED (main.dart 50ms path)
-  location/     LocationBloc (GPS stream + route)        provided, NOT auto-started (main.dart owns GPS)
+  preferences/    PreferencesCubit                       WIRED (realTimeData, rideLogging)
+  telemetry/      TelemetryBloc                          PARTLY WIRED (main.dart 50 ms path; BMS still on a StreamController)
+  location/       LocationBloc                           provided, not wired (main.dart owns GPS)
   ble_connection/ BLEConnectionBloc                      provided, not wired
-  file_sync/    FileSyncBloc                             provided, not wired
-  robogotchi/   RobogotchiBloc                           provided, not wired
-  esc_config/   ESCConfigBloc                            provided, not wired
+  file_sync/      FileSyncBloc                           provided, not wired
+  robogotchi/     RobogotchiBloc                         provided, not wired
+  esc_config/     ESCConfigBloc                          provided, not wired
 ```
-Conventions: Equatable events/states with `List<Object?> props`; never call `emit()` outside a registered handler — use private internal event classes + public `add()`-wrapping methods (see TelemetryBloc); `copyWith` uses nullable params + `??` (plus explicit `clearX` flags where null is a meaningful value, e.g. `clearDieBieMS`).
+Conventions: Equatable events/states with `List<Object?> props`; never call `emit()` outside a
+registered handler; `copyWith` uses nullable params + `??`.
 
-Key UUIDs (UART service): `6e400001-…` service, `…0002` TX, `…0003` RX, `…0004` TX-logger, `…0005` RX-logger (logger chars present ⇒ Robogotchi, else direct ESC).
+Key UUIDs (UART service): `6e400001-…` service, `…0002` TX, `…0003` RX, `…0004` TX-logger,
+`…0005` RX-logger (logger characteristics present ⇒ Robogotchi, else direct ESC).
 
-## 10. Gotchas discovered the hard way
+## 10. Gotchas
 
-- `ESCTelemetry`/`ESCFault` live in `hardwareSupport/escHelper/escHelper.dart`, **not** `dataTypes.dart`; `InputCalibration` lives in `subViews/inputConfigurationEditor.dart`; `TimeSeriesESC` lives at the bottom of `rideLogViewer.dart`.
-- `Stream.exhaustMap` does not exist in Dart — don't invent bloc EventTransformers with it.
-- flutter_blue_plus 2.3.10 `connect()` requires `license:`; FreeSK8 qualifies for `License.nonprofit`.
-- `community_charts_flutter`'s import is `community_charts_flutter.dart` (the old `charts_flutter/flutter.dart` path pattern does not carry over).
-- Marker `builder:` param indentation varies across rideLogViewer — a plain string replace missed one at 6-space indent; grep after bulk edits.
-- Font-size preference historical minimum is **14**, not 10 (regression was caught by audit and fixed).
-- The RT view previously only kept first+current GPS points (route tracking via phone GPS is intentionally disabled in `updateLocationForRoute` — don't "fix" it back on).
+- `ESCTelemetry`/`ESCFault` live in `hardwareSupport/escHelper/escHelper.dart`; `InputCalibration`
+  in `subViews/inputConfigurationEditor.dart`; `TimeSeriesESC` at the bottom of `rideLogViewer.dart`.
+- The firmware serializers (`hardwareSupport/escHelper/serialization/firmware*.dart`) are
+  generated (§11); never edit them by hand. They return a default object on a signature mismatch;
+  check `isValid`, never a field value.
+- flutter_blue_plus 2.x: `FlutterBluePlus.scan()` throws; use `onScanResults` + `startScan()`.
+  `connect()` requires `license:` (FreeSK8 uses `License.nonprofit`).
+- archive 4.x: `ZipFileEncoder` add/close are async; use `createBackupArchive()`.
+- Serialized MCCONF/APPCONF start with the signature at byte 0; the deserializers expect a
+  packet-id byte first (index 1), see `test/esc_serializers_test.dart`.
+- Font-size preference historical minimum is 14, not 10.
+- Route tracking via phone GPS is intentionally disabled in `updateLocationForRoute`.
+
+## 11. ESC firmware support
+
+Supported: 5.1, 5.2, 5.3, 6.00, 6.02, 6.05, 6.06, 7.00 (`ESC_FIRMWARE` in
+`lib/hardwareSupport/escHelper/escHelper.dart`; `ESCHelper.firmwareFor()` maps the reported
+major/minor, an unknown 7.x minor falls back to the 7.00 layout and the signature check is the real
+guard). Unknown versions map to `UNSUPPORTED`: telemetry still works, the Motor/Input configuration
+menu entries refuse with a message and `main.dart` guards the configuration parsers.
+
+- `tool/esc_serializers/generate.py` generates `serialization/firmware*.dart` and
+  `tool/esc_serializers/layouts/*.json` from the vendored firmware sources in
+  `tool/esc_serializers/vesc/<version>/`; `versions.json` maps versions to classes and renames
+  fields; CI runs `generate.py --check`. Adding a release: `tool/esc_serializers/SOURCES.md`.
+- `MCCONF`/`APPCONF` (`mcConf.dart`, `appConf.dart`) are the union of all versions. Enums are
+  decoded through `serialization/wireEnums.dart` with per-version wire tables; an unknown index logs
+  and falls back to the first member. Fault codes: `faultCodeFromWire` / `faultCodeName` in
+  `dataTypes.dart`.
+- `FirmwareFeatures(fw)` tells the editors what a release has: `hasBalanceApp`, `hasRegenCutoff`,
+  `tempsAreWholeDegrees`, `hasBmsVoltageLimits`, `hasOffsetsCalOnBoot` / `hasOffsetsCalMode`,
+  `adcButtonsBitmask`, `sensorModes`.
+- Wire-format history: 6.0 replaced the ADC invert flags with the `app_adc_conf.buttons` bitmask
+  (bit 0 enabled, bit 1 invert cruise control, bit 2 invert reverse); 6.05 removed
+  `app_balance_conf` and `APP_BALANCE` (so `app_use` wire indices shift), made the temperature
+  limits whole degrees and added the regen cutoff and BMS voltage limits; 6.06 replaced
+  `foc_offsets_cal_on_boot` with the `foc_offsets_cal_mode` bitmask (bit 0 = on boot); 7.00 added
+  `FOC_SENSOR_MODE_ENCODER_AB` and the nunchuk coast brake. The bldc `master` branch has the 7.00
+  layout under a different signature and is not supported until it is released.
+- Tests: `test/esc_serializers_test.dart` (per-version round trips, sizes, signatures and enum
+  lists against the layout tables), `test/esc_firmware_detection_test.dart`.

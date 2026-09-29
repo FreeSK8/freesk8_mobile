@@ -5,11 +5,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:freesk8_mobile/subViews/brocator.dart';
-import 'package:logger_flutter/logger_flutter.dart';
+import '../widgets/debugLog/debugLog.dart';
 
 import '../subViews/vehicleManager.dart';
 import '../globalUtilities.dart';
 
+import '../components/backupArchive.dart';
 import '../components/userSettings.dart';
 import '../hardwareSupport/escHelper/escHelper.dart';
 
@@ -209,7 +210,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                     }
 
                     setState((){
-                      widget.myUserSettings.settings.useGPSData = valueToSet != null ? valueToSet : false;
+                      widget.myUserSettings.settings.useGPSData = valueToSet;
                     });
                   },
                   secondary: Icon(widget.myUserSettings.settings.useGPSData ? Icons.gps_fixed : Icons.gps_not_fixed),
@@ -358,32 +359,21 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                   final documentsDirectory = await getApplicationDocumentsDirectory();
                                   final supportDirectory = await getApplicationSupportDirectory();
 
-                                  // Zip a directory to out.zip using the zipDirectory convenience method
-                                  var encoder = ZipFileEncoder();
+                                  final String databasePath = await getDatabasesPath();
+                                  final File settingsExport = await exportSettings('${supportDirectory.path}/freesk8_beta_userSettings.json');
 
-                                  // Manually create a zip of individual files
-                                  encoder.create("${supportDirectory.path}/freesk8_beta_backup.zip");
-
-                                  // Add log files
-                                  encoder.addDirectory(Directory("${documentsDirectory.path}/logs"));
-
-                                  //rideLogsFromDatabase.forEach((element)  {
-                                  //TODO: no safety checking here. Opening file must be on device
-                                  //  encoder.addFile(File("${documentsDirectory.path}${element.logFilePath}"));
-                                  //});
-
-                                  // Add the database
-                                  String path = await getDatabasesPath();
-                                  encoder.addFile(File("$path/logDatabase.db"));
-
-                                  // Add the avatars
-                                  encoder.addDirectory(Directory("${documentsDirectory.path}/avatars"));
-
-                                  // Add the userSettings export
-                                  encoder.addFile(await exportSettings('${supportDirectory.path}/freesk8_beta_userSettings.json'));
-
-                                  // Finish out zip file
-                                  encoder.close();
+                                  // Zip the ride logs, avatars, database and settings export.
+                                  await createBackupArchive(
+                                    outputPath: "${supportDirectory.path}/freesk8_beta_backup.zip",
+                                    directories: [
+                                      Directory("${documentsDirectory.path}/logs"),
+                                      Directory("${documentsDirectory.path}/avatars"),
+                                    ],
+                                    files: [
+                                      File("$databasePath/logDatabase.db"),
+                                      settingsExport,
+                                    ],
+                                  );
 
                                   Navigator.of(context).pop(); // Remove PleaseWait dialog
                                   await SharePlus.instance.share(ShareParams(
@@ -498,7 +488,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                               onPressed: () async {
                                 FocusScope.of(context).requestFocus(new FocusNode()); //Hide keyboard
                                 // Wait for the navigation to return
-                                final result = await Navigator.of(context).pushNamed(VehicleManager.routeName, arguments: VehicleManagerArguments(widget.currentDevice == null ? null : widget.currentDevice?.id.toString()));
+                                final result = await Navigator.of(context).pushNamed(VehicleManager.routeName, arguments: VehicleManagerArguments(widget.currentDevice == null ? null : widget.currentDevice?.remoteId.str));
                                 // If changes were made the result of the Navigation will be true and we'll want to reload the user settings
                                 if (result == true) {
                                   // Request the user settings to be reloaded
@@ -515,7 +505,7 @@ class ESK8ConfigurationState extends State<ESK8Configuration> {
                                 final result = await Navigator.of(context).pushNamed(Brocator.routeName, arguments: BrocatorArguments(widget.currentDevice == null ? null : widget.myUserSettings.settings.boardAlias, _boardAvatar, widget.telemetryStream, widget.theTXCharacteristic));
                                 // If changes were made the result of the Navigation will be true and we'll want to reload the user settings
                                 if (result == true) {
-                                  globalLogger.wtf(result);
+                                  globalLogger.f(result);
                                 }
                               }),
                         ],),

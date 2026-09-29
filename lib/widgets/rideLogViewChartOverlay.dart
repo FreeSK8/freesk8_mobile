@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:freesk8_mobile/globalUtilities.dart';
 import '../subViews/rideLogViewer.dart';
 import 'package:rxdart/rxdart.dart';
@@ -80,7 +79,7 @@ class RideLogViewChartOverlayState extends State<RideLogViewChartOverlay> {
       padding: EdgeInsets.fromLTRB(0, 3, 0, 3),
       width: 200,
 
-      color: Colors.black.withOpacity(0.85),
+      color: Colors.black.withValues(alpha: 0.85),
       child: GestureDetector(onTap: (){
           setState(() {
             selectedDateTime = null;
@@ -89,7 +88,7 @@ class RideLogViewChartOverlayState extends State<RideLogViewChartOverlay> {
         ,child: Column(
           children: <Widget>[
             Text("${selectedDateTime!.toIso8601String().substring(0,19)}"),
-            selectedESCData!.faultCode != null ? Text("${mc_fault_code.values[selectedESCData!.faultCode!].toString().substring(14)}", style: TextStyle(fontSize: 8),) : Container(),
+            selectedESCData!.faultCode != null ? Text(faultCodeName(selectedESCData!.faultCode!), style: TextStyle(fontSize: 8),) : Container(),
             Container(
                 padding: EdgeInsets.only(left: 5),
                 child: Table(  //border: TableBorder.all(color: Colors.white),

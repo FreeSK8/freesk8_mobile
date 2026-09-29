@@ -1,0 +1,3759 @@
+{
+ "label": "6.0",
+ "ref": "6.00",
+ "class": "SerializeFirmware60",
+ "firmware": [
+  "FW6_0",
+  "FW6_2"
+ ],
+ "mcconf": {
+  "signature": 776184161,
+  "size": 481,
+  "fields": [
+   {
+    "c": "pwm_mode",
+    "dart": "pwm_mode",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "mc_pwm_mode",
+    "dtype": "mc_pwm_mode",
+    "enum": "mc_pwm_mode"
+   },
+   {
+    "c": "comm_mode",
+    "dart": "comm_mode",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "mc_comm_mode",
+    "dtype": "mc_comm_mode",
+    "enum": "mc_comm_mode"
+   },
+   {
+    "c": "motor_type",
+    "dart": "motor_type",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "mc_motor_type",
+    "dtype": "mc_motor_type",
+    "enum": "mc_motor_type"
+   },
+   {
+    "c": "sensor_mode",
+    "dart": "sensor_mode",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "mc_sensor_mode",
+    "dtype": "mc_sensor_mode",
+    "enum": "mc_sensor_mode"
+   },
+   {
+    "c": "l_current_max",
+    "dart": "l_current_max",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "l_current_min",
+    "dart": "l_current_min",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "l_in_current_max",
+    "dart": "l_in_current_max",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "l_in_current_min",
+    "dart": "l_in_current_min",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "l_abs_current_max",
+    "dart": "l_abs_current_max",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "l_min_erpm",
+    "dart": "l_min_erpm",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "l_max_erpm",
+    "dart": "l_max_erpm",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "l_erpm_start",
+    "dart": "l_erpm_start",
+    "kind": "float16",
+    "scale": "10000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "l_max_erpm_fbrake",
+    "dart": "l_max_erpm_fbrake",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "l_max_erpm_fbrake_cc",
+    "dart": "l_max_erpm_fbrake_cc",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "l_min_vin",
+    "dart": "l_min_vin",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "l_max_vin",
+    "dart": "l_max_vin",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "l_battery_cut_start",
+    "dart": "l_battery_cut_start",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "l_battery_cut_end",
+    "dart": "l_battery_cut_end",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "l_slow_abs_current",
+    "dart": "l_slow_abs_current",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "bool",
+    "dtype": "bool"
+   },
+   {
+    "c": "l_temp_fet_start",
+    "dart": "l_temp_fet_start",
+    "kind": "float16",
+    "scale": "10",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "l_temp_fet_end",
+    "dart": "l_temp_fet_end",
+    "kind": "float16",
+    "scale": "10",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "l_temp_motor_start",
+    "dart": "l_temp_motor_start",
+    "kind": "float16",
+    "scale": "10",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "l_temp_motor_end",
+    "dart": "l_temp_motor_end",
+    "kind": "float16",
+    "scale": "10",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "l_temp_accel_dec",
+    "dart": "l_temp_accel_dec",
+    "kind": "float16",
+    "scale": "10000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "l_min_duty",
+    "dart": "l_min_duty",
+    "kind": "float16",
+    "scale": "10000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "l_max_duty",
+    "dart": "l_max_duty",
+    "kind": "float16",
+    "scale": "10000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "l_watt_max",
+    "dart": "l_watt_max",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "l_watt_min",
+    "dart": "l_watt_min",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "l_current_max_scale",
+    "dart": "l_current_max_scale",
+    "kind": "float16",
+    "scale": "10000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "l_current_min_scale",
+    "dart": "l_current_min_scale",
+    "kind": "float16",
+    "scale": "10000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "l_duty_start",
+    "dart": "l_duty_start",
+    "kind": "float16",
+    "scale": "10000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "sl_min_erpm",
+    "dart": "sl_min_erpm",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "sl_min_erpm_cycle_int_limit",
+    "dart": "sl_min_erpm_cycle_int_limit",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "sl_max_fullbreak_current_dir_change",
+    "dart": "sl_max_fullbreak_current_dir_change",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "sl_cycle_int_limit",
+    "dart": "sl_cycle_int_limit",
+    "kind": "float16",
+    "scale": "10",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "sl_phase_advance_at_br",
+    "dart": "sl_phase_advance_at_br",
+    "kind": "float16",
+    "scale": "10000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "sl_cycle_int_rpm_br",
+    "dart": "sl_cycle_int_rpm_br",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "sl_bemf_coupling_k",
+    "dart": "sl_bemf_coupling_k",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "hall_table[0]",
+    "dart": "hall_table[0]",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "int8_t",
+    "dtype": "int"
+   },
+   {
+    "c": "hall_table[1]",
+    "dart": "hall_table[1]",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "int8_t",
+    "dtype": "int"
+   },
+   {
+    "c": "hall_table[2]",
+    "dart": "hall_table[2]",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "int8_t",
+    "dtype": "int"
+   },
+   {
+    "c": "hall_table[3]",
+    "dart": "hall_table[3]",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "int8_t",
+    "dtype": "int"
+   },
+   {
+    "c": "hall_table[4]",
+    "dart": "hall_table[4]",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "int8_t",
+    "dtype": "int"
+   },
+   {
+    "c": "hall_table[5]",
+    "dart": "hall_table[5]",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "int8_t",
+    "dtype": "int"
+   },
+   {
+    "c": "hall_table[6]",
+    "dart": "hall_table[6]",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "int8_t",
+    "dtype": "int"
+   },
+   {
+    "c": "hall_table[7]",
+    "dart": "hall_table[7]",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "int8_t",
+    "dtype": "int"
+   },
+   {
+    "c": "hall_sl_erpm",
+    "dart": "hall_sl_erpm",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_current_kp",
+    "dart": "foc_current_kp",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_current_ki",
+    "dart": "foc_current_ki",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_f_zv",
+    "dart": "foc_f_zv",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_dt_us",
+    "dart": "foc_dt_us",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_encoder_inverted",
+    "dart": "foc_encoder_inverted",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "bool",
+    "dtype": "bool"
+   },
+   {
+    "c": "foc_encoder_offset",
+    "dart": "foc_encoder_offset",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_encoder_ratio",
+    "dart": "foc_encoder_ratio",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_sensor_mode",
+    "dart": "foc_sensor_mode",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "mc_foc_sensor_mode",
+    "dtype": "mc_foc_sensor_mode",
+    "enum": "mc_foc_sensor_mode"
+   },
+   {
+    "c": "foc_pll_kp",
+    "dart": "foc_pll_kp",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_pll_ki",
+    "dart": "foc_pll_ki",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_motor_l",
+    "dart": "foc_motor_l",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_motor_ld_lq_diff",
+    "dart": "foc_motor_ld_lq_diff",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_motor_r",
+    "dart": "foc_motor_r",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_motor_flux_linkage",
+    "dart": "foc_motor_flux_linkage",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_observer_gain",
+    "dart": "foc_observer_gain",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_observer_gain_slow",
+    "dart": "foc_observer_gain_slow",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_observer_offset",
+    "dart": "foc_observer_offset",
+    "kind": "float16",
+    "scale": "1000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_duty_dowmramp_kp",
+    "dart": "foc_duty_dowmramp_kp",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_duty_dowmramp_ki",
+    "dart": "foc_duty_dowmramp_ki",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_start_curr_dec",
+    "dart": "foc_start_curr_dec",
+    "kind": "float16",
+    "scale": "10000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_start_curr_dec_rpm",
+    "dart": "foc_start_curr_dec_rpm",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_openloop_rpm",
+    "dart": "foc_openloop_rpm",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_openloop_rpm_low",
+    "dart": "foc_openloop_rpm_low",
+    "kind": "float16",
+    "scale": "1000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_d_gain_scale_start",
+    "dart": "foc_d_gain_scale_start",
+    "kind": "float16",
+    "scale": "1000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_d_gain_scale_max_mod",
+    "dart": "foc_d_gain_scale_max_mod",
+    "kind": "float16",
+    "scale": "1000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_sl_openloop_hyst",
+    "dart": "foc_sl_openloop_hyst",
+    "kind": "float16",
+    "scale": "100",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_sl_openloop_time_lock",
+    "dart": "foc_sl_openloop_time_lock",
+    "kind": "float16",
+    "scale": "100",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_sl_openloop_time_ramp",
+    "dart": "foc_sl_openloop_time_ramp",
+    "kind": "float16",
+    "scale": "100",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_sl_openloop_time",
+    "dart": "foc_sl_openloop_time",
+    "kind": "float16",
+    "scale": "100",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_sl_openloop_boost_q",
+    "dart": "foc_sl_openloop_boost_q",
+    "kind": "float16",
+    "scale": "100",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_sl_openloop_max_q",
+    "dart": "foc_sl_openloop_max_q",
+    "kind": "float16",
+    "scale": "100",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_hall_table[0]",
+    "dart": "foc_hall_table[0]",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "uint8_t",
+    "dtype": "int"
+   },
+   {
+    "c": "foc_hall_table[1]",
+    "dart": "foc_hall_table[1]",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "uint8_t",
+    "dtype": "int"
+   },
+   {
+    "c": "foc_hall_table[2]",
+    "dart": "foc_hall_table[2]",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "uint8_t",
+    "dtype": "int"
+   },
+   {
+    "c": "foc_hall_table[3]",
+    "dart": "foc_hall_table[3]",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "uint8_t",
+    "dtype": "int"
+   },
+   {
+    "c": "foc_hall_table[4]",
+    "dart": "foc_hall_table[4]",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "uint8_t",
+    "dtype": "int"
+   },
+   {
+    "c": "foc_hall_table[5]",
+    "dart": "foc_hall_table[5]",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "uint8_t",
+    "dtype": "int"
+   },
+   {
+    "c": "foc_hall_table[6]",
+    "dart": "foc_hall_table[6]",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "uint8_t",
+    "dtype": "int"
+   },
+   {
+    "c": "foc_hall_table[7]",
+    "dart": "foc_hall_table[7]",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "uint8_t",
+    "dtype": "int"
+   },
+   {
+    "c": "foc_hall_interp_erpm",
+    "dart": "foc_hall_interp_erpm",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_sl_erpm",
+    "dart": "foc_sl_erpm",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_sample_v0_v7",
+    "dart": "foc_sample_v0_v7",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "bool",
+    "dtype": "bool"
+   },
+   {
+    "c": "foc_sample_high_current",
+    "dart": "foc_sample_high_current",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "bool",
+    "dtype": "bool"
+   },
+   {
+    "c": "foc_sat_comp_mode",
+    "dart": "foc_sat_comp_mode",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "SAT_COMP_MODE",
+    "dtype": "SAT_COMP_MODE",
+    "enum": "SAT_COMP_MODE"
+   },
+   {
+    "c": "foc_sat_comp",
+    "dart": "foc_sat_comp",
+    "kind": "float16",
+    "scale": "1000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_temp_comp",
+    "dart": "foc_temp_comp",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "bool",
+    "dtype": "bool"
+   },
+   {
+    "c": "foc_temp_comp_base_temp",
+    "dart": "foc_temp_comp_base_temp",
+    "kind": "float16",
+    "scale": "100",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_current_filter_const",
+    "dart": "foc_current_filter_const",
+    "kind": "float16",
+    "scale": "10000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_cc_decoupling",
+    "dart": "foc_cc_decoupling",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "mc_foc_cc_decoupling_mode",
+    "dtype": "mc_foc_cc_decoupling_mode",
+    "enum": "mc_foc_cc_decoupling_mode"
+   },
+   {
+    "c": "foc_observer_type",
+    "dart": "foc_observer_type",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "mc_foc_observer_type",
+    "dtype": "mc_foc_observer_type",
+    "enum": "mc_foc_observer_type"
+   },
+   {
+    "c": "foc_hfi_voltage_start",
+    "dart": "foc_hfi_voltage_start",
+    "kind": "float16",
+    "scale": "10",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_hfi_voltage_run",
+    "dart": "foc_hfi_voltage_run",
+    "kind": "float16",
+    "scale": "10",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_hfi_voltage_max",
+    "dart": "foc_hfi_voltage_max",
+    "kind": "float16",
+    "scale": "10",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_hfi_gain",
+    "dart": "foc_hfi_gain",
+    "kind": "float16",
+    "scale": "1000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_hfi_hyst",
+    "dart": "foc_hfi_hyst",
+    "kind": "float16",
+    "scale": "100",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_sl_erpm_hfi",
+    "dart": "foc_sl_erpm_hfi",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_hfi_start_samples",
+    "dart": "foc_hfi_start_samples",
+    "kind": "uint16",
+    "scale": null,
+    "size": 2,
+    "ctype": "uint16_t",
+    "dtype": "int"
+   },
+   {
+    "c": "foc_hfi_obs_ovr_sec",
+    "dart": "foc_hfi_obs_ovr_sec",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_hfi_samples",
+    "dart": "foc_hfi_samples",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "foc_hfi_samples",
+    "dtype": "mc_foc_hfi_samples",
+    "enum": "foc_hfi_samples"
+   },
+   {
+    "c": "foc_offsets_cal_on_boot",
+    "dart": "foc_offsets_cal_on_boot",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "bool",
+    "dtype": "bool"
+   },
+   {
+    "c": "foc_offsets_current[0]",
+    "dart": "foc_offsets_current[0]",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_offsets_current[1]",
+    "dart": "foc_offsets_current[1]",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_offsets_current[2]",
+    "dart": "foc_offsets_current[2]",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_offsets_voltage[0]",
+    "dart": "foc_offsets_voltage[0]",
+    "kind": "float16",
+    "scale": "10000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_offsets_voltage[1]",
+    "dart": "foc_offsets_voltage[1]",
+    "kind": "float16",
+    "scale": "10000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_offsets_voltage[2]",
+    "dart": "foc_offsets_voltage[2]",
+    "kind": "float16",
+    "scale": "10000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_offsets_voltage_undriven[0]",
+    "dart": "foc_offsets_voltage_undriven[0]",
+    "kind": "float16",
+    "scale": "10000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_offsets_voltage_undriven[1]",
+    "dart": "foc_offsets_voltage_undriven[1]",
+    "kind": "float16",
+    "scale": "10000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_offsets_voltage_undriven[2]",
+    "dart": "foc_offsets_voltage_undriven[2]",
+    "kind": "float16",
+    "scale": "10000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_phase_filter_enable",
+    "dart": "foc_phase_filter_enable",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "bool",
+    "dtype": "bool"
+   },
+   {
+    "c": "foc_phase_filter_disable_fault",
+    "dart": "foc_phase_filter_disable_fault",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "bool",
+    "dtype": "bool"
+   },
+   {
+    "c": "foc_phase_filter_max_erpm",
+    "dart": "foc_phase_filter_max_erpm",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_mtpa_mode",
+    "dart": "foc_mtpa_mode",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "MTPA_MODE",
+    "dtype": "MTPA_MODE",
+    "enum": "MTPA_MODE"
+   },
+   {
+    "c": "foc_fw_current_max",
+    "dart": "foc_fw_current_max",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_fw_duty_start",
+    "dart": "foc_fw_duty_start",
+    "kind": "float16",
+    "scale": "10000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_fw_ramp_time",
+    "dart": "foc_fw_ramp_time",
+    "kind": "float16",
+    "scale": "1000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_fw_q_current_factor",
+    "dart": "foc_fw_q_current_factor",
+    "kind": "float16",
+    "scale": "10000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "foc_speed_soure",
+    "dart": "foc_speed_source",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "SPEED_SRC",
+    "dtype": "FOC_SPEED_SRC",
+    "enum": "SPEED_SRC"
+   },
+   {
+    "c": "gpd_buffer_notify_left",
+    "dart": "gpd_buffer_notify_left",
+    "kind": "int16",
+    "scale": null,
+    "size": 2,
+    "ctype": "int",
+    "dtype": "int"
+   },
+   {
+    "c": "gpd_buffer_interpol",
+    "dart": "gpd_buffer_interpol",
+    "kind": "int16",
+    "scale": null,
+    "size": 2,
+    "ctype": "int",
+    "dtype": "int"
+   },
+   {
+    "c": "gpd_current_filter_const",
+    "dart": "gpd_current_filter_const",
+    "kind": "float16",
+    "scale": "10000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "gpd_current_kp",
+    "dart": "gpd_current_kp",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "gpd_current_ki",
+    "dart": "gpd_current_ki",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "sp_pid_loop_rate",
+    "dart": "sp_pid_loop_rate",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "PID_RATE",
+    "dtype": "PID_RATE",
+    "enum": "PID_RATE"
+   },
+   {
+    "c": "s_pid_kp",
+    "dart": "s_pid_kp",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "s_pid_ki",
+    "dart": "s_pid_ki",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "s_pid_kd",
+    "dart": "s_pid_kd",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "s_pid_kd_filter",
+    "dart": "s_pid_kd_filter",
+    "kind": "float16",
+    "scale": "10000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "s_pid_min_erpm",
+    "dart": "s_pid_min_erpm",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "s_pid_allow_braking",
+    "dart": "s_pid_allow_braking",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "bool",
+    "dtype": "bool"
+   },
+   {
+    "c": "s_pid_ramp_erpms_s",
+    "dart": "s_pid_ramp_erpms_s",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "p_pid_kp",
+    "dart": "p_pid_kp",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "p_pid_ki",
+    "dart": "p_pid_ki",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "p_pid_kd",
+    "dart": "p_pid_kd",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "p_pid_kd_proc",
+    "dart": "p_pid_kd_proc",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "p_pid_kd_filter",
+    "dart": "p_pid_kd_filter",
+    "kind": "float16",
+    "scale": "10000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "p_pid_ang_div",
+    "dart": "p_pid_ang_div",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "p_pid_gain_dec_angle",
+    "dart": "p_pid_gain_dec_angle",
+    "kind": "float16",
+    "scale": "10",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "p_pid_offset",
+    "dart": "p_pid_offset",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "cc_startup_boost_duty",
+    "dart": "cc_startup_boost_duty",
+    "kind": "float16",
+    "scale": "10000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "cc_min_current",
+    "dart": "cc_min_current",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "cc_gain",
+    "dart": "cc_gain",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "cc_ramp_step_max",
+    "dart": "cc_ramp_step_max",
+    "kind": "float16",
+    "scale": "10000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "m_fault_stop_time_ms",
+    "dart": "m_fault_stop_time_ms",
+    "kind": "int32",
+    "scale": null,
+    "size": 4,
+    "ctype": "int32_t",
+    "dtype": "int"
+   },
+   {
+    "c": "m_duty_ramp_step",
+    "dart": "m_duty_ramp_step",
+    "kind": "float16",
+    "scale": "10000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "m_current_backoff_gain",
+    "dart": "m_current_backoff_gain",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "m_encoder_counts",
+    "dart": "m_encoder_counts",
+    "kind": "uint32",
+    "scale": null,
+    "size": 4,
+    "ctype": "uint32_t",
+    "dtype": "int"
+   },
+   {
+    "c": "m_encoder_sin_amp",
+    "dart": "m_encoder_sin_amp",
+    "kind": "float16",
+    "scale": "1000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "m_encoder_cos_amp",
+    "dart": "m_encoder_cos_amp",
+    "kind": "float16",
+    "scale": "1000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "m_encoder_sin_offset",
+    "dart": "m_encoder_sin_offset",
+    "kind": "float16",
+    "scale": "1000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "m_encoder_cos_offset",
+    "dart": "m_encoder_cos_offset",
+    "kind": "float16",
+    "scale": "1000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "m_encoder_sincos_filter_constant",
+    "dart": "m_encoder_sincos_filter_constant",
+    "kind": "float16",
+    "scale": "1000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "m_encoder_sincos_phase_correction",
+    "dart": "m_encoder_sincos_phase_correction",
+    "kind": "float16",
+    "scale": "1000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "m_sensor_port_mode",
+    "dart": "m_sensor_port_mode",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "sensor_port_mode",
+    "dtype": "sensor_port_mode",
+    "enum": "sensor_port_mode"
+   },
+   {
+    "c": "m_invert_direction",
+    "dart": "m_invert_direction",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "bool",
+    "dtype": "bool"
+   },
+   {
+    "c": "m_drv8301_oc_mode",
+    "dart": "m_drv8301_oc_mode",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "drv8301_oc_mode",
+    "dtype": "drv8301_oc_mode",
+    "enum": "drv8301_oc_mode"
+   },
+   {
+    "c": "m_drv8301_oc_adj",
+    "dart": "m_drv8301_oc_adj",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "int",
+    "dtype": "int"
+   },
+   {
+    "c": "m_bldc_f_sw_min",
+    "dart": "m_bldc_f_sw_min",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "m_bldc_f_sw_max",
+    "dart": "m_bldc_f_sw_max",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "m_dc_f_sw",
+    "dart": "m_dc_f_sw",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "m_ntc_motor_beta",
+    "dart": "m_ntc_motor_beta",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "m_out_aux_mode",
+    "dart": "m_out_aux_mode",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "out_aux_mode",
+    "dtype": "out_aux_mode",
+    "enum": "out_aux_mode"
+   },
+   {
+    "c": "m_motor_temp_sens_type",
+    "dart": "m_motor_temp_sens_type",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "temp_sensor_type",
+    "dtype": "temp_sensor_type",
+    "enum": "temp_sensor_type"
+   },
+   {
+    "c": "m_ptc_motor_coeff",
+    "dart": "m_ptc_motor_coeff",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "m_ntcx_ptcx_res",
+    "dart": "m_ntcx_ptcx_res",
+    "kind": "float16",
+    "scale": "0.1",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "m_ntcx_ptcx_temp_base",
+    "dart": "m_ntcx_ptcx_temp_base",
+    "kind": "float16",
+    "scale": "10",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "m_hall_extra_samples",
+    "dart": "m_hall_extra_samples",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "int",
+    "dtype": "int"
+   },
+   {
+    "c": "m_batt_filter_const",
+    "dart": "m_batt_filter_const",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "int",
+    "dtype": "int"
+   },
+   {
+    "c": "si_motor_poles",
+    "dart": "si_motor_poles",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "uint8_t",
+    "dtype": "int"
+   },
+   {
+    "c": "si_gear_ratio",
+    "dart": "si_gear_ratio",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "si_wheel_diameter",
+    "dart": "si_wheel_diameter",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "si_battery_type",
+    "dart": "si_battery_type",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "BATTERY_TYPE",
+    "dtype": "BATTERY_TYPE",
+    "enum": "BATTERY_TYPE"
+   },
+   {
+    "c": "si_battery_cells",
+    "dart": "si_battery_cells",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "int",
+    "dtype": "int"
+   },
+   {
+    "c": "si_battery_ah",
+    "dart": "si_battery_ah",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "si_motor_nl_current",
+    "dart": "si_motor_nl_current",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "bms.type",
+    "dart": "bms.type",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "BMS_TYPE",
+    "dtype": "BMS_TYPE",
+    "enum": "BMS_TYPE"
+   },
+   {
+    "c": "bms.limit_mode",
+    "dart": "bms.limit_mode",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "uint8_t",
+    "dtype": "int"
+   },
+   {
+    "c": "bms.t_limit_start",
+    "dart": "bms.t_limit_start",
+    "kind": "float16",
+    "scale": "100",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "bms.t_limit_end",
+    "dart": "bms.t_limit_end",
+    "kind": "float16",
+    "scale": "100",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "bms.soc_limit_start",
+    "dart": "bms.soc_limit_start",
+    "kind": "float16",
+    "scale": "1000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "bms.soc_limit_end",
+    "dart": "bms.soc_limit_end",
+    "kind": "float16",
+    "scale": "1000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "bms.fwd_can_mode",
+    "dart": "bms.fwd_can_mode",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "BMS_FWD_CAN_MODE",
+    "dtype": "BMS_FWD_CAN_MODE",
+    "enum": "BMS_FWD_CAN_MODE"
+   }
+  ]
+ },
+ "appconf": {
+  "signature": 486554156,
+  "size": 493,
+  "fields": [
+   {
+    "c": "controller_id",
+    "dart": "controller_id",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "uint8_t",
+    "dtype": "int"
+   },
+   {
+    "c": "timeout_msec",
+    "dart": "timeout_msec",
+    "kind": "uint32",
+    "scale": null,
+    "size": 4,
+    "ctype": "uint32_t",
+    "dtype": "int"
+   },
+   {
+    "c": "timeout_brake_current",
+    "dart": "timeout_brake_current",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "can_status_rate_1",
+    "dart": "can_status_rate_1",
+    "kind": "uint16",
+    "scale": null,
+    "size": 2,
+    "ctype": "uint32_t",
+    "dtype": "int"
+   },
+   {
+    "c": "can_status_rate_2",
+    "dart": "can_status_rate_2",
+    "kind": "uint16",
+    "scale": null,
+    "size": 2,
+    "ctype": "uint32_t",
+    "dtype": "int"
+   },
+   {
+    "c": "can_status_msgs_r1",
+    "dart": "can_status_msgs_r1",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "uint8_t",
+    "dtype": "int"
+   },
+   {
+    "c": "can_status_msgs_r2",
+    "dart": "can_status_msgs_r2",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "uint8_t",
+    "dtype": "int"
+   },
+   {
+    "c": "can_baud_rate",
+    "dart": "can_baud_rate",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "CAN_BAUD",
+    "dtype": "CAN_BAUD",
+    "enum": "CAN_BAUD"
+   },
+   {
+    "c": "pairing_done",
+    "dart": "pairing_done",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "bool",
+    "dtype": "bool"
+   },
+   {
+    "c": "permanent_uart_enabled",
+    "dart": "permanent_uart_enabled",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "bool",
+    "dtype": "bool"
+   },
+   {
+    "c": "shutdown_mode",
+    "dart": "shutdown_mode",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "SHUTDOWN_MODE",
+    "dtype": "SHUTDOWN_MODE",
+    "enum": "SHUTDOWN_MODE"
+   },
+   {
+    "c": "can_mode",
+    "dart": "can_mode",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "CAN_MODE",
+    "dtype": "CAN_MODE",
+    "enum": "CAN_MODE"
+   },
+   {
+    "c": "uavcan_esc_index",
+    "dart": "uavcan_esc_index",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "uint8_t",
+    "dtype": "int"
+   },
+   {
+    "c": "uavcan_raw_mode",
+    "dart": "uavcan_raw_mode",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "UAVCAN_RAW_MODE",
+    "dtype": "UAVCAN_RAW_MODE",
+    "enum": "UAVCAN_RAW_MODE"
+   },
+   {
+    "c": "uavcan_raw_rpm_max",
+    "dart": "uavcan_raw_rpm_max",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "uavcan_status_current_mode",
+    "dart": "uavcan_status_current_mode",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "UAVCAN_STATUS_CURRENT_MODE",
+    "dtype": "UAVCAN_STATUS_CURRENT_MODE",
+    "enum": "UAVCAN_STATUS_CURRENT_MODE"
+   },
+   {
+    "c": "servo_out_enable",
+    "dart": "servo_out_enabled",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "bool",
+    "dtype": "bool"
+   },
+   {
+    "c": "kill_sw_mode",
+    "dart": "kill_sw_mode",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "KILL_SW_MODE",
+    "dtype": "KILL_SW_MODE",
+    "enum": "KILL_SW_MODE"
+   },
+   {
+    "c": "app_to_use",
+    "dart": "app_to_use",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "app_use",
+    "dtype": "app_use",
+    "enum": "app_use"
+   },
+   {
+    "c": "app_ppm_conf.ctrl_type",
+    "dart": "app_ppm_conf.ctrl_type",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "ppm_control_type",
+    "dtype": "ppm_control_type",
+    "enum": "ppm_control_type"
+   },
+   {
+    "c": "app_ppm_conf.pid_max_erpm",
+    "dart": "app_ppm_conf.pid_max_erpm",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_ppm_conf.hyst",
+    "dart": "app_ppm_conf.hyst",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_ppm_conf.pulse_start",
+    "dart": "app_ppm_conf.pulse_start",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_ppm_conf.pulse_end",
+    "dart": "app_ppm_conf.pulse_end",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_ppm_conf.pulse_center",
+    "dart": "app_ppm_conf.pulse_center",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_ppm_conf.median_filter",
+    "dart": "app_ppm_conf.median_filter",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "bool",
+    "dtype": "bool"
+   },
+   {
+    "c": "app_ppm_conf.safe_start",
+    "dart": "app_ppm_conf.safe_start",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "SAFE_START_MODE",
+    "dtype": "SAFE_START_MODE",
+    "enum": "SAFE_START_MODE"
+   },
+   {
+    "c": "app_ppm_conf.throttle_exp",
+    "dart": "app_ppm_conf.throttle_exp",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_ppm_conf.throttle_exp_brake",
+    "dart": "app_ppm_conf.throttle_exp_brake",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_ppm_conf.throttle_exp_mode",
+    "dart": "app_ppm_conf.throttle_exp_mode",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "thr_exp_mode",
+    "dtype": "thr_exp_mode",
+    "enum": "thr_exp_mode"
+   },
+   {
+    "c": "app_ppm_conf.ramp_time_pos",
+    "dart": "app_ppm_conf.ramp_time_pos",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_ppm_conf.ramp_time_neg",
+    "dart": "app_ppm_conf.ramp_time_neg",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_ppm_conf.multi_esc",
+    "dart": "app_ppm_conf.multi_esc",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "bool",
+    "dtype": "bool"
+   },
+   {
+    "c": "app_ppm_conf.tc",
+    "dart": "app_ppm_conf.tc",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "bool",
+    "dtype": "bool"
+   },
+   {
+    "c": "app_ppm_conf.tc_max_diff",
+    "dart": "app_ppm_conf.tc_max_diff",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_ppm_conf.max_erpm_for_dir",
+    "dart": "app_ppm_conf.max_erpm_for_dir",
+    "kind": "float16",
+    "scale": "1",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_ppm_conf.smart_rev_max_duty",
+    "dart": "app_ppm_conf.smart_rev_max_duty",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_ppm_conf.smart_rev_ramp_time",
+    "dart": "app_ppm_conf.smart_rev_ramp_time",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_adc_conf.ctrl_type",
+    "dart": "app_adc_conf.ctrl_type",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "adc_control_type",
+    "dtype": "adc_control_type",
+    "enum": "adc_control_type"
+   },
+   {
+    "c": "app_adc_conf.hyst",
+    "dart": "app_adc_conf.hyst",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_adc_conf.voltage_start",
+    "dart": "app_adc_conf.voltage_start",
+    "kind": "float16",
+    "scale": "1000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_adc_conf.voltage_end",
+    "dart": "app_adc_conf.voltage_end",
+    "kind": "float16",
+    "scale": "1000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_adc_conf.voltage_min",
+    "dart": "app_adc_conf.voltage_min",
+    "kind": "float16",
+    "scale": "1000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_adc_conf.voltage_max",
+    "dart": "app_adc_conf.voltage_max",
+    "kind": "float16",
+    "scale": "1000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_adc_conf.voltage_center",
+    "dart": "app_adc_conf.voltage_center",
+    "kind": "float16",
+    "scale": "1000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_adc_conf.voltage2_start",
+    "dart": "app_adc_conf.voltage2_start",
+    "kind": "float16",
+    "scale": "1000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_adc_conf.voltage2_end",
+    "dart": "app_adc_conf.voltage2_end",
+    "kind": "float16",
+    "scale": "1000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_adc_conf.use_filter",
+    "dart": "app_adc_conf.use_filter",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "bool",
+    "dtype": "bool"
+   },
+   {
+    "c": "app_adc_conf.safe_start",
+    "dart": "app_adc_conf.safe_start",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "SAFE_START_MODE",
+    "dtype": "SAFE_START_MODE",
+    "enum": "SAFE_START_MODE"
+   },
+   {
+    "c": "app_adc_conf.buttons",
+    "dart": "app_adc_conf.buttons",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "uint8_t",
+    "dtype": "int"
+   },
+   {
+    "c": "app_adc_conf.voltage_inverted",
+    "dart": "app_adc_conf.voltage_inverted",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "bool",
+    "dtype": "bool"
+   },
+   {
+    "c": "app_adc_conf.voltage2_inverted",
+    "dart": "app_adc_conf.voltage2_inverted",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "bool",
+    "dtype": "bool"
+   },
+   {
+    "c": "app_adc_conf.throttle_exp",
+    "dart": "app_adc_conf.throttle_exp",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_adc_conf.throttle_exp_brake",
+    "dart": "app_adc_conf.throttle_exp_brake",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_adc_conf.throttle_exp_mode",
+    "dart": "app_adc_conf.throttle_exp_mode",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "thr_exp_mode",
+    "dtype": "thr_exp_mode",
+    "enum": "thr_exp_mode"
+   },
+   {
+    "c": "app_adc_conf.ramp_time_pos",
+    "dart": "app_adc_conf.ramp_time_pos",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_adc_conf.ramp_time_neg",
+    "dart": "app_adc_conf.ramp_time_neg",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_adc_conf.multi_esc",
+    "dart": "app_adc_conf.multi_esc",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "bool",
+    "dtype": "bool"
+   },
+   {
+    "c": "app_adc_conf.tc",
+    "dart": "app_adc_conf.tc",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "bool",
+    "dtype": "bool"
+   },
+   {
+    "c": "app_adc_conf.tc_max_diff",
+    "dart": "app_adc_conf.tc_max_diff",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_adc_conf.update_rate_hz",
+    "dart": "app_adc_conf.update_rate_hz",
+    "kind": "uint16",
+    "scale": null,
+    "size": 2,
+    "ctype": "uint32_t",
+    "dtype": "int"
+   },
+   {
+    "c": "app_uart_baudrate",
+    "dart": "app_uart_baudrate",
+    "kind": "uint32",
+    "scale": null,
+    "size": 4,
+    "ctype": "uint32_t",
+    "dtype": "int"
+   },
+   {
+    "c": "app_chuk_conf.ctrl_type",
+    "dart": "app_chuk_conf.ctrl_type",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "chuk_control_type",
+    "dtype": "chuk_control_type",
+    "enum": "chuk_control_type"
+   },
+   {
+    "c": "app_chuk_conf.hyst",
+    "dart": "app_chuk_conf.hyst",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_chuk_conf.ramp_time_pos",
+    "dart": "app_chuk_conf.ramp_time_pos",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_chuk_conf.ramp_time_neg",
+    "dart": "app_chuk_conf.ramp_time_neg",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_chuk_conf.stick_erpm_per_s_in_cc",
+    "dart": "app_chuk_conf.stick_erpm_per_s_in_cc",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_chuk_conf.throttle_exp",
+    "dart": "app_chuk_conf.throttle_exp",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_chuk_conf.throttle_exp_brake",
+    "dart": "app_chuk_conf.throttle_exp_brake",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_chuk_conf.throttle_exp_mode",
+    "dart": "app_chuk_conf.throttle_exp_mode",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "thr_exp_mode",
+    "dtype": "thr_exp_mode",
+    "enum": "thr_exp_mode"
+   },
+   {
+    "c": "app_chuk_conf.multi_esc",
+    "dart": "app_chuk_conf.multi_esc",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "bool",
+    "dtype": "bool"
+   },
+   {
+    "c": "app_chuk_conf.tc",
+    "dart": "app_chuk_conf.tc",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "bool",
+    "dtype": "bool"
+   },
+   {
+    "c": "app_chuk_conf.tc_max_diff",
+    "dart": "app_chuk_conf.tc_max_diff",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_chuk_conf.use_smart_rev",
+    "dart": "app_chuk_conf.use_smart_rev",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "bool",
+    "dtype": "bool"
+   },
+   {
+    "c": "app_chuk_conf.smart_rev_max_duty",
+    "dart": "app_chuk_conf.smart_rev_max_duty",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_chuk_conf.smart_rev_ramp_time",
+    "dart": "app_chuk_conf.smart_rev_ramp_time",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_nrf_conf.speed",
+    "dart": "app_nrf_conf.speed",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "NRF_SPEED",
+    "dtype": "NRF_SPEED",
+    "enum": "NRF_SPEED"
+   },
+   {
+    "c": "app_nrf_conf.power",
+    "dart": "app_nrf_conf.power",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "NRF_POWER",
+    "dtype": "NRF_POWER",
+    "enum": "NRF_POWER"
+   },
+   {
+    "c": "app_nrf_conf.crc_type",
+    "dart": "app_nrf_conf.crc_type",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "NRF_CRC",
+    "dtype": "NRF_CRC",
+    "enum": "NRF_CRC"
+   },
+   {
+    "c": "app_nrf_conf.retry_delay",
+    "dart": "app_nrf_conf.retry_delay",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "NRF_RETR_DELAY",
+    "dtype": "NRF_RETR_DELAY",
+    "enum": "NRF_RETR_DELAY"
+   },
+   {
+    "c": "app_nrf_conf.retries",
+    "dart": "app_nrf_conf.retries",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "unsigned char",
+    "dtype": "int"
+   },
+   {
+    "c": "app_nrf_conf.channel",
+    "dart": "app_nrf_conf.channel",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "unsigned char",
+    "dtype": "int"
+   },
+   {
+    "c": "app_nrf_conf.address[0]",
+    "dart": "app_nrf_conf.address[0]",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "unsigned char",
+    "dtype": "int"
+   },
+   {
+    "c": "app_nrf_conf.address[1]",
+    "dart": "app_nrf_conf.address[1]",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "unsigned char",
+    "dtype": "int"
+   },
+   {
+    "c": "app_nrf_conf.address[2]",
+    "dart": "app_nrf_conf.address[2]",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "unsigned char",
+    "dtype": "int"
+   },
+   {
+    "c": "app_nrf_conf.send_crc_ack",
+    "dart": "app_nrf_conf.send_crc_ack",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "bool",
+    "dtype": "bool"
+   },
+   {
+    "c": "app_balance_conf.pid_mode",
+    "dart": "app_balance_conf.pid_mode",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "BALANCE_PID_MODE",
+    "dtype": "BALANCE_PID_MODE",
+    "enum": "BALANCE_PID_MODE"
+   },
+   {
+    "c": "app_balance_conf.kp",
+    "dart": "app_balance_conf.kp",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.ki",
+    "dart": "app_balance_conf.ki",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.kd",
+    "dart": "app_balance_conf.kd",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.kp2",
+    "dart": "app_balance_conf.kp2",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.ki2",
+    "dart": "app_balance_conf.ki2",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.kd2",
+    "dart": "app_balance_conf.kd2",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.hertz",
+    "dart": "app_balance_conf.hertz",
+    "kind": "uint16",
+    "scale": null,
+    "size": 2,
+    "ctype": "uint16_t",
+    "dtype": "int"
+   },
+   {
+    "c": "app_balance_conf.loop_time_filter",
+    "dart": "app_balance_conf.loop_time_filter",
+    "kind": "uint16",
+    "scale": null,
+    "size": 2,
+    "ctype": "uint16_t",
+    "dtype": "int"
+   },
+   {
+    "c": "app_balance_conf.fault_pitch",
+    "dart": "app_balance_conf.fault_pitch",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.fault_roll",
+    "dart": "app_balance_conf.fault_roll",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.fault_duty",
+    "dart": "app_balance_conf.fault_duty",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.fault_adc1",
+    "dart": "app_balance_conf.fault_adc1",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.fault_adc2",
+    "dart": "app_balance_conf.fault_adc2",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.fault_delay_pitch",
+    "dart": "app_balance_conf.fault_delay_pitch",
+    "kind": "uint16",
+    "scale": null,
+    "size": 2,
+    "ctype": "uint16_t",
+    "dtype": "int"
+   },
+   {
+    "c": "app_balance_conf.fault_delay_roll",
+    "dart": "app_balance_conf.fault_delay_roll",
+    "kind": "uint16",
+    "scale": null,
+    "size": 2,
+    "ctype": "uint16_t",
+    "dtype": "int"
+   },
+   {
+    "c": "app_balance_conf.fault_delay_duty",
+    "dart": "app_balance_conf.fault_delay_duty",
+    "kind": "uint16",
+    "scale": null,
+    "size": 2,
+    "ctype": "uint16_t",
+    "dtype": "int"
+   },
+   {
+    "c": "app_balance_conf.fault_delay_switch_half",
+    "dart": "app_balance_conf.fault_delay_switch_half",
+    "kind": "uint16",
+    "scale": null,
+    "size": 2,
+    "ctype": "uint16_t",
+    "dtype": "int"
+   },
+   {
+    "c": "app_balance_conf.fault_delay_switch_full",
+    "dart": "app_balance_conf.fault_delay_switch_full",
+    "kind": "uint16",
+    "scale": null,
+    "size": 2,
+    "ctype": "uint16_t",
+    "dtype": "int"
+   },
+   {
+    "c": "app_balance_conf.fault_adc_half_erpm",
+    "dart": "app_balance_conf.fault_adc_half_erpm",
+    "kind": "uint16",
+    "scale": null,
+    "size": 2,
+    "ctype": "uint16_t",
+    "dtype": "int"
+   },
+   {
+    "c": "app_balance_conf.fault_is_dual_switch",
+    "dart": "app_balance_conf.fault_is_dual_switch",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "bool",
+    "dtype": "bool"
+   },
+   {
+    "c": "app_balance_conf.tiltback_duty_angle",
+    "dart": "app_balance_conf.tiltback_duty_angle",
+    "kind": "float16",
+    "scale": "100",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.tiltback_duty_speed",
+    "dart": "app_balance_conf.tiltback_duty_speed",
+    "kind": "float16",
+    "scale": "100",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.tiltback_duty",
+    "dart": "app_balance_conf.tiltback_duty",
+    "kind": "float16",
+    "scale": "1000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.tiltback_hv_angle",
+    "dart": "app_balance_conf.tiltback_hv_angle",
+    "kind": "float16",
+    "scale": "100",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.tiltback_hv_speed",
+    "dart": "app_balance_conf.tiltback_hv_speed",
+    "kind": "float16",
+    "scale": "100",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.tiltback_hv",
+    "dart": "app_balance_conf.tiltback_hv",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.tiltback_lv_angle",
+    "dart": "app_balance_conf.tiltback_lv_angle",
+    "kind": "float16",
+    "scale": "100",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.tiltback_lv_speed",
+    "dart": "app_balance_conf.tiltback_lv_speed",
+    "kind": "float16",
+    "scale": "100",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.tiltback_lv",
+    "dart": "app_balance_conf.tiltback_lv",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.tiltback_return_speed",
+    "dart": "app_balance_conf.tiltback_return_speed",
+    "kind": "float16",
+    "scale": "100",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.tiltback_constant",
+    "dart": "app_balance_conf.tiltback_constant",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.tiltback_constant_erpm",
+    "dart": "app_balance_conf.tiltback_constant_erpm",
+    "kind": "uint16",
+    "scale": null,
+    "size": 2,
+    "ctype": "uint16_t",
+    "dtype": "int"
+   },
+   {
+    "c": "app_balance_conf.tiltback_variable",
+    "dart": "app_balance_conf.tiltback_variable",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.tiltback_variable_max",
+    "dart": "app_balance_conf.tiltback_variable_max",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.noseangling_speed",
+    "dart": "app_balance_conf.noseangling_speed",
+    "kind": "float16",
+    "scale": "100",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.startup_pitch_tolerance",
+    "dart": "app_balance_conf.startup_pitch_tolerance",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.startup_roll_tolerance",
+    "dart": "app_balance_conf.startup_roll_tolerance",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.startup_speed",
+    "dart": "app_balance_conf.startup_speed",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.deadzone",
+    "dart": "app_balance_conf.deadzone",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.multi_esc",
+    "dart": "app_balance_conf.multi_esc",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "bool",
+    "dtype": "bool"
+   },
+   {
+    "c": "app_balance_conf.yaw_kp",
+    "dart": "app_balance_conf.yaw_kp",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.yaw_ki",
+    "dart": "app_balance_conf.yaw_ki",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.yaw_kd",
+    "dart": "app_balance_conf.yaw_kd",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.roll_steer_kp",
+    "dart": "app_balance_conf.roll_steer_kp",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.roll_steer_erpm_kp",
+    "dart": "app_balance_conf.roll_steer_erpm_kp",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.brake_current",
+    "dart": "app_balance_conf.brake_current",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.brake_timeout",
+    "dart": "app_balance_conf.brake_timeout",
+    "kind": "uint16",
+    "scale": null,
+    "size": 2,
+    "ctype": "uint16_t",
+    "dtype": "int"
+   },
+   {
+    "c": "app_balance_conf.yaw_current_clamp",
+    "dart": "app_balance_conf.yaw_current_clamp",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.ki_limit",
+    "dart": "app_balance_conf.ki_limit",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.kd_pt1_lowpass_frequency",
+    "dart": "app_balance_conf.kd_pt1_lowpass_frequency",
+    "kind": "uint16",
+    "scale": null,
+    "size": 2,
+    "ctype": "uint16_t",
+    "dtype": "int"
+   },
+   {
+    "c": "app_balance_conf.kd_pt1_highpass_frequency",
+    "dart": "app_balance_conf.kd_pt1_highpass_frequency",
+    "kind": "uint16",
+    "scale": null,
+    "size": 2,
+    "ctype": "uint16_t",
+    "dtype": "int"
+   },
+   {
+    "c": "app_balance_conf.booster_angle",
+    "dart": "app_balance_conf.booster_angle",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.booster_ramp",
+    "dart": "app_balance_conf.booster_ramp",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.booster_current",
+    "dart": "app_balance_conf.booster_current",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.torquetilt_start_current",
+    "dart": "app_balance_conf.torquetilt_start_current",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.torquetilt_angle_limit",
+    "dart": "app_balance_conf.torquetilt_angle_limit",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.torquetilt_on_speed",
+    "dart": "app_balance_conf.torquetilt_on_speed",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.torquetilt_off_speed",
+    "dart": "app_balance_conf.torquetilt_off_speed",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.torquetilt_strength",
+    "dart": "app_balance_conf.torquetilt_strength",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.torquetilt_filter",
+    "dart": "app_balance_conf.torquetilt_filter",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.turntilt_strength",
+    "dart": "app_balance_conf.turntilt_strength",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.turntilt_angle_limit",
+    "dart": "app_balance_conf.turntilt_angle_limit",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.turntilt_start_angle",
+    "dart": "app_balance_conf.turntilt_start_angle",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.turntilt_start_erpm",
+    "dart": "app_balance_conf.turntilt_start_erpm",
+    "kind": "uint16",
+    "scale": null,
+    "size": 2,
+    "ctype": "uint16_t",
+    "dtype": "int"
+   },
+   {
+    "c": "app_balance_conf.turntilt_speed",
+    "dart": "app_balance_conf.turntilt_speed",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_balance_conf.turntilt_erpm_boost",
+    "dart": "app_balance_conf.turntilt_erpm_boost",
+    "kind": "uint16",
+    "scale": null,
+    "size": 2,
+    "ctype": "uint16_t",
+    "dtype": "int"
+   },
+   {
+    "c": "app_balance_conf.turntilt_erpm_boost_end",
+    "dart": "app_balance_conf.turntilt_erpm_boost_end",
+    "kind": "uint16",
+    "scale": null,
+    "size": 2,
+    "ctype": "uint16_t",
+    "dtype": "int"
+   },
+   {
+    "c": "app_pas_conf.ctrl_type",
+    "dart": "app_pas_conf.ctrl_type",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "pas_control_type",
+    "dtype": "pas_control_type",
+    "enum": "pas_control_type"
+   },
+   {
+    "c": "app_pas_conf.sensor_type",
+    "dart": "app_pas_conf.sensor_type",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "pas_sensor_type",
+    "dtype": "pas_sensor_type",
+    "enum": "pas_sensor_type"
+   },
+   {
+    "c": "app_pas_conf.current_scaling",
+    "dart": "app_pas_conf.current_scaling",
+    "kind": "float16",
+    "scale": "1000",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_pas_conf.pedal_rpm_start",
+    "dart": "app_pas_conf.pedal_rpm_start",
+    "kind": "float16",
+    "scale": "10",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_pas_conf.pedal_rpm_end",
+    "dart": "app_pas_conf.pedal_rpm_end",
+    "kind": "float16",
+    "scale": "10",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_pas_conf.invert_pedal_direction",
+    "dart": "app_pas_conf.invert_pedal_direction",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "bool",
+    "dtype": "bool"
+   },
+   {
+    "c": "app_pas_conf.magnets",
+    "dart": "app_pas_conf.magnets",
+    "kind": "uint16",
+    "scale": null,
+    "size": 2,
+    "ctype": "uint8_t",
+    "dtype": "int"
+   },
+   {
+    "c": "app_pas_conf.use_filter",
+    "dart": "app_pas_conf.use_filter",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "bool",
+    "dtype": "bool"
+   },
+   {
+    "c": "app_pas_conf.ramp_time_pos",
+    "dart": "app_pas_conf.ramp_time_pos",
+    "kind": "float16",
+    "scale": "100",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_pas_conf.ramp_time_neg",
+    "dart": "app_pas_conf.ramp_time_neg",
+    "kind": "float16",
+    "scale": "100",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "app_pas_conf.update_rate_hz",
+    "dart": "app_pas_conf.update_rate_hz",
+    "kind": "uint16",
+    "scale": null,
+    "size": 2,
+    "ctype": "uint32_t",
+    "dtype": "int"
+   },
+   {
+    "c": "imu_conf.type",
+    "dart": "imu_conf.type",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "IMU_TYPE",
+    "dtype": "IMU_TYPE",
+    "enum": "IMU_TYPE"
+   },
+   {
+    "c": "imu_conf.mode",
+    "dart": "imu_conf.mode",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "AHRS_MODE",
+    "dtype": "AHRS_MODE",
+    "enum": "AHRS_MODE"
+   },
+   {
+    "c": "imu_conf.filter",
+    "dart": "imu_conf.filter",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "IMU_FILTER",
+    "dtype": "IMU_FILTER",
+    "enum": "IMU_FILTER"
+   },
+   {
+    "c": "imu_conf.accel_lowpass_filter_x",
+    "dart": "imu_conf.accel_lowpass_filter_x",
+    "kind": "float16",
+    "scale": "1",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "imu_conf.accel_lowpass_filter_y",
+    "dart": "imu_conf.accel_lowpass_filter_y",
+    "kind": "float16",
+    "scale": "1",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "imu_conf.accel_lowpass_filter_z",
+    "dart": "imu_conf.accel_lowpass_filter_z",
+    "kind": "float16",
+    "scale": "1",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "imu_conf.gyro_lowpass_filter",
+    "dart": "imu_conf.gyro_lowpass_filter",
+    "kind": "float16",
+    "scale": "1",
+    "size": 2,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "imu_conf.sample_rate_hz",
+    "dart": "imu_conf.sample_rate_hz",
+    "kind": "uint16",
+    "scale": null,
+    "size": 2,
+    "ctype": "int",
+    "dtype": "int"
+   },
+   {
+    "c": "imu_conf.use_magnetometer",
+    "dart": "imu_conf.use_magnetometer",
+    "kind": "byte",
+    "scale": null,
+    "size": 1,
+    "ctype": "bool",
+    "dtype": "bool"
+   },
+   {
+    "c": "imu_conf.accel_confidence_decay",
+    "dart": "imu_conf.accel_confidence_decay",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "imu_conf.mahony_kp",
+    "dart": "imu_conf.mahony_kp",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "imu_conf.mahony_ki",
+    "dart": "imu_conf.mahony_ki",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "imu_conf.madgwick_beta",
+    "dart": "imu_conf.madgwick_beta",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "imu_conf.rot_roll",
+    "dart": "imu_conf.rot_roll",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "imu_conf.rot_pitch",
+    "dart": "imu_conf.rot_pitch",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "imu_conf.rot_yaw",
+    "dart": "imu_conf.rot_yaw",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "imu_conf.accel_offsets[0]",
+    "dart": "imu_conf.accel_offsets[0]",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "imu_conf.accel_offsets[1]",
+    "dart": "imu_conf.accel_offsets[1]",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "imu_conf.accel_offsets[2]",
+    "dart": "imu_conf.accel_offsets[2]",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "imu_conf.gyro_offsets[0]",
+    "dart": "imu_conf.gyro_offsets[0]",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "imu_conf.gyro_offsets[1]",
+    "dart": "imu_conf.gyro_offsets[1]",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   },
+   {
+    "c": "imu_conf.gyro_offsets[2]",
+    "dart": "imu_conf.gyro_offsets[2]",
+    "kind": "float32_auto",
+    "scale": null,
+    "size": 4,
+    "ctype": "float",
+    "dtype": "double"
+   }
+  ]
+ },
+ "enums": {
+  "mc_pwm_mode": [
+   "PWM_MODE_NONSYNCHRONOUS_HISW",
+   "PWM_MODE_SYNCHRONOUS",
+   "PWM_MODE_BIPOLAR"
+  ],
+  "mc_comm_mode": [
+   "COMM_MODE_INTEGRATE",
+   "COMM_MODE_DELAY"
+  ],
+  "mc_sensor_mode": [
+   "SENSOR_MODE_SENSORLESS",
+   "SENSOR_MODE_SENSORED",
+   "SENSOR_MODE_HYBRID"
+  ],
+  "mc_foc_sensor_mode": [
+   "FOC_SENSOR_MODE_SENSORLESS",
+   "FOC_SENSOR_MODE_ENCODER",
+   "FOC_SENSOR_MODE_HALL",
+   "FOC_SENSOR_MODE_HFI",
+   "FOC_SENSOR_MODE_HFI_START",
+   "FOC_SENSOR_MODE_HFI_V2",
+   "FOC_SENSOR_MODE_HFI_V3",
+   "FOC_SENSOR_MODE_HFI_V4",
+   "FOC_SENSOR_MODE_HFI_V5"
+  ],
+  "out_aux_mode": [
+   "OUT_AUX_MODE_OFF",
+   "OUT_AUX_MODE_ON_AFTER_2S",
+   "OUT_AUX_MODE_ON_AFTER_5S",
+   "OUT_AUX_MODE_ON_AFTER_10S",
+   "OUT_AUX_MODE_UNUSED",
+   "OUT_AUX_MODE_ON_WHEN_RUNNING",
+   "OUT_AUX_MODE_ON_WHEN_NOT_RUNNING",
+   "OUT_AUX_MODE_MOTOR_50",
+   "OUT_AUX_MODE_MOSFET_50",
+   "OUT_AUX_MODE_MOTOR_70",
+   "OUT_AUX_MODE_MOSFET_70",
+   "OUT_AUX_MODE_MOTOR_MOSFET_50",
+   "OUT_AUX_MODE_MOTOR_MOSFET_70"
+  ],
+  "temp_sensor_type": [
+   "TEMP_SENSOR_NTC_10K_25C",
+   "TEMP_SENSOR_PTC_1K_100C",
+   "TEMP_SENSOR_KTY83_122",
+   "TEMP_SENSOR_NTC_100K_25C",
+   "TEMP_SENSOR_KTY84_130",
+   "TEMP_SENSOR_NTCX",
+   "TEMP_SENSOR_PTCX",
+   "TEMP_SENSOR_PT1000",
+   "TEMP_SENSOR_DISABLED"
+  ],
+  "mc_motor_type": [
+   "MOTOR_TYPE_BLDC",
+   "MOTOR_TYPE_DC",
+   "MOTOR_TYPE_FOC",
+   "MOTOR_TYPE_GPD"
+  ],
+  "mc_foc_cc_decoupling_mode": [
+   "FOC_CC_DECOUPLING_DISABLED",
+   "FOC_CC_DECOUPLING_CROSS",
+   "FOC_CC_DECOUPLING_BEMF",
+   "FOC_CC_DECOUPLING_CROSS_BEMF"
+  ],
+  "mc_foc_observer_type": [
+   "FOC_OBSERVER_ORTEGA_ORIGINAL",
+   "FOC_OBSERVER_MXLEMMING",
+   "FOC_OBSERVER_ORTEGA_LAMBDA_COMP",
+   "FOC_OBSERVER_MXLEMMING_LAMBDA_COMP"
+  ],
+  "sensor_port_mode": [
+   "SENSOR_PORT_MODE_HALL",
+   "SENSOR_PORT_MODE_ABI",
+   "SENSOR_PORT_MODE_AS5047_SPI",
+   "SENSOR_PORT_MODE_AD2S1205",
+   "SENSOR_PORT_MODE_SINCOS",
+   "SENSOR_PORT_MODE_TS5700N8501",
+   "SENSOR_PORT_MODE_TS5700N8501_MULTITURN",
+   "SENSOR_PORT_MODE_MT6816_SPI_HW",
+   "SENSOR_PORT_MODE_AS5x47U_SPI",
+   "SENSOR_PORT_MODE_BISSC",
+   "SENSOR_PORT_MODE_TLE5012_SSC_SW",
+   "SENSOR_PORT_MODE_TLE5012_SSC_HW",
+   "SENSOR_PORT_MODE_CUSTOM_ENCODER"
+  ],
+  "drv8301_oc_mode": [
+   "DRV8301_OC_LIMIT",
+   "DRV8301_OC_LATCH_SHUTDOWN",
+   "DRV8301_OC_REPORT_ONLY",
+   "DRV8301_OC_DISABLED"
+  ],
+  "CAN_BAUD": [
+   "CAN_BAUD_125K",
+   "CAN_BAUD_250K",
+   "CAN_BAUD_500K",
+   "CAN_BAUD_1M",
+   "CAN_BAUD_10K",
+   "CAN_BAUD_20K",
+   "CAN_BAUD_50K",
+   "CAN_BAUD_75K",
+   "CAN_BAUD_100K"
+  ],
+  "BATTERY_TYPE": [
+   "BATTERY_TYPE_LIION_3_0__4_2",
+   "BATTERY_TYPE_LIIRON_2_6__3_6",
+   "BATTERY_TYPE_LEAD_ACID"
+  ],
+  "foc_hfi_samples": [
+   "HFI_SAMPLES_8",
+   "HFI_SAMPLES_16",
+   "HFI_SAMPLES_32"
+  ],
+  "BMS_TYPE": [
+   "BMS_TYPE_NONE",
+   "BMS_TYPE_VESC"
+  ],
+  "BMS_FWD_CAN_MODE": [
+   "BMS_FWD_CAN_MODE_DISABLED",
+   "BMS_FWD_CAN_MODE_USB_ONLY",
+   "BMS_FWD_CAN_MODE_ANY"
+  ],
+  "PID_RATE": [
+   "PID_RATE_25_HZ",
+   "PID_RATE_50_HZ",
+   "PID_RATE_100_HZ",
+   "PID_RATE_250_HZ",
+   "PID_RATE_500_HZ",
+   "PID_RATE_1000_HZ",
+   "PID_RATE_2500_HZ",
+   "PID_RATE_5000_HZ",
+   "PID_RATE_10000_HZ"
+  ],
+  "MTPA_MODE": [
+   "MTPA_MODE_OFF",
+   "MTPA_MODE_IQ_TARGET",
+   "MTPA_MODE_IQ_MEASURED"
+  ],
+  "SPEED_SRC": [
+   "FOC_SPEED_SRC_CORRECTED",
+   "FOC_SPEED_SRC_OBSERVER"
+  ],
+  "SAT_COMP_MODE": [
+   "SAT_COMP_DISABLED",
+   "SAT_COMP_FACTOR",
+   "SAT_COMP_LAMBDA",
+   "SAT_COMP_LAMBDA_AND_FACTOR"
+  ],
+  "app_use": [
+   "APP_NONE",
+   "APP_PPM",
+   "APP_ADC",
+   "APP_UART",
+   "APP_PPM_UART",
+   "APP_ADC_UART",
+   "APP_NUNCHUK",
+   "APP_NRF",
+   "APP_CUSTOM",
+   "APP_BALANCE",
+   "APP_PAS",
+   "APP_ADC_PAS"
+  ],
+  "thr_exp_mode": [
+   "THR_EXP_EXPO",
+   "THR_EXP_NATURAL",
+   "THR_EXP_POLY"
+  ],
+  "SAFE_START_MODE": [
+   "SAFE_START_DISABLED",
+   "SAFE_START_REGULAR",
+   "SAFE_START_NO_FAULT"
+  ],
+  "ppm_control_type": [
+   "PPM_CTRL_TYPE_NONE",
+   "PPM_CTRL_TYPE_CURRENT",
+   "PPM_CTRL_TYPE_CURRENT_NOREV",
+   "PPM_CTRL_TYPE_CURRENT_NOREV_BRAKE",
+   "PPM_CTRL_TYPE_DUTY",
+   "PPM_CTRL_TYPE_DUTY_NOREV",
+   "PPM_CTRL_TYPE_PID",
+   "PPM_CTRL_TYPE_PID_NOREV",
+   "PPM_CTRL_TYPE_CURRENT_BRAKE_REV_HYST",
+   "PPM_CTRL_TYPE_CURRENT_SMART_REV",
+   "PPM_CTRL_TYPE_PID_POSITION_180",
+   "PPM_CTRL_TYPE_PID_POSITION_360"
+  ],
+  "adc_control_type": [
+   "ADC_CTRL_TYPE_NONE",
+   "ADC_CTRL_TYPE_CURRENT",
+   "ADC_CTRL_TYPE_CURRENT_REV_CENTER",
+   "ADC_CTRL_TYPE_CURRENT_REV_BUTTON",
+   "ADC_CTRL_TYPE_CURRENT_REV_BUTTON_BRAKE_ADC",
+   "ADC_CTRL_TYPE_CURRENT_REV_BUTTON_BRAKE_CENTER",
+   "ADC_CTRL_TYPE_CURRENT_NOREV_BRAKE_CENTER",
+   "ADC_CTRL_TYPE_CURRENT_NOREV_BRAKE_BUTTON",
+   "ADC_CTRL_TYPE_CURRENT_NOREV_BRAKE_ADC",
+   "ADC_CTRL_TYPE_DUTY",
+   "ADC_CTRL_TYPE_DUTY_REV_CENTER",
+   "ADC_CTRL_TYPE_DUTY_REV_BUTTON",
+   "ADC_CTRL_TYPE_PID",
+   "ADC_CTRL_TYPE_PID_REV_CENTER",
+   "ADC_CTRL_TYPE_PID_REV_BUTTON"
+  ],
+  "pas_control_type": [
+   "PAS_CTRL_TYPE_NONE",
+   "PAS_CTRL_TYPE_CADENCE",
+   "PAS_CTRL_TYPE_TORQUE",
+   "PAS_CTRL_TYPE_TORQUE_WITH_CADENCE_TIMEOUT"
+  ],
+  "pas_sensor_type": [
+   "PAS_SENSOR_TYPE_QUADRATURE"
+  ],
+  "chuk_control_type": [
+   "CHUK_CTRL_TYPE_NONE",
+   "CHUK_CTRL_TYPE_CURRENT",
+   "CHUK_CTRL_TYPE_CURRENT_NOREV",
+   "CHUK_CTRL_TYPE_CURRENT_BIDIRECTIONAL"
+  ],
+  "NRF_SPEED": [
+   "NRF_SPEED_250K",
+   "NRF_SPEED_1M",
+   "NRF_SPEED_2M"
+  ],
+  "NRF_POWER": [
+   "NRF_POWER_M18DBM",
+   "NRF_POWER_M12DBM",
+   "NRF_POWER_M6DBM",
+   "NRF_POWER_0DBM",
+   "NRF_POWER_OFF"
+  ],
+  "NRF_CRC": [
+   "NRF_CRC_DISABLED",
+   "NRF_CRC_1B",
+   "NRF_CRC_2B"
+  ],
+  "NRF_RETR_DELAY": [
+   "NRF_RETR_DELAY_250US",
+   "NRF_RETR_DELAY_500US",
+   "NRF_RETR_DELAY_750US",
+   "NRF_RETR_DELAY_1000US",
+   "NRF_RETR_DELAY_1250US",
+   "NRF_RETR_DELAY_1500US",
+   "NRF_RETR_DELAY_1750US",
+   "NRF_RETR_DELAY_2000US",
+   "NRF_RETR_DELAY_2250US",
+   "NRF_RETR_DELAY_2500US",
+   "NRF_RETR_DELAY_2750US",
+   "NRF_RETR_DELAY_3000US",
+   "NRF_RETR_DELAY_3250US",
+   "NRF_RETR_DELAY_3500US",
+   "NRF_RETR_DELAY_3750US",
+   "NRF_RETR_DELAY_4000US"
+  ],
+  "BALANCE_PID_MODE": [
+   "BALANCE_PID_MODE_ANGLE",
+   "BALANCE_PID_MODE_ANGLE_RATE_CASCADE"
+  ],
+  "SHUTDOWN_MODE": [
+   "SHUTDOWN_MODE_ALWAYS_OFF",
+   "SHUTDOWN_MODE_ALWAYS_ON",
+   "SHUTDOWN_MODE_TOGGLE_BUTTON_ONLY",
+   "SHUTDOWN_MODE_OFF_AFTER_10S",
+   "SHUTDOWN_MODE_OFF_AFTER_1M",
+   "SHUTDOWN_MODE_OFF_AFTER_5M",
+   "SHUTDOWN_MODE_OFF_AFTER_10M",
+   "SHUTDOWN_MODE_OFF_AFTER_30M",
+   "SHUTDOWN_MODE_OFF_AFTER_1H",
+   "SHUTDOWN_MODE_OFF_AFTER_5H"
+  ],
+  "IMU_TYPE": [
+   "IMU_TYPE_OFF",
+   "IMU_TYPE_INTERNAL",
+   "IMU_TYPE_EXTERNAL_MPU9X50",
+   "IMU_TYPE_EXTERNAL_ICM20948",
+   "IMU_TYPE_EXTERNAL_BMI160",
+   "IMU_TYPE_EXTERNAL_LSM6DS3"
+  ],
+  "AHRS_MODE": [
+   "AHRS_MODE_MADGWICK",
+   "AHRS_MODE_MAHONY",
+   "AHRS_MODE_MADGWICK_FUSION"
+  ],
+  "IMU_FILTER": [
+   "IMU_FILTER_LOW",
+   "IMU_FILTER_MEDIUM",
+   "IMU_FILTER_HIGH"
+  ],
+  "CAN_MODE": [
+   "CAN_MODE_VESC",
+   "CAN_MODE_UAVCAN",
+   "CAN_MODE_COMM_BRIDGE",
+   "CAN_MODE_UNUSED"
+  ],
+  "UAVCAN_RAW_MODE": [
+   "UAVCAN_RAW_MODE_CURRENT",
+   "UAVCAN_RAW_MODE_CURRENT_NO_REV_BRAKE",
+   "UAVCAN_RAW_MODE_DUTY",
+   "UAVCAN_RAW_MODE_RPM"
+  ],
+  "UAVCAN_STATUS_CURRENT_MODE": [
+   "UAVCAN_STATUS_CURRENT_MODE_MOTOR",
+   "UAVCAN_STATUS_CURRENT_MODE_INPUT"
+  ],
+  "KILL_SW_MODE": [
+   "KILL_SW_MODE_DISABLED",
+   "KILL_SW_MODE_PPM_LOW",
+   "KILL_SW_MODE_PPM_HIGH",
+   "KILL_SW_MODE_ADC2_LOW",
+   "KILL_SW_MODE_ADC2_HIGH"
+  ]
+ }
+}

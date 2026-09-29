@@ -55,6 +55,11 @@ enum sensor_port_mode {
   SENSOR_PORT_MODE_TLE5012_SSC_SW,
   SENSOR_PORT_MODE_TLE5012_SSC_HW,
   SENSOR_PORT_MODE_CUSTOM_ENCODER,
+  SENSOR_PORT_MODE_PWM, // fw6.06/7.0; MT6816_SPI is the fw5.3 name
+  SENSOR_PORT_MODE_PWM_ABI, // fw6.06/7.0; MT6816_SPI is the fw5.3 name
+  SENSOR_PORT_MODE_MA782, // fw6.06/7.0; MT6816_SPI is the fw5.3 name
+  SENSOR_PORT_MODE_AMT22, // fw6.06/7.0; MT6816_SPI is the fw5.3 name
+  SENSOR_PORT_MODE_MT6816_SPI, // fw6.06/7.0; MT6816_SPI is the fw5.3 name
 }
 
 enum mc_foc_hfi_samples {
@@ -67,7 +72,11 @@ enum mc_foc_observer_type{
   FOC_OBSERVER_ORTEGA_ORIGINAL,
   FOC_OBSERVER_MXLEMMING,
   FOC_OBSERVER_ORTEGA_LAMBDA_COMP,
-  FOC_OBSERVER_MXLEMMING_LAMBDA_COMP
+  FOC_OBSERVER_MXLEMMING_LAMBDA_COMP,
+  FOC_OBSERVER_MXV, // fw6.05
+  FOC_OBSERVER_MXV_LAMBDA_COMP, // fw6.05
+  FOC_OBSERVER_MXV_LAMBDA_COMP_LIN, // fw6.05
+  FOC_OBSERVER_ORTEGA_ITERATIVE, // fw5.x only
 }
 
 enum mc_foc_cc_decoupling_mode {
@@ -86,7 +95,8 @@ enum mc_foc_sensor_mode {
   FOC_SENSOR_MODE_HFI_V2,
   FOC_SENSOR_MODE_HFI_V3,
   FOC_SENSOR_MODE_HFI_V4,
-  FOC_SENSOR_MODE_HFI_V5
+  FOC_SENSOR_MODE_HFI_V5,
+  FOC_SENSOR_MODE_ENCODER_AB, // fw7.0
 }
 
 enum mc_foc_control_sample_mode {
@@ -95,10 +105,17 @@ enum mc_foc_control_sample_mode {
   FOC_CONTROL_SAMPLE_MODE_V0_V7_INTERPOL
 }
 
+enum mc_foc_hfi_amb_mode { // fw6.06
+  FOC_AMB_MODE_SIX_VECTOR,
+  FOC_AMB_MODE_D_SINGLE_PULSE,
+  FOC_AMB_MODE_D_DOUBLE_PULSE,
+}
+
 enum mc_foc_current_sample_mode {
   FOC_CURRENT_SAMPLE_MODE_LONGEST_ZERO,
   FOC_CURRENT_SAMPLE_MODE_ALL_SENSORS,
-  FOC_CURRENT_SAMPLE_MODE_HIGH_CURRENT
+  FOC_CURRENT_SAMPLE_MODE_HIGH_CURRENT,
+  FOC_CURRENT_SAMPLE_MODE_BEST_SENSOR, // fw6.06
 }
 
 enum mc_sensor_mode {
@@ -144,6 +161,10 @@ class bms_config {
   double soc_limit_start = 0;
   double soc_limit_end = 0;
   BMS_FWD_CAN_MODE fwd_can_mode = BMS_FWD_CAN_MODE.BMS_FWD_CAN_MODE_DISABLED; // Firmware 5.3 added
+  double vmin_limit_start = 0; // fw6.05
+  double vmin_limit_end = 0; // fw6.05
+  double vmax_limit_start = 0; // fw6.05
+  double vmax_limit_end = 0; // fw6.05
 }
 
 enum PID_RATE {
@@ -184,6 +205,11 @@ SAT_COMP_LAMBDA_AND_FACTOR
 
 
 class MCCONF {
+  /// True once a firmware deserializer has parsed this configuration with a
+  /// matching signature. A freshly constructed or signature-mismatched
+  /// configuration is not valid and must not be edited or written back.
+  bool isValid = false;
+
   // Limits
   double l_current_max = 0;
   double l_current_min = 0;
@@ -386,4 +412,19 @@ class MCCONF {
   double si_motor_nl_current = 0; // Firmware 5.3 added
   // BMS Configuration
   bms_config bms = new bms_config(); // Firmware 5.2 added
+
+  // Firmware 6.05 added
+  double foc_hfi_max_err = 0;
+  bool foc_short_ls_on_zero_duty = false;
+  // Firmware 6.06 added
+  mc_foc_hfi_amb_mode foc_hfi_amb_mode = mc_foc_hfi_amb_mode.FOC_AMB_MODE_SIX_VECTOR;
+  double foc_hfi_amb_current = 0;
+  int foc_hfi_amb_tres = 0;
+  int foc_offsets_cal_mode = 0; // bit 0: calibrate offsets on boot (replaces foc_offsets_cal_on_boot)
+  double foc_overmod_factor = 0;
+  // Firmware 7.0 added
+  int l_additional_faults = 0;
+  double foc_hfi_reset_erpm = 0;
+  double foc_fw_backoff = 0;
+  double foc_mag_vd_max = 0;
 }

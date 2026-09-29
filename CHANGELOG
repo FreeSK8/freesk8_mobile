@@ -1,3 +1,41 @@
+v0.24.0
+
+* Upgrade to Flutter 3.47.5 / Dart 3.13 with sound null safety (Android toolchain: Gradle 8.14.3, AGP 8.13.2, Kotlin 2.2.21, compileSdk/targetSdk 36)
+* Fix Robogotchi Updater and gotchiPro Updater screens crashing when opened
+* Fix "Export Data Backup" producing an empty zip file
+* Fix ESC hardware name decoding (long names, stray characters)
+* VESC firmware 6.05, 6.06 and 7.00 supported; firmware 6.0/6.2 motor and app configuration read/write corrected (misaligned fields, wrong scales, writes on 6.2 failed)
+* Motor configuration: battery regen cutoff, BMS cell voltage limits and calibrate-offsets-on-boot settings; sensor modes and temperature limits follow the connected firmware
+* App configuration: ADC button options on firmware 6.0+; the balance app is only offered where the firmware has it
+* Unsupported ESC firmware is reported with its version instead of crashing; unknown enum values and fault codes no longer crash the telemetry or ride log views
+* Restore the shake-to-show debug log console (filter, search, share)
+* Android: remove obsolete background location service declarations; predictive back support
+* Update project dependencies (flutter_map 8, nordic_dfu 8, wifi_iot 0.4, flutter_blue_plus 2.3, geolocator 14.1, wakelock_plus 1.8, archive 4.3)
+* Identify the app to OpenStreetMap tile servers
+* Automated GitHub Releases with APK attached, built by CI from version tags
+* iOS project updated to the Flutter 3.47 template (minimum iOS 15); not yet verified on a device
+
+v0.23.0
+
+* VESC firmware 6.0 and 6.2 support, with detection of 6.x beta firmware
+* gotchiPro firmware 1.6.0 with logging stability improvements
+* First pass of the sk8net / WiFi configuration menu for gotchiPro
+* App configuration data type cleanup
+
+v0.22.1
+
+* Initial iOS rebuild using Xcode 14.3.1 and Xcode Cloud CI script
+* gotchiPro versioning rework and delete-log function
+* Expected gotchiPro firmware version 1.5.0
+* Minimum iOS version 11
+
+v0.22.0
+
+* Switch Bluetooth stack to flutter_blue_plus, MTU and connection priority requests
+* First pass of the gotchiPro OTA view
+* Remove Firebase
+* Upgrade to Flutter 3.3.10
+
 v0.21.5
 
 * Fix Speed calculation in RealTimeData

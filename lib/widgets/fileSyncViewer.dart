@@ -46,7 +46,7 @@ class FileSyncViewerState extends State<FileSyncViewer> {
 
   @override
   Widget build(BuildContext context) {
-    //globalLogger.wtf("Build: fileSyncViewer");
+    //globalLogger.f("Build: fileSyncViewer");
 
     // Update icon angle every state refresh
     syncIconAngle -= 0.1;
