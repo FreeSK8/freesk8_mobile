@@ -45,7 +45,17 @@ flutter test test/esc_serializers_test.dart
 
 1. Fetch `confgenerator.c`, `confgenerator.h` and `datatypes.h` for the release
    from the bldc repository into `vesc/<label>/` and write a `SOURCE` file next
-   to them (repo, ref, commit, fetch date, file list).
+   to them (repo, ref, commit, fetch date, file list). From the repository root,
+   with `REF` the bldc branch or tag and `V` the label:
+
+   ```sh
+   REF=release_7_01; V=7.01; DIR=tool/esc_serializers/vesc/$V; mkdir -p $DIR
+   for f in confgenerator.c confgenerator.h datatypes.h; do
+     curl -fsSL https://raw.githubusercontent.com/vedderb/bldc/$REF/$f -o $DIR/$f; done
+   SHA=$(git ls-remote https://github.com/vedderb/bldc "refs/heads/$REF" "refs/tags/$REF" | tail -1 | cut -f1)
+   printf 'repo=https://github.com/vedderb/bldc\nref=%s\ncommit=%s\nfetched=%s\nfiles=confgenerator.c confgenerator.h datatypes.h\n' \
+     "$REF" "$SHA" "$(date +%F)" > $DIR/SOURCE
+   ```
 2. Add the version to `versions.json`: `label`, `ref`, the Dart `class` and
    `file` names, and the `ESC_FIRMWARE` members it serves.
 3. Add the new `ESC_FIRMWARE` member in `lib/hardwareSupport/escHelper/escHelper.dart`,

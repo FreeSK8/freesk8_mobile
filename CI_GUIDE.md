@@ -37,27 +37,24 @@ compileSdk / targetSdk 36 (`android/app/build.gradle`).
 
 ## Step 1 - Generate a release keystore (one time)
 
-Run this on your local machine and store the output file somewhere safe (password manager, not the repo):
+Run this on your local machine, outside the repository, and keep the output file safe (Step 2).
+`keytool` is part of a JDK and is usually not on PATH; on macOS the bare `java` stub only prints
+"Unable to locate a Java Runtime".
 
-```bash
-keytool -genkey -v \
-  -keystore release.keystore \
-  -alias freesk8 \
-  -keyalg RSA -keysize 2048 \
-  -validity 10000
-```
-
-`keytool` is part of a JDK and is usually not on PATH. On macOS the bare `java` stub only prints
-"Unable to locate a Java Runtime"; use the JDK bundled with Android Studio (`flutter doctor -v`
-prints it after "Java binary at:", and `keytool` sits next to `java`):
+With Android Studio installed, use its bundled JDK (`flutter doctor -v` prints the path after
+"Java binary at:", and `keytool` sits next to `java`):
 
 ```bash
 "/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool" -genkey -v \
   -keystore release.keystore -alias freesk8 -keyalg RSA -keysize 2048 -validity 10000
 ```
 
-or install one (`brew install --cask temurin@21` on macOS, `apt install openjdk-21-jdk-headless`
-on Debian/Ubuntu).
+Without Android Studio, install a JDK first and use plain `keytool` in a new shell:
+
+```bash
+brew install --cask temurin@21   # macOS; Debian/Ubuntu: sudo apt install openjdk-21-jdk-headless
+keytool -genkey -v -keystore release.keystore -alias freesk8 -keyalg RSA -keysize 2048 -validity 10000
+```
 
 You will need the `release.keystore` file, the `keyAlias` (e.g. `freesk8`), the `storePassword`
 and the `keyPassword`. Losing the keystore means future builds can no longer upgrade installed
@@ -84,8 +81,9 @@ in for the file (it is exactly what the `KEYSTORE_BASE64` secret holds):
 Prove the backup restores before deleting anything local:
 
 ```bash
-pbpaste | base64 -d > restored.keystore        # the base64 text from the entry, on the clipboard
-keytool -list -v -keystore restored.keystore   # must list one entry: freesk8
+KEYTOOL="/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool"   # or KEYTOOL=keytool after the Temurin install
+pbpaste | base64 -d > restored.keystore          # the base64 text from the entry, on the clipboard
+"$KEYTOOL" -list -v -keystore restored.keystore  # must list one entry: freesk8
 rm restored.keystore
 ```
 
@@ -109,6 +107,18 @@ Variable (the *Variables* tab, not a secret):
 | Variable | Value |
 |---|---|
 | `HAS_SIGNING` | `true` |
+
+Or with the GitHub CLI, from a clone of the repository:
+
+```bash
+brew install gh && gh auth login     # once
+gh secret set KEYSTORE_BASE64 < release.keystore.b64
+gh secret set KEY_ALIAS --body freesk8
+gh secret set KEY_PASSWORD           # prompts for the value, so nothing lands in shell history
+gh secret set STORE_PASSWORD
+gh variable set HAS_SIGNING --body true
+gh secret list && gh variable list
+```
 
 Passwords may contain any characters: the workflow passes them through the environment and
 writes `android/key.properties` with `printf`, so nothing is shell-expanded.
@@ -151,9 +161,14 @@ and put `release.keystore` in `android/app/`. Both paths are ignored by the root
    `https://github.com/FreeSK8/freesk8_mobile/releases/tag/v0.24.0` with
    `freesk8_mobile-v0.24.0-signed.apk` and `.sha256`.
 
-To rehearse without a real release, push `v0.24.0-rc1`; it publishes a pre-release that can be
-deleted afterwards (delete the release in the GitHub UI, then
-`git push origin :refs/tags/v0.24.0-rc1`).
+To rehearse without a real release, push `v0.24.0-rc1`; it publishes a pre-release. Remove it
+and its tag afterwards:
+
+```bash
+gh release delete v0.24.0-rc1 --yes --cleanup-tag   # release and tag in one go
+# without gh: delete the pre-release in the GitHub UI, then
+git push origin :refs/tags/v0.24.0-rc1
+```
 
 ---
 
