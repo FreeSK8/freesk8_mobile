@@ -49,43 +49,65 @@ With Android Studio installed, use its bundled JDK (`flutter doctor -v` prints t
   -keystore release.keystore -alias freesk8 -keyalg RSA -keysize 2048 -validity 10000
 ```
 
-Without Android Studio, install a JDK first and use plain `keytool` in a new shell:
+Without Android Studio, install a JDK first (`brew install --cask temurin@21` on macOS,
+`sudo apt install openjdk-21-jdk-headless` on Debian/Ubuntu), open a new shell, and run plain
+`keytool`:
 
 ```bash
-brew install --cask temurin@21   # macOS; Debian/Ubuntu: sudo apt install openjdk-21-jdk-headless
 keytool -genkey -v -keystore release.keystore -alias freesk8 -keyalg RSA -keysize 2048 -validity 10000
 ```
 
-You will need the `release.keystore` file, the `keyAlias` (e.g. `freesk8`), the `storePassword`
+Command blocks in this guide carry no comments: zsh, the macOS default shell, does not accept `#`
+comments on an interactive command line.
+
+At the prompt "Enter key password for <freesk8>" press RETURN so the key password equals the
+store password: one password to keep, and the backup entry in Step 2 needs only one password
+field. You will need the `release.keystore` file, the `keyAlias` (`freesk8`), the `storePassword`
 and the `keyPassword`. Losing the keystore means future builds can no longer upgrade installed
 copies in place, so back it up (Step 2).
 
 ## Step 2 - Encode the keystore as base64 and back it up
 
+macOS:
+
 ```bash
-# Linux
-base64 -w 0 release.keystore > release.keystore.b64
-# macOS
 base64 -i release.keystore | tr -d '\n' > release.keystore.b64
 ```
 
-Keep the keystore and its passwords in one password-manager entry, with the base64 text standing
-in for the file (it is exactly what the `KEYSTORE_BASE64` secret holds):
-
-- Apple Passwords: File -> New Password; user name `freesk8` (the alias), password = store
-  password, notes = key password plus the contents of `release.keystore.b64`
-  (`pbcopy < release.keystore.b64`, then paste). Older macOS: Keychain Access -> File -> New
-  Secure Note Item.
-- 1Password / Bitwarden Premium: attach `release.keystore` to the item instead.
-
-Prove the backup restores before deleting anything local:
+Linux:
 
 ```bash
-KEYTOOL="/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool"   # or KEYTOOL=keytool after the Temurin install
-pbpaste | base64 -d > restored.keystore          # the base64 text from the entry, on the clipboard
-"$KEYTOOL" -list -v -keystore restored.keystore  # must list one entry: freesk8
-rm restored.keystore
+base64 -w 0 release.keystore > release.keystore.b64
 ```
+
+Keep the keystore and its password in one password-manager entry, with the base64 text standing
+in for the file (it is exactly what the `KEYSTORE_BASE64` secret holds). The notes must hold the
+base64 text and nothing else: a password line above it decodes as base64 too and corrupts a
+restore.
+
+- Apple Passwords: File -> New Password; user name `freesk8` (the alias), password = store
+  password, notes = the contents of `release.keystore.b64` only
+  (`pbcopy < release.keystore.b64`, then paste). A key password that differs from the store
+  password goes into a second entry, never into the notes. Older macOS: Keychain Access -> File
+  -> New Secure Note Item, same rule.
+- 1Password / Bitwarden Premium: attach `release.keystore` to the item instead.
+
+Prove the backup restores before deleting anything local. Do not go through the clipboard
+(copying a command replaces what you copied from the password manager): run `cat > restore.b64`,
+paste the base64 from the entry, press Return, then Ctrl-D, and:
+
+```bash
+KEYTOOL="/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool"
+tr -d '\n' < restore.b64 | base64 -d > restored.keystore
+shasum -a 256 release.keystore restored.keystore
+"$KEYTOOL" -list -v -keystore restored.keystore
+rm restore.b64 restored.keystore
+```
+
+After a Temurin or apt install use `KEYTOOL=keytool`. The two hashes must be identical and the
+listing must show one entry, `freesk8`. If the hashes differ, `wc -c restore.b64` should match
+`wc -c release.keystore.b64` within a byte; a much smaller file means the paste was incomplete or
+held other text.
 
 Delete `release.keystore.b64` once the secret in Step 3 is set.
 
@@ -111,14 +133,17 @@ Variable (the *Variables* tab, not a secret):
 Or with the GitHub CLI, from a clone of the repository:
 
 ```bash
-brew install gh && gh auth login     # once
+brew install gh && gh auth login
 gh secret set KEYSTORE_BASE64 < release.keystore.b64
 gh secret set KEY_ALIAS --body freesk8
-gh secret set KEY_PASSWORD           # prompts for the value, so nothing lands in shell history
+gh secret set KEY_PASSWORD
 gh secret set STORE_PASSWORD
 gh variable set HAS_SIGNING --body true
 gh secret list && gh variable list
 ```
+
+The first line is a one-time install and login; the two password lines prompt for the value, so
+nothing lands in shell history.
 
 Passwords may contain any characters: the workflow passes them through the environment and
 writes `android/key.properties` with `printf`, so nothing is shell-expanded.
@@ -162,11 +187,15 @@ and put `release.keystore` in `android/app/`. Both paths are ignored by the root
    `freesk8_mobile-v0.24.0-signed.apk` and `.sha256`.
 
 To rehearse without a real release, push `v0.24.0-rc1`; it publishes a pre-release. Remove it
-and its tag afterwards:
+and its tag afterwards in one go:
 
 ```bash
-gh release delete v0.24.0-rc1 --yes --cleanup-tag   # release and tag in one go
-# without gh: delete the pre-release in the GitHub UI, then
+gh release delete v0.24.0-rc1 --yes --cleanup-tag
+```
+
+Without the GitHub CLI, delete the pre-release in the GitHub UI, then remove the tag:
+
+```bash
 git push origin :refs/tags/v0.24.0-rc1
 ```
 
