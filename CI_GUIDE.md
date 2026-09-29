@@ -47,18 +47,49 @@ keytool -genkey -v \
   -validity 10000
 ```
 
+`keytool` is part of a JDK and is usually not on PATH. On macOS the bare `java` stub only prints
+"Unable to locate a Java Runtime"; use the JDK bundled with Android Studio (`flutter doctor -v`
+prints it after "Java binary at:", and `keytool` sits next to `java`):
+
+```bash
+"/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool" -genkey -v \
+  -keystore release.keystore -alias freesk8 -keyalg RSA -keysize 2048 -validity 10000
+```
+
+or install one (`brew install --cask temurin@21` on macOS, `apt install openjdk-21-jdk-headless`
+on Debian/Ubuntu).
+
 You will need the `release.keystore` file, the `keyAlias` (e.g. `freesk8`), the `storePassword`
 and the `keyPassword`. Losing the keystore means future builds can no longer upgrade installed
-copies in place, so back it up.
+copies in place, so back it up (Step 2).
 
-## Step 2 - Encode the keystore as base64
+## Step 2 - Encode the keystore as base64 and back it up
 
 ```bash
 # Linux
 base64 -w 0 release.keystore > release.keystore.b64
 # macOS
-base64 release.keystore | tr -d '\n' > release.keystore.b64
+base64 -i release.keystore | tr -d '\n' > release.keystore.b64
 ```
+
+Keep the keystore and its passwords in one password-manager entry, with the base64 text standing
+in for the file (it is exactly what the `KEYSTORE_BASE64` secret holds):
+
+- Apple Passwords: File -> New Password; user name `freesk8` (the alias), password = store
+  password, notes = key password plus the contents of `release.keystore.b64`
+  (`pbcopy < release.keystore.b64`, then paste). Older macOS: Keychain Access -> File -> New
+  Secure Note Item.
+- 1Password / Bitwarden Premium: attach `release.keystore` to the item instead.
+
+Prove the backup restores before deleting anything local:
+
+```bash
+pbpaste | base64 -d > restored.keystore        # the base64 text from the entry, on the clipboard
+keytool -list -v -keystore restored.keystore   # must list one entry: freesk8
+rm restored.keystore
+```
+
+Delete `release.keystore.b64` once the secret in Step 3 is set.
 
 ## Step 3 - Add the GitHub secrets and variable
 
