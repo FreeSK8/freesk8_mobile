@@ -8,6 +8,7 @@ allprojects {
 // Compatibility shims for unmaintained pub packages under AGP 8:
 // - namespace: AGP 8 requires one per module; derive it from the manifest's
 //   package attribute (the pre-AGP8 convention).
+// - compileSdk: see below.
 // - JVM targets: old plugins mix Java 1.8 with whatever Kotlin defaults to
 //   (the host JDK), which Kotlin 2.x rejects; pin both to 11 everywhere.
 subprojects {
@@ -22,6 +23,19 @@ subprojects {
                         android.namespace = packageName
                     }
                 }
+            }
+            // - compileSdk: AGP 8.13 refuses a library compiled against an SDK
+            //   older than its androidx dependencies require (34+); raise old
+            //   plugins to the app's level.
+            Integer compileSdk = android.compileSdk
+            if (compileSdk == null && android.compileSdkVersion != null) {
+                def match = (android.compileSdkVersion.toString() =~ /(\d+)/)
+                if (match.find()) {
+                    compileSdk = match.group(1).toInteger()
+                }
+            }
+            if (compileSdk != null && compileSdk < 34) {
+                android.compileSdk = 36
             }
             android.compileOptions {
                 sourceCompatibility JavaVersion.VERSION_11

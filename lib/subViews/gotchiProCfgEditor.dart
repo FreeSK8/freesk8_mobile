@@ -1,6 +1,5 @@
 
 import 'dart:convert';
-import 'dart:ffi';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,9 +7,7 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 import '../globalUtilities.dart';
 
-import 'package:multiselect_formfield/multiselect_formfield.dart';
 
-import '../widgets/sliderThumbImage.dart';
 import 'dart:ui' as ui;
 
 class gotchiProConfiguration {
@@ -47,8 +44,6 @@ class gotchiProCfgEditor extends StatefulWidget {
 class gotchiProCfgEditorState extends State<gotchiProCfgEditor> {
 
 
-  List<DropdownMenuItem<ListItem>>? _dropdownMenuItems;
-  ListItem? _selectedItem;
 
   TextEditingController ssidInput = TextEditingController();
   TextEditingController passInput = TextEditingController();
@@ -76,7 +71,6 @@ class gotchiProCfgEditorState extends State<gotchiProCfgEditor> {
 
   @override
   void dispose() {
-    _selectedItem = null;
     ssidInput.dispose();
     passInput.dispose();
     super.dispose();

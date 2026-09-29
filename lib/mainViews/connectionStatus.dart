@@ -145,7 +145,7 @@ class ConnectionStatus extends StatelessWidget {
                           initialTime: Duration(seconds: 0),
                           decoration: new BoxDecoration(
                             shape: BoxShape.rectangle,
-                            color: Theme.of(context).dialogBackgroundColor,
+                            color: dialogBackground(context),
                             borderRadius: new BorderRadius.all(new Radius.circular(32.0)),
                           ),
                         );
@@ -177,7 +177,7 @@ class ConnectionStatus extends StatelessWidget {
               gotchiStatus?.isLogging != null ? Divider(thickness: 2,) : Container(),
 
               Text("Connected to"),
-              Text(userSettings.settings.boardAlias != null ? userSettings.settings.boardAlias : "unnamed",style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold), textAlign: TextAlign.center,),
+              Text(userSettings.settings.boardAlias.isNotEmpty ? userSettings.settings.boardAlias : "unnamed",style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold), textAlign: TextAlign.center,),
 
               Flexible(child: CircleAvatar(
                 backgroundImage: imageBoardAvatar != null ? imageBoardAvatar : AssetImage('assets/FreeSK8_Mobile.png') as ImageProvider,
@@ -185,7 +185,7 @@ class ConnectionStatus extends StatelessWidget {
                 backgroundColor: Colors.white,
               )),
 
-              Text(currentDevice!.name == '' ? '(unknown device)' : currentDevice!.name),
+              Text(currentDevice!.platformName == '' ? '(unknown device)' : currentDevice!.platformName),
 
               gotchiStatus?.isLogging != null ?
               Text("Distance Logged ${doublePrecision(userSettings.settings.useImperial ? kmToMile(connectedVehicleOdometer!) : connectedVehicleOdometer!, 2)} ${userSettings.settings.useImperial ? "miles" : "km"}") : Container(),
@@ -196,7 +196,7 @@ class ConnectionStatus extends StatelessWidget {
               //Text(currentDevice.id.toString()),
 
               Text("ESC Hardware: ${currentFirmware!.hardware_name}"),
-              Text("ESC Firmware: ${currentFirmware!.fw_version_major}.${currentFirmware!.fw_version_minor}"),
+              Text("ESC Firmware: ${ESCHelper.firmwareLabel(currentFirmware!.fw_version_major, currentFirmware!.fw_version_minor)}"),
 
 
               ElevatedButton(

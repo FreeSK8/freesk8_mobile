@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -143,7 +142,6 @@ class RealTimeDataState extends State<RealTimeData> {
     String temperatureMotor = widget.currentSettings.settings.useFahrenheit ? "$tempMotor F" : "$tempMotor C";
 
     double escSpeed = escTelemetry.speed; //NOTE: Meters/second
-    if (escSpeed == null) escSpeed = 0;
     escSpeed *= 3.6; //Meters/s to kph
     double speedNow = widget.currentSettings.settings.useImperial ? kphToMph(escSpeed) : escSpeed;
 
@@ -155,7 +153,6 @@ class RealTimeDataState extends State<RealTimeData> {
     double efficiency = calculateEfficiency(distanceTraveled);
     String efficiencyGaugeLabel = widget.currentSettings.settings.useImperial ? "Wh/mi" : "Wh/km";
 
-    double powerMax = widget.currentSettings.settings.batterySeriesCount * widget.currentSettings.settings.batteryCellMaxVoltage;
     double powerMinimum = widget.currentSettings.settings.batterySeriesCount * widget.currentSettings.settings.batteryCellMinVoltage;
 
     if (widget.deviceIsConnected) {
@@ -172,23 +169,17 @@ class RealTimeDataState extends State<RealTimeData> {
 
     // Set initial batteryRemaining value
     if (batteryRemaining == null) {
-      if (escTelemetry.battery_level != null) {
-        batteryRemaining = escTelemetry.battery_level * 100;
-      } else {
-        batteryRemaining = 0;
-      }
+      batteryRemaining = escTelemetry.battery_level * 100;
     }
 
     // Smooth battery remaining from ESC
-    if (escTelemetry.battery_level != null) {
-      batteryRemaining = (0.1 * escTelemetry.battery_level * 100) + (0.9 * batteryRemaining!);
-      if (batteryRemaining! < 0.0) {
-        globalLogger.e("Battery Remaining $batteryRemaining battery_level ${escTelemetry.battery_level} v_in ${escTelemetry.v_in}");
-        batteryRemaining = 0;
-      }
-      if(batteryRemaining! > 100.0) {
-        batteryRemaining = 100.0;
-      }
+    batteryRemaining = (0.1 * escTelemetry.battery_level * 100) + (0.9 * batteryRemaining!);
+    if (batteryRemaining! < 0.0) {
+      globalLogger.e("Battery Remaining $batteryRemaining battery_level ${escTelemetry.battery_level} v_in ${escTelemetry.v_in}");
+      batteryRemaining = 0;
+    }
+    if(batteryRemaining! > 100.0) {
+      batteryRemaining = 100.0;
     }
 
     // Estimate range
@@ -201,7 +192,7 @@ class RealTimeDataState extends State<RealTimeData> {
       rangeEstimateAverage = rangeEstimate * 0.1 + rangeEstimateAverage! * 0.9;
     }
 
-    Color boxBgColor = Theme.of(context).dialogBackgroundColor;
+    Color boxBgColor = dialogBackground(context);
     double cellVoltage = escTelemetry.v_in / widget.currentSettings.settings.batterySeriesCount;
 
     // Compute color for cell voltage
@@ -222,7 +213,7 @@ class RealTimeDataState extends State<RealTimeData> {
 
 
     BoxDecoration boxDecoration = BoxDecoration(
-        color: Theme.of(context).dialogBackgroundColor,
+        color: dialogBackground(context),
         borderRadius: BorderRadius.circular(5),
 
         gradient: LinearGradient(
@@ -231,8 +222,8 @@ class RealTimeDataState extends State<RealTimeData> {
           end: Alignment.bottomRight,
           stops: [0.0, 0.9, 1.0],
           colors: [
-            Theme.of(context).dialogBackgroundColor,
-            Theme.of(context).dialogBackgroundColor,
+            dialogBackground(context),
+            dialogBackground(context),
             Theme.of(context).scaffoldBackgroundColor,
           ],
         )
@@ -371,7 +362,7 @@ class RealTimeDataState extends State<RealTimeData> {
 
     Widget childBattery = Container(
         decoration: BoxDecoration(
-            color: Theme.of(context).dialogBackgroundColor,
+            color: dialogBackground(context),
             borderRadius: BorderRadius.circular(5),
 
             gradient: LinearGradient(
@@ -380,8 +371,8 @@ class RealTimeDataState extends State<RealTimeData> {
               end: Alignment.bottomRight,
               stops: [0.0, 0.4, 1.0],
               colors: [
-                Theme.of(context).dialogBackgroundColor,
-                Theme.of(context).dialogBackgroundColor,
+                dialogBackground(context),
+                dialogBackground(context),
                 colorCellVoltage,
               ],
             )
@@ -428,7 +419,7 @@ class RealTimeDataState extends State<RealTimeData> {
 
     Widget childMosfetTemp = Container(
         decoration: BoxDecoration(
-            color: Theme.of(context).dialogBackgroundColor,
+            color: dialogBackground(context),
             borderRadius: BorderRadius.circular(5),
 
             gradient: LinearGradient(
@@ -437,8 +428,8 @@ class RealTimeDataState extends State<RealTimeData> {
               end: Alignment.bottomRight,
               stops: [0.0, 0.4, 1.0],
               colors: [
-                Theme.of(context).dialogBackgroundColor,
-                Theme.of(context).dialogBackgroundColor,
+                dialogBackground(context),
+                dialogBackground(context),
                 colorMosfet,
               ],
             )
@@ -460,7 +451,7 @@ class RealTimeDataState extends State<RealTimeData> {
 
     Widget childMotorTemp = Container(
         decoration: BoxDecoration(
-            color: Theme.of(context).dialogBackgroundColor,
+            color: dialogBackground(context),
             borderRadius: BorderRadius.circular(5),
 
             gradient: LinearGradient(
@@ -469,8 +460,8 @@ class RealTimeDataState extends State<RealTimeData> {
               end: Alignment.bottomRight,
               stops: [0.0, 0.4, 1.0],
               colors: [
-                Theme.of(context).dialogBackgroundColor,
-                Theme.of(context).dialogBackgroundColor,
+                dialogBackground(context),
+                dialogBackground(context),
                 colorMotor,
               ],
             )
@@ -515,14 +506,14 @@ class RealTimeDataState extends State<RealTimeData> {
                               context.read<PreferencesCubit>().increaseFontSize();
                               globalLogger.d("Font Size: $fontSizeValues Screen W: ${MediaQuery.of(context).size.width.toInt()} H: ${MediaQuery.of(context).size.height.toInt()}");
                             },
-                            child: Icon(Icons.add_circle_outline, color: Theme.of(context).dialogBackgroundColor),
+                            child: Icon(Icons.add_circle_outline, color: dialogBackground(context)),
                           ),
                           GestureDetector(
                             onTap: () {
                               context.read<PreferencesCubit>().decreaseFontSize();
                               globalLogger.d("Font Size: $fontSizeValues Screen W: ${MediaQuery.of(context).size.width.toInt()} H: ${MediaQuery.of(context).size.height.toInt()}");
                             },
-                            child: Icon(Icons.remove_circle, color: Theme.of(context).dialogBackgroundColor),
+                            child: Icon(Icons.remove_circle, color: dialogBackground(context)),
                           ),
                         ],)
                     ) : Container(),
@@ -636,14 +627,14 @@ class RealTimeDataState extends State<RealTimeData> {
                               context.read<PreferencesCubit>().decreaseFontSize();
                               globalLogger.d("Font Size: $fontSizeValues Screen W: ${MediaQuery.of(context).size.width.toInt()} H: ${MediaQuery.of(context).size.height.toInt()}");
                             },
-                            child: Icon(Icons.remove_circle, color: Theme.of(context).dialogBackgroundColor),
+                            child: Icon(Icons.remove_circle, color: dialogBackground(context)),
                           ),
                           GestureDetector(
                             onTap: () {
                               context.read<PreferencesCubit>().increaseFontSize();
                               globalLogger.d("Font Size: $fontSizeValues Screen W: ${MediaQuery.of(context).size.width.toInt()} H: ${MediaQuery.of(context).size.height.toInt()}");
                             },
-                            child: Icon(Icons.add_circle_outline, color: Theme.of(context).dialogBackgroundColor),
+                            child: Icon(Icons.add_circle_outline, color: dialogBackground(context)),
                           )
                         ],)
                     ) : Container(),

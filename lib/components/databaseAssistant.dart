@@ -136,7 +136,7 @@ class DatabaseAssistant {
       },
       onOpen: (db) async {
         //int version = await db.getVersion();
-        //globalLogger.wtf("DatabaseAssistant: getDatabase: openDatabase: onOpen(). Version $version");
+        //globalLogger.f("DatabaseAssistant: getDatabase: openDatabase: onOpen(). Version $version");
       },
       onUpgrade: (Database db, int oldVersion, int newVersion) async {
         globalLogger.d("DatabaseAssistant: getDatabase: openDatabase: onUpgrade(): oldVersion $oldVersion -> newVersion $newVersion");
@@ -240,7 +240,7 @@ class DatabaseAssistant {
 
   static Future<int> dbAssociateVehicle( String deviceID, String newDeviceID ) async {
     final Database db = await getDatabase();
-    globalLogger.wtf("db moving $deviceID records to $newDeviceID");
+    globalLogger.f("db moving $deviceID records to $newDeviceID");
     int response = await db.update('logs', {'board_id': newDeviceID}, where: 'board_id = ?', whereArgs: [deviceID]);
     await db.close();
     return Future.value(response);
@@ -297,7 +297,7 @@ class DatabaseAssistant {
     if (consumption.isNaN || consumption.isInfinite) {
       consumption = 0;
     }
-    //globalLogger.wtf("distance $distance wh $wattHours imperial $useImperial consumption $consumption");
+    //globalLogger.f("distance $distance wh $wattHours imperial $useImperial consumption $consumption");
     return consumption;
   }
 
@@ -346,7 +346,7 @@ class DatabaseAssistant {
     else if (trend > 1.0) trend -= 1.0;
 
     if (columnName == "distance_km")
-    globalLogger.wtf("Trending Column $columnName Window ${window.inSeconds} Earlier $totalEarlier Later $totalLater Trend $trend Agv $averageValue  ${previousMoment} ${moment}");
+    globalLogger.f("Trending Column $columnName Window ${window.inSeconds} Earlier $totalEarlier Later $totalLater Trend $trend Agv $averageValue  ${previousMoment} ${moment}");
 
 
     return trend;
